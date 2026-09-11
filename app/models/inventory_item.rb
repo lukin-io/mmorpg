@@ -43,6 +43,12 @@ class InventoryItem < ApplicationRecord
     durable? && current_durability.to_i <= 0
   end
 
+  # A corrected template maximum must not turn an inconsistent historical item
+  # into an inflated Shop payout. This rejects the sale without repairing it.
+  def valid_sale_durability?
+    !durable? || current_durability.to_d.between?(0, max_durability.to_d)
+  end
+
   def expired?
     expires_at = properties.to_h["expires_at"] || properties.to_h["expires_on"]
     return false if expires_at.blank?
@@ -61,18 +67,22 @@ class InventoryItem < ApplicationRecord
   end
 
   def decrement_durability!(amount = 1)
-    return current_durability unless durable?
+    with_lock do
+      next current_durability unless durable?
 
-    new_value = [current_durability.to_i - amount.to_i, 0].max
-    update!(properties: properties.to_h.merge("current_durability" => new_value))
-    update!(equipped: false, equipment_slot: nil) if new_value.zero? && equipped?
-    new_value
+      new_value = [current_durability.to_i - amount.to_i, 0].max
+      update!(properties: properties.to_h.merge("current_durability" => new_value))
+      update!(equipped: false, equipment_slot: nil) if new_value.zero? && equipped?
+      new_value
+    end
   end
 
   def reset_durability!
-    return unless durable?
+    with_lock do
+      next unless durable?
 
-    update!(properties: properties.to_h.merge("current_durability" => max_durability.to_i))
+      update!(properties: properties.to_h.merge("current_durability" => max_durability.to_i))
+    end
   end
 
   private

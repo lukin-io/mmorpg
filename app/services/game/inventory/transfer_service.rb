@@ -23,36 +23,9 @@ module Game
       def sell_item!(item:, recipient_name:, quantity: 1, price:)
         return failure("Trade license required.") unless trade_license?
 
-        price = decimal_value(price)
-        return failure("Price must be positive.") unless price.positive?
-
-        recipient = find_recipient(recipient_name)
-        return recipient unless recipient.is_a?(Character)
-
-        buyer_wallet = wallet_for(recipient)
-        seller_wallet = wallet_for(character)
-        return failure("Recipient does not have enough NV.") if buyer_wallet.nv_balance < price
-        metadata = transfer_metadata(item, quantity)
-
-        ApplicationRecord.transaction(requires_new: true) do
-          transfer_stack!(item:, recipient:, quantity: quantity.to_i)
-          buyer_wallet.adjust!(
-            amount: -price,
-            reason: "inventory.player_sale.buy",
-            metadata:
-          )
-          seller_wallet.adjust!(
-            amount: price,
-            reason: "inventory.player_sale.sell",
-            metadata: metadata.merge("recipient" => recipient.name)
-          )
-        end
-
-        success("Item sold to #{recipient.name}.")
-      rescue CapacityError, OwnershipError => e
-        failure(e.message)
-      rescue Economy::WalletService::InsufficientFundsError
-        failure("Recipient does not have enough NV.")
+        # A license grants trade eligibility, never consent to debit another
+        # player. Enable settlement only with a captured buyer-acceptance flow.
+        failure("Player sales are currently unavailable.")
       end
 
       def transfer_money!(recipient_name:, amount:)
@@ -95,23 +68,36 @@ module Game
         return recipient unless recipient.is_a?(Character)
 
         ApplicationRecord.transaction(requires_new: true) do
-          transfer_stack!(item:, recipient:, quantity: quantity.to_i, reason:)
+          raise OwnershipError, "Item not found." unless item
+
+          source_inventory = character.inventory
+          raise OwnershipError, "Item not found." unless source_inventory
+
+          recipient_inventory = recipient.inventory || recipient.create_inventory!
+          # Share Shop's template -> inventory -> item order. Sorting both
+          # inventories also prevents opposite-direction transfers deadlocking.
+          item.item_template.with_lock do
+            [source_inventory, recipient_inventory].sort_by(&:id).each(&:lock!)
+            item.with_lock do
+              transfer_stack!(item:, source_inventory:, recipient_inventory:, quantity: quantity.to_i, reason:)
+            end
+          end
         end
 
         success(success_message)
       rescue CapacityError, OwnershipError => e
         failure(e.message)
+      rescue ActiveRecord::RecordNotFound
+        failure("Item not found.")
       end
 
-      def transfer_stack!(item:, recipient:, quantity:, reason: "inventory.transfer")
-        raise OwnershipError, "Item not found." unless item&.inventory&.character_id == character.id
+      def transfer_stack!(item:, source_inventory:, recipient_inventory:, quantity:, reason: "inventory.transfer")
+        raise OwnershipError, "Item not found." unless item.inventory_id == source_inventory.id
         raise OwnershipError, "Invalid quantity." unless quantity.positive?
         raise OwnershipError, "Not enough items in stack." if quantity > item.quantity.to_i
         raise OwnershipError, "Equipped items cannot be transferred." if item.equipped?
         raise OwnershipError, "Protected items cannot be transferred." if item.protected_from_discard?
 
-        recipient_inventory = recipient.inventory || recipient.create_inventory!
-        source_inventory = item.inventory
         delta_weight = item.weight.to_i * quantity
 
         raise CapacityError, "Recipient inventory is overloaded." if recipient_inventory.current_weight.to_i + delta_weight > recipient_inventory.max_weight.to_i
@@ -167,15 +153,7 @@ module Game
       end
 
       def trade_license?
-        inventory = character.inventory
-        return false unless inventory
-        return true if inventory.metadata.to_h["trade_license"] == true
-
-        inventory.inventory_items.includes(:item_template).any? do |item|
-          key = item.item_template.key.to_s.downcase
-          name = item.item_template.name.to_s.downcase
-          key.include?("license") || name.include?("license")
-        end
+        Game::Shop::LicenseRules.new(character:).active?(:trading)
       end
 
       def wallet_for(target_character)
@@ -186,14 +164,6 @@ module Game
         BigDecimal(value.to_s)
       rescue ArgumentError
         BigDecimal("0")
-      end
-
-      def transfer_metadata(item, quantity)
-        {
-          "item_template_id" => item.item_template_id,
-          "item" => item.item_template.name,
-          "quantity" => quantity.to_i
-        }
       end
 
       def success(message)

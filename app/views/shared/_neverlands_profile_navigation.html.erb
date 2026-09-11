@@ -16,4 +16,9 @@
   <% else %>
     <%= link_to "Perks", perks_character_path(character), class: "lbut" %>
   <% end %>
+  <% if current_section == :licenses %>
+    <span class="lbutdis" aria-current="page">Your licenses</span>
+  <% else %>
+    <%= link_to "Your licenses", character_licenses_path, class: "lbut" %>
+  <% end %>
 </nav>

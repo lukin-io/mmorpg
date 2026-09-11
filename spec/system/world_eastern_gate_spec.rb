@@ -1,8 +1,11 @@
 # frozen_string_literal: true
 
 require "rails_helper"
+require Rails.root.join("db/seeds/forpost_gate_repair")
 
-RSpec.describe "Seeded eastern gate and pond route", type: :system, js: true do
+RSpec.describe "Repaired eastern gate and pond route", type: :system, js: true do
+  include ActiveSupport::Testing::TimeHelpers
+
   def expect_idle_cell(x, y)
     expect(page).to have_css(
       ".nl-map-container[data-nl-world-map-player-x-value='#{x}']" \
@@ -16,13 +19,15 @@ RSpec.describe "Seeded eastern gate and pond route", type: :system, js: true do
     expect(page).to have_css(".nl-location-text", exact_text: "#{label} [ 1 ]")
   end
 
-  it "walks from Law Quarter to the pond and returns through the same eastern entrance" do
-    allow($stdout).to receive(:puts)
-    Rails.application.load_seed
+  it "repairs missing gate content, walks from Law Quarter to the pond and returns through the eastern entrance" do
+    create(:zone, :city_node, name: "Outpost")
+    law = create(:zone, :city, name: "Outpost Law Quarter",
+      metadata: {"city_key" => "forpost", "city_node_key" => "forpost4", "title" => "Law Quarter"})
+    outdoors = create(:zone, :mvp_outdoor_region, name: "Outpost Surroundings",
+      metadata: {"source_map" => "m_1001_999"})
+    Seeds::ForpostGateRepair.new.call
     user = create(:user)
     character = create(:character, user:, level: 0)
-    law = Zone.find_by!(name: "Outpost Law Quarter")
-    outdoors = Zone.find_by!(name: "Outpost Surroundings")
     position = create(:character_position, character:, zone: law, x: 0, y: 0)
 
     # Use the seeded cells and passability; shorten only their server-owned
@@ -45,9 +50,21 @@ RSpec.describe "Seeded eastern gate and pond route", type: :system, js: true do
       expect(page).to have_no_button("Fish")
     end
 
-    click_button "Move southeast"
-    expect(page).to have_css(".nl-map-container[data-nl-world-map-movement-active-value='true']")
-    expect(page).to have_no_css("button[aria-label^='Move ']")
+    expect(page).to have_css(".nl-map-container[data-viewport-ready='true']")
+    # The server clock owns arrival. Hold it only while checking the actual
+    # accepted UI state so CI/browser overhead cannot complete the one-second
+    # fixture step before the assertion; restoring time lets normal polling
+    # complete the same persisted movement without a second click. Preserve
+    # microseconds so the map's timestamp revision cannot move backward.
+    freeze_time(with_usec: true) do
+      click_button "Move southeast"
+      expect(page).to have_css(".nl-map-container[data-nl-world-map-movement-active-value='true']")
+      expect(page).to have_no_css("button[aria-label^='Move ']")
+      expect(position.reload).to have_attributes(zone: outdoors, x: 11, y: 9)
+      expect(MovementCommand.moving.find_by!(character:)).to have_attributes(
+        from_x: 11, from_y: 9, target_x: 12, target_y: 10
+      )
+    end
     expect_idle_cell(12, 10)
     expect_world_location("Outpost Surroundings")
     within("#available-actions") do

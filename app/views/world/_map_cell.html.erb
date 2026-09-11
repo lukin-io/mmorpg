@@ -4,15 +4,15 @@
   terrain = tile.respond_to?(:terrain_type) ? tile.terrain_type : zone.location_type
   tile_meta = tile.respond_to?(:metadata) ? (tile.metadata || {}) : {}
   is_walkable = tile.respond_to?(:walkable) ? tile.walkable : !tile_meta["blocked"]
-  cell_art = Game::World::CellArtCatalog.resolve(tile_meta["cell_art"])
+  cell_art = Game::World::CellArtCatalog.resolve_for_tile(tile_meta["cell_art"], zone:, x: tile.x, y: tile.y)
   painted_building = cell_art&.painted_building?(tile.respond_to?(:building_key) ? tile.building_key : nil)
   hidden_building_label = painted_building || %w[city village].include?(tile_meta["building_kind"])
   terrain_style = if cell_art
-    "background-image: url('#{image_path(cell_art.asset)}'); background-position: #{cell_art.background_x}px #{cell_art.background_y}px; background-size: #{cell_art.sheet_width}px #{cell_art.sheet_height}px;"
-  else
-    terrain_x = -(tile.x.to_i.modulo(10) * tile_size)
-    terrain_y = -(tile.y.to_i.modulo(10) * tile_size)
-    "background-image: url('#{image_path('world/forpost-terrain.png')}'); background-position: #{terrain_x}px #{terrain_y}px; background-size: 1000px 1000px;"
+    base_image = "url('#{image_path(cell_art.asset)}')"
+    density_image = if cell_art.high_density_asset
+      "background-image: image-set(#{base_image} 1x, url('#{image_path(cell_art.high_density_asset)}') 2x); "
+    end
+    "background-image: #{base_image}; #{density_image}background-position: #{cell_art.background_x}px #{cell_art.background_y}px; background-size: #{cell_art.sheet_width}px #{cell_art.sheet_height}px;"
   end
 %>
 

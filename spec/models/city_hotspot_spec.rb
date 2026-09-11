@@ -28,6 +28,25 @@ RSpec.describe CityHotspot, type: :model do
       expect(subject).to be_valid
     end
 
+    it "persists a bounded presentation polygon without changing the feature action" do
+      polygon = [[0, 0], [100, 0], [50, 100]]
+      subject.action_params = {"feature" => "arena", "polygon" => polygon}
+      subject.save!
+
+      expect(subject.reload.presentation_polygon).to eq(polygon)
+      expect(subject.navigate_url).to eq("/arena")
+    end
+
+    it "rejects malformed, unbounded, and collapsed presentation polygons" do
+      [nil, "polygon(0 0)", [[0, 0], [100, 0]], [[0, 0], [101, 0], [50, 100]],
+        [[0, 0], ["100", 0], [50, 100]], [[0, 0], [50, 0], [100, 0]],
+        Array.new(33) { [0, 0] }].each do |polygon|
+        subject.action_params = {"feature" => "arena", "polygon" => polygon}
+        expect(subject).not_to be_valid
+        expect(subject.presentation_polygon).to be_nil
+      end
+    end
+
     it "loads the ungated level-zero default from the consolidated schema" do
       hotspot = described_class.new(valid_attributes.except(:required_level))
 

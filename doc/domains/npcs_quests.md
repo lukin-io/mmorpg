@@ -31,8 +31,11 @@ gate, and failure flows for Quests.
 
 NPC combat is implemented through the existing World and Arena pipelines.
 Successful NPC inventory and NV-wallet awards also hand item-found or
-money-found facts to the shell-owned timeline. Quests are `NOT_IMPLEMENTED`;
-observation of a modal shape is not a complete Quest mechanic.
+money-found facts to the shell-owned timeline. General NPC Quests remain
+`NOT_IMPLEMENTED`; Shop owns a bounded Merchant license prerequisite based on
+the official wiki: Market acceptance → paid Shop receipt → Market completion.
+Its garment reward and original dialogue remain incomplete. See
+`doc/features/shop_economy.md` and the September 9 license/selling observation.
 
 Authored wilderness groups accept up to ten members through the shared
 model/config/selector boundary. The seeded paired-rat and captured variable

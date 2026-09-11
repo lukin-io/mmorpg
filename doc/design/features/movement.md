@@ -77,9 +77,14 @@ arrives at the new node or building.
   change.
 
 The visible wilderness is assembled from those same authoritative cells. Each
-`100 x 100` cell renders its coordinate's crop of an allowlisted regional map
-sheet, unless that cell has a validated explicit art override. Moving scrolls
-the assembled cells beneath the fixed player marker; artwork never decides
+`100 x 100` cell renders its validated explicit art or guarded starter PNG;
+unresolved art uses per-cell CSS terrain. Required missing PNGs never load
+the full authoring master, while explicit nonsliced catalogs retain their
+configured sheet crops. Moving scrolls
+the assembled cells beneath the fixed player marker. Optional 200px density
+variants are browser-selected rasters for that same 100px CSS footprint; they
+do not change the accepted direction, deadline or translation distance.
+Artwork never decides
 passability, resources, entrances, NPCs, or other cell content.
 
 ## Persistence Contract
@@ -99,8 +104,11 @@ generation reads only the eight neighboring coordinates, acceptance/completion
 read the exact target, and rendering reads the nearby buffer. The Neverlands
 client retains overlapping cells; fresh movement controls remain server-owned.
 The local implementation supplies entering edge cells and fresh controls when
-its signed prior buffer still matches the character, zone, and content. Changed
-content, an invalid/stale buffer, or reload uses a complete bounded snapshot.
+its signed prior buffer still matches the character, zone, visible dimensions
+and content. Viewport hints select bounded odd cell counts, not reachable
+coordinates; a debounced resize GET may refresh owned offers while preserving
+accepted movement and its deadline. Changed content, resized dimensions, an
+invalid/stale buffer or reload uses a complete bounded snapshot.
 The buffer hint never authorizes movement or decides the current position.
 
 `zone_id` on position/command records is the existing region identity.

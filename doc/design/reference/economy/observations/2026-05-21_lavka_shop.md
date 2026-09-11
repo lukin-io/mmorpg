@@ -22,6 +22,14 @@ already documented below. No item rows loaded in this supplemental state, so it
 adds shell geometry and responsive implementation evidence but does not replace
 the earlier populated catalog observations.
 
+**Sizing correction, September 10:** the
+[fresh Shop layout measurement](2026-09-10_shop_layout_and_entrance_scale.md)
+establishes that 1250 × 600 is the natural illustration size and maximum
+display size, not a fixed displayed scene. The source scales its entrance
+from 625 × 300 to 1250 × 600 using the gameplay frame's height. The July
+paragraph above is retained as historical evidence; its fixed-size
+interpretation is superseded.
+
 The source building illustration and category bitmaps are reference evidence
 only. Local implementation must use project-owned CSS/HTML/text or project
 assets and must not copy source images, identity text, or asset URLs.
@@ -335,6 +343,11 @@ infer the full licensing purchase rule from this capture alone.
   demand signals are not Neverlands-shaped and should remain deleted.
 
 ## Not Captured Yet
+
+These are gaps at the date of this capture. The September 9 observation
+`doc/design/reference/economy/observations/2026-09-09_city_shop_purchase.md`
+now supplies a successful one-item purchase and Inventory handoff, current
+license cards and novice level denial. Other gaps below remain unresolved.
 
 - Successful purchase flow.
 - Failed purchase validation for requirements, money, stock, or carry mass.

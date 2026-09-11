@@ -2,8 +2,8 @@
 
 Contract metadata:
 
-- updated_at: `2026-09-09`
-- why_changed: "Require one consolidated changelog for each repository-changing session, finalized after all applicable verification passes."
+- updated_at: `2026-09-10`
+- why_changed: "Require agent-performed local browser acceptance after automated checks pass for changes affecting browser-visible flows, with explicit scope, evidence, and failure handling."
 
 This file is the repository entry point for engineering work. It tells an agent
 what to read, which rules are mandatory, what to verify, and what to report.
@@ -54,9 +54,8 @@ Fix in-scope `[IMPL]` and `[DOC]` gaps. Never invent a resolution for an
 
 Every implementation, bug fix, behavior change, refactor, migration, or
 executable process-tooling change automatically follows this workflow. No
-special prompt phrase, YAML receipt, or profile declaration is required.
-Every session that changes repository files, including documentation-only
-work, requires one consolidated session changelog under section 8.
+special prompt phrase, YAML receipt, profile declaration, or per-conversation
+changelog is required.
 
 Read-only explanation, review, diagnosis, and planning do not authorize edits.
 
@@ -74,13 +73,12 @@ Read-only explanation, review, diagnosis, and planning do not authorize edits.
    `doc/RUBY_ON_RAILS_GUIDE.md`; correct concrete findings before completion.
 7. **Synchronize documentation** — update each canonical document whose owned
    truth changed. Do not edit unrelated documents merely to create ceremony.
-8. **Verify** — pass the proportional completion command from section 8 and
-   all other applicable checks, including required manual verification.
-9. **Consolidate the session** — finalize the single whole-session changelog
-   after verification passes, then validate the final documentation and diff
-   as described in section 8.
+8. **Verify** — run the proportional completion command from section 8.
+9. **Manual browser acceptance** — after automated checks pass, personally
+   exercise the changed local UI and flow in a real browser as required by
+   [section 8](#manual-browser-acceptance).
 10. **Report** — summarize rationale, behavior/files, documentation, exact check
-    outcomes, and any remaining `[EVIDENCE]` or deferred risk.
+   outcomes, and any remaining `[EVIDENCE]` or deferred risk.
 
 ### Optional planning-first gate
 
@@ -99,7 +97,7 @@ the plan or asking for a second confirmation.
 ## 3. [NORMATIVE] Scope, safety, and repository care
 
 Normal implementation scope may include `app/**`, applicable `config/**`,
-`db/**`, `lib/**`, `spec/**`, relevant design/feature documents, `changelogs/**`, and
+`db/**`, `lib/**`, `spec/**`, relevant design/feature documents, and
 `.env.example`.
 
 Editing `AGENTS.md`, canonical templates, repository-wide documentation
@@ -113,7 +111,9 @@ implication.
 - Resolve exact targets before destructive filesystem or database actions.
 - Do not edit committed migrations unless the user explicitly authorizes a
   pre-release schema-history rewrite.
-- Verification is read-only; never use lint auto-fix as a completion check.
+- Verification commands must not rewrite source files; never use lint auto-fix
+  as a completion check. Browser acceptance may perform bounded, authorized
+  gameplay mutations on local development test data; preserve unrelated data.
 
 ## 4. [NORMATIVE] Implementation approach
 
@@ -289,29 +289,9 @@ they materially improve traceability.
 `NOT_IMPLEMENTED` documents must not invent runtime files, routes, specs, or
 state. Use the lean gap template.
 
-### Mandatory consolidated session changelog
-
-Every session that changes repository files must produce one consolidated
-record in `changelogs/`, using `changelogs/CHANGELOG_TEMPLATE.md`. Cover the
-whole session's authorized changes, evidence and decisions, verification,
-documentation, and remaining gaps; do not limit it to the latest turn, commit,
-or subtask. Read-only explanation, review, diagnosis, and planning require no
-fabricated changelog.
-
-Finalize the record only after all applicable verification passes: focused
-tests, required completion profile, documentation audits, stable-diff review,
-and required manual checks. If a required check fails or remains pending,
-report that fact and keep the work incomplete; never claim a completed session
-or invent a passing result. Later verified work in the same session updates
-the same record rather than creating another note. Preserve historical records
-from other sessions.
-
-After writing or updating the record and any final workflow documentation, run
-`bin/verify docs`, validate their repository links, and run `git diff --check`.
-Writing the changelog alone does not require repeating already passed runtime
-checks; new executable changes or unresolved concerns determine whether those
-checks must run again. The record is human-readable history, not a mutable
-receipt, profile declaration, or state machine used to make verification pass.
+Changelogs/change notes are optional. Create one when the user requests it, a
+release/rollout needs it, or a durable architectural decision is otherwise hard
+to discover. They are not workflow state and do not gate verification.
 
 ### Verification commands
 
@@ -336,15 +316,52 @@ Completion profiles:
   the broader suite.
 
 CI independently runs security, lint, non-system specs, system specs, and
-documentation audits. Verification remains read-only and does not depend on
-changelog state. The required session record follows passed checks and is
-validated as documentation before handoff.
+documentation audits. Local verification never requires editing a receipt or
+changelog into a special state.
 
 The documentation audits intentionally enforce a small set of objective facts:
 resolving canonical links/paths, required ownership/navigation, unresolved
 template placeholders, duplicate handbook ownership, and false
 `NOT_IMPLEMENTED` runtime claims. They do not enforce README prose, a fixed
 document inventory, or universal acceptance matrices.
+
+### Manual browser acceptance
+
+For any change affecting a browser-visible surface or player flow, the agent
+must personally verify the final local implementation through browser tools
+**after the required automated checks pass and before reporting completion**.
+This includes artwork, CSS, Hotwire interactions, and server changes behind a
+UI flow. Earlier exploratory checks are useful but do not replace this final
+acceptance pass. Automated system specs, HTTP requests, DOM inspection, or
+screenshots alone do not establish that the flow works through the UI.
+
+- Use the running local app with the final code/assets and an authorized local
+  session or development test player. Exercise actual links, buttons, forms,
+  tabs, and hotspots involved in the change; do not bypass the UI action with
+  direct requests or database writes and call that manual acceptance.
+- Follow the affected flow from entry through its action, visible result, and
+  return/navigation. For persisted state, revisit or reload to confirm it
+  survives. Include relevant empty/error states and recovery. A Shop flow may
+  require buy → Inventory → find item → equip → confirm on player → unequip →
+  confirm in Inventory; merely opening Shop is insufficient for that scope.
+- Inspect the rendered result as well as behavior: artwork/composition,
+  clipping, labels, feedback, overlays, and reachable controls. For changed
+  layout or controls, apply the relevant viewport, keyboard/pointer, zoom, and
+  hotspot checks from
+  [adaptive UI acceptance](doc/design/areas/game_client_layout.md#adaptive-ui-acceptance).
+  Restore temporary browser settings after checking.
+- If a check fails, fix the issue, rerun the affected automated checks and the
+  required completion profile, then repeat the affected final browser flow on
+  the corrected version. Evidence-only documentation updates afterward require
+  the relevant documentation audit, not another unchanged browser run.
+- Record the actual browser, viewport/input mode, steps, observed results, and
+  remaining gaps in the responsible handbook or task handoff; attach useful
+  screenshots for visual changes without secrets. Distinguish manual evidence
+  from automated tests, CI, and Neverlands observations.
+- If the local app, browser, or required test state is unavailable, report the
+  blocker and unverified flow explicitly; do not mark that UI scope Done.
+  Documentation-only changes and backend work with no browser-visible effect
+  may report manual browser acceptance as not applicable, with a brief reason.
 
 ## 9. [NORMATIVE] Final review and handoff
 
@@ -356,8 +373,8 @@ Before reporting completion:
 - review applicable server authority, SRP/DI/PORO/KISS/service, Hotwire,
   atomicity/retry, query, async/cache, and operational risks;
 - ensure canonical documentation describes verified behavior;
-- ensure the required whole-session changelog is consolidated, current, and
-  validated after all applicable verification passes;
+- confirm final [manual browser acceptance](#manual-browser-acceptance) passed
+  for the changed UI scope, or explicitly report why it is blocked/not applicable;
 - report exact checks and honest pending/pre-existing failures.
 
 Use these headings:

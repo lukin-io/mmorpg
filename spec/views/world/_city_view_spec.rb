@@ -44,18 +44,81 @@ RSpec.describe "world/_city_view.html.erb", type: :view do
     end
   end
 
-  it "renders the project illustration in a native 1250 by 600 pannable city scene" do
+  it "renders the complete Central Square illustration and matching highlight dimensions" do
     render partial: "world/city_view", locals: {
       zone:,
       hotspots: [shop, to_business],
       offers_by_hotspot_id: offers
     }
 
-    expect(rendered).to have_css(".nl-city-viewport[data-controller='nl-city-map']")
-    expect(rendered).to have_css(".nl-city-scene[data-nl-city-map-target='scene']")
-    expect(rendered).to have_css("img.nl-city-scene-image[src*='city']")
-    expect(rendered).to include("--nl-city-image-x: -143px", "--nl-city-image-y: -212px")
-    expect(rendered).to have_css(".nl-city-tooltip[data-nl-city-map-target='tooltip']", visible: :all)
+    expect(rendered).to have_css(".nl-city-viewport[data-controller='nl-scene-size nl-city-map']")
+    expect(rendered).to have_css(".nl-city-scene[data-nl-scene-size-target='canvas']")
+    expect(rendered).to have_css("img.nl-city-scene-image[src='#{view.asset_path('city/central-square.png')}']")
+    scene = Nokogiri::HTML.fragment(rendered).at_css(".nl-city-scene")
+    expect(scene["style"]).to include(
+      "--nl-city-image-url: url(#{view.asset_path('city/central-square.png').to_json})",
+      "--nl-city-image-width: 1250px", "--nl-city-image-height: 600px",
+      "--nl-city-image-x: 0px", "--nl-city-image-y: 0px"
+    )
+    expect(rendered).to have_css(".nl-city-viewport > .nl-city-tooltip[data-nl-city-map-target='tooltip']", visible: :all)
+  end
+
+  {
+    "forpost1" => ["residential-quarter.png", "main", {
+      "clan_hall" => "Clan Hall", "post" => "Post Office", "city_hall" => "City Hall"
+    }],
+    "forpost2" => ["knowledge-quarter.png", "forpost1", {
+      "magic_school" => "Magic School", "library" => "Library",
+      "general_school" => "General School", "military_school" => "Military School"
+    }],
+    "forpost3" => ["business-quarter.png", "main", {
+      "auction" => "Auction", "souvenir_shop" => "Souvenir Shop", "dealer_house" => "Dealer House",
+      "obelisk" => "Obelisk", "temple" => "Temple of Ilana", "bank" => "Bank"
+    }],
+    "forpost4" => ["law-quarter.png", "forpost1", {
+      "law_abode" => "Law Abode", "prison" => "Prison", "gallows" => "Gallows"
+    }]
+  }.each do |node_key, (image_name, destination_key, landmarks)|
+    it "renders #{node_key}'s own illustration, landmark silhouettes and named route" do
+      node = Game::World::CityCatalog.node(node_key)
+      business.update!(metadata: {"city_key" => "forpost", "city_node_key" => node_key,
+        "title" => node.fetch("title"), "city_presentation" => Game::World::CityCatalog.presentation(node_key)})
+      destination_name = Game::World::CityCatalog.node(destination_key).fetch("title")
+      destination = create(:zone, :city, name: "Destination #{node_key}",
+        metadata: {"city_key" => "forpost", "city_node_key" => destination_key, "title" => destination_name})
+      route = create(:city_hotspot, :district, zone: business, destination_zone: destination,
+        key: "go_#{destination_key}", name: destination_name)
+
+      render partial: "world/city_view", locals: {
+        zone: business, hotspots: [route],
+        offers_by_hotspot_id: {route.id => OpenStruct.new(action_key: "return-action-key")}
+      }
+
+      expect(rendered).to have_css("img.nl-city-scene-image[src='#{view.asset_path("city/#{image_name}")}']", count: 1)
+      expect(rendered).to have_css(".nl-city-viewport[data-controller='nl-scene-size nl-city-map']")
+      expect(rendered).not_to have_css(".nl-city-scene--pending, .nl-city-pending-notice")
+      expect(rendered).to have_css("[data-landmark-key]", count: landmarks.length)
+      landmarks.each do |key, name|
+        expect(rendered).to have_css("[data-landmark-key='#{key}'][aria-label='#{name}'][tabindex='0'][style*='--nl-city-hotspot-clip: polygon(']", visible: :all)
+      end
+      expect(rendered).not_to have_css("form [data-landmark-key]")
+      expect(rendered).to have_button(destination_name, count: 1)
+      expect(rendered).to have_css("input[name='action_key'][value='return-action-key']", visible: :all)
+      expect(rendered).to have_css("button[data-hotspot-key='go_#{destination_key}'] img.nl-city-route-marker[alt=''][aria-hidden='true']")
+    end
+  end
+
+  it "does not guess artwork for an older persisted crop without an explicit asset" do
+    zone.update!(metadata: zone.metadata.merge("city_presentation" => {
+      "image_offset" => [-143, -212], "landmarks" => {}
+    }))
+
+    render partial: "world/city_view", locals: {zone:, hotspots: []}
+
+    expect(rendered).to have_css(".nl-city-scene--pending")
+    expect(rendered).to have_content("This quarter is not ready yet.")
+    expect(rendered).not_to have_css(".nl-city-scene-image, .nl-city-landmarks, .nl-city-tooltip")
+    expect(rendered).not_to have_css("[data-controller~='nl-scene-size'], [data-controller~='nl-city-map']")
   end
 
   it "renders pixel building regions, route arrows, and server capability fields" do
@@ -66,10 +129,23 @@ RSpec.describe "world/_city_view.html.erb", type: :view do
     }
 
     expect(rendered).to have_button("Shop")
-    expect(rendered).to have_css(".nl-city-hotspot[data-hotspot-key='shop'][style*='width: 320px']", visible: :all)
+    expect(rendered).to have_css(".nl-city-scene button[data-hotspot-key='shop']")
+    expect(rendered).to have_css(".nl-city-viewport > .nl-city-routes button[data-hotspot-key='go_forpost3']", count: 1)
+    expect(rendered).not_to have_css(".nl-city-scene button[data-hotspot-key='go_forpost3']")
+    expect(rendered).to have_css(".nl-city-hotspot[data-hotspot-key='shop'][style*='--nl-city-hotspot-clip: polygon(']", visible: :all)
     expect(rendered).to have_css(".nl-city-hotspot[data-hotspot-key='go_forpost3']", visible: :all)
-    expect(rendered).to have_css(".nl-city-route-marker[data-direction='southwest']", text: ">")
+    expect(rendered).to have_css("img.nl-city-route-marker[data-direction='southwest'][src='#{view.asset_path('city/route-arrow.png')}'][alt=''][aria-hidden='true'][draggable='false']")
     expect(rendered).to have_css("input[name='action_key'][value='shop-action-key']", visible: :all)
+  end
+
+  it "keeps the generated route decoration on an unavailable region without a submit action" do
+    render partial: "world/city_view", locals: {
+      zone:, hotspots: [to_business], offers_by_hotspot_id: {}
+    }
+
+    expect(rendered).not_to have_button("Business Quarter")
+    expect(rendered).to have_css("[data-hotspot-key='go_forpost3'][role='img'][aria-label='Business Quarter'] img.nl-city-route-marker[alt=''][aria-hidden='true']")
+    expect(rendered).not_to have_css("form")
   end
 
   it "renders presentation-only landmarks as focusable tooltip regions" do
@@ -117,13 +193,15 @@ RSpec.describe "world/_city_view.html.erb", type: :view do
     }
 
     expect(rendered).to have_button("Custom Route")
-    expect(rendered).to have_css("[data-hotspot-key='custom_route'][style*='width: 180px']", visible: :all)
+    expect(rendered).to have_css("[data-hotspot-key='custom_route'][style*='--nl-city-route-width: 180px']", visible: :all)
   end
 
   it "prefers managed zone and hotspot presentation records over catalog fallbacks" do
     zone.update!(
       metadata: zone.metadata.merge(
         "city_presentation" => {
+          "image_asset" => "arena.png",
+          "image_size" => [768, 512],
           "image_offset" => [-10, -20],
           "focus" => [300, 250],
           "landmarks" => {
@@ -140,7 +218,13 @@ RSpec.describe "world/_city_view.html.erb", type: :view do
       offers_by_hotspot_id: offers
     }
 
-    expect(rendered).to include("--nl-city-image-x: -10px", "--nl-city-image-y: -20px")
+    expect(rendered).to have_css("img.nl-city-scene-image[src='#{view.asset_path('arena.png')}']")
+    scene = Nokogiri::HTML.fragment(rendered).at_css(".nl-city-scene")
+    expect(scene["style"]).to include(
+      "--nl-city-image-url: url(#{view.asset_path('arena.png').to_json})",
+      "--nl-city-image-width: 768px", "--nl-city-image-height: 512px",
+      "--nl-city-image-x: -10px", "--nl-city-image-y: -20px"
+    )
     expect(rendered).to have_css("[data-hotspot-key='shop'][style*='width: 210px']", visible: :all)
     expect(rendered).to have_css("[data-landmark-key='managed_landmark'][aria-label='Managed Landmark']", visible: :all)
   end

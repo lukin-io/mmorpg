@@ -22,6 +22,7 @@ class CityHotspot < ApplicationRecord
   }.freeze
 
   belongs_to :zone
+  has_one :shop_account, as: :location, dependent: :restrict_with_exception
   belongs_to :destination_zone, class_name: "Zone", inverse_of: :incoming_city_hotspots, optional: true
 
   validates :key, presence: true, uniqueness: {scope: :zone_id}
@@ -32,6 +33,7 @@ class CityHotspot < ApplicationRecord
     numericality: {only_integer: true, greater_than_or_equal_to: 0}
   validates :required_level, numericality: {only_integer: true, greater_than_or_equal_to: 0}
   validates :z_index, numericality: {only_integer: true}
+  validate :valid_presentation_polygon
 
   scope :for_zone, ->(zone) { where(zone: zone).where(active: true).order(:z_index) }
   scope :active, -> { where(active: true) }
@@ -90,5 +92,19 @@ class CityHotspot < ApplicationRecord
 
   def presentation_direction
     action_params.to_h["direction"].presence
+  end
+
+  def presentation_polygon
+    polygon = action_params.to_h["polygon"]
+    polygon if Game::World::CityCatalog.valid_polygon?(polygon)
+  end
+
+  private
+
+  def valid_presentation_polygon
+    return unless action_params.to_h.key?("polygon")
+    return if presentation_polygon
+
+    errors.add(:action_params, "polygon must contain 3 to 32 percentage points enclosing an area")
   end
 end

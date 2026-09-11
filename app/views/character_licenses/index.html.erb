@@ -1,0 +1,36 @@
+<% content_for :title, "Your licenses - #{@character.name}" %>
+
+<section class="nl-character-page" aria-label="Abilities">
+  <div class="nl-character-page-grid">
+    <aside class="nl-character-page-aside">
+      <%= render "shared/neverlands_character_sheet",
+        character: @character,
+        equipment: @equipment,
+        interactive: false,
+        show_money: true %>
+    </aside>
+
+    <main class="nl-character-page-main">
+      <%= render "shared/neverlands_profile_navigation", character: @character, current_section: :licenses %>
+      <section class="nl-panel nl-allocation-frame" aria-labelledby="character-licenses-heading">
+        <h2 id="character-licenses-heading">Your licenses</h2>
+        <% if @licenses.empty? %>
+          <p class="nl-empty-note">You have no licenses.</p>
+        <% else %>
+          <ul class="nl-profile-license-list">
+            <% @licenses.each do |license| %>
+              <li id="<%= dom_id(license) %>">
+                <strong><%= license.name %></strong>
+                <dl class="nl-profile-license-details">
+                  <div><dt>Type:</dt><dd><%= license.kind.humanize %></dd></div>
+                  <div><dt>Level:</dt><dd><%= license.tier %></dd></div>
+                  <div><dt>Valid until:</dt><dd><time datetime="<%= license.expires_at.iso8601 %>"><%= l(license.expires_at, format: :long) %></time></dd></div>
+                </dl>
+              </li>
+            <% end %>
+          </ul>
+        <% end %>
+      </section>
+    </main>
+  </div>
+</section>

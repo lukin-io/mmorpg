@@ -1,6 +1,13 @@
 # frozen_string_literal: true
 
 module WorldHelper
+  def city_hotspot_polygon_style(polygon)
+    return unless Game::World::CityCatalog.valid_polygon?(polygon)
+
+    points = polygon.map { |x, y| "#{x}% #{y}%" }.join(", ")
+    "--nl-city-hotspot-clip: polygon(#{points});"
+  end
+
   # Format time remaining in human-readable format
   #
   # @param seconds [Integer] seconds remaining

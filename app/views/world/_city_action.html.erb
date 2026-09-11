@@ -1,0 +1,64 @@
+<%
+  offer = offers_by_hotspot_id[hotspot.id]
+  catalog_geometry = Game::World::CityCatalog.hotspot_presentation(node_key, hotspot.key) || {
+    "box" => [25 + ((index % 5) * 205), 500, 180, 80],
+    "direction" => (hotspot.hotspot_type == "district" ? "south" : nil)
+  }
+  geometry = catalog_geometry.merge(
+    "box" => hotspot.presentation_box || catalog_geometry.fetch("box"),
+    "polygon" => hotspot.presentation_polygon || catalog_geometry["polygon"],
+    "direction" => hotspot.presentation_direction || catalog_geometry["direction"]
+  )
+  left, top, width, height = geometry.fetch("box")
+  hotspot_style = "left: #{left}px; top: #{top}px; width: #{width}px; height: #{height}px; --nl-city-hotspot-x: #{left}px; --nl-city-hotspot-y: #{top}px;"
+  hotspot_style += city_hotspot_polygon_style(geometry["polygon"]).to_s
+  if hotspot.hotspot_type == "district"
+    hotspot_style = "--nl-city-route-x: #{left}px; --nl-city-route-y: #{top}px; --nl-city-route-width: #{width}px; --nl-city-route-height: #{height}px;"
+  end
+  hotspot_style = nil unless image_asset
+  blocked_reason = hotspot.interaction_blocked_reason(current_character)
+  tooltip = blocked_reason.present? ? "#{hotspot.name} - #{blocked_reason}" : hotspot.name
+  hotspot_classes = ["nl-city-hotspot", "nl-city-hotspot--#{hotspot.hotspot_type}"]
+  hotspot_classes << "nl-city-hotspot--unavailable" unless offer
+%>
+
+<% if offer %>
+  <%= form_with url: interact_hotspot_world_path,
+                method: :post,
+                class: "city-action-form nl-city-hotspot-form",
+                local: true,
+                data: {turbo: false} do |f| %>
+    <%= f.hidden_field :hotspot_id, value: hotspot.id %>
+    <%= f.hidden_field :action_key, value: offer.action_key %>
+    <button type="submit"
+            class="<%= hotspot_classes.join(' ') %>"
+            style="<%= hotspot_style %>"
+            data-hotspot-key="<%= hotspot.key %>"
+            data-tooltip="<%= tooltip %>"
+            data-action="<%= tooltip_actions %>"
+            aria-label="<%= hotspot.name %>">
+      <% if geometry["direction"] %>
+        <%= image_tag "city/route-arrow.png", class: "nl-city-route-marker", alt: "",
+              width: 64, height: 64, aria: {hidden: true}, draggable: false,
+              data: {direction: geometry["direction"]} %>
+      <% end %>
+      <span class="<%= ['nl-visually-hidden', ('nl-city-route-label' if hotspot.hotspot_type == 'district')].compact.join(' ') if image_asset %>"><%= hotspot.name %></span>
+    </button>
+  <% end %>
+<% else %>
+  <span class="<%= hotspot_classes.join(' ') %>"
+        style="<%= hotspot_style %>"
+        data-hotspot-key="<%= hotspot.key %>"
+        data-tooltip="<%= tooltip %>"
+        data-action="<%= tooltip_actions %>"
+        role="img"
+        aria-label="<%= tooltip %>"
+        tabindex="0">
+    <% if geometry["direction"] %>
+      <%= image_tag "city/route-arrow.png", class: "nl-city-route-marker", alt: "",
+            width: 64, height: 64, aria: {hidden: true}, draggable: false,
+            data: {direction: geometry["direction"]} %>
+    <% end %>
+    <span class="<%= ['nl-visually-hidden', ('nl-city-route-label' if hotspot.hotspot_type == 'district')].compact.join(' ') if image_asset %>"><%= tooltip %></span>
+  </span>
+<% end %>

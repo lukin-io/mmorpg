@@ -1,0 +1,33 @@
+<% qualification = Game::Shop::MerchantQualification.new(character: current_character) %>
+<% if qualification.visible_at?(location) %>
+  <section class="nl-panel" aria-label="Merchant qualification">
+    <h2>Merchant qualification</h2>
+    <% case qualification.status %>
+    <% when "completed" %>
+      <p class="nl-empty-note">Merchant qualification completed. Trading licenses are available in the Shop.</p>
+    <% when "not_started" %>
+      <% if location == :market %>
+        <p class="nl-empty-note">Accept qualification, collect a receipt for 1,000 NV at the Shop, then return here.</p>
+        <%= button_to "Accept Merchant qualification", accept_merchant_qualification_path, class: "lbut" %>
+      <% else %>
+        <p class="nl-empty-note">Accept Merchant qualification at the Market first.</p>
+      <% end %>
+    <% when "accepted" %>
+      <% if location == :shop %>
+        <p class="nl-empty-note">Collect the qualification receipt for 1,000 NV, then return to the Market.</p>
+        <%= button_to "Pay 1,000 NV and collect receipt", pay_merchant_qualification_path, class: "lbut" %>
+      <% else %>
+        <p class="nl-empty-note">Collect the receipt from the Shop for 1,000 NV, then return here.</p>
+      <% end %>
+    <% when "paid" %>
+      <% if location == :market %>
+        <p class="nl-empty-note">Your paid receipt is ready.</p>
+        <%= button_to "Complete Merchant qualification", complete_merchant_qualification_path, class: "lbut" %>
+      <% else %>
+        <p class="nl-empty-note">Receipt received. Return to the Market.</p>
+      <% end %>
+    <% else %>
+      <p class="nl-empty-note">Qualification progress is unavailable.</p>
+    <% end %>
+  </section>
+<% end %>

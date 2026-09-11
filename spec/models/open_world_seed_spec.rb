@@ -319,7 +319,9 @@ RSpec.describe "Open-world seed data", type: :model do
       "title" => "Central Square"
     )
     expect(city.city_presentation).to include(
-      "image_offset" => [-143, -212],
+      "image_asset" => "city/central-square.png",
+      "image_size" => [1250, 600],
+      "image_offset" => [0, 0],
       "focus" => [625, 300]
     )
     expect(MapTileTemplate.exists?(legacy_south_gate_id)).to be false
@@ -424,11 +426,22 @@ RSpec.describe "Open-world seed data", type: :model do
       CityHotspot.active.find_by!(zone: node_zones.fetch("main"), key: "arena").required_level
     ).to eq(0)
     expect(CityHotspot.active.find_by!(zone: node_zones.fetch("main"), key: "shop")).to have_attributes(
-      position_x: 96,
-      position_y: 303,
-      width: 320,
-      height: 182
+      position_x: 98,
+      position_y: 245,
+      width: 314,
+      height: 225,
+      presentation_polygon: Game::World::CityCatalog.hotspot_presentation("main", "shop").fetch("polygon")
     )
+    Game::World::CityCatalog::PRESENTATIONS.each do |node_key, presentation|
+      expect(node_zones.fetch(node_key).reload.city_presentation).to eq(presentation)
+      presentation.fetch("hotspots").each do |key, geometry|
+        expect(CityHotspot.active.find_by!(zone: node_zones.fetch(node_key), key:)).to have_attributes(
+          presentation_box: geometry.fetch("box"),
+          presentation_polygon: geometry["polygon"],
+          presentation_direction: geometry["direction"]
+        )
+      end
+    end
     expect(CityHotspot.active.find_by!(zone: node_zones.fetch("main"), key: "go_forpost3")).to have_attributes(
       presentation_direction: "southwest"
     )

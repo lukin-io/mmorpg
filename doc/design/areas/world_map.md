@@ -96,36 +96,65 @@ The world map screen is a compact game surface:
 - local player list/presence panel;
 - chat frame or chat bar.
 
-The implemented surface uses a `15 x 9` server-rendered buffer clipped to
-whole odd cell counts derived from the available width and the equivalent
-source gameplay-frame height (local header plus main pane), capped at `13 x 7`
-(`1302 × 702` including borders). The source `1150 × 519` frame exposes `11 x 5`
-cells; the local default `1150 × 799` browser gives a `520px` combined frame
-and the same `1102 × 502` map. This leaves at least one off-screen
-cell on every side for the one-cell travel animation and keeps the cursor
-centered even at the logical region boundary; out-of-bounds buffer cells render
-as inert terrain and can never receive an offer. Tablet/mobile clients pan the
-same native cell geometry inside a bounded owner. The starter rectangle uses
-one continuous original `2100 × 1300` landscape sliced into 273 physical
-`100 × 100` PNG cells; a missing slice falls back to the matching master crop.
-Outside it, the default terrain remains the project-owned
-`1000 x 1000` art sheet cropped into `100 x 100` cells. Sparse explicit tile
+The local adaptive surface keeps `100 × 100` cells and fits whole odd visible
+columns and rows to available width and the header-plus-main gameplay height.
+Its server-validated presentation limits are columns `3..39` and rows `3..9`,
+with independent defaults of `3` and `5`. The buffer adds one off-screen cell
+on every edge, up to `41 × 11`. Resizing requests a new bounded snapshot; it
+never changes the authoritative position, reachable destinations or active
+deadline. These limits and overscan are local implementation choices.
+The [September 10 tile inspection](../reference/world/observations/2026-09-10_world_tile_loading_and_city_scale.md)
+shows a 1700px source map with 17 columns and a sampled 119 → 136 rendered-cell
+increase, retaining an old off-screen row. Earlier `11 × 5`/`13 × 7` visible
+measurements remain dated observations, not universal source caps or proof of
+immediate culling. At region edges, out-of-bounds placeholders remain inert;
+small screens preserve centered internal panning without page overflow.
+The starter presentation uses one original 2400 × 1300 assembly split into
+2100 × 1300 main and 300 × 1300 western masters, supplying 273 main plus
+39 western scenery-only `100 × 100` PNG cells; a missing required slice uses per-cell CSS terrain,
+not its authoring master. Outside it, absent or invalid references use CSS
+terrain, while valid explicit nonsliced sheets retain their configured crops. Sparse explicit tile
 records may replace that coordinate's slice through a configured source-backed
-cell-art key; malformed or absent overrides use the coordinate-derived default.
+cell-art key. Within the canonical Forpost starter rectangle, absent or valid
+legacy references use the coordinate-derived starter default; nonblank invalid
+references retain generic terrain recovery. The guard includes the outdoor
+region identity and integer bounds, so another region's equal coordinates do
+not inherit this landscape. Valid independent/edited references are preserved.
+The city rectangle additionally supplies 32 optional 200 × 200px images for
+the same 100 × 100 CSS cells. Browser `image-set` chooses 1× or 2× density;
+missing 2× keeps the mandatory 1× image. These native City detail variants
+improve local raster clarity without changing the map scale, cell count,
+coordinates, tile data or source-backed movement/entrance rules. The full
+landscape is not a 2× master.
 The table of crops is the scrollable map: the renderer translates it beneath a
 fixed player marker instead of moving an independently authoritative browser
 sprite across a free-form canvas.
 
-Neverlands retains overlapping terrain cells when the viewport advances.
-The local walking renderer now follows that approach: a valid same-zone buffer
-can retain 126 cells for an east/west step, 120 for north/south, or 112 for a
-diagonal step, rendering only the respective 9, 15, or 23 entering cells.
-Movement buttons and current-cell state are renewed from server offers.
-A signed buffer token is a rendering hint scoped to the character, zone, and
-authored content, never a movement permission. Changed or deleted content,
-invalid/stale hints, zone changes, and reload recover through a full bounded
-snapshot. These are local delivery safeguards, not claims about Neverlands'
-internal network protocol.
+The user-requested local walking decoration uses eight original directional
+GIFs on 128px canvases, rendered at 64 CSS px inside the existing 100px fixed
+cursor. Cardinals use eight 100ms frames; diagonals use four 140ms frames.
+The May 9 source observation records direction-based sprite selection.
+The idle compass remains unchanged; reduced-motion clients use the matching
+direction's static first-frame PNG.
+This local artwork choice preserves the source's walking-state distinction
+without copying its sprite. The accepted movement vector selects presentation;
+initial click feedback uses the offered direction and reload restores the
+active command's heading. The animation does not choose the destination,
+update coordinates or replace the server travel timer.
+ARTWORK.md owns its exact prompt and frame/size specifications; the World
+handbook owns runtime acceptance.
+
+The sampled Neverlands step retains earlier cell coordinates while adding a
+row. The local walking renderer keeps unchanged overlap inside its current
+bounded window and drops cells outside that window; this local eviction rule
+is not claimed as the source's exact retention policy. For a `W × H` buffer,
+horizontal/vertical/diagonal completion adds `H`, `W`, or `W + H - 1` cells;
+acceptance adds no terrain. Movement buttons and current-cell state are renewed
+from server offers. A signed buffer token is a rendering hint scoped to the
+character, zone, visible dimensions and authored content, never movement
+permission. Changed/deleted content, invalid/stale hints, resize, zone changes
+and reload recover through a full bounded snapshot. No source network cache
+policy or spatial-tree implementation is inferred from its rendered grid.
 
 It should feel like a utilitarian MMORPG client, not a large marketing page.
 
@@ -218,8 +247,10 @@ The public atlas's local mapping `source = atlas + [922,954]` is corroborated
 by both gates, the village and pond. Its bounded survey contains 312 cells at
 source `x=991..1014,y=994..1006`. Only 273 fit the current local zone:
 source `x=994..1014,y=994..1006` → local `x=0..20,y=2..14`. Source columns
-`991..993` translate to local `-3..-1`; preserve them as evidence without
-clamping, wraparound or invented zone crossings.
+`991..993` translate to local `-3..-1`; the original artwork may illustrate
+those 39 outside-zone buffer slots, but gameplay does not import them or permit
+walking there. There is no clamping, wraparound, new region or invented crossing.
+The art catalog's 312-image coverage is distinct from the 273-cell gameplay data.
 
 The imported subset has 118 explicitly atlas-active and 155 inactive cells.
 `config/gameplay/starter_world_cells.yml` preserves source coordinates,
@@ -363,14 +394,16 @@ The implementation and complete authoring examples live in
 4. Reference only that key plus a zero-based sheet column/row from a sparse
    `MapTileTemplate` record.
 5. Author the bounded starter cells explicitly; unmaterialized cells outside
-   that area continue to use the deterministic coordinate-derived region slice.
+   that area use per-cell CSS terrain unless a valid explicit art reference exists.
 
 A dedicated special-cell file is a `1 x 1` catalog entry. A regional mosaic is
 one larger sheet whose physical dimensions match its configured columns and
 rows multiplied by 100px. Database records never store filesystem paths or
 URLs, and renaming a catalog key requires a persisted-reference update.
 The server catalog may declare a safe physical-slice directory and painted
-landmarks; it retains the master as fallback. `doc/ARTWORK.md` owns the
+landmarks; a required missing slice returns no art instead of its master.
+The renderer recovers through per-cell CSS, while valid explicit nonsliced
+catalog entries retain their configured crops. `doc/ARTWORK.md` owns the
 project's reusable illustration style and prompt workflow.
 
 Artwork does not imply passability, an entrance, an NPC, or a local action.

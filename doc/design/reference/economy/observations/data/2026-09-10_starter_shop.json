@@ -1,0 +1,1589 @@
+{
+  "doc_type": "neverlands-observation-data",
+  "domain": "economy",
+  "captured_at": "2026-09-10",
+  "source_type": "authenticated-live",
+  "evidence_status": "current for the selected displayed rows; economic mutations not exercised",
+  "source": {
+    "place": "Форпост",
+    "building": "Лавка",
+    "browser": "Google Chrome",
+    "capture_surface": "native accessibility item rows",
+    "session": "Existing authenticated session reused",
+    "login_performed": false,
+    "purchase_performed": false,
+    "sale_performed": false
+  },
+  "filters": {
+    "min_level": 0,
+    "max_level": 33,
+    "min_price_nv": 0,
+    "max_price_nv": 1000000
+  },
+  "selection": "Five selected goods from each of fifteen equipment categories; all four displayed duel permits; the only Other row; no rows in Relics or Runes. Knives preserve the three previously authored goods plus Assassin Dagger and Butcher Cleaver. Jewelry uses the first four rows plus Subtlety Ring. Other equipment categories use the first five displayed rows.",
+  "normalization": "English names and stable snake_case keys are local wording. source_name, source_heading, source_properties, and source_requirements retain the captured Russian display text. Parsed values below do not define an unobserved restock or expiry rule.",
+  "notes": [
+    "Displayed current stock is a dated shared Shop snapshot, not a fixed balance, replenishment rule, or instruction to overwrite traded local stock.",
+    "Other / Wood Chips has a 5.00 NV buy headline but a 1 NV property price. Both are preserved separately; their difference is unresolved.",
+    "Other / Wood Chips displayed expiry 15.09.2026 12:12, then 15.09.2026 12:18 when the source server clock read 10.09.2026 12:18:14. The visible catalog expiry moves with page time and is five days ahead. Purchase/use expiry activation, source timezone, and a replenishment rule were not exercised.",
+    "Subtlety Ring now displays durability 20/20. Earlier local template durability 30 must not override this fresh source row; existing owned item snapshots are a separate local persistence concern.",
+    "All six live Trading I-III and Doctor I-III license cards were rechecked on September 10. Five tiers per license kind were not observed. Doctor I stock changed from the September 9 snapshot of 11 to 10; stock is mutable.",
+    "No Neverlands artwork, account details, action keys, player balances, private messages, cookies, or credentials are included.",
+    "The user explicitly excluded Wood Chips from the requested starter Shop data as quest waste. Its captured row remains evidence only; local assortment contains 79 ordinary goods plus six licenses."
+  ],
+  "categories": [
+    {
+      "key": "knives",
+      "source_name": "Ножи",
+      "source_category_id": 4,
+      "visible_rows": 28,
+      "selected_count": 5,
+      "items": [
+        {
+          "key": "penknife",
+          "name": "Penknife",
+          "source_name": "Перочинный Нож",
+          "category": "knives",
+          "source_heading": "Перочинный Нож  (количество: 196 / 500) Цена : 7.00 NV",
+          "source_properties": "Цена:  7 NV  Удар:  1-2  Долговечность:  10/10  Пробой брони: + 1%",
+          "source_requirements": "Масса:  5  Уровень:  1  Очки действия:  40",
+          "displayed_buy_price_nv": "7.00",
+          "displayed_property_price_nv": "7",
+          "displayed_stock": {
+            "current": 196,
+            "max": 500
+          },
+          "displayed_out_of_stock": false
+        },
+        {
+          "key": "assassin_dagger",
+          "name": "Assassin Dagger",
+          "source_name": "Кинжал Убийцы",
+          "category": "knives",
+          "source_heading": "Кинжал Убийцы  (количество: 495 / 500) Цена : 19.00 NV",
+          "source_properties": "Цена:  19 NV  Удар:  3-5  Долговечность:  20/20  Уловка: + 5  Точность: + 5  Пробой брони: + 3%  Удача: + 1",
+          "source_requirements": "Масса:  6  Уровень:  3  Удача:  7  Ловкость:  10  Очки действия:  41  Владение ножами:  10",
+          "displayed_buy_price_nv": "19.00",
+          "displayed_property_price_nv": "19",
+          "displayed_stock": {
+            "current": 495,
+            "max": 500
+          },
+          "displayed_out_of_stock": false
+        },
+        {
+          "key": "butcher_cleaver",
+          "name": "Butcher Cleaver",
+          "source_name": "Мясницкий Тесак",
+          "category": "knives",
+          "source_heading": "Мясницкий Тесак  (количество: 490 / 500) Цена : 20.00 NV",
+          "source_properties": "Цена:  20 NV  Удар:  3-5  Долговечность:  20/20  Сокрушение: + 10  Пробой брони: + 4%  Сила: + 1",
+          "source_requirements": "Масса:  6  Уровень:  3  Удача:  9  Очки действия:  51  Владение ножами:  10",
+          "displayed_buy_price_nv": "20.00",
+          "displayed_property_price_nv": "20",
+          "displayed_stock": {
+            "current": 490,
+            "max": 500
+          },
+          "displayed_out_of_stock": false
+        },
+        {
+          "key": "hunter_knife",
+          "name": "Hunter Knife",
+          "source_name": "Нож Охотника",
+          "category": "knives",
+          "source_heading": "Нож Охотника  (количество: 445 / 500) Цена : 19.00 NV",
+          "source_properties": "Цена:  19 NV  Удар:  4-6  Долговечность:  20/20  Уловка: + 10  Пробой брони: + 5%  Ловкость: + 1  Владение ножами: + 5",
+          "source_requirements": "Масса:  6  Уровень:  3  Ловкость:  16  Очки действия:  26  Владение ножами:  10  Владение двумя руками:  10",
+          "displayed_buy_price_nv": "19.00",
+          "displayed_property_price_nv": "19",
+          "displayed_stock": {
+            "current": 445,
+            "max": 500
+          },
+          "displayed_out_of_stock": false
+        },
+        {
+          "key": "mage_dagger",
+          "name": "Mage Dagger",
+          "source_name": "Кинжал Мага",
+          "category": "knives",
+          "source_heading": "Кинжал Мага  (количество: 411 / 500) Цена : 75.00 NV",
+          "source_properties": "Цена:  75 NV  Удар:  4-9  Долговечность:  50/50  Сокрушение: + 25  Стойкость: + 5  Пробой брони: + 10%  HP: + 15  Мана: + 15  Удача: + 2",
+          "source_requirements": "Масса:  5  Уровень:  5  Удача:  5  Знания:  15  Очки действия:  55  Владение ножами:  10",
+          "displayed_buy_price_nv": "75.00",
+          "displayed_property_price_nv": "75",
+          "displayed_stock": {
+            "current": 411,
+            "max": 500
+          },
+          "displayed_out_of_stock": false
+        }
+      ]
+    },
+    {
+      "key": "swords",
+      "source_name": "Мечи",
+      "source_category_id": 1,
+      "visible_rows": 26,
+      "selected_count": 5,
+      "items": [
+        {
+          "key": "action_blade",
+          "name": "Action Blade",
+          "source_name": "Клинок Действия",
+          "category": "swords",
+          "source_heading": "Клинок Действия  (количество: 339 / 500) Цена : 14.00 NV",
+          "source_properties": "Цена:  14 NV  Удар:  2-5  Долговечность:  15/15  Точность: + 5  Пробой брони: + 6%",
+          "source_requirements": "Масса:  4  Уровень:  2  Сила:  5  Удача:  6  Ловкость:  8  Очки действия:  53  Владение мечами:  4",
+          "displayed_buy_price_nv": "14.00",
+          "displayed_property_price_nv": "14",
+          "displayed_stock": {
+            "current": 339,
+            "max": 500
+          },
+          "displayed_out_of_stock": false
+        },
+        {
+          "key": "sensation_sword",
+          "name": "Sensation Sword",
+          "source_name": "Меч Ощущений",
+          "category": "swords",
+          "source_heading": "Меч Ощущений  (количество: 322 / 500) Цена : 14.00 NV",
+          "source_properties": "Цена:  14 NV  Удар:  2-5  Долговечность:  15/15  Стойкость: + 5  Пробой брони: + 5%",
+          "source_requirements": "Масса:  5  Уровень:  2  Сила:  5  Здоровье:  8  Очки действия:  68  Владение мечами:  4",
+          "displayed_buy_price_nv": "14.00",
+          "displayed_property_price_nv": "14",
+          "displayed_stock": {
+            "current": 322,
+            "max": 500
+          },
+          "displayed_out_of_stock": false
+        },
+        {
+          "key": "double_blade",
+          "name": "Double Blade",
+          "source_name": "Двойной Клинок",
+          "category": "swords",
+          "source_heading": "Двойной Клинок  (количество: 433 / 500) Цена : 60.00 NV",
+          "source_properties": "Двуручное оружие  Цена:  60 NV  Удар:  10-18  Долговечность:  25/25  Сокрушение: + 15  Стойкость: + 5  Пробой брони: + 15%  Сила: + 1",
+          "source_requirements": "Масса:  9  Уровень:  4  Сила:  6  Удача:  8  Здоровье:  6  Очки действия:  58  Владение мечами:  10  Владение двуручным оружием:  10",
+          "displayed_buy_price_nv": "60.00",
+          "displayed_property_price_nv": "60",
+          "displayed_stock": {
+            "current": 433,
+            "max": 500
+          },
+          "displayed_out_of_stock": false
+        },
+        {
+          "key": "curved_blade",
+          "name": "Curved Blade",
+          "source_name": "Искривлённый Клинок",
+          "category": "swords",
+          "source_heading": "Искривлённый Клинок  (количество: 474 / 500) Цена : 60.00 NV",
+          "source_properties": "Цена:  60 NV  Удар:  4-7  Долговечность:  20/20  Стойкость: + 15  Точность: + 5  Пробой брони: + 7%",
+          "source_requirements": "Масса:  7  Уровень:  4  Сила:  7  Здоровье:  10  Очки действия:  72  Владение мечами:  10",
+          "displayed_buy_price_nv": "60.00",
+          "displayed_property_price_nv": "60",
+          "displayed_stock": {
+            "current": 474,
+            "max": 500
+          },
+          "displayed_out_of_stock": false
+        },
+        {
+          "key": "smile_sword",
+          "name": "Smile Sword",
+          "source_name": "Меч Улыбки",
+          "category": "swords",
+          "source_heading": "Меч Улыбки  (количество: 246 / 500) Цена : 60.00 NV",
+          "source_properties": "Цена:  60 NV  Удар:  6-12  Долговечность:  20/20  Уловка: + 10  Точность: + 10  Пробой брони: + 8%",
+          "source_requirements": "Масса:  6  Уровень:  4  Сила:  6  Удача:  9  Ловкость:  11  Очки действия:  55  Владение мечами:  10",
+          "displayed_buy_price_nv": "60.00",
+          "displayed_property_price_nv": "60",
+          "displayed_stock": {
+            "current": 246,
+            "max": 500
+          },
+          "displayed_out_of_stock": false
+        }
+      ]
+    },
+    {
+      "key": "axes",
+      "source_name": "Топоры",
+      "source_category_id": 2,
+      "visible_rows": 28,
+      "selected_count": 5,
+      "items": [
+        {
+          "key": "woodcutter_axe",
+          "name": "Woodcutter Axe",
+          "source_name": "Колун Дровосека",
+          "category": "axes",
+          "source_heading": "Колун Дровосека  (количество: 493 / 500) Цена : 17.00 NV",
+          "source_properties": "Цена:  17 NV  Удар:  3-6  Долговечность:  15/15  Сокрушение: + 4  Пробой брони: + 6%",
+          "source_requirements": "Масса:  7  Уровень:  2  Сила:  6  Удача:  8  Ловкость:  7  Очки действия:  56  Владение топорами:  5",
+          "displayed_buy_price_nv": "17.00",
+          "displayed_property_price_nv": "17",
+          "displayed_stock": {
+            "current": 493,
+            "max": 500
+          },
+          "displayed_out_of_stock": false
+        },
+        {
+          "key": "search_axe",
+          "name": "Search Axe",
+          "source_name": "Секира Поиска",
+          "category": "axes",
+          "source_heading": "Секира Поиска  (количество: 471 / 500) Цена : 15.00 NV",
+          "source_properties": "Цена:  15 NV  Удар:  2-6  Долговечность:  15/15  Сокрушение: + 5  Пробой брони: + 4%",
+          "source_requirements": "Масса:  6  Уровень:  2  Сила:  5  Удача:  8  Здоровье:  6  Очки действия:  56  Владение топорами:  5",
+          "displayed_buy_price_nv": "15.00",
+          "displayed_property_price_nv": "15",
+          "displayed_stock": {
+            "current": 471,
+            "max": 500
+          },
+          "displayed_out_of_stock": false
+        },
+        {
+          "key": "cleaving_axe",
+          "name": "Cleaving Axe",
+          "source_name": "Разрубающий Топор",
+          "category": "axes",
+          "source_heading": "Разрубающий Топор  (количество: 489 / 500) Цена : 65.00 NV",
+          "source_properties": "Двуручное оружие  Цена:  65 NV  Удар:  12-19  Долговечность:  30/30  Сокрушение: + 25  Стойкость: + 10  Уловка:  -5  Пробой брони: + 16%",
+          "source_requirements": "Масса:  10  Уровень:  4  Сила:  13  Удача:  9  Очки действия:  62  Владение топорами:  16  Владение двуручным оружием:  16",
+          "displayed_buy_price_nv": "65.00",
+          "displayed_property_price_nv": "65",
+          "displayed_stock": {
+            "current": 489,
+            "max": 500
+          },
+          "displayed_out_of_stock": false
+        },
+        {
+          "key": "prosperity_axe",
+          "name": "Prosperity Axe",
+          "source_name": "Топор Благоденствия",
+          "category": "axes",
+          "source_heading": "Топор Благоденствия  (количество: 442 / 500) Цена : 65.00 NV",
+          "source_properties": "Цена:  65 NV  Удар:  7-12  Долговечность:  30/30  Сокрушение: + 15  Стойкость: + 5  Пробой брони: + 12%",
+          "source_requirements": "Масса:  9  Уровень:  4  Сила:  8  Удача:  12  Ловкость:  10  Очки действия:  60  Владение топорами:  15",
+          "displayed_buy_price_nv": "65.00",
+          "displayed_property_price_nv": "65",
+          "displayed_stock": {
+            "current": 442,
+            "max": 500
+          },
+          "displayed_out_of_stock": false
+        },
+        {
+          "key": "distortion_axe",
+          "name": "Distortion Axe",
+          "source_name": "Топор Искажения",
+          "category": "axes",
+          "source_heading": "Топор Искажения  (количество: 320 / 500) Цена : 65.00 NV",
+          "source_properties": "Цена:  65 NV  Удар:  9-11  Долговечность:  25/25  Сокрушение: + 10  Стойкость: + 10  Пробой брони: + 8%",
+          "source_requirements": "Масса:  9  Уровень:  4  Сила:  5  Удача:  12  Здоровье:  6  Очки действия:  60  Владение топорами:  16",
+          "displayed_buy_price_nv": "65.00",
+          "displayed_property_price_nv": "65",
+          "displayed_stock": {
+            "current": 320,
+            "max": 500
+          },
+          "displayed_out_of_stock": false
+        }
+      ]
+    },
+    {
+      "key": "blunt",
+      "source_name": "Дробящие",
+      "source_category_id": 3,
+      "visible_rows": 25,
+      "selected_count": 5,
+      "items": [
+        {
+          "key": "townsman_club",
+          "name": "Townsman Club",
+          "source_name": "Дубинка Горожанина",
+          "category": "blunt",
+          "source_heading": "Дубинка Горожанина  (количество: 471 / 500) Цена : 13.00 NV",
+          "source_properties": "Цена:  13 NV  Удар:  2-3  Долговечность:  15/15  Стойкость: + 7  Пробой брони: + 2%",
+          "source_requirements": "Масса:  6  Уровень:  2  Сила:  8  Здоровье:  8  Очки действия:  67  Владение дробящим оружием:  4",
+          "displayed_buy_price_nv": "13.00",
+          "displayed_property_price_nv": "13",
+          "displayed_stock": {
+            "current": 471,
+            "max": 500
+          },
+          "displayed_out_of_stock": false
+        },
+        {
+          "key": "apprentice_hammer",
+          "name": "Apprentice Hammer",
+          "source_name": "Молоток Подмастерья",
+          "category": "blunt",
+          "source_heading": "Молоток Подмастерья  (количество: 492 / 500) Цена : 58.00 NV",
+          "source_properties": "Двуручное оружие  Цена:  58 NV  Удар:  8-19  Долговечность:  20/20  Сокрушение: + 10  Стойкость: + 30  Уловка:  -10  Пробой брони: + 8%",
+          "source_requirements": "Масса:  9  Уровень:  4  Сила:  10  Удача:  8  Очки действия:  60  Владение дробящим оружием:  16  Владение двуручным оружием:  16",
+          "displayed_buy_price_nv": "58.00",
+          "displayed_property_price_nv": "58",
+          "displayed_stock": {
+            "current": 492,
+            "max": 500
+          },
+          "displayed_out_of_stock": false
+        },
+        {
+          "key": "steel_club",
+          "name": "Steel Club",
+          "source_name": "Стальная Дубина",
+          "category": "blunt",
+          "source_heading": "Стальная Дубина  (количество: 498 / 500) Цена : 58.00 NV",
+          "source_properties": "Цена:  58 NV  Удар:  5-9  Долговечность:  25/25  Сокрушение: + 5  Стойкость: + 5  Пробой брони: + 6%",
+          "source_requirements": "Масса:  10  Уровень:  4  Сила:  10  Здоровье:  10  Очки действия:  69  Владение дробящим оружием:  8",
+          "displayed_buy_price_nv": "58.00",
+          "displayed_property_price_nv": "58",
+          "displayed_stock": {
+            "current": 498,
+            "max": 500
+          },
+          "displayed_out_of_stock": false
+        },
+        {
+          "key": "steppe_sword",
+          "name": "Steppe Sword",
+          "source_name": "Степной Меч",
+          "category": "blunt",
+          "source_heading": "Степной Меч  (количество: 48 / 500) Цена : 40.00 NV",
+          "source_properties": "Цена:  40 NV  Удар:  6-8  Долговечность:  15/15  Стойкость: + 5  Пробой брони: + 6%  Сила: + 1",
+          "source_requirements": "Масса:  7  Уровень:  4  Сила:  8  Здоровье:  8  Очки действия:  69  Владение дробящим оружием:  8",
+          "displayed_buy_price_nv": "40.00",
+          "displayed_property_price_nv": "40",
+          "displayed_stock": {
+            "current": 48,
+            "max": 500
+          },
+          "displayed_out_of_stock": false
+        },
+        {
+          "key": "war_pick",
+          "name": "War Pick",
+          "source_name": "Клевец",
+          "category": "blunt",
+          "source_heading": "Клевец  (количество: 485 / 500) Цена : 85.00 NV",
+          "source_properties": "Цена:  85 NV  Удар:  6-8  Долговечность:  25/25  Стойкость: + 25  Пробой брони: + 12%  HP: + 15  Сила: + 1",
+          "source_requirements": "Масса:  9  Уровень:  5  Сила:  10  Здоровье:  12  Очки действия:  80  Владение дробящим оружием:  20",
+          "displayed_buy_price_nv": "85.00",
+          "displayed_property_price_nv": "85",
+          "displayed_stock": {
+            "current": 485,
+            "max": 500
+          },
+          "displayed_out_of_stock": false
+        }
+      ]
+    },
+    {
+      "key": "polearms",
+      "source_name": "Алебарды и копья",
+      "source_category_id": 6,
+      "visible_rows": 15,
+      "selected_count": 5,
+      "items": [
+        {
+          "key": "primitive_spear",
+          "name": "Primitive Spear",
+          "source_name": "Примитивное Копьё",
+          "category": "polearms",
+          "source_heading": "Примитивное Копьё  (количество: 365 / 500) Цена : 15.00 NV",
+          "source_properties": "Цена:  15 NV  Удар:  1-7  Долговечность:  15/15  Уловка: + 5  Пробой брони: + 10%  Владение алебардами и копьями: + 5",
+          "source_requirements": "Масса:  5  Уровень:  2  Ловкость:  5  Очки действия:  45  Владение алебардами и копьями:  5",
+          "displayed_buy_price_nv": "15.00",
+          "displayed_property_price_nv": "15",
+          "displayed_stock": {
+            "current": 365,
+            "max": 500
+          },
+          "displayed_out_of_stock": false
+        },
+        {
+          "key": "parrying_spear",
+          "name": "Parrying Spear",
+          "source_name": "Копьё Парирования",
+          "category": "polearms",
+          "source_heading": "Копьё Парирования  (количество: 496 / 500) Цена : 60.00 NV",
+          "source_properties": "Двуручное оружие  Цена:  60 NV  Удар:  4-17  Долговечность:  27/27  Сокрушение: + 15  Стойкость: + 5  Пробой брони: + 18%  Сила: + 1  Владение алебардами и копьями: + 10",
+          "source_requirements": "Масса:  12  Уровень:  4  Сила:  8  Ловкость:  6  Очки действия:  52  Владение алебардами и копьями:  17  Владение двумя руками:  17",
+          "displayed_buy_price_nv": "60.00",
+          "displayed_property_price_nv": "60",
+          "displayed_stock": {
+            "current": 496,
+            "max": 500
+          },
+          "displayed_out_of_stock": false
+        },
+        {
+          "key": "pilum",
+          "name": "Pilum",
+          "source_name": "Пилум",
+          "category": "polearms",
+          "source_heading": "Пилум  (количество: 347 / 500) Цена : 60.00 NV",
+          "source_properties": "Цена:  60 NV  Удар:  3-13  Долговечность:  20/20  Стойкость: + 5  Уловка: + 15  Пробой брони: + 12%  Владение алебардами и копьями: + 5",
+          "source_requirements": "Масса:  8  Уровень:  4  Сила:  5  Ловкость:  9  Очки действия:  47  Владение алебардами и копьями:  10",
+          "displayed_buy_price_nv": "60.00",
+          "displayed_property_price_nv": "60",
+          "displayed_stock": {
+            "current": 347,
+            "max": 500
+          },
+          "displayed_out_of_stock": false
+        },
+        {
+          "key": "adventurer_spear",
+          "name": "Adventurer Spear",
+          "source_name": "Копьё Авантюриста",
+          "category": "polearms",
+          "source_heading": "Копьё Авантюриста  (количество: 491 / 500) Цена : 90.00 NV",
+          "source_properties": "Цена:  90 NV  Удар:  5-13  Долговечность:  25/25  Стойкость: + 10  Уловка: + 15  Пробой брони: + 11%  Сила:  -1  Ловкость: + 2",
+          "source_requirements": "Масса:  16  Уровень:  5  Сила:  10  Ловкость:  10  Здоровье:  8  Очки действия:  47  Владение алебардами и копьями:  20",
+          "displayed_buy_price_nv": "90.00",
+          "displayed_property_price_nv": "90",
+          "displayed_stock": {
+            "current": 491,
+            "max": 500
+          },
+          "displayed_out_of_stock": false
+        },
+        {
+          "key": "trident",
+          "name": "Trident",
+          "source_name": "Трезубец",
+          "category": "polearms",
+          "source_heading": "Трезубец  (количество: 0 / 500) Цена : 90.00 NV   Нет в наличии",
+          "source_properties": "Двуручное оружие  Цена:  90 NV  Удар:  5-20  Долговечность:  25/25  Сокрушение: + 20  Стойкость: + 5  Пробой брони: + 21%  Сила: + 2  Удача: + 1  Ловкость:  -1",
+          "source_requirements": "Масса:  20  Уровень:  5  Сила:  12  Ловкость:  10  Очки действия:  55  Владение алебардами и копьями:  9  Владение двуручным оружием:  9",
+          "displayed_buy_price_nv": "90.00",
+          "displayed_property_price_nv": "90",
+          "displayed_stock": {
+            "current": 0,
+            "max": 500
+          },
+          "displayed_out_of_stock": true
+        }
+      ]
+    },
+    {
+      "key": "staves",
+      "source_name": "Посохи",
+      "source_category_id": 7,
+      "visible_rows": 20,
+      "selected_count": 5,
+      "items": [
+        {
+          "key": "small_earthly_blessings_staff",
+          "name": "Small Earthly Blessings Staff",
+          "source_name": "Малый Жезл Земных Благ",
+          "category": "staves",
+          "source_heading": "Малый Жезл Земных Благ  (количество: 494 / 500) Цена : 165.00 NV",
+          "source_properties": "Цена:  165 NV  Удар:  8-14  Долговечность:  30/30  Сокрушение: + 15  Точность: + 15  Пробой брони: + 15%  Мана: + 25  Удача: + 2  Ловкость: + 1",
+          "source_requirements": "Масса:  12  Уровень:  6  Удача:  9  Ловкость:  8  Знания:  15  Очки действия:  63  Владение посохами:  20",
+          "displayed_buy_price_nv": "165.00",
+          "displayed_property_price_nv": "165",
+          "displayed_stock": {
+            "current": 494,
+            "max": 500
+          },
+          "displayed_out_of_stock": false
+        },
+        {
+          "key": "small_crescent_staff",
+          "name": "Small Crescent Staff",
+          "source_name": "Малый Жезл Полумесяца",
+          "category": "staves",
+          "source_heading": "Малый Жезл Полумесяца  (количество: 452 / 500) Цена : 150.00 NV",
+          "source_properties": "Цена:  150 NV  Удар:  6-11  Долговечность:  30/30  Уловка: + 15  Точность: + 10  Пробой брони: + 14%  Мана: + 30  Ловкость: + 1  Знания: + 2",
+          "source_requirements": "Масса:  11  Уровень:  6  Удача:  6  Ловкость:  10  Знания:  15  Очки действия:  63  Владение посохами:  20",
+          "displayed_buy_price_nv": "150.00",
+          "displayed_property_price_nv": "150",
+          "displayed_stock": {
+            "current": 452,
+            "max": 500
+          },
+          "displayed_out_of_stock": false
+        },
+        {
+          "key": "small_aspiration_staff",
+          "name": "Small Aspiration Staff",
+          "source_name": "Малый Жезл Стремлений",
+          "category": "staves",
+          "source_heading": "Малый Жезл Стремлений  (количество: 492 / 500) Цена : 150.00 NV",
+          "source_properties": "Цена:  150 NV  Удар:  6-13  Долговечность:  30/30  Стойкость: + 15  Точность: + 10  Пробой брони: + 17%  Мана: + 40  Удача: + 1  Ловкость:  -1  Знания: + 2",
+          "source_requirements": "Масса:  13  Уровень:  6  Удача:  10  Ловкость:  7  Знания:  15  Очки действия:  63  Владение посохами:  20",
+          "displayed_buy_price_nv": "150.00",
+          "displayed_property_price_nv": "150",
+          "displayed_stock": {
+            "current": 492,
+            "max": 500
+          },
+          "displayed_out_of_stock": false
+        },
+        {
+          "key": "small_power_staff",
+          "name": "Small Power Staff",
+          "source_name": "Малый Силовой Жезл",
+          "category": "staves",
+          "source_heading": "Малый Силовой Жезл  (количество: 499 / 500) Цена : 160.00 NV",
+          "source_properties": "Цена:  160 NV  Удар:  7-12  Долговечность:  30/30  Сокрушение: + 15  Стойкость: + 15  Пробой брони: + 16%  Мана: + 40  Сила: + 2",
+          "source_requirements": "Масса:  12  Уровень:  6  Удача:  7  Ловкость:  9  Знания:  15  Очки действия:  63  Владение посохами:  20",
+          "displayed_buy_price_nv": "160.00",
+          "displayed_property_price_nv": "160",
+          "displayed_stock": {
+            "current": 499,
+            "max": 500
+          },
+          "displayed_out_of_stock": false
+        },
+        {
+          "key": "earthly_blessings_staff",
+          "name": "Earthly Blessings Staff",
+          "source_name": "Жезл Земных Благ",
+          "category": "staves",
+          "source_heading": "Жезл Земных Благ  (количество: 488 / 500) Цена : 290.00 NV",
+          "source_properties": "Цена:  290 NV  Удар:  14-21  Долговечность:  60/60  Сокрушение: + 25  Точность: + 20  Пробой брони: + 21%  Мана: + 40  Удача: + 3  Ловкость: + 2",
+          "source_requirements": "Масса:  13  Уровень:  8  Удача:  14  Ловкость:  11  Знания:  16  Очки действия:  67  Владение посохами:  40",
+          "displayed_buy_price_nv": "290.00",
+          "displayed_property_price_nv": "290",
+          "displayed_stock": {
+            "current": 488,
+            "max": 500
+          },
+          "displayed_out_of_stock": false
+        }
+      ]
+    },
+    {
+      "key": "shields",
+      "source_name": "Щиты",
+      "source_category_id": 20,
+      "visible_rows": 18,
+      "selected_count": 5,
+      "items": [
+        {
+          "key": "advantage_shield",
+          "name": "Advantage Shield",
+          "source_name": "Щит Преимущества",
+          "category": "shields",
+          "source_heading": "Щит Преимущества  (количество: 373 / 500) Цена : 33.00 NV",
+          "source_properties": "Блокировка 1-ой точки  Цена:  33 NV  Удар:  1-2  Долговечность:  25/25  Точность: + 5  Класс брони: + 4",
+          "source_requirements": "Масса:  6  Уровень:  3  Сила:  9  Здоровье:  9  Очки действия:  40",
+          "displayed_buy_price_nv": "33.00",
+          "displayed_property_price_nv": "33",
+          "displayed_stock": {
+            "current": 373,
+            "max": 500
+          },
+          "displayed_out_of_stock": false
+        },
+        {
+          "key": "stubborn_shield",
+          "name": "Stubborn Shield",
+          "source_name": "Щит Упрямца",
+          "category": "shields",
+          "source_heading": "Щит Упрямца  (количество: 0 / 500) Цена : 30.00 NV   Нет в наличии",
+          "source_properties": "Блокировка 1-ой точки  Цена:  30 NV  Долговечность:  30/30  Стойкость: + 10  Класс брони: + 6",
+          "source_requirements": "Масса:  9  Уровень:  3  Сила:  10  Здоровье:  9  Очки действия:  40",
+          "displayed_buy_price_nv": "30.00",
+          "displayed_property_price_nv": "30",
+          "displayed_stock": {
+            "current": 0,
+            "max": 500
+          },
+          "displayed_out_of_stock": true
+        },
+        {
+          "key": "grim_shield",
+          "name": "Grim Shield",
+          "source_name": "Мрачный Щит",
+          "category": "shields",
+          "source_heading": "Мрачный Щит  (количество: 355 / 500) Цена : 80.00 NV",
+          "source_properties": "Блокировка 1-ой точки  Цена:  80 NV  Долговечность:  50/50  Стойкость: + 10  Точность: + 10  Класс брони: + 10  Сила: + 1",
+          "source_requirements": "Масса:  10  Уровень:  5  Сила:  10  Здоровье:  12  Очки действия:  40",
+          "displayed_buy_price_nv": "80.00",
+          "displayed_property_price_nv": "80",
+          "displayed_stock": {
+            "current": 355,
+            "max": 500
+          },
+          "displayed_out_of_stock": false
+        },
+        {
+          "key": "dew_shield",
+          "name": "Dew Shield",
+          "source_name": "Щит Росы",
+          "category": "shields",
+          "source_heading": "Щит Росы  (количество: 223 / 500) Цена : 80.00 NV",
+          "source_properties": "Блокировка 2-х точек  Цена:  80 NV  Долговечность:  60/60  Стойкость: + 20  Класс брони: + 12  HP: + 10",
+          "source_requirements": "Масса:  12  Уровень:  5  Сила:  10  Здоровье:  15  Очки действия:  70",
+          "displayed_buy_price_nv": "80.00",
+          "displayed_property_price_nv": "80",
+          "displayed_stock": {
+            "current": 223,
+            "max": 500
+          },
+          "displayed_out_of_stock": false
+        },
+        {
+          "key": "possibility_shield",
+          "name": "Possibility Shield",
+          "source_name": "Щит Возможностей",
+          "category": "shields",
+          "source_heading": "Щит Возможностей  (количество: 382 / 500) Цена : 130.00 NV",
+          "source_properties": "Блокировка 2-х точек  Цена:  130 NV  Долговечность:  60/60  Стойкость: + 20  Точность: + 20  Класс брони: + 12  HP: + 30  Сила: + 2",
+          "source_requirements": "Масса:  15  Уровень:  7  Сила:  18  Здоровье:  15  Очки действия:  70",
+          "displayed_buy_price_nv": "130.00",
+          "displayed_property_price_nv": "130",
+          "displayed_stock": {
+            "current": 382,
+            "max": 500
+          },
+          "displayed_out_of_stock": false
+        }
+      ]
+    },
+    {
+      "key": "armor",
+      "source_name": "Доспехи",
+      "source_category_id": 19,
+      "visible_rows": 82,
+      "selected_count": 5,
+      "items": [
+        {
+          "key": "caution_armor",
+          "name": "Caution Armor",
+          "source_name": "Доспех Осторожности",
+          "category": "armor",
+          "source_heading": "Доспех Осторожности  (количество: 14 / 500) Цена : 20.00 NV",
+          "source_properties": "Цена:  20 NV  Долговечность:  10/10  Стойкость: + 10  Класс брони: + 6",
+          "source_requirements": "Масса:  9  Уровень:  2  Сила:  8  Здоровье:  8",
+          "displayed_buy_price_nv": "20.00",
+          "displayed_property_price_nv": "20",
+          "displayed_stock": {
+            "current": 14,
+            "max": 500
+          },
+          "displayed_out_of_stock": false
+        },
+        {
+          "key": "assassin_suit",
+          "name": "Assassin Suit",
+          "source_name": "Костюм Убийцы",
+          "category": "armor",
+          "source_heading": "Костюм Убийцы  (количество: 101 / 500) Цена : 20.00 NV",
+          "source_properties": "Цена:  20 NV  Долговечность:  10/10  Уловка: + 10  Класс брони: + 1",
+          "source_requirements": "Масса:  1  Уровень:  2  Ловкость:  12  Здоровье:  5",
+          "displayed_buy_price_nv": "20.00",
+          "displayed_property_price_nv": "20",
+          "displayed_stock": {
+            "current": 101,
+            "max": 500
+          },
+          "displayed_out_of_stock": false
+        },
+        {
+          "key": "salvation_jacket",
+          "name": "Salvation Jacket",
+          "source_name": "Куртка Спасения",
+          "category": "armor",
+          "source_heading": "Куртка Спасения  (количество: 162 / 500) Цена : 20.00 NV",
+          "source_properties": "Цена:  20 NV  Долговечность:  10/10  Сокрушение: + 10  Класс брони: + 3",
+          "source_requirements": "Масса:  8  Уровень:  2  Удача:  12  Здоровье:  5",
+          "displayed_buy_price_nv": "20.00",
+          "displayed_property_price_nv": "20",
+          "displayed_stock": {
+            "current": 162,
+            "max": 500
+          },
+          "displayed_out_of_stock": false
+        },
+        {
+          "key": "life_shirt",
+          "name": "Life Shirt",
+          "source_name": "Рубашка Жизни",
+          "category": "armor",
+          "source_heading": "Рубашка Жизни  (количество: 0 / 500) Цена : 10.00 NV   Нет в наличии",
+          "source_properties": "Цена:  10 NV  Долговечность:  20/20  HP: + 10",
+          "source_requirements": "Масса:  1  Уровень:  2",
+          "displayed_buy_price_nv": "10.00",
+          "displayed_property_price_nv": "10",
+          "displayed_stock": {
+            "current": 0,
+            "max": 500
+          },
+          "displayed_out_of_stock": true
+        },
+        {
+          "key": "knowledge_shirt",
+          "name": "Knowledge Shirt",
+          "source_name": "Рубашка Знаний",
+          "category": "armor",
+          "source_heading": "Рубашка Знаний  (количество: 70 / 500) Цена : 10.00 NV",
+          "source_properties": "Цена:  10 NV  Долговечность:  20/20  Знания: + 1",
+          "source_requirements": "Масса:  1  Уровень:  2",
+          "displayed_buy_price_nv": "10.00",
+          "displayed_property_price_nv": "10",
+          "displayed_stock": {
+            "current": 70,
+            "max": 500
+          },
+          "displayed_out_of_stock": false
+        }
+      ]
+    },
+    {
+      "key": "helmets",
+      "source_name": "Шлемы",
+      "source_category_id": 23,
+      "visible_rows": 43,
+      "selected_count": 5,
+      "items": [
+        {
+          "key": "leather_cap",
+          "name": "Leather Cap",
+          "source_name": "Кожаная шапка",
+          "category": "helmets",
+          "source_heading": "Кожаная шапка  (количество: 11 / 500) Цена : 20.00 NV",
+          "source_properties": "Цена:  20 NV  Долговечность:  10/10  Уловка: + 5  Класс брони: + 2  HP: + 5",
+          "source_requirements": "Масса:  2  Уровень:  2  Ловкость:  5",
+          "displayed_buy_price_nv": "20.00",
+          "displayed_property_price_nv": "20",
+          "displayed_stock": {
+            "current": 11,
+            "max": 500
+          },
+          "displayed_out_of_stock": false
+        },
+        {
+          "key": "earflap_hat",
+          "name": "Earflap Hat",
+          "source_name": "Шапка-ушанка",
+          "category": "helmets",
+          "source_heading": "Шапка-ушанка  (количество: 0 / 500) Цена : 20.00 NV   Нет в наличии",
+          "source_properties": "Цена:  20 NV  Долговечность:  10/10  Класс брони: + 1  HP: + 15",
+          "source_requirements": "Масса:  2  Уровень:  2",
+          "displayed_buy_price_nv": "20.00",
+          "displayed_property_price_nv": "20",
+          "displayed_stock": {
+            "current": 0,
+            "max": 500
+          },
+          "displayed_out_of_stock": true
+        },
+        {
+          "key": "hunter_helmet",
+          "name": "Hunter Helmet",
+          "source_name": "Шлем Охотника",
+          "category": "helmets",
+          "source_heading": "Шлем Охотника  (количество: 0 / 500) Цена : 20.00 NV   Нет в наличии",
+          "source_properties": "Цена:  20 NV  Долговечность:  20/20  Класс брони: + 2  Удача: + 1",
+          "source_requirements": "Масса:  2  Уровень:  2  Удача:  5",
+          "displayed_buy_price_nv": "20.00",
+          "displayed_property_price_nv": "20",
+          "displayed_stock": {
+            "current": 0,
+            "max": 500
+          },
+          "displayed_out_of_stock": true
+        },
+        {
+          "key": "bandit_helmet",
+          "name": "Bandit Helmet",
+          "source_name": "Шлем Разбойника",
+          "category": "helmets",
+          "source_heading": "Шлем Разбойника  (количество: 3 / 500) Цена : 20.00 NV",
+          "source_properties": "Цена:  20 NV  Долговечность:  10/10  Стойкость: + 5  Класс брони: + 5  HP: + 10",
+          "source_requirements": "Масса:  2  Уровень:  2  Сила:  4  Здоровье:  6",
+          "displayed_buy_price_nv": "20.00",
+          "displayed_property_price_nv": "20",
+          "displayed_stock": {
+            "current": 3,
+            "max": 500
+          },
+          "displayed_out_of_stock": false
+        },
+        {
+          "key": "spellcaster_cap",
+          "name": "Spellcaster Cap",
+          "source_name": "Колпак Заклинателя",
+          "category": "helmets",
+          "source_heading": "Колпак Заклинателя  (количество: 446 / 500) Цена : 40.00 NV",
+          "source_properties": "Цена:  40 NV  Долговечность:  15/15  Класс брони: + 1  HP: + 15  Мана: + 20  Быстрое восстановление маны: + 5",
+          "source_requirements": "Масса:  2  Уровень:  3  Знания:  10",
+          "displayed_buy_price_nv": "40.00",
+          "displayed_property_price_nv": "40",
+          "displayed_stock": {
+            "current": 446,
+            "max": 500
+          },
+          "displayed_out_of_stock": false
+        }
+      ]
+    },
+    {
+      "key": "boots",
+      "source_name": "Сапоги",
+      "source_category_id": 21,
+      "visible_rows": 48,
+      "selected_count": 5,
+      "items": [
+        {
+          "key": "peasant_boots",
+          "name": "Peasant Boots",
+          "source_name": "Крестьянские Сапоги",
+          "category": "boots",
+          "source_heading": "Крестьянские Сапоги  (количество: 170 / 500) Цена : 15.00 NV",
+          "source_properties": "Цена:  15 NV  Долговечность:  10/10  Класс брони: + 2  HP: + 5",
+          "source_requirements": "Масса:  3  Уровень:  1  Здоровье:  5",
+          "displayed_buy_price_nv": "15.00",
+          "displayed_property_price_nv": "15",
+          "displayed_stock": {
+            "current": 170,
+            "max": 500
+          },
+          "displayed_out_of_stock": false
+        },
+        {
+          "key": "military_boots",
+          "name": "Military Boots",
+          "source_name": "Военные Ботинки",
+          "category": "boots",
+          "source_heading": "Военные Ботинки  (количество: 480 / 500) Цена : 30.00 NV",
+          "source_properties": "Цена:  30 NV  Долговечность:  20/20  Стойкость: + 5  Класс брони: + 5  HP: + 10  Сила: + 1",
+          "source_requirements": "Масса:  5  Уровень:  3  Сила:  8  Здоровье:  8",
+          "displayed_buy_price_nv": "30.00",
+          "displayed_property_price_nv": "30",
+          "displayed_stock": {
+            "current": 480,
+            "max": 500
+          },
+          "displayed_out_of_stock": false
+        },
+        {
+          "key": "hunter_boots",
+          "name": "Hunter Boots",
+          "source_name": "Охотничьи Сапоги",
+          "category": "boots",
+          "source_heading": "Охотничьи Сапоги  (количество: 35 / 500) Цена : 30.00 NV",
+          "source_properties": "Цена:  30 NV  Долговечность:  10/10  Сокрушение: + 5  Класс брони: + 3  Удача: + 1",
+          "source_requirements": "Масса:  3  Уровень:  3  Удача:  7  Здоровье:  7",
+          "displayed_buy_price_nv": "30.00",
+          "displayed_property_price_nv": "30",
+          "displayed_stock": {
+            "current": 35,
+            "max": 500
+          },
+          "displayed_out_of_stock": false
+        },
+        {
+          "key": "petty_thief_sandals",
+          "name": "Petty Thief Sandals",
+          "source_name": "Сандалии Воришки",
+          "category": "boots",
+          "source_heading": "Сандалии Воришки  (количество: 0 / 500) Цена : 30.00 NV   Нет в наличии",
+          "source_properties": "Цена:  30 NV  Долговечность:  10/10  Уловка: + 5  Класс брони: + 1  Ловкость: + 1",
+          "source_requirements": "Масса:  2  Уровень:  3  Ловкость:  7  Здоровье:  7",
+          "displayed_buy_price_nv": "30.00",
+          "displayed_property_price_nv": "30",
+          "displayed_stock": {
+            "current": 0,
+            "max": 500
+          },
+          "displayed_out_of_stock": true
+        },
+        {
+          "key": "mage_apprentice_shoes",
+          "name": "Mage Apprentice Shoes",
+          "source_name": "Туфли Ученика Мага",
+          "category": "boots",
+          "source_heading": "Туфли Ученика Мага  (количество: 0 / 500) Цена : 35.00 NV   Нет в наличии",
+          "source_properties": "Цена:  35 NV  Долговечность:  25/25  HP: + 5  Мана: + 10  Сила:  -2  Знания: + 1  Владение посохами: + 5  Магия огня: + 3  Магия воды: + 3  Магия воздуха: + 3  Магия земли: + 3  Сопротивление магии огня: + 4  Сопротивление магии воды: + 4  Сопротивление магии воздуха: + 4  Сопротивление магии земли: + 4",
+          "source_requirements": "Масса:  3  Уровень:  3  Знания:  12",
+          "displayed_buy_price_nv": "35.00",
+          "displayed_property_price_nv": "35",
+          "displayed_stock": {
+            "current": 0,
+            "max": 500
+          },
+          "displayed_out_of_stock": true
+        }
+      ]
+    },
+    {
+      "key": "pants",
+      "source_name": "Штаны",
+      "source_category_id": 17,
+      "visible_rows": 26,
+      "selected_count": 5,
+      "items": [
+        {
+          "key": "worn_pants",
+          "name": "Worn Pants",
+          "source_name": "Ветхие Штаны",
+          "category": "pants",
+          "source_heading": "Ветхие Штаны  (количество: 0 / 500) Цена : 20.00 NV   Нет в наличии",
+          "source_properties": "Цена:  20 NV  Долговечность:  5/5  Стойкость: + 10  Класс брони: + 2  HP: + 10",
+          "source_requirements": "Масса:  4  Уровень:  2",
+          "displayed_buy_price_nv": "20.00",
+          "displayed_property_price_nv": "20",
+          "displayed_stock": {
+            "current": 0,
+            "max": 500
+          },
+          "displayed_out_of_stock": true
+        },
+        {
+          "key": "peasant_trousers",
+          "name": "Peasant Trousers",
+          "source_name": "Крестьянские Порты",
+          "category": "pants",
+          "source_heading": "Крестьянские Порты  (количество: 0 / 500) Цена : 80.00 NV   Нет в наличии",
+          "source_properties": "Цена:  80 NV  Долговечность:  40/40  Точность: + 15  Класс брони: + 5  HP: + 15  Удача: + 1",
+          "source_requirements": "Масса:  8  Уровень:  5  Удача:  19  Здоровье:  10",
+          "displayed_buy_price_nv": "80.00",
+          "displayed_property_price_nv": "80",
+          "displayed_stock": {
+            "current": 0,
+            "max": 500
+          },
+          "displayed_out_of_stock": true
+        },
+        {
+          "key": "hunter_trousers",
+          "name": "Hunter Trousers",
+          "source_name": "Охотничьи Брюки",
+          "category": "pants",
+          "source_heading": "Охотничьи Брюки  (количество: 0 / 500) Цена : 80.00 NV   Нет в наличии",
+          "source_properties": "Цена:  80 NV  Долговечность:  40/40  Уловка: + 15  Класс брони: + 5  HP: + 15  Ловкость: + 1",
+          "source_requirements": "Масса:  8  Уровень:  5  Ловкость:  19  Здоровье:  10",
+          "displayed_buy_price_nv": "80.00",
+          "displayed_property_price_nv": "80",
+          "displayed_stock": {
+            "current": 0,
+            "max": 500
+          },
+          "displayed_out_of_stock": true
+        },
+        {
+          "key": "recruit_chainmail_pants",
+          "name": "Recruit Chainmail Pants",
+          "source_name": "Кольчужные Штаны Новобранца",
+          "category": "pants",
+          "source_heading": "Кольчужные Штаны Новобранца  (количество: 0 / 500) Цена : 140.00 NV   Нет в наличии",
+          "source_properties": "Цена:  140 NV  Долговечность:  60/60  Стойкость: + 15  Точность: + 15  Класс брони: + 12  HP: + 25  Сила: + 2",
+          "source_requirements": "Масса:  11  Уровень:  7  Сила:  18  Здоровье:  15",
+          "displayed_buy_price_nv": "140.00",
+          "displayed_property_price_nv": "140",
+          "displayed_stock": {
+            "current": 0,
+            "max": 500
+          },
+          "displayed_out_of_stock": true
+        },
+        {
+          "key": "leather_breeches",
+          "name": "Leather Breeches",
+          "source_name": "Кожаные Бриджи",
+          "category": "pants",
+          "source_heading": "Кожаные Бриджи  (количество: 0 / 500) Цена : 180.00 NV   Нет в наличии",
+          "source_properties": "Цена:  180 NV  Долговечность:  60/60  Уловка: + 35  Точность: + 15  Класс брони: + 10  HP: + 20  Ловкость: + 3",
+          "source_requirements": "Масса:  12  Уровень:  8  Ловкость:  27  Здоровье:  16",
+          "displayed_buy_price_nv": "180.00",
+          "displayed_property_price_nv": "180",
+          "displayed_stock": {
+            "current": 0,
+            "max": 500
+          },
+          "displayed_out_of_stock": true
+        }
+      ]
+    },
+    {
+      "key": "belts",
+      "source_name": "Пояса",
+      "source_category_id": 26,
+      "visible_rows": 47,
+      "selected_count": 5,
+      "items": [
+        {
+          "key": "advantage_belt",
+          "name": "Advantage Belt",
+          "source_name": "Пояс Преимущества",
+          "category": "belts",
+          "source_heading": "Пояс Преимущества  (количество: 0 / 500) Цена : 25.00 NV   Нет в наличии",
+          "source_properties": "Цена:  25 NV  Долговечность:  20/20  Карманов:  1  Уловка: + 10  Класс брони: + 1  Ловкость: + 1",
+          "source_requirements": "Масса:  4  Уровень:  3  Ловкость:  8  Здоровье:  7",
+          "displayed_buy_price_nv": "25.00",
+          "displayed_property_price_nv": "25",
+          "displayed_stock": {
+            "current": 0,
+            "max": 500
+          },
+          "displayed_out_of_stock": true
+        },
+        {
+          "key": "thick_leather_belt",
+          "name": "Thick Leather Belt",
+          "source_name": "Толстый Кожаный Пояс",
+          "category": "belts",
+          "source_heading": "Толстый Кожаный Пояс  (количество: 0 / 500) Цена : 25.00 NV   Нет в наличии",
+          "source_properties": "Цена:  25 NV  Долговечность:  20/20  Карманов:  1  Стойкость: + 10  Класс брони: + 3  Сила: + 1",
+          "source_requirements": "Масса:  5  Уровень:  3  Сила:  10  Здоровье:  8",
+          "displayed_buy_price_nv": "25.00",
+          "displayed_property_price_nv": "25",
+          "displayed_stock": {
+            "current": 0,
+            "max": 500
+          },
+          "displayed_out_of_stock": true
+        },
+        {
+          "key": "thin_leather_belt",
+          "name": "Thin Leather Belt",
+          "source_name": "Тонкий Кожаный Пояс",
+          "category": "belts",
+          "source_heading": "Тонкий Кожаный Пояс  (количество: 0 / 500) Цена : 25.00 NV   Нет в наличии",
+          "source_properties": "Цена:  25 NV  Долговечность:  20/20  Карманов:  1  Сокрушение: + 10  Класс брони: + 2  Сила: + 1",
+          "source_requirements": "Масса:  4  Уровень:  3  Удача:  8  Здоровье:  7",
+          "displayed_buy_price_nv": "25.00",
+          "displayed_property_price_nv": "25",
+          "displayed_stock": {
+            "current": 0,
+            "max": 500
+          },
+          "displayed_out_of_stock": true
+        },
+        {
+          "key": "diamond_sash",
+          "name": "Diamond Sash",
+          "source_name": "Алмазный Кушак",
+          "category": "belts",
+          "source_heading": "Алмазный Кушак  (количество: 86 / 500) Цена : 100.00 NV",
+          "source_properties": "Цена:  100 NV  Долговечность:  30/30  Карманов:  2  Точность: + 20  Класс брони: + 3  Мана: + 20  Удача: + 1  Ловкость: + 1  Владение ножами: + 5  Владение посохами: + 5  Сопротивление магии воздуха: + 7",
+          "source_requirements": "Масса:  4  Уровень:  5  Знания:  8  Здоровье:  6",
+          "displayed_buy_price_nv": "100.00",
+          "displayed_property_price_nv": "100",
+          "displayed_stock": {
+            "current": 86,
+            "max": 500
+          },
+          "displayed_out_of_stock": false
+        },
+        {
+          "key": "emerald_sash",
+          "name": "Emerald Sash",
+          "source_name": "Изумрудный Кушак",
+          "category": "belts",
+          "source_heading": "Изумрудный Кушак  (количество: 195 / 500) Цена : 100.00 NV",
+          "source_properties": "Цена:  100 NV  Долговечность:  30/30  Карманов:  2  Стойкость: + 20  Класс брони: + 2  HP: + 40  Мана: + 20  Знания: + 1  Владение ножами: + 5  Владение посохами: + 5  Сопротивление магии земли: + 7",
+          "source_requirements": "Масса:  4  Уровень:  5  Знания:  8  Здоровье:  7",
+          "displayed_buy_price_nv": "100.00",
+          "displayed_property_price_nv": "100",
+          "displayed_stock": {
+            "current": 195,
+            "max": 500
+          },
+          "displayed_out_of_stock": false
+        }
+      ]
+    },
+    {
+      "key": "gloves",
+      "source_name": "Перчатки",
+      "source_category_id": 24,
+      "visible_rows": 47,
+      "selected_count": 5,
+      "items": [
+        {
+          "key": "dexterity_gloves",
+          "name": "Dexterity Gloves",
+          "source_name": "Перчатки Ловкости",
+          "category": "gloves",
+          "source_heading": "Перчатки Ловкости  (количество: 0 / 500) Цена : 18.00 NV   Нет в наличии",
+          "source_properties": "Цена:  18 NV  Долговечность:  10/10  Ловкость: + 1",
+          "source_requirements": "Масса:  2  Уровень:  2  Ловкость:  5",
+          "displayed_buy_price_nv": "18.00",
+          "displayed_property_price_nv": "18",
+          "displayed_stock": {
+            "current": 0,
+            "max": 500
+          },
+          "displayed_out_of_stock": true
+        },
+        {
+          "key": "strength_gloves",
+          "name": "Strength Gloves",
+          "source_name": "Перчатки Силы",
+          "category": "gloves",
+          "source_heading": "Перчатки Силы  (количество: 0 / 500) Цена : 18.00 NV   Нет в наличии",
+          "source_properties": "Цена:  18 NV  Долговечность:  10/10  Сила: + 1",
+          "source_requirements": "Масса:  2  Уровень:  2  Сила:  5",
+          "displayed_buy_price_nv": "18.00",
+          "displayed_property_price_nv": "18",
+          "displayed_stock": {
+            "current": 0,
+            "max": 500
+          },
+          "displayed_out_of_stock": true
+        },
+        {
+          "key": "luck_gloves",
+          "name": "Luck Gloves",
+          "source_name": "Перчатки Удачи",
+          "category": "gloves",
+          "source_heading": "Перчатки Удачи  (количество: 0 / 500) Цена : 18.00 NV   Нет в наличии",
+          "source_properties": "Цена:  18 NV  Долговечность:  10/10  Удача: + 1",
+          "source_requirements": "Масса:  2  Уровень:  2  Удача:  5",
+          "displayed_buy_price_nv": "18.00",
+          "displayed_property_price_nv": "18",
+          "displayed_stock": {
+            "current": 0,
+            "max": 500
+          },
+          "displayed_out_of_stock": true
+        },
+        {
+          "key": "spellcaster_gloves",
+          "name": "Spellcaster Gloves",
+          "source_name": "Перчатки Заклинателя",
+          "category": "gloves",
+          "source_heading": "Перчатки Заклинателя  (количество: 0 / 500) Цена : 40.00 NV   Нет в наличии",
+          "source_properties": "Цена:  40 NV  Долговечность:  10/10  Мана: + 10  Знания: + 1",
+          "source_requirements": "Масса:  4  Уровень:  3  Знания:  10",
+          "displayed_buy_price_nv": "40.00",
+          "displayed_property_price_nv": "40",
+          "displayed_stock": {
+            "current": 0,
+            "max": 500
+          },
+          "displayed_out_of_stock": true
+        },
+        {
+          "key": "quick_strike_gloves",
+          "name": "Quick Strike Gloves",
+          "source_name": "Перчатки Быстрого Удара",
+          "category": "gloves",
+          "source_heading": "Перчатки Быстрого Удара  (количество: 0 / 500) Цена : 50.00 NV   Нет в наличии",
+          "source_properties": "Цена:  50 NV  Долговечность:  20/20  Сокрушение: + 5  Класс брони: + 1  Удача: + 1  Владение топорами: + 5  Владение двуручным оружием: + 5",
+          "source_requirements": "Масса:  4  Уровень:  4  Удача:  12",
+          "displayed_buy_price_nv": "50.00",
+          "displayed_property_price_nv": "50",
+          "displayed_stock": {
+            "current": 0,
+            "max": 500
+          },
+          "displayed_out_of_stock": true
+        }
+      ]
+    },
+    {
+      "key": "bracers",
+      "source_name": "Наручи",
+      "source_category_id": 80,
+      "visible_rows": 42,
+      "selected_count": 5,
+      "items": [
+        {
+          "key": "leather_bracers",
+          "name": "Leather Bracers",
+          "source_name": "Кожаные Наручи",
+          "category": "bracers",
+          "source_heading": "Кожаные Наручи  (количество: 0 / 500) Цена : 10.00 NV   Нет в наличии",
+          "source_properties": "Цена:  10 NV  Долговечность:  10/10  Класс брони: + 1  HP: + 10",
+          "source_requirements": "Масса:  3  Уровень:  1  Здоровье:  5",
+          "displayed_buy_price_nv": "10.00",
+          "displayed_property_price_nv": "10",
+          "displayed_stock": {
+            "current": 0,
+            "max": 500
+          },
+          "displayed_out_of_stock": true
+        },
+        {
+          "key": "congealed_blood_bracers",
+          "name": "Congealed Blood Bracers",
+          "source_name": "Наручи Застывшей Крови",
+          "category": "bracers",
+          "source_heading": "Наручи Застывшей Крови  (количество: 0 / 500) Цена : 25.00 NV   Нет в наличии",
+          "source_properties": "Цена:  25 NV  Долговечность:  20/20  Сокрушение: + 5  Точность: + 5  Класс брони: + 2  Удача: + 1  Владение двуручным оружием: + 5",
+          "source_requirements": "Масса:  4  Уровень:  3  Удача:  10",
+          "displayed_buy_price_nv": "25.00",
+          "displayed_property_price_nv": "25",
+          "displayed_stock": {
+            "current": 0,
+            "max": 500
+          },
+          "displayed_out_of_stock": true
+        },
+        {
+          "key": "development_bracers",
+          "name": "Development Bracers",
+          "source_name": "Наручи Развития",
+          "category": "bracers",
+          "source_heading": "Наручи Развития  (количество: 0 / 500) Цена : 25.00 NV   Нет в наличии",
+          "source_properties": "Цена:  25 NV  Долговечность:  20/20  Уловка: + 5  Точность: + 5  Класс брони: + 1  Ловкость: + 1  Владение ножами: + 5",
+          "source_requirements": "Масса:  5  Уровень:  3  Ловкость:  10",
+          "displayed_buy_price_nv": "25.00",
+          "displayed_property_price_nv": "25",
+          "displayed_stock": {
+            "current": 0,
+            "max": 500
+          },
+          "displayed_out_of_stock": true
+        },
+        {
+          "key": "stability_bracers",
+          "name": "Stability Bracers",
+          "source_name": "Наручи Стабильности",
+          "category": "bracers",
+          "source_heading": "Наручи Стабильности  (количество: 272 / 500) Цена : 25.00 NV",
+          "source_properties": "Цена:  25 NV  Долговечность:  20/20  Стойкость: + 5  Точность: + 5  Класс брони: + 3  HP: + 10  Владение дробящим оружием: + 5",
+          "source_requirements": "Масса:  5  Уровень:  3  Сила:  6  Здоровье:  7",
+          "displayed_buy_price_nv": "25.00",
+          "displayed_property_price_nv": "25",
+          "displayed_stock": {
+            "current": 272,
+            "max": 500
+          },
+          "displayed_out_of_stock": false
+        },
+        {
+          "key": "truth_bracers",
+          "name": "Truth Bracers",
+          "source_name": "Наручи Правды",
+          "category": "bracers",
+          "source_heading": "Наручи Правды  (количество: 165 / 500) Цена : 45.00 NV",
+          "source_properties": "Цена:  45 NV  Долговечность:  30/30  Точность: + 5  Класс брони: + 1  Мана: + 10  Знания: + 1",
+          "source_requirements": "Масса:  6  Уровень:  4  Знания:  10",
+          "displayed_buy_price_nv": "45.00",
+          "displayed_property_price_nv": "45",
+          "displayed_stock": {
+            "current": 165,
+            "max": 500
+          },
+          "displayed_out_of_stock": false
+        }
+      ]
+    },
+    {
+      "key": "jewelry",
+      "source_name": "Ювелирные украшения",
+      "source_category_id": 22,
+      "visible_rows": 121,
+      "selected_count": 5,
+      "items": [
+        {
+          "key": "salvation_pendant",
+          "name": "Salvation Pendant",
+          "source_name": "Кулон Спасения",
+          "category": "jewelry",
+          "source_heading": "Кулон Спасения  (количество: 0 / 500) Цена : 6.00 NV   Нет в наличии",
+          "source_properties": "Цена:  6 NV  Долговечность:  10/10  HP: + 10",
+          "source_requirements": "Масса:  2  Уровень:  2  Здоровье:  5",
+          "displayed_buy_price_nv": "6.00",
+          "displayed_property_price_nv": "6",
+          "displayed_stock": {
+            "current": 0,
+            "max": 500
+          },
+          "displayed_out_of_stock": true
+        },
+        {
+          "key": "small_life_ring",
+          "name": "Small Life Ring",
+          "source_name": "Малое Кольцо Жизни",
+          "category": "jewelry",
+          "source_heading": "Малое Кольцо Жизни  (количество: 0 / 500) Цена : 6.00 NV   Нет в наличии",
+          "source_properties": "Цена:  6 NV  Долговечность:  10/10  HP: + 10",
+          "source_requirements": "Масса:  1  Уровень:  2",
+          "displayed_buy_price_nv": "6.00",
+          "displayed_property_price_nv": "6",
+          "displayed_stock": {
+            "current": 0,
+            "max": 500
+          },
+          "displayed_out_of_stock": true
+        },
+        {
+          "key": "small_protection_ring",
+          "name": "Small Protection Ring",
+          "source_name": "Малое Кольцо Защиты",
+          "category": "jewelry",
+          "source_heading": "Малое Кольцо Защиты  (количество: 0 / 500) Цена : 15.00 NV   Нет в наличии",
+          "source_properties": "Цена:  15 NV  Долговечность:  15/15  Класс брони: + 5",
+          "source_requirements": "Масса:  2  Уровень:  2  Здоровье:  7",
+          "displayed_buy_price_nv": "15.00",
+          "displayed_property_price_nv": "15",
+          "displayed_stock": {
+            "current": 0,
+            "max": 500
+          },
+          "displayed_out_of_stock": true
+        },
+        {
+          "key": "small_knowledge_ring",
+          "name": "Small Knowledge Ring",
+          "source_name": "Малое Кольцо Знаний",
+          "category": "jewelry",
+          "source_heading": "Малое Кольцо Знаний  (количество: 0 / 500) Цена : 6.00 NV   Нет в наличии",
+          "source_properties": "Цена:  6 NV  Долговечность:  10/10  Знания: + 1",
+          "source_requirements": "Масса:  1  Уровень:  2",
+          "displayed_buy_price_nv": "6.00",
+          "displayed_property_price_nv": "6",
+          "displayed_stock": {
+            "current": 0,
+            "max": 500
+          },
+          "displayed_out_of_stock": true
+        },
+        {
+          "key": "subtlety_ring",
+          "name": "Subtlety Ring",
+          "source_name": "Кольцо Тонкости",
+          "category": "jewelry",
+          "source_heading": "Кольцо Тонкости  (количество: 486 / 500) Цена : 10.00 NV",
+          "source_properties": "Цена:  10 NV  Долговечность:  20/20  Сокрушение:  -5  Уловка: + 5  Точность: + 5",
+          "source_requirements": "Масса:  1  Уровень:  3  Ловкость:  9",
+          "displayed_buy_price_nv": "10.00",
+          "displayed_property_price_nv": "10",
+          "displayed_stock": {
+            "current": 486,
+            "max": 500
+          },
+          "displayed_out_of_stock": false
+        }
+      ]
+    },
+    {
+      "key": "relics",
+      "source_name": "Реликвии",
+      "source_category_id": 16,
+      "visible_rows": 0,
+      "selected_count": 0,
+      "items": []
+    },
+    {
+      "key": "scrolls",
+      "source_name": "Свитки и зелья",
+      "source_category_id": 28,
+      "visible_rows": 4,
+      "selected_count": 4,
+      "items": [
+        {
+          "key": "duel_permit_i",
+          "name": "Duel Permit I",
+          "source_name": "Разрешение на поединок I",
+          "category": "scrolls",
+          "source_heading": "Разрешение на поединок I  (количество: 192 / 500) Цена : 16.00 NV",
+          "source_properties": "Цена:  16 NV  Долговечность:  1/1 Описание:  Начинает открытый бой с низкой травматичностью.",
+          "source_requirements": "Масса:  1  Уровень:  5  Скрытность:  20",
+          "displayed_buy_price_nv": "16.00",
+          "displayed_property_price_nv": "16",
+          "displayed_stock": {
+            "current": 192,
+            "max": 500
+          },
+          "displayed_out_of_stock": false
+        },
+        {
+          "key": "duel_permit_ii",
+          "name": "Duel Permit II",
+          "source_name": "Разрешение на поединок II",
+          "category": "scrolls",
+          "source_heading": "Разрешение на поединок II  (количество: 0 / 500) Цена : 30.00 NV   Нет в наличии",
+          "source_properties": "Цена:  30 NV  Долговечность:  2/2 Описание:  Начинает открытый бой с низкой травматичностью.",
+          "source_requirements": "Масса:  1  Уровень:  5  Скрытность:  30",
+          "displayed_buy_price_nv": "30.00",
+          "displayed_property_price_nv": "30",
+          "displayed_stock": {
+            "current": 0,
+            "max": 500
+          },
+          "displayed_out_of_stock": true
+        },
+        {
+          "key": "duel_permit_iii",
+          "name": "Duel Permit III",
+          "source_name": "Разрешение на поединок III",
+          "category": "scrolls",
+          "source_heading": "Разрешение на поединок III  (количество: 0 / 500) Цена : 54.00 NV   Нет в наличии",
+          "source_properties": "Цена:  54 NV  Долговечность:  4/4 Описание:  Начинает открытый бой с низкой травматичностью.",
+          "source_requirements": "Масса:  1  Уровень:  5  Скрытность:  40",
+          "displayed_buy_price_nv": "54.00",
+          "displayed_property_price_nv": "54",
+          "displayed_stock": {
+            "current": 0,
+            "max": 500
+          },
+          "displayed_out_of_stock": true
+        },
+        {
+          "key": "duel_permit_iv",
+          "name": "Duel Permit IV",
+          "source_name": "Разрешение на поединок IV",
+          "category": "scrolls",
+          "source_heading": "Разрешение на поединок IV  (количество: 0 / 500) Цена : 84.00 NV   Нет в наличии",
+          "source_properties": "Цена:  84 NV  Долговечность:  7/7 Описание:  Начинает открытый бой с низкой травматичностью.",
+          "source_requirements": "Масса:  1  Уровень:  5  Скрытность:  60",
+          "displayed_buy_price_nv": "84.00",
+          "displayed_property_price_nv": "84",
+          "displayed_stock": {
+            "current": 0,
+            "max": 500
+          },
+          "displayed_out_of_stock": true
+        }
+      ]
+    },
+    {
+      "key": "runes",
+      "source_name": "Руны",
+      "source_category_id": 29,
+      "visible_rows": 0,
+      "selected_count": 0,
+      "items": []
+    },
+    {
+      "key": "misc",
+      "source_name": "Другое",
+      "source_category_id": 60,
+      "visible_rows": 1,
+      "selected_count": 1,
+      "items": [
+        {
+          "key": "wood_chips",
+          "name": "Wood Chips",
+          "source_name": "Щепки",
+          "category": "misc",
+          "source_heading": "Щепки  (количество: 0 / 500) Цена : 5.00 NV   Нет в наличии",
+          "source_properties": "Срок годности: 15.09.2026 12:12  Цена:  1 NV  Долговечность:  1/1 Описание:  Ошметки от тренировочного манекена.",
+          "source_requirements": "Масса:  1",
+          "displayed_buy_price_nv": "5.00",
+          "displayed_property_price_nv": "1",
+          "displayed_stock": {
+            "current": 0,
+            "max": 500
+          },
+          "displayed_out_of_stock": true,
+          "evidence_gaps": [
+            "The buy headline is 5.00 NV while the item property price is 1 NV.",
+            "Catalog expiry is dynamically five days ahead of its server clock; purchased-instance activation and use remain unobserved."
+          ],
+          "expiry_recheck": {
+            "source_server_clock": "10.09.2026 12:18:14",
+            "source_expiry": "15.09.2026 12:18",
+            "source_property_price_nv": "1",
+            "source_buy_price_nv": "5.00",
+            "source_stock": "0/500",
+            "inference": "Displayed catalog expiry is five days ahead of the source server clock, changing with the read-only page refresh. This does not prove purchased-instance expiry activation."
+          }
+        }
+      ]
+    }
+  ],
+  "licenses": [
+    {
+      "key": "trading_license_i",
+      "name": "Trading License I",
+      "kind": "trading",
+      "tier": 1,
+      "price_nv": 300,
+      "duration_days": 3,
+      "displayed_stock": 9,
+      "displayed_stock_max": null,
+      "displayed_mass": 1,
+      "displayed_durability": "1/1",
+      "capture_date": "2026-09-10",
+      "provenance": "Fresh live license cards in the same authenticated Chrome session",
+      "capture_note": "Quantity 1 and Buy controls disabled for the source character; no purchase submitted."
+    },
+    {
+      "key": "trading_license_ii",
+      "name": "Trading License II",
+      "kind": "trading",
+      "tier": 2,
+      "price_nv": 800,
+      "duration_days": 10,
+      "displayed_stock": 666,
+      "displayed_stock_max": null,
+      "displayed_mass": 1,
+      "displayed_durability": "1/1",
+      "capture_date": "2026-09-10",
+      "provenance": "Fresh live license cards in the same authenticated Chrome session",
+      "capture_note": "Quantity 1 and Buy controls disabled for the source character; no purchase submitted."
+    },
+    {
+      "key": "trading_license_iii",
+      "name": "Trading License III",
+      "kind": "trading",
+      "tier": 3,
+      "price_nv": 2000,
+      "duration_days": 30,
+      "displayed_stock": 4,
+      "displayed_stock_max": null,
+      "displayed_mass": 1,
+      "displayed_durability": "1/1",
+      "capture_date": "2026-09-10",
+      "provenance": "Fresh live license cards in the same authenticated Chrome session",
+      "capture_note": "Quantity 1 and Buy controls disabled for the source character; no purchase submitted."
+    },
+    {
+      "key": "doctor_license_i",
+      "name": "Doctor License I",
+      "kind": "doctor",
+      "tier": 1,
+      "price_nv": 300,
+      "duration_days": 5,
+      "displayed_stock": 10,
+      "displayed_stock_max": null,
+      "displayed_mass": 1,
+      "displayed_durability": "1/1",
+      "capture_date": "2026-09-10",
+      "provenance": "Fresh live license cards in the same authenticated Chrome session",
+      "capture_note": "Quantity 1 and Buy controls disabled for the source character; no purchase submitted."
+    },
+    {
+      "key": "doctor_license_ii",
+      "name": "Doctor License II",
+      "kind": "doctor",
+      "tier": 2,
+      "price_nv": 550,
+      "duration_days": 10,
+      "displayed_stock": 9,
+      "displayed_stock_max": null,
+      "displayed_mass": 1,
+      "displayed_durability": "1/1",
+      "capture_date": "2026-09-10",
+      "provenance": "Fresh live license cards in the same authenticated Chrome session",
+      "capture_note": "Quantity 1 and Buy controls disabled for the source character; no purchase submitted."
+    },
+    {
+      "key": "doctor_license_iii",
+      "name": "Doctor License III",
+      "kind": "doctor",
+      "tier": 3,
+      "price_nv": 800,
+      "duration_days": 15,
+      "displayed_stock": 10,
+      "displayed_stock_max": null,
+      "displayed_mass": 1,
+      "displayed_durability": "1/1",
+      "capture_date": "2026-09-10",
+      "provenance": "Fresh live license cards in the same authenticated Chrome session",
+      "capture_note": "Quantity 1 and Buy controls disabled for the source character; no purchase submitted."
+    }
+  ]
+}

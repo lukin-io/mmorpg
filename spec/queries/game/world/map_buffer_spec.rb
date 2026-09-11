@@ -8,7 +8,36 @@ RSpec.describe Game::World::MapBuffer do
   let(:position) { create(:character_position, zone:, x: 20, y: 20) }
 
   def buffer(token: nil)
-    described_class.new(position:, token:).call
+    described_class.new(position:, token:, columns: 13, rows: 7).call
+  end
+
+  it "bootstraps with only a 5-by-7 buffer until the client supplies its viewport" do
+    result = described_class.new(position:).call
+
+    expect(result).to have_attributes(visible_columns: 3, visible_rows: 5, width: 5, height: 7)
+    expect(result.rows.flatten.size).to eq(35)
+  end
+
+  it "sizes desktop and phone buffers from validated whole odd cells" do
+    [[17, 5, 133], [3, 5, 35], [39, 9, 451]].each do |columns, rows, count|
+      result = described_class.new(position:, columns: columns.to_s, rows: rows.to_s).call
+      expect(result).to have_attributes(visible_columns: columns, visible_rows: rows)
+      expect(result.rows.flatten.size).to eq(count)
+    end
+    [nil, "", "9.0", [], {}, -3, 0, 2, 4, 100_001, "3 OR 1=1"].each do |invalid|
+      result = described_class.new(position:, columns: invalid, rows: invalid).call
+      expect(result).to have_attributes(visible_columns: 3, visible_rows: 5)
+      expect(result.rows.flatten.size).to eq(35)
+    end
+  end
+
+  it "rebuilds a resized viewport rather than interpreting its token with new dimensions" do
+    desktop = described_class.new(position:, columns: 17, rows: 5).call
+    phone = described_class.new(position:, columns: 3, rows: 5, token: desktop.token).call
+
+    expect(phone.base_token).to be_nil
+    expect(phone.rows.flatten.size).to eq(35)
+    expect(described_class.new(position:, columns: 3, rows: 5, token: phone.token).call.rows.flatten).to be_empty
   end
 
   it "bounds the full snapshot to 135 cells even in a million-cell sparse region" do
@@ -58,6 +87,7 @@ RSpec.describe Game::World::MapBuffer do
 
       expect(payload).to match(
         "character_id" => position.character_id, "zone_id" => zone.id,
+        "columns" => 13, "rows" => 7,
         "x" => 20, "y" => 20, "fingerprint" => a_string_matching(/\A[0-9a-f]{64}\z/)
       )
       expect(result.revision).to eq(1_788_955_200_123_456)

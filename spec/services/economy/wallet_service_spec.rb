@@ -38,5 +38,31 @@ RSpec.describe Economy::WalletService do
         service.adjust!(amount: -5, reason: "shop.buy")
       end.to raise_error(Economy::WalletService::InsufficientFundsError)
     end
+
+    it "rolls back a balance adjustment when its ledger fails inside a continuing outer transaction" do
+      wallet.update!(nv_balance: 100)
+      service = described_class.new(wallet:)
+
+      ApplicationRecord.transaction do
+        expect { service.adjust!(amount: 10, reason: nil) }.to raise_error(ActiveRecord::RecordInvalid)
+        user.update!(profile_name: "Continued outer work")
+      end
+
+      expect(user.reload.profile_name).to eq("Continued outer work")
+      expect(wallet.reload.nv_balance).to eq(100)
+      expect(wallet.currency_transactions).to be_empty
+    end
+
+    it "keeps a successful nested adjustment subject to its caller's rollback" do
+      wallet.update!(nv_balance: 100)
+
+      ApplicationRecord.transaction(requires_new: true) do
+        described_class.new(wallet:).adjust!(amount: 10, reason: "test.credit")
+        raise ActiveRecord::Rollback
+      end
+
+      expect(wallet.reload.nv_balance).to eq(100)
+      expect(wallet.currency_transactions).to be_empty
+    end
   end
 end

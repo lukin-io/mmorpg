@@ -9,94 +9,52 @@
     "hotspots" => {},
     "landmarks" => {}
   }
+  image_asset = presentation["image_asset"].presence
+  image_width, image_height = presentation.fetch("image_size", [Game::World::CityCatalog::SCENE_WIDTH, Game::World::CityCatalog::SCENE_HEIGHT])
   image_x, image_y = presentation.fetch("image_offset", [0, 0])
-  focus_x, focus_y = presentation.fetch("focus", [625, 300])
-  tooltip_actions = "pointerenter->nl-city-map#showTooltip pointermove->nl-city-map#moveTooltip pointerleave->nl-city-map#hideTooltip focus->nl-city-map#showTooltip blur->nl-city-map#hideTooltip"
+  tooltip_actions = "pointerenter->nl-city-map#showTooltip pointermove->nl-city-map#moveTooltip pointerleave->nl-city-map#hideTooltip focus->nl-city-map#showTooltip blur->nl-city-map#hideTooltip" if image_asset
 %>
 
-<div class="city-view-container">
-  <h1 class="nl-visually-hidden city-name"><%= current_zone.display_name %></h1>
+<div class="city-view-container city-actions">
+  <% if image_asset %>
+    <h1 class="nl-visually-hidden city-name"><%= current_zone.display_name %></h1>
+  <% end %>
 
-  <div class="nl-city-viewport"
-       data-controller="nl-city-map"
+  <div class="nl-city-viewport<%= ' nl-city-viewport--pending' unless image_asset %>"
+       data-controller="<%= 'nl-scene-size nl-city-map' if image_asset %>"
        data-nl-city-map-target="viewport"
-       data-nl-city-focus-x="<%= focus_x %>"
-       data-nl-city-focus-y="<%= focus_y %>"
-       data-action="resize@window->nl-city-map#centerScene">
-    <div class="nl-city-scene"
-         data-nl-city-map-target="scene"
+       data-action="nl-scene-size:resize->nl-city-map#hideTooltip">
+    <div class="nl-city-image-frame">
+    <div class="nl-city-scene<%= ' nl-city-scene--pending' unless image_asset %>"
          aria-label="<%= current_zone.display_name %> city map"
-         style="--nl-city-image-url: url('<%= asset_path('city.png') %>'); --nl-city-image-x: <%= image_x %>px; --nl-city-image-y: <%= image_y %>px;">
-      <%= image_tag "city.png",
+         <% if image_asset %>
+         data-nl-scene-size-target="canvas"
+         style="--nl-city-image-url: url(<%= asset_path(image_asset).to_json %>); --nl-city-image-width: <%= image_width %>px; --nl-city-image-height: <%= image_height %>px; --nl-city-image-x: <%= image_x %>px; --nl-city-image-y: <%= image_y %>px;"
+         <% end %>>
+      <% if image_asset %>
+      <%= image_tag image_asset,
                     class: "nl-city-scene-image",
                     alt: "",
                     aria: {hidden: true},
                     style: "left: #{image_x}px; top: #{image_y}px;" %>
+      <% else %>
+        <h1 class="nl-city-pending-title city-name"><%= current_zone.display_name %></h1>
+        <p class="nl-city-pending-notice">This quarter is not ready yet.</p>
+      <% end %>
 
-      <nav class="city-actions nl-city-hotspots" aria-label="Available city actions">
+      <nav class="nl-city-hotspots" aria-label="City buildings">
         <% hotspots.each_with_index do |hotspot, index| %>
-          <%
-            offer = offers_by_hotspot_id[hotspot.id]
-            catalog_geometry = Game::World::CityCatalog.hotspot_presentation(node_key, hotspot.key) || {
-              "box" => [25 + ((index % 5) * 205), 500, 180, 80],
-              "direction" => (hotspot.hotspot_type == "district" ? "south" : nil)
-            }
-            geometry = catalog_geometry.merge(
-              "box" => hotspot.presentation_box || catalog_geometry.fetch("box"),
-              "direction" => hotspot.presentation_direction || catalog_geometry["direction"]
-            )
-            left, top, width, height = geometry.fetch("box")
-            hotspot_style = "left: #{left}px; top: #{top}px; width: #{width}px; height: #{height}px; --nl-city-hotspot-x: #{left}px; --nl-city-hotspot-y: #{top}px;"
-            blocked_reason = hotspot.interaction_blocked_reason(current_character)
-            tooltip = blocked_reason.present? ? "#{hotspot.name} - #{blocked_reason}" : hotspot.name
-            hotspot_classes = ["nl-city-hotspot", "nl-city-hotspot--#{hotspot.hotspot_type}"]
-            hotspot_classes << "nl-city-hotspot--unavailable" unless offer
-          %>
-
-          <% if offer %>
-            <%= form_with url: interact_hotspot_world_path,
-                          method: :post,
-                          class: "city-action-form nl-city-hotspot-form",
-                          local: true,
-                          data: {turbo: false} do |f| %>
-              <%= f.hidden_field :hotspot_id, value: hotspot.id %>
-              <%= f.hidden_field :action_key, value: offer.action_key %>
-              <button type="submit"
-                      class="<%= hotspot_classes.join(' ') %>"
-                      style="<%= hotspot_style %>"
-                      data-hotspot-key="<%= hotspot.key %>"
-                      data-tooltip="<%= tooltip %>"
-                      data-action="<%= tooltip_actions %>"
-                      aria-label="<%= hotspot.name %>">
-                <% if geometry["direction"] %>
-                  <span class="nl-city-route-marker" data-direction="<%= geometry['direction'] %>" aria-hidden="true">&gt;</span>
-                <% end %>
-                <span class="nl-visually-hidden"><%= hotspot.name %></span>
-              </button>
-            <% end %>
-          <% else %>
-            <span class="<%= hotspot_classes.join(' ') %>"
-                  style="<%= hotspot_style %>"
-                  data-hotspot-key="<%= hotspot.key %>"
-                  data-tooltip="<%= tooltip %>"
-                  data-action="<%= tooltip_actions %>"
-                  role="img"
-                  aria-label="<%= tooltip %>"
-                  tabindex="0">
-              <% if geometry["direction"] %>
-                <span class="nl-city-route-marker" data-direction="<%= geometry['direction'] %>" aria-hidden="true">&gt;</span>
-              <% end %>
-              <span class="nl-visually-hidden"><%= tooltip %></span>
-            </span>
-          <% end %>
+          <% next if hotspot.hotspot_type == "district" %>
+          <%= render "world/city_action", hotspot:, index:, node_key:, image_asset:, tooltip_actions:, offers_by_hotspot_id: %>
         <% end %>
       </nav>
 
+      <% if image_asset %>
       <div class="nl-city-landmarks" aria-label="City landmarks">
         <% presentation.fetch("landmarks", {}).each do |landmark_key, landmark| %>
           <% left, top, width, height = landmark.fetch("box") %>
           <span class="nl-city-hotspot nl-city-hotspot--landmark"
-                style="left: <%= left %>px; top: <%= top %>px; width: <%= width %>px; height: <%= height %>px; --nl-city-hotspot-x: <%= left %>px; --nl-city-hotspot-y: <%= top %>px;"
+                style="left: <%= left %>px; top: <%= top %>px; width: <%= width %>px; height: <%= height %>px; --nl-city-hotspot-x: <%= left %>px; --nl-city-hotspot-y: <%= top %>px; <%= city_hotspot_polygon_style(landmark['polygon']) %>"
                 data-landmark-key="<%= landmark_key %>"
                 data-tooltip="<%= landmark.fetch('name') %>"
                 data-action="<%= tooltip_actions %>"
@@ -107,11 +65,23 @@
           </span>
         <% end %>
       </div>
+      <% end %>
 
-      <div class="nl-city-tooltip"
-           data-nl-city-map-target="tooltip"
-           role="status"
-           hidden></div>
     </div>
+    </div>
+    <% if hotspots.any? { |hotspot| hotspot.hotspot_type == "district" } %>
+    <nav class="nl-city-routes" aria-label="City quarter routes">
+      <% hotspots.each_with_index do |hotspot, index| %>
+        <% next unless hotspot.hotspot_type == "district" %>
+        <%= render "world/city_action", hotspot:, index:, node_key:, image_asset:, tooltip_actions:, offers_by_hotspot_id: %>
+      <% end %>
+    </nav>
+    <% end %>
+    <% if image_asset %>
+    <div class="nl-city-tooltip"
+         data-nl-city-map-target="tooltip"
+         role="status"
+         hidden></div>
+    <% end %>
   </div>
 </div>

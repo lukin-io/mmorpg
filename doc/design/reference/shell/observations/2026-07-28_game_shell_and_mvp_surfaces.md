@@ -186,6 +186,12 @@ Observed shop shell:
 - numeric level and price filters;
 - item list loaded by AJAX.
 
+The historical 800px image-width note is superseded by the
+[September 10 entrance measurement](../../economy/observations/2026-09-10_shop_layout_and_entrance_scale.md).
+The 800px width belongs to the catalog controls; the decorative 25:12 source
+illustration scales from 625 × 300 to 1250 × 600 according to gameplay-frame
+height. This does not alter the City hotspot coordinates above.
+
 Observed tabs:
 
 | Tab | Behavior |

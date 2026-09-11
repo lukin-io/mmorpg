@@ -146,4 +146,66 @@ RSpec.describe ItemTemplate, type: :model do
       expect(template.equipment_slot).to be_nil
     end
   end
+
+  describe "authored shop goods" do
+    let(:rules) do
+      {"shop" => {"sold" => true}, "subcategory" => "knives", "shop_stock" => {"current" => 0, "max" => 500}}
+    end
+
+    it "allows exhausted but authored finite stock to remain visible" do
+      template = build(:item_template, base_price: 7, enhancement_rules: rules)
+      expect(template).to be_valid
+      expect(template).to be_available_in_shop
+      expect(template.shop_stock_current).to eq(0)
+    end
+
+    [{"current" => -1, "max" => 500}, {"current" => 501, "max" => 500},
+      {"current" => 1}, {"current" => "1", "max" => 500}].each do |stock|
+      it "rejects malformed authored shop stock #{stock.inspect}" do
+        template = build(:item_template, base_price: 7, enhancement_rules: rules.merge("shop_stock" => stock))
+        expect(template).not_to be_valid
+      end
+    end
+
+    it "allows a definition without bootstrap counts because stock is local to each shop" do
+      template = build(:item_template, base_price: 7, enhancement_rules: rules.except("shop_stock"))
+      expect(template).to be_valid
+      expect(template).to be_available_in_shop
+    end
+
+    it "rejects an unsupported sale category or zero sale price" do
+      template = build(:item_template, base_price: 7, enhancement_rules: rules.merge("subcategory" => "weapons"))
+      expect(template).not_to be_valid
+      template.assign_attributes(base_price: 0, enhancement_rules: rules)
+      expect(template).not_to be_valid
+    end
+
+    it "does not mistake a positive inventory valuation or malformed marker for a shop offer" do
+      template = build(:item_template, base_price: 7, enhancement_rules: {"shop" => true})
+      expect(template).not_to be_available_in_shop
+    end
+  end
+
+  describe "authored shop licenses" do
+    def license_definition(**changes)
+      {"kind" => "trading", "tier" => 1, "duration_days" => 3, "required_perk" => "merchant"}.merge(changes.stringify_keys)
+    end
+
+    it "requires a supported typed license and its explicit perk at the content boundary" do
+      template = build(:item_template, item_type: "misc", slot: "none", stack_limit: 1, base_price: 300,
+        enhancement_rules: {"shop" => {"sold" => true, "mode" => "licenses"}, "license" => license_definition})
+      expect(template).to be_valid
+      expect(template).to be_available_in_shop
+
+      [license_definition(kind: "unknown", required_perk: nil, duration_days: nil),
+        license_definition(duration_days: nil), license_definition(duration_days: "3"),
+        license_definition(duration_days: 3.0), license_definition(duration_days: 0),
+        license_definition(duration_days: 300), license_definition(tier: 2),
+        license_definition(required_perk: nil)].each do |definition|
+        template.enhancement_rules["license"] = definition
+        expect(template).not_to be_valid
+        expect(template).not_to be_available_in_shop
+      end
+    end
+  end
 end

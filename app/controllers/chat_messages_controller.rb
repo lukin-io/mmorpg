@@ -66,7 +66,7 @@ class ChatMessagesController < ApplicationController
     respond_to do |format|
       format.turbo_stream do
         stream = if @chat_channel.local?
-          turbo_stream.update("flash", helpers.tag.div(message, class: "nl-flash nl-flash--alert"))
+          turbo_stream.update("flash", partial: "shared/flash", locals: {type: "alert", message:})
         else
           turbo_stream.replace(
             dom_id(@chat_channel, :form),

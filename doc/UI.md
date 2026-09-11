@@ -221,27 +221,39 @@ consistent. Cross-check each against the cited capture before building.
   with its own point pool and preview/save flow. The full source id/name/category
   catalog is now captured; capture prerequisites, point timing, and mechanical
   effects before exposing more choices.
-- **City graph and services**: the fresh city capture is implemented as five
-  native `1250 × 600` district scenes with eight directed routes, project-owned
-  CSS/art presentation, ASCII/text arrows, hover/focus tooltips, and
-  keyboard-accessible server-offered hotspots. Only captured interactive
-  buildings are enabled; uncaptured service mutations and the Law outdoor
-  handoff remain deferred.
-- **Outdoor client**: the launch region renders whole odd rows/columns of
-  exact `100 x 100` project-owned cells, capped at 13 × 7, over a server-built
-  15 × 9 buffer. Visible size follows the equivalent header-plus-main frame: the
-  source `1150 × 519` frame and local default 520px frame show 11 × 5; the
-  verified `390 × 844` mobile layout shows a centered 3 × 5 map (`302 × 502`). The player cursor stays fixed in the center, only
-  server-offered destinations receive the thin red clickable outline, accepted
-  travel slides the terrain beneath the cursor, and a red countdown is shown
-  one cell above it. Tablet/mobile clients pan the same unscaled geometry.
-  Context actions stay in the shell's top row.
+- **City graph and services**: the five native `1250 × 600` district scenes
+  retain eight directed routes, original artwork and arrow decorations,
+  hover/focus tooltips and keyboard-accessible server-offered hotspots.
+  Narrow/coarse input reflows the same named route controls below the image.
+  Both captured Central/Law outdoor handoffs are implemented; other service
+  mutations remain bounded by their own evidence and handbooks.
+- **Outdoor client**: the launch region fits whole odd rows/columns of exact
+  `100 × 100` cells to the available width and header-plus-main height. The
+  server validates visible columns `3..39` and rows `3..9` and adds one cell
+  per edge for travel. A debounced resize GET rebuilds the bounded map while
+  preserving accepted movement and its deadline. These limits are local
+  implementation choices; the September 10 source sample was 17 columns wide.
+  The cursor stays centered, server offers supply the red clickable outline,
+  travel slides terrain beneath it, and the countdown sits one cell above.
+  Optional 200px City rasters improve detail on dense displays while retaining
+  the same 100 CSS px cell geometry and required 100px base images. Registered
+  128px walking assets render at 64 CSS px within the unchanged cursor.
+  Narrow clients preserve unscaled geometry and internal panning. Context
+  actions stay in the shell's top row. World handbook section 15.10 records
+  current City clarity and walking-frame acceptance: desktop DPR 2 artwork,
+  four actual travel directions, 390 × 844 idle layout and city entry, then
+  desktop gate return and reload. All eight directions passed timed gallery
+  review. Earlier checks, including mid-travel resize, remain separate history;
+  the latest phone check does not claim a phone-sized city exit.
 - **Outdoor linked location**: the captured Frontier Village exact-cell
   entrance, CSS-built `760 × 255` scene, Trading Post/exit hotspot offers,
   linked Shop, and DB-backed login resume are implemented. The canonical
-  village kind drives its map landmark; the nearby seeded city gate uses a
-  castle marker, and Enter is offered only on the entrance cell. Mines, exchanges,
-  and other uncaptured location families remain intentionally unavailable.
+  village kind drives its map landmark. Authored village/city cell artwork
+  suppresses an extra landmark marker; the CSS hut/castle marker remains only
+  for cells whose selected art does not paint that building. Enter is offered
+  only on the entrance cell. The seeded mine and exchange support entry,
+  read-only sections, return and login resume. Underground travel, resource
+  transactions and other uncaptured location families remain unavailable.
 - **Local social surface**: ordinary chat and presence use the authoritative
   current cell or validated village/Shop/city/Arena room. Delivered ordinary
   rows survive navigation within a login; fresh login clears that browser

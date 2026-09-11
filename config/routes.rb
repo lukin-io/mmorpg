@@ -27,6 +27,12 @@ Rails.application.routes.draw do
       patch :perks, action: :update_perks
     end
   end
+  resources :character_licenses, only: :index, path: "character/licenses"
+  resource :merchant_qualification, only: [], controller: "merchant_qualifications" do
+    post :accept
+    post :pay
+    post :complete
+  end
 
   resource :world, only: :show, controller: "world" do
     get :players
@@ -107,7 +113,7 @@ Rails.application.routes.draw do
 
   # Non-game related
 
-  devise_for :users, controllers: {registrations: "user_registrations"}
+  devise_for :users, controllers: {registrations: "user_registrations", sessions: "user_sessions"}
   mount ActionCable.server => "/cable"
   resource :session_ping, only: :create
   get "up" => "rails/health#show", :as => :rails_health_check

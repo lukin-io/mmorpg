@@ -2,7 +2,7 @@
 
 - Document type: operational and extension guide
 - Status: Current
-- Updated: 2026-09-09
+- Updated: 2026-09-10
 - Audience: administrators, content authors, Rails engineers, and AI agents
 - UI entry point: `/manage`
 - Controller namespace: `Manage`
@@ -143,7 +143,9 @@ local variables between phases:
 | `db/seeds/world_zones.rb` | City nodes, the single outdoor Zone, spawn-point reconciliation |
 | `db/seeds/world_cells.rb` | Starter survey import, cell actions, artwork, obsolete gate-cell cleanup |
 | `db/seeds/starter_characters.rb` | Initial sample characters and starting inventory |
-| `db/seeds/shop_inventory.rb` | Item templates, shop stock, existing sample inventory |
+| `db/seeds/data/starter_shop.json` | 79 captured ordinary Shop goods, requirements, bonuses and bootstrap stock |
+| `db/seeds/shop_inventory.rb` | Loads starter goods, six licenses and inventory-only templates; preserves owned durability and optional sample inventory |
+| `db/seeds/shop_accounts.rb` | Creates missing per-Shop stock; preserves traded stock and funds |
 | `db/seeds/starter_wallets.rb` | One-time initial sample-wallet grants |
 | `db/seeds/arena_rooms.rb` | Arena room baseline |
 | `db/seeds/world_locations.rb` | Reconciled reciprocal city gates; bootstrap-only linked outdoor locations |
@@ -156,6 +158,8 @@ authored entrance is already visible to its placement guard. Each phase
 resolves its persisted inputs explicitly. `Seeds::WorldContentSupport` owns
 shared city metadata lookup and action-offer cleanup; callers keep the target
 change and cancellation inside their existing transaction.
+It also owns the starter-cell/art and reciprocal-gate attribute builders used
+by normal seeds and the bounded Forpost repair below.
 
 `Seeds::StarterEncounterBootstrap#call` accepts one zone's validated derived
 definitions and persisted NPC templates. It reads the declared cells,
@@ -180,6 +184,52 @@ amount:, metadata:)`. The existing wallet row lock spans checking the
 Retries and competing bootstrap calls therefore cannot grant twice. An older
 ledger entry with that reason also counts as completion; balances, spending,
 and historical duplicate grants are retained without retroactive repair.
+
+### Bounded Forpost gate repair
+
+Use this explicit development operation when the existing five-node City is
+present but its captured Central/Law outdoor gate content is missing or stale.
+It does not run other seed phases or recreate the database. Its canonical
+runtime contract is
+[City gate handoff and repair](../features/city.md#521-bounded-repair-owner).
+The source handoffs are Central Square ↔ `[6,8]` and Law Quarter ↔ `[11,9]`;
+the September 9 survey already captures both directions.
+
+From the repository root, run:
+
+```bash
+RAILS_ENV=development bin/rails runner 'require Rails.root.join("db/seeds/forpost_gate_repair.rb"); puts Seeds::ForpostGateRepair.new.call.inspect'
+```
+
+`Seeds::ForpostGateRepair#call` returns the changed-record counts `cells`,
+`city_exits`, `outdoor_entrances` and `retired_markers`. The class accepts an
+optional validated `cell_catalog:` dependency, defaulting to
+`Game::World::StarterCellCatalog.default`; ordinary repair uses that default.
+It locks the exact Central, Law and outdoor zones and reconciles both gate
+pairs plus the bounded 26-cell gate/eastern-path neighborhood in one
+transaction. Managed/atlas cell overrides remain intact; a blocked required
+managed path, conflicting entrance, invalid catalog coordinate or mismatched
+zone/gate identity aborts all writes with `Seeds::ForpostGateRepair::Conflict`.
+Inspect that conflict before changing the independently authored content.
+
+Changed target offers are cancelled transactionally. The repair preserves
+unrelated metadata and only removes a matching obsolete gate marker; it does
+not read or write characters, wallets, inventory or NPCs. The printed counts
+are operation output, not a management UI audit event. Record those counts,
+then repeat the same command: an already reconciled database returns zero
+for all four keys. After automated checks pass, verify both City exits and
+their outdoor Enter controls in the local browser, confirming the exact node
+and coordinates after each handoff. A zero-change rerun proves convergence,
+not browser behavior. Do not substitute a full seed or `db:seed:replant` for
+this bounded content repair.
+
+Disconnected landscape pieces around a repaired gate are a presentation issue
+when neighboring gameplay cells are still sparse. The renderer's bounded
+starter-art default covers the full authored rectangle from the existing
+273 main slices plus 39 scenery-only western slices; no full seed or extra
+cell import is needed to fill the picture.
+The artwork rules below distinguish this lookup from the repair's passability
+and entrance writes.
 
 ## 5. General create, edit, deactivate, and delete rules
 
@@ -356,9 +406,21 @@ Artwork remains a separate layer from passability and actions. The cell stores
 only its server-catalog `cell_art` key, column and row. A catalog entry may
 provide individual slices and declare painted landmarks; cell metadata cannot
 choose arbitrary files, dimensions or the decorative-marker policy. Existing
-100 × 100 PNG slices render directly; a missing slice falls back to the same
-position on its master landscape. Accessible location/entity labels remain
+100 × 100 PNG slices remain the required base. A sliced catalog may additionally
+declare a safe `high_density_slices_directory` containing 200 × 200px versions
+at the same column/row filenames; browser density selection still displays
+100 × 100 CSS cells. Missing optional 2× files use the 1× image. A missing required slice returns no
+art and uses per-cell CSS terrain; restore the exact packaged PNG instead of
+relying on its authoring master. Valid explicit nonsliced catalog entries
+retain their configured sheet crops. Accessible location/entity labels remain
 available when a painted landmark replaces a decorative marker.
+
+Generate native detail at or above the optional density's delivery footprint;
+do not turn an enlarged 100px tile into a claimed native 2× asset. Keep matching
+1×/2× images in the same composition and cover their physical dimensions with
+asset specs. Density paths belong to the catalog, never to per-cell metadata,
+and introduce no gameplay records. Reload the catalog or restart the local app
+after changing its cached configuration.
 
 Painted-landmark suppression requires both `landmarks_in_art: true` and an
 exact `painted_landmarks` entry such as
@@ -373,7 +435,12 @@ without removing their accessible names or Enter controls.
 
 The starter baseline uses `forpost_starter`: one 2100 × 1300 master and 273
 physical PNGs under `world/cells/forpost-starter`. Local `[x,y]` maps to art
-column `x`, row `y - 2`. The seed upgrades missing art and legacy
+column `x`, row `y - 2`. A separate `forpost_starter_west` catalog key supplies
+39 scenery-only images from its 300 × 1300 master and
+`world/cells/forpost-starter-west`. Art column `x + 3`, row `y - 2` covers local
+x−3..−1,y2..14; these remain outside the region and cannot receive gameplay
+offers. The 312 visual images do not enlarge the 273-cell seed import.
+The seed upgrades missing art and legacy
 `forpost_terrain`/`forpost_pond` references within the surveyed rectangle.
 An independent catalog key or an already edited `forpost_starter` reference
 is preserved. This replaces the older forced 25-cell pond-art reconciliation;
@@ -381,6 +448,20 @@ the old pond catalog remains valid for independently authored content.
 Gameplay, passability, labels and saved positions are separate from this
 visual upgrade. The western intermediate `[5,7]` defaults to the captured
 village-area label while retaining no entrance; a managed label survives seeds.
+
+At render time, `CellArtCatalog.resolve_for_tile` also supplies this coordinate
+slice for missing/empty or valid legacy art references, including cells with
+no template row. The default is restricted to the canonical outdoor
+`Outpost Surroundings` identity (`1000 × 1000`, source map `m_1001_999`) and
+integer visual local `x−3..20, y2..14`. Main x0..20 selects `forpost_starter`;
+western x−3..−1 selects `forpost_starter_west` for missing/empty references.
+Valid explicit western art and valid custom/deliberately edited main art remain
+authoritative; nonblank invalid references use per-cell CSS recovery. Other
+regions and coordinates outside this visual rectangle gain no Forpost default.
+The separate tile/movement bounds still make every negative-x slot inert. This read-only presentation lookup requires no seed, creates no cells
+or capabilities, and leaves passability/NPC/resource data unchanged. The
+[World handbook](../features/world.md#continuous-starter-landscape) defines its
+complete precedence and missing-asset behavior.
 
 The survey is not a complete zone. See
 `doc/design/reference/world/observations/2026-09-09_starter_atlas.md` and
@@ -859,6 +940,16 @@ contains destination coordinates/direction, while the foreign key identifies
 the destination record. Feature navigation remains restricted by
 `CityHotspot::FEATURE_ROUTES`; arbitrary URLs are not accepted.
 
+An optional `polygon` in the action-parameter JSON clips both the pointer
+target and hover highlight inside the action's bounding box. Use 3–32 numeric
+`[x,y]` percentage points within `0..100`, enclosing a nonzero area; for example,
+`"polygon": [[0, 0], [100, 0], [50, 100]]` defines a triangle. This is local
+artwork geometry, not an action or permission. Landmark entries inside
+`city_presentation.landmarks` accept the same optional polygon. Invalid
+polygons fail model validation; both bounds and silhouette must be authored
+against the actual project image. Seeded Central Square shapes live in
+`CityCatalog` and return to that baseline on a seed sync.
+
 Hotspot geometry is interactive, so verify hover, keyboard focus, arrow
 direction, desktop layout, and responsive pan/scroll behavior after editing.
 
@@ -944,14 +1035,13 @@ reflection-based generic model editor.
     or command behavior, invalid/dependency failure, audit behavior, and a
     responsive system path. Add service/concurrency tests for valuable state.
 11. **Update documentation.** Update the owning feature handbook and this route
-    table/instructions.
+    table/instructions. Add a change note only for a justified release,
+    rollout, explicit request, or durable architecture decision.
 12. **Review and verify.** Apply `doc/RUBY_ON_RAILS_GUIDE.md`, run focused
-    checks, the handbook audit, the appropriate `bin/verify` profile, and
-    required manual checks.
-13. **Consolidate the session.** After all applicable checks pass, finalize the
-    one mandatory whole-session changelog under `AGENTS.md`; update the same
-    record for later verified work in that session. Validate final
-    documentation, links, and diff before reporting completion.
+    checks, the handbook audit, and the appropriate `bin/verify` profile.
+    After those pass, perform the affected management and player flows under
+    [manual browser acceptance](../../AGENTS.md#manual-browser-acceptance),
+    and record the actual controls, persisted results and viewport checks.
 
 ### 11.2 Conventional CRUD skeleton
 
@@ -1040,7 +1130,9 @@ Item management must preserve two different owners:
 | Concern | Owner | Correct management operation |
 |---|---|---|
 | What an axe/armor/potion is | `ItemTemplate` | Catalog CRUD or deactivate/archive policy |
-| Whether it appears in the Shop | `ItemTemplate.base_price` and `enhancement_rules.shop_stock`, consumed by `Game::Shop::Catalog` | Edit catalog definition with Shop coverage |
+| Whether it appears in a Shop | Explicit `ItemTemplate.enhancement_rules.shop` definition plus that building's `ShopStock` | Author the definition and local stock separately |
+| Shop funds and stock | `ShopAccount.nv_balance` and `ShopStock.current/maximum` | Exact-target economic adjustment; never reset through template CRUD |
+| Professional permission | `CharacterLicense` | Purchase through Shop; template names or boolean metadata grant no right |
 | What one character owns | `InventoryItem` under `Inventory` | Dedicated grant/revoke/adjust command through inventory services |
 | Equipped slot/durability | `InventoryItem`, equipment/inventory services | Dedicated validated commands; not arbitrary CRUD |
 
@@ -1075,10 +1167,15 @@ Example schema shape only:
   },
   "enhancement_rules": {
     "subcategory": "axes",
-    "shop_stock": { "current": 25, "max": 25 }
+    "shop": { "sold": true, "mode": "buy" }
   }
 }
 ```
+
+A ShopStock row in the selected ShopAccount separately supplies current count
+and captured capacity. Template JSON shop_stock values retained in seed content
+are one-time bootstrap inputs; they are not live global stock. Never infer a
+second building's opening funds or supply from the first building.
 
 Those numbers are illustrative schema values, not approved balance. Replace
 them with captured/adopted values and add requirement, equipment, inventory,
@@ -1194,6 +1291,10 @@ changed handbook, `bin/documentation-architecture-audit` when adding a domain
 or missing-layer record, and the completion profile required by `AGENTS.md`. Review the
 stabilized diff against the applicable sections of
 `doc/RUBY_ON_RAILS_GUIDE.md` before the completion run.
+After automated checks pass, use the local browser to exercise the changed
+management forms and their affected player-facing flow, including reload and
+the relevant adaptive checks. Record that evidence separately from automated
+results under [manual browser acceptance](../../AGENTS.md#manual-browser-acceptance).
 
 ## 15. Responsible implementation files
 

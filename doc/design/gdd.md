@@ -19,6 +19,16 @@ to `doc/DOCUMENTATION.md`.
 
 Non-Neverlands game rules are not alternate design authority.
 
+Adaptive UI, accessibility, original art and modern engineering are project
+requirements, as clarified by the user on September 10. Preserve Neverlands'
+game rules, features, information and action outcomes while allowing deliberate
+improvements to layout, control sizing and image composition on every screen
+size. Captured desktop pixels are reference evidence, not a universal fixed
+layout requirement. The shared requirements live in
+[Game Client Layout](areas/game_client_layout.md#adaptive-ui-requirements),
+and scene composition/dimensions in
+[ARTWORK.md](../ARTWORK.md#shared-scene-image-standard).
+
 ## Design Library
 
 Use these documents when implementing or extending the game design:
@@ -255,11 +265,15 @@ cannot become a paid offer. Region isolation is required for position,
 movement, content reads, entrances, chat, and presence; passengers use their
 flight audience rather than the ground cell below them.
 
-The local map reads a bounded `15 × 9` render buffer. The visible viewport uses
-whole odd rows/columns of `100px` cells, capped at `13 × 7`, fitted to the
-source-equivalent header-plus-main frame. Move offers query at most eight
-neighbors; cell actions and encounters resolve their exact authoritative cell.
-These are local spatial-query choices, not claims about Neverlands internals.
+The local map fits whole odd rows/columns of `100px` cells to the available
+width and header-plus-main height. The server validates visible columns
+`3..39` and rows `3..9` independently, defaulting to `3 × 5`, and adds one
+off-screen cell per edge for a maximum `41 × 11` buffer. Resizing requests a
+bounded projection without changing accepted movement or its deadline.
+Move offers query at most eight neighbors; cell actions and encounters resolve
+their exact authoritative cell. These are local spatial-query choices. The
+September 10 source tile observation records incremental growth and retention
+of an older off-screen row, not this exact buffer limit or eviction policy.
 
 ## Tile-Local Actions
 
@@ -387,6 +401,17 @@ The economy supports:
 - normal shop currency;
 - inventory weight/slots;
 - city shop buy/sell flows;
+
+The September 9 observed Shop purchase links NV payment, item acquisition,
+carried mass and Shop stock consumption. The bounded local purchase saves all
+four changes and consumes its one-use action in one transaction; replay cannot
+duplicate the trade. Explicit source-backed goods and 19 category controls
+replace generic positive-price listings. Licenses grants typed, expiring
+professional permissions under their prerequisites. Licensed Sell uses the
+documented skill/durability payout, stock headroom and that Shop's funds;
+each Shop has independent economic records. Novice remains denial/empty.
+Source activation timing and profession quest gaps remain explicit.
+`doc/design/features/economy_trading_shops.md` owns this contract.
 
 Direct player trade exists in Neverlands, but it is deferred until its exact
 flow and constraints are captured.

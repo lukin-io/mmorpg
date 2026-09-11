@@ -85,6 +85,7 @@ class Character < ApplicationRecord
 
   has_one :position, class_name: "CharacterPosition", dependent: :destroy
   has_one :inventory, dependent: :destroy
+  has_many :character_licenses, dependent: :destroy
   has_many :arena_applications, foreign_key: :applicant_id, dependent: :destroy
   has_many :arena_participations, dependent: :destroy
 

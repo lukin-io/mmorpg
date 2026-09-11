@@ -393,7 +393,7 @@ input.nl-chat-input-field,
 .nl-chat-tool--messages { width: 28px; }
 .nl-chat-tool--speed { width: 28px; }
 .nl-chat-tool--language { width: 28px; }
-.nl-chat-tool--sound { width: 26px; margin-right: 4px; letter-spacing: 1px; }
+.nl-chat-tool--abilities { width: 26px; margin-right: 4px; font-size: 12px; text-decoration: none; }
 
 .nl-status-icons {
   justify-content: space-between;

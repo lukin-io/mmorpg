@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 ---
 title: Character Progression Feature
-description: Implementation handbook for Neverlands-based primary stats, numeric skills, boolean perks, point allocation, and public progression display.
+description: Implementation handbook for Neverlands-based primary stats, numeric skills, boolean perks, point allocation, current license permissions, and public progression display.
 status: Fully Implemented
-updated: 2026-09-09
+updated: 2026-09-11
 owners: Character Progression
 template: feature-v1
 ---
@@ -33,10 +33,11 @@ Supporting documents:
 - `doc/design/reference/character/observations/legacy_skills_and_arena_analysis.md` records the wiki character-development audit, complete level rows, exact derived formulas, and unresolved evidence boundaries.
 - `doc/design/reference/world/observations/2026-09-09_starter_routes.md` records the public pond profile's separate zone and current-cell labels without raw coordinates.
 - `doc/design/reference/world/observations/2026-09-09_wiki_skills_and_cell_actions.md` records published Nature Child effects and distinguishes allocated skills, binary perks and profession counters.
+- `doc/design/reference/economy/observations/2026-09-09_licenses_and_shop_selling.md` records Merchant/Healer license prerequisites and the live Abilities → Your licenses empty state; purchase-time activation was not exercised.
 - `doc/design/reference/social/observations/2026-08-23_chat_game_event_timeline.md` records recipient-visible fight completion with awarded combat XP in the persistent chat history.
 - `doc/design/reference/neverlands.md` defines the Neverlands evidence-to-implementation rule.
 - `doc/design/features/progression_stats_skills.md` normalizes the five primary stats, 29 numeric skills, captured tier rates, point pools, and launch-safe perk subset.
-- `doc/design/features/professions.md` keeps profession access/counters outside ordinary allocation until one activity is fully captured.
+- `doc/design/features/professions.md` owns profession activity/counter behavior beyond the bounded Merchant/Healer perk and Shop-license handoff.
 - `doc/design/features/items_inventory_equipment.md` defines equipment modifiers consumed by effective stats and skills.
 - `doc/design/features/combat.md` owns combat effects after progression values are handed off.
 - `doc/design/launch_mvp_plan.md` defines the launch progression boundary.
@@ -52,7 +53,7 @@ Supporting documents:
 |---|---|---|
 | `doc/features/game_shell.md` | The shell links to the player profile and renders profile/allocation surfaces in its main content context. | Character Progression owns saved allocations and profile values; Game Shell owns only shared navigation, framing, and header presentation. |
 | `doc/features/world.md` | World consumes effective Wanderer for adjacent travel and supplies the profile's current cell/room/flight label. | Character Progression owns saved skill values and profile formatting; World owns the configurable `24..30` second local fallback, exact authored durations, movement lifecycle, and `Presence#label` resolution from persisted location. |
-| `doc/features/shop_economy.md` | Shop rows display item requirements against progression-backed character values. | Character Progression owns stat/skill values; Shop owns catalog presentation and trade eligibility, while Inventory owns later equip enforcement. |
+| `doc/features/shop_economy.md` | Shop rows read character requirements and Merchant/Healer prerequisites; Your licenses displays purchased permissions. | Character Progression owns allocations and permission display; Shop owns license grants, catalog, eligibility and atomic settlement, while Inventory owns later equipment enforcement. |
 | `doc/features/player_inventory.md` | The shared character sheet and item rows consume effective stats/skills. | Character Progression owns saved/effective values; Player Inventory owns equipment state, capacity display, and requirement enforcement. |
 | `doc/features/arena_combat.md` | Fight profiles consume effective character values and eligible completed solo NPC fights may award capped XP, whose actual amount is passed onward for concise shell feedback. | Character Progression owns values, thresholds, and grants; Arena Combat owns match resolution, the idempotent award handoff, and the persisted fact supplied to Game Shell. |
 
@@ -62,7 +63,7 @@ An authenticated player begins at level `0`, gains configured combat experience 
 
 The `Character` record is authoritative for saved allocations and point balances. `allocated_stats`, `passive_skills`, and `perks` are JSONB maps; `stat_points_available`, `combat_skill_points`, `peace_skill_points`, and `perk_points` are separate non-negative counters. The browser never grants points or finalizes an allocation.
 
-Numeric skill identities and four-band progression rates come from the captured Neverlands registry. Effective Extra Action Points now contributes one-for-one to the shared fight AP profile. Boolean perks remain deliberately narrow: source ID `7`, `Больше силы`/`More Strength`, adds `floor(level / 2)` effective Strength, while source ID `15`, `Аккуратный боец`/`Careful Fighter`, halves post-fight equipment-wear probability.
+Numeric skill identities and four-band progression rates come from the captured Neverlands registry. Effective Extra Action Points now contributes one-for-one to the shared fight AP profile. The selectable perk subset contains source ID `7`, `Больше силы`/`More Strength`, adding `floor(level / 2)` effective Strength; source ID `15`, `Аккуратный боец`/`Careful Fighter`, halving post-fight equipment-wear probability; source ID `34`, Merchant; and source ID `35`, Healer. Merchant and Healer satisfy explicit Shop license prerequisites; selecting either does not grant a license, quest completion, or medical treatment.
 
 The MVP currently contains:
 
@@ -70,7 +71,8 @@ The MVP currently contains:
 - a finite table of complete source rows `0..27` for thresholds, stat/skill/perk/NV grants, per-fight XP caps, and source NPC-group limits;
 - exact `Health × 5` base HP, `Knowledge × 7` base MP, and `Strength × 5 + Health × 10 + level × 10` mass formulas;
 - 29 source-backed numeric skills from `0` to `100` with combat and peace point pools;
-- two selectable binary perks with a separate point pool and captured exclusion infrastructure;
+- four selectable binary perks with a separate point pool and captured exclusion infrastructure;
+- an owner-only Your licenses surface showing current purchased permissions and their server-owned expiry;
 - solo configured-NPC XP award through idempotent fight finalization, capped by the current level row;
 - public HTML and JSON display of numeric skills and owned perks;
 - owner-only allocation enforced by Devise, current-character resolution, and `CharacterPolicy`.
@@ -101,7 +103,7 @@ The MVP currently contains:
 
 ### 4.1 Entry conditions
 
-The public profile is available at `/player/:name` by case-insensitive active character name in the minimal public layout. A signed-in owner sees the same profile inside the persistent game shell and reaches Stats, Skills, and Perks from the profile's internal subnavigation. Allocation routes require an authenticated user, an active playable character, and ownership of the requested `Character`.
+The public profile is available at `/player/:name` by case-insensitive active character name in the minimal public layout. A signed-in owner sees the same profile inside the persistent game shell and reaches Stats, Skills, Perks, and Your licenses from the profile's internal subnavigation. Allocation routes require an authenticated user, an active playable character, and ownership of the requested `Character`.
 
 The owner's HTML profile and every Stats/Skills/Perks request also honor
 persisted outdoor travel/Look availability. `OutdoorActionAvailability`
@@ -133,7 +135,7 @@ Each allocation page uses the compact Neverlands player-subpage language:
 - plus and minus controls for pending changes;
 - an explicit Reset button;
 - one disabled-until-changed Save button;
-- profile, Stats, Skills, and Perks navigation.
+- profile, Stats, Skills, Perks, and Your licenses navigation.
 
 Numeric skills render as `[NNN/100]` and show the gain for the next spend. Perks render as `Yes` or `No`. Existing owned perks remain `Yes` and do not expose a normal removal control.
 
@@ -168,6 +170,8 @@ The feature is an authored catalog and state graph rather than spatial topology.
 | `peace_world` | Peace/world skills | Spend peace points | Source IDs `22`, `23`, `24`, `26`, `27`, `30`, `33`, `34` |
 | `more_strength` | More Strength | Spend one perk point; persist `Yes` | Boolean perk source ID `7`; adds `floor(level / 2)` effective Strength |
 | `careful_fighter` | Careful Fighter | Spend one perk point; persist `Yes` | Boolean perk source ID `15`; halves each post-fight equipment-wear chance |
+| `merchant` | Merchant | Spend one perk point; persist `Yes` | Boolean perk source ID `34`; prerequisite for Trading licenses, alongside Merchant qualification |
+| `healer` | Healer | Spend one perk point; persist `Yes` | Boolean perk source ID `35`; prerequisite for Doctor licenses, with Traumatologist qualification additionally required for tiers II/III |
 
 Numeric skills use captured four-value rate strings. The rate selected for a spend is based on the saved/current value before that spend:
 
@@ -182,7 +186,7 @@ Numeric skills use captured four-value rate strings. The rate selected for a spe
 
 - **Primary-stat key** — normalized local identity such as `strength`, `dexterity`, `luck`, `vitality`, or `intelligence`; player labels map Health to `vitality` and Knowledge to `intelligence`.
 - **Numeric-skill source ID** — stable Neverlands `Умения` identity retained in `PassiveSkillRegistry`; local symbolic keys are used in persisted JSONB.
-- **Perk source ID** — stable Neverlands `Навыки` identity retained in `PerkRegistry`; only source IDs `7` and `15` have launch-selectable local keys.
+- **Perk source ID** — stable Neverlands `Навыки` identity retained in `PerkRegistry`; source IDs `7`, `15`, `34`, and `35` have launch-selectable local keys.
 - **Base value** — saved character allocation before equipment modifiers.
 - **Effective value** — base character value plus supported equipment modifiers, capped where the implementation defines a cap.
 
@@ -199,7 +203,8 @@ Relationships must come from the source-backed registries. Categories, display o
 | Primary-stat allocation | `GET/PATCH /characters/:id/stats` | Interactive | `CharactersController` and `Character` |
 | Numeric-skill allocation | `GET/PATCH /characters/:id/skills` | Interactive | `CharactersController`, registry, and formula |
 | Boolean perk allocation | `GET/PATCH /characters/:id/perks` | Interactive subset | `PerkAllocation` and `PerkRegistry` |
-| Remaining observed perks/professions | No local route/control | Deferred outside this handbook boundary | Evidence and design documents only |
+| Current license permissions | `GET /character/licenses` | Read-only owner surface | `CharacterLicensesController`, `CharacterLicense`; Shop owns acquisition |
+| Remaining observed perks/profession operations | No local route/control | Deferred outside this handbook boundary | Evidence and design documents only |
 | Wanderer movement effect | World movement-offer creation | Interactive downstream consumer | `Game::Movement::TravelTime` |
 | Extra Action Points effect | Shared combat-profile preparation | Interactive downstream consumer | `Character#max_action_points` and `Arena::CombatProfile` |
 | Careful Fighter effect | Shared fight finalization | Interactive downstream consumer | `Arena::EquipmentWearResolver` |
@@ -231,8 +236,9 @@ captured.
 
 ### 6.4 Boolean perks and deferred behavior boundary
 
-`more_strength` and `careful_fighter` are the only rendered selectable perks.
-Saving either consumes one `perk_points`, stores its key as `true`, and makes it
+`more_strength`, `careful_fighter`, `merchant`, and `healer` are the rendered
+selectable perks. Saving any new selection consumes one `perk_points`, stores
+its key as `true`, and makes it
 non-removable through the normal UI. `PerkAllocation` rejects empty/duplicate
 ownership, unknown keys, insufficient points, and any captured mutually
 exclusive combination under a character row lock.
@@ -241,8 +247,11 @@ The complete observed `Навыки` labels and saved yes/no rows are evidence, 
 local capabilities. Source ID `7` adds one effective Strength per two levels,
 rounded down. Source ID `15` halves the independent per-item wear chance at
 fight finalization, including the `1%` arena-defeat chance as an exact `0.5%`
-roll. Prerequisite gates, reset behavior, all profession mechanics, and every
-other perk effect remain deferred.
+roll. Source IDs `34` and `35` provide Merchant/Healer ownership to Shop
+license prerequisite checks. Selecting a profession perk grants neither quest
+completion nor a timed license. Shop implements the bounded Merchant
+qualification path; Doctor quests and medical treatment remain unimplemented.
+Reset behavior and other uncaptured prerequisite/effect rules remain deferred.
 
 ### 6.5 World-related skill and perk gaps
 
@@ -261,8 +270,54 @@ wiki observation.
 | Deferred profession progression | Successful fishing grows its profession counter per the user's confirmation; there is no initial fishing skill gate. Successful fishing/gathering/mining counters and their activity lifecycle belong to [Professions](professions.md), not ordinary allocatable peace skills. |
 
 Known-but-unimplemented effects and unresolved source coefficients are tracked
-separately. These entries do not expand the currently verified two-perk contract
+separately. These entries do not expand the currently bounded perk contract
 or automatically assign every gap to after MVP.
+
+### 6.6 Purchased licenses and Abilities
+
+The bottom-right `A` / Abilities link and the owner profile's Your licenses tab
+open `GET /character/licenses`. The controller resolves only the signed-in
+current character, authorizes ownership, and reads active `CharacterLicense`
+rows at one server timestamp. It shows at most 100 current grants, ordered by
+expiry and id, with snapshot name, kind, tier, and expiry. An empty collection
+shows `You have no licenses.` Query-supplied character or license ids cannot
+select another owner.
+
+Shop owns atomic purchase, funds, stock, prerequisites, and grant creation. The
+local grant stores a separate permission beginning at successful payment and
+lasting the described number of days. It creates no `InventoryItem` and adds no
+carried mass or occupied slot. This is a bounded local adaptation: the source
+shows a separate ownership section, but activation timing and carried-mass
+effects were not exercised. `[EVIDENCE]` Renewal, stacking, activation and
+expiry-cleanup parity remain open.
+
+At `starts_at <= now < expires_at`, a grant is current. At expiry it stops
+authorizing licensed actions, and the next server request omits it from this
+read-only list; its persisted purchase record remains. No cron/background job
+deletes grants, and this page does not poll or remove an already-rendered row
+at the deadline. Reload and login rebuild the list from persisted permissions
+without extending deadlines. Turbo snapshots are disabled on this surface,
+and the browser never decides license validity. Shop implements the
+published Merchant license-unlock path through Market acceptance, a 1,000-NV
+Shop receipt and Market completion. Its garment reward and the Doctor quest
+flows remain `[IMPL]` gaps; exact source dialogue and temporary garment details
+remain `[EVIDENCE]` gaps. Selecting either perk does not set the server-owned
+qualification flags.
+
+Four separate facts govern this handoff: a boolean Merchant/Healer perk,
+numeric profession proficiency, completed quest qualification, and an active
+timed license. Profession proficiency is not an ordinary allocatable skill or
+another name for the perk. Shop reads saved Trading proficiency for resale
+rates but does not grow it after sales. Doctor II/III purchase checks the
+Traumatologist completion flag; it does not independently check Doctor
+proficiency. The published `100` Doctor proficiency requirement belongs to
+entering that still-unimplemented quest, with equipment allowed to contribute.
+The Doctor wiki does not state an additional license-purchase quest gate for
+tier I; this does not implement or bypass the separate initial medical quest
+needed for the described treatment/crafting progression. See the
+[source prerequisite clarification](../design/reference/economy/observations/2026-09-09_licenses_and_shop_selling.md#profession-prerequisites-wiki-clarification-2026-09-10)
+and the [Shop runtime contract](shop_economy.md) for the license-specific rules
+and remaining gaps.
 
 ## 7. Authoritative data and presentation model
 
@@ -277,7 +332,9 @@ or automatically assign every gap to after MVP.
 | `SkillProgressionFormula` | Apply and reverse one preview spend | Four numeric rates, 25-level bands, and `0..100` boundary |
 | `PerkRegistry` | Launch perk identity and captured exclusion table | Only named/captured launch entries are selectable |
 | `PerkAllocation` | Validate and persist new perk ownership | Locks the character, spends only new selections, and rejects conflicts |
-| `CharacterPolicy` | Owner-only progression authorization | Signed-in user must own the requested character |
+| `CharacterPolicy` | Owner-only progression and license-page authorization | Signed-in user must own the requested character |
+| `CharacterLicense` | Purchased permission snapshots and interval | Separate from permanent perks and inventory; Shop owns grant creation |
+| `CharacterLicensesController` | Current-character license display | One active-at query, limit 100, no permission mutation |
 | `PlayerProfileHelper#profile_location` | HTML location and public fight-link formatting | Escapes zone/current-location labels, uses World `Presence#label`, and displays no raw coordinates |
 | Stimulus allocation controllers | Pending browser preview | May alter hidden inputs and display only; never saved authority |
 
@@ -363,6 +420,7 @@ The client disables Save until a preview exists, but that is usability only and 
 | `PATCH /characters/:id/skills` | Save numeric skill spends | Redirect or Turbo frame/flash replacement | Error redirect/flash; no intended mutation |
 | `GET /characters/:id/perks` | Render launch-safe binary perks | Perks page/frame | Authentication redirect, owner denial, or `404` |
 | `PATCH /characters/:id/perks` | Save new perk ownership | Redirect or Turbo frame/flash replacement | Allocation error redirect/flash; state preserved |
+| `GET /character/licenses` | Show current owned license grants | Read-only shell HTML | Authentication/owner denial; query ids cannot change owner |
 
 The allocation feature is authenticated HTML/Turbo. The public profile also offers an unversioned read-only JSON representation for internal/public consumption. There is no separately versioned progression API, so Swagger/rswag and blueprint coverage are not applicable.
 
@@ -427,7 +485,7 @@ Accessibility behavior:
 
 ## 11. Persistence and login resume
 
-Saved progression lives entirely on `Character` and survives reload, navigation, logout, and login. The feature stores no pending allocation draft and no feature-specific resume URL. Unsaved Stimulus preview state disappears on reload or when leaving the page.
+Saved allocations and point pools live on `Character`; purchased permissions live separately on `CharacterLicense`. Both survive reload, navigation, logout, and login. The feature stores no pending allocation draft and no feature-specific resume URL. Unsaved Stimulus preview state disappears on reload or when leaving the page.
 
 On login or return:
 
@@ -440,7 +498,7 @@ Arbitrary saved browser fields, translated labels, or profile URLs do not grant 
 
 ## 12. Authorization, trust boundaries, and concurrency
 
-- Devise protects all Stats, Skills, and Perks routes.
+- Devise protects Stats, Skills, Perks, and Your licenses routes.
 - `CurrentCharacterContext` resolves the signed-in user's playable character.
 - `CharacterPolicy#manage_progression?` requires ownership of the requested character.
 - `CharactersController` allowlists/normalizes stat and skill inputs; locked services recheck separate point pools.
@@ -482,9 +540,12 @@ Arbitrary saved browser fields, translated labels, or profile URLs do not grant 
 - The owner can allocate and permanently save additions to all five primary stats.
 - The owner can spend the correct combat or peace pool across all 29 captured numeric skills.
 - Numeric skill spends use the captured four-band rate and never exceed `100`.
-- The owner can spend perk points on `more_strength` or `careful_fighter`;
-  another save cannot reacquire either, Strength gains `floor(level / 2)`, and
-  shared fight wear chances are halved for Careful Fighter.
+- The owner can spend perk points on `more_strength`, `careful_fighter`,
+  `merchant`, or `healer`; another save cannot reacquire an owned perk. Strength
+  gains `floor(level / 2)`, shared fight wear chances are halved for Careful
+  Fighter, and profession perks feed explicit Shop license prerequisites.
+- Your licenses displays only current owned permissions, preserves grant
+  snapshots across catalog changes/login, and hides them exactly at expiry.
 - A level-0 starter receives exact catalog grants when configured solo-PvE XP crosses one or more complete thresholds.
 - Health/Knowledge allocation recalculates base maxima at `5/7` per point without healing, and mass uses the exact `5/10/10` formula.
 - Stat, skill, perk, and level transitions recheck the character under a row lock.
@@ -534,6 +595,7 @@ bundle exec rspec \
   spec/services/game/movement/travel_time_spec.rb \
   spec/services/players/progression/level_up_service_spec.rb \
   spec/requests/characters_spec.rb \
+  spec/requests/character_licenses_spec.rb \
   spec/requests/characters/skills_spec.rb \
   spec/requests/players_spec.rb \
   spec/system/skill_allocation_spec.rb \
@@ -558,12 +620,14 @@ There is no dedicated view spec for each allocation partial; request and system 
 
 - `config/routes.rb`
 - `app/controllers/characters_controller.rb`
+- `app/controllers/character_licenses_controller.rb`
 - `app/controllers/players_controller.rb`
 - `app/controllers/concerns/current_character_context.rb`
 
 ### Models and policies
 
 - `app/models/character.rb`
+- `app/models/character_license.rb`
 - `app/policies/character_policy.rb`
 
 ### Services, registries, and formulas
@@ -590,6 +654,7 @@ There is no dedicated view spec for each allocation partial; request and system 
 - `app/views/characters/skills.html.erb`
 - `app/views/characters/_skill_allocation.html.erb`
 - `app/views/characters/perks.html.erb`
+- `app/views/character_licenses/index.html.erb`
 - `app/views/characters/_perk_allocation.html.erb`
 - `app/javascript/controllers/stat_allocation_controller.js`
 - `app/javascript/controllers/skill_allocation_controller.js`
@@ -602,10 +667,11 @@ There is no dedicated view spec for each allocation partial; request and system 
 
 ### Content, configuration, seeds, and schema
 
-- `db/schema.rb`
+- `db/structure.sql`
 - `config/gameplay/character_progression.yml`
 - `db/migrate/20251121150000_create_characters_and_privacy_settings.rb`
 - `db/migrate/20260720090000_add_perks_to_characters.rb`
+- `db/migrate/20260909160000_create_character_licenses.rb`
 
 ### Integrated feature entry points
 
@@ -638,6 +704,8 @@ Character Progression owns saved stats, numeric skills, perks, and their allocat
 - `spec/services/game/movement/travel_time_spec.rb`
 - `spec/services/players/progression/level_up_service_spec.rb`
 - `spec/requests/characters_spec.rb`
+- `spec/requests/character_licenses_spec.rb`
+- `spec/models/character_license_spec.rb`
 - `spec/requests/characters/skills_spec.rb`
 - `spec/requests/players_spec.rb`
 - `spec/requests/outdoor_action_availability_spec.rb`

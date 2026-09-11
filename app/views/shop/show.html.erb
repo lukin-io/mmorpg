@@ -1,91 +1,72 @@
-<%
-  shop_filter_context = {
-    min_level: params[:min_level],
-    max_level: params[:max_level],
-    min_price: params[:min_price],
-    max_price: params[:max_price]
-  }.compact_blank
-%>
-
 <div class="nl-shop-page">
-  <div class="nl-shop-scene-viewport" aria-hidden="true">
-    <div class="nl-shop-scene">
-      <span class="nl-shop-scene__beam nl-shop-scene__beam--left"></span>
-      <span class="nl-shop-scene__beam nl-shop-scene__beam--right"></span>
-      <span class="nl-shop-scene__shelf nl-shop-scene__shelf--left"></span>
-      <span class="nl-shop-scene__shelf nl-shop-scene__shelf--right"></span>
-      <span class="nl-shop-scene__display nl-shop-scene__display--left"></span>
-      <span class="nl-shop-scene__display nl-shop-scene__display--right"></span>
-      <span class="nl-shop-scene__counter"></span>
-      <span class="nl-shop-scene__sign">SHOP</span>
-    </div>
-  </div>
+  <h1 class="sr-only">Shop</h1>
+  <%= render "shared/building_entrance", asset: "shop/interior.png" %>
 
   <div class="nl-shop-frame">
-    <div class="nl-shop-topline">
-      <div class="nl-shop-title">
-        <h1>Shop</h1>
-        <span><%= current_character.name %>[<%= current_character.level %>]</span>
-      </div>
-      <div class="nl-shop-controls">
-        <%= link_to shop_location_return_label, shop_location_return_path, class: "lbut", data: {turbo: false} %>
-        <%= link_to "Inventory", inventory_path, class: "lbut" %>
-        <%= link_to "Refresh", shop_path(mode: @mode, category: @category, **shop_filter_context), class: "lbut" %>
-      </div>
-    </div>
-
-    <div class="nl-shop-status-row">
-      <span>NV: <b><%= number_with_delimiter(@wallet.nv_balance) %></b></span>
-      <span>Mass: <b><%= @inventory.current_weight %>/<%= @inventory.max_weight %></b></span>
-      <span>Slots: <b><%= @shop_inventory_items.size %>/<%= @inventory.slot_capacity %></b></span>
-    </div>
-
     <nav class="nl-shop-tabs" aria-label="Shop mode">
       <% shop_mode_options.each do |key, label| %>
-        <% if @mode == key %>
-          <span class="nl-shop-tab nl-shop-tab--active" aria-current="page"><%= label %></span>
-        <% else %>
-          <%= link_to label,
-                      shop_path(mode: key, category: @category, **shop_filter_context),
-                      class: "nl-shop-tab" %>
-        <% end %>
+        <%= link_to label,
+                    shop_path(mode: key, category: @category, **shop_filter_context),
+                    class: ["nl-shop-tab", ("nl-shop-tab--active" if @mode == key)],
+                    aria: {current: ("page" if @mode == key)},
+                    data: {turbo_action: "advance"} %>
       <% end %>
     </nav>
 
     <% unless @mode == "licenses" %>
-      <nav class="nl-shop-categories" aria-label="Item category">
-        <% shop_category_options.each do |key, label| %>
-          <%= link_to shop_path(mode: @mode, category: key, **shop_filter_context),
-                      class: ["nl-shop-category", ("nl-shop-category--active" if @category == key)],
-                      title: label,
-                      aria: {label: label, current: (@category == key ? "page" : nil)} do %>
-            <span class="nl-shop-category__glyph" aria-hidden="true"><%= shop_category_glyph(key) %></span>
-            <span class="nl-shop-category__label"><%= label %></span>
+      <div class="nl-shop-filter-viewport">
+        <nav class="nl-shop-categories" aria-label="Item category">
+          <% shop_category_options.each do |key, label| %>
+            <%= link_to shop_path(mode: @mode, category: key, **shop_filter_context),
+                        class: ["nl-shop-category", ("nl-shop-category--active" if @category == key)],
+                        title: label,
+                        data: {turbo_action: "advance"},
+                        aria: {label: label, current: (@category == key ? "page" : nil)} do %>
+              <span class="nl-shop-category__icon" style="<%= shop_category_icon_style(key) %>" aria-hidden="true"></span>
+            <% end %>
           <% end %>
-        <% end %>
-      </nav>
+        </nav>
 
-      <%= form_with url: shop_path, method: :get, class: "nl-shop-filters", local: true do |f| %>
-        <%= f.hidden_field :mode, value: @mode %>
-        <%= f.hidden_field :category, value: @category %>
-        <span class="nl-shop-filter-label">Level</span>
-        <%= f.number_field :min_level, value: params[:min_level], min: 0, placeholder: "0", class: "nl-shop-mini-input", aria: {label: "Minimum level"} %>
-        <span aria-hidden="true">-</span>
-        <%= f.number_field :max_level, value: params[:max_level], min: 0, placeholder: "33", class: "nl-shop-mini-input", aria: {label: "Maximum level"} %>
-        <span class="nl-shop-filter-label">Price</span>
-        <%= f.number_field :min_price, value: params[:min_price], min: 0, placeholder: "0", class: "nl-shop-price-input", aria: {label: "Minimum price"} %>
-        <span aria-hidden="true">-</span>
-        <%= f.number_field :max_price, value: params[:max_price], min: 0, placeholder: "1000000", class: "nl-shop-price-input", aria: {label: "Maximum price"} %>
-        <%= f.submit "Apply", class: "lbut" %>
-      <% end %>
+        <%= form_with url: shop_path, method: :get, class: "nl-shop-filters", local: true, data: {turbo_action: "advance"} do |f| %>
+          <%= f.hidden_field :mode, value: @mode %>
+          <%= f.hidden_field :category, value: @category %>
+          <span class="nl-shop-filter-label">Level:</span>
+          <%= f.text_field :min_level, value: @catalog.filters[:min_level], size: 3, inputmode: "numeric", class: "nl-shop-mini-input", aria: {label: "Minimum level"} %>
+          <span aria-hidden="true">-</span>
+          <%= f.text_field :max_level, value: @catalog.filters[:max_level], size: 3, inputmode: "numeric", class: "nl-shop-mini-input", aria: {label: "Maximum level"} %>
+          <span class="nl-shop-filter-label nl-shop-filter-label--price">Price:</span>
+          <%= f.text_field :min_price, value: @catalog.filters[:min_price], size: 20, inputmode: "numeric", class: "nl-shop-price-input", aria: {label: "Minimum price"} %>
+          <span aria-hidden="true">-</span>
+          <%= f.text_field :max_price, value: @catalog.filters[:max_price], size: 20, inputmode: "numeric", class: "nl-shop-price-input", aria: {label: "Maximum price"} %>
+          <span>NV</span>
+          <%= f.submit "Apply", class: "invbut" %>
+        <% end %>
+      </div>
     <% end %>
 
     <div class="nl-shop-table-viewport">
-      <% if @mode == "sell" %>
+      <% unless @mode == "licenses" %>
+        <div class="nl-shop-status-row">
+          <div>You carry <b><%= number_with_precision(@wallet.nv_balance, precision: 2) %> NV</b> and items weighing: <b><%= number_with_precision(@inventory.current_weight, precision: 2) %></b>. Maximum weight: <b><%= shop_max_weight %></b></div>
+          <% if @shop_account %>
+            <div>Shop funds: <b><%= number_with_precision(@shop_account.nv_balance, precision: 2) %> NV</b></div>
+          <% end %>
+        </div>
+      <% end %>
+      <% if @mode == "licenses" %>
+        <%= render "shop/licenses", items: @shop_items %>
+      <% elsif @mode == "novice" && current_character.level >= 10 %>
+        <p class="nl-empty-note nl-shop-empty">This section is available only to players below level 10.</p>
+      <% elsif @mode == "sell" %>
         <%= render "shop/sell_table", items: @sell_items %>
       <% else %>
         <%= render "shop/buy_table", items: @shop_items %>
       <% end %>
     </div>
+    <% if @mode == "licenses" && Game::Shop::MerchantQualification.new(character: current_character).status.in?(%w[accepted paid]) %>
+      <div class="nl-shop-qualification">
+        <%= render "shop/merchant_qualification", location: :shop %>
+      </div>
+    <% end %>
   </div>
 </div>

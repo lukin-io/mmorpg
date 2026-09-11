@@ -24,6 +24,13 @@ RSpec.describe "Local chat browser buffer", type: :system, js: true do
     JS
   end
 
+  def wait_for_personal_event_stream
+    signed_name = Turbo::StreamsChannel.signed_stream_name([Chat::TimelineBroadcaster::PERSONAL_STREAM, user])
+    # Timeline HTML/polling can be ready before ActionCable confirms the
+    # separate personal-event subscription. Publish only after that handshake.
+    expect(page).to have_css("turbo-cable-stream-source[signed-stream-name='#{signed_name}'][connected]", visible: :all)
+  end
+
   it "retains delivered rows through movement, culls the former cell, and deduplicates polling" do
     visit world_path
     expect(page).to have_css("#chat_timeline[data-chat-poll-url-value]")
@@ -54,9 +61,13 @@ RSpec.describe "Local chat browser buffer", type: :system, js: true do
     find(".nl-chat-input-field").send_keys(:enter)
     expect(page).to have_content("Previous login row")
     create(:game_event, recipient: user, body: "Retained personal result")
+    old_session_cookie = page.driver.browser.manage.cookie_named(Rails.application.config.session_options.fetch(:key))
 
     accept_confirm { find(".nl-close-btn").click }
     expect(page).to have_current_path(new_user_session_path)
+    # Model an already-started map response restoring the authenticated cookie
+    # after logout. The first real sign-in must still reopen the closed login.
+    page.driver.browser.manage.add_cookie(old_session_cookie)
     fill_in "Email", with: user.email
     fill_in "Password", with: "Password123!"
     click_button "Enter"
@@ -76,6 +87,31 @@ RSpec.describe "Local chat browser buffer", type: :system, js: true do
     expect(ChatMessage.where(body: "%<Someone> confidential")).not_to exist
   end
 
+  it "refuses background authentication redirects instead of fetching another sign-in form" do
+    channel = Chat::ChannelRouter.new(user:).resolve(scope: :local)
+    visit chat_channel_path(channel)
+    expect(page).to have_css("#chat_timeline")
+    poll_chat
+    # Exercise a real redirect response as well as the request specs' 401 path.
+    allow(Devise).to receive(:http_authenticatable_on_xhr).and_return(false)
+    page.driver.browser.manage.delete_cookie(Rails.application.config.session_options.fetch(:key))
+    sign_in_requests = Queue.new
+    observer = lambda do |*arguments|
+      payload = arguments.last
+      if payload[:controller] == "UserSessionsController" && payload[:action] == "new"
+        sign_in_requests << true
+      end
+    end
+
+    ActiveSupport::Notifications.subscribed(observer, "process_action.action_controller") { poll_chat }
+
+    expect(Devise).to have_received(:http_authenticatable_on_xhr).at_least(:once)
+    expect(sign_in_requests).to be_empty
+    expect(page).to have_current_path(chat_channel_path(channel))
+    expect(page).to have_css("#chat_timeline")
+    expect(page).to have_no_css('input[name="user[password]"]')
+  end
+
   it "clears delivered rows while keeping subsequent chat and event delivery connected" do
     visit world_path
     expect(page).to have_css("#chat_timeline")
@@ -92,6 +128,7 @@ RSpec.describe "Local chat browser buffer", type: :system, js: true do
     expect(page).to have_css("#chat_timeline article", text: "Arrived after clear")
     expect(page).to have_no_content("Clear this delivered row")
 
+    wait_for_personal_event_stream
     Chat::EventPublisher.new.fight_finished!(recipient: user, experience: 11,
       event_key: "clear-chat:fight:#{user.id}")
     expect(page).to have_css("#chat_timeline article", text: "Combat experience gained: 11")
@@ -167,6 +204,7 @@ RSpec.describe "Local chat browser buffer", type: :system, js: true do
       timeline.dispatchEvent(new Event("scroll"))
     JS
 
+    wait_for_personal_event_stream
     Chat::EventPublisher.new.fight_finished!(recipient: user, experience: 12,
       event_key: "scroll-chat:fight:#{user.id}")
     expect(page).to have_css("#chat_timeline article", text: "Combat experience gained: 12")

@@ -4,34 +4,46 @@ require "securerandom"
 
 module Game
   module World
-    # Builds persisted action offers for the current authoritative tile state.
+    # Returns live offers for the current tile or linked-location surface.
+    # Serialized reads reuse exact unchanged actions without extending expiry;
+    # changed/unavailable actions are replaced or cancelled. Supplied tile state
+    # selects targets only: their current persisted rules are rechecked under
+    # the character lock, and a stale-position read cannot cancel newer offers.
     class ActionOfferBuilder
       def initialize(character:, position:, tile_state:, context: :tile)
         @character = character
         @position = position
+        @requested_coordinates = [position.zone_id, position.x, position.y]
         @tile_state = tile_state
         @context = context.to_sym
       end
 
       def call
-        cancel_open_offers!
+        character.with_lock do
+          @position = character.position&.reload
+          next [] unless position && requested_coordinates == [position.zone_id, position.x, position.y]
 
-        return location_feature_offers if context == :location
-
-        offers = []
-        offers << building_offer
-        offers.concat(local_action_offers)
-        offers.compact
+          @candidates = WorldActionOffer.live.at_tile(position.zone, position.x, position.y)
+            .where(character:).order(:id).to_a
+          offers = if context == :location
+            location_feature_offers
+          else
+            [building_offer, *local_action_offers].compact
+          end
+          cancel_obsolete_offers!(offers)
+          offers
+        end
       end
 
       private
 
-      attr_reader :character, :position, :tile_state, :context
+      attr_reader :character, :position, :tile_state, :context, :requested_coordinates, :candidates
 
-      def cancel_open_offers!
+      def cancel_obsolete_offers!(offers)
         WorldActionOffer
           .offered
           .where(character:)
+          .where.not(id: offers.map(&:id))
           .update_all(
             status: WorldActionOffer.statuses.fetch("cancelled"),
             updated_at: Time.current
@@ -39,7 +51,7 @@ module Game
       end
 
       def building_offer
-        building = tile_state.building
+        building = current_target(tile_state.building)
         return unless building&.can_enter?(character)
         return if fatigue_locked?("enter_building")
 
@@ -54,10 +66,10 @@ module Game
       end
 
       def local_action_offers
-        tile = tile_state.respond_to?(:tile) ? tile_state.tile : nil
+        tile = current_target(tile_state.respond_to?(:tile) ? tile_state.tile : nil)
         return [] unless tile
 
-        Array(tile_state.local_actions).filter_map do |local_action|
+        Array(tile.active_local_actions).filter_map do |local_action|
           local_action_type = local_action["type"]
           next unless MapTileTemplate.local_action_implemented?(local_action_type)
 
@@ -79,7 +91,7 @@ module Game
       end
 
       def location_feature_offers
-        building = tile_state.building
+        building = current_target(tile_state.building)
         return [] unless building&.location? && building.can_enter?(character)
 
         building.location_features.map do |feature|
@@ -97,6 +109,13 @@ module Game
       end
 
       def create_offer(action_type, target:, metadata: {})
+        metadata = metadata.stringify_keys.merge("target_revision" => target.updated_at.iso8601(6))
+        existing = candidates.find do |offer|
+          offer.action_type == action_type.to_s && offer.target_type == target.class.base_class.name &&
+            offer.target_id == target.id && offer.metadata == metadata
+        end
+        return existing if existing
+
         WorldActionOffer.create!(
           character:,
           zone: position.zone,
@@ -108,6 +127,12 @@ module Game
           expires_at: WorldActionOffer::OFFER_TTL.from_now,
           metadata:
         )
+      end
+
+      def current_target(target)
+        return unless target
+
+        target.class.find_by(id: target.id, zone: position.zone.name, x: position.x, y: position.y)
       end
 
       def fatigue_locked?(action_type)

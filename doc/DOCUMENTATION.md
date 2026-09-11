@@ -7,6 +7,14 @@ many competing documents.
 
 Neverlands remains the sole game-design authority.
 
+Modern adaptive presentation is a project requirement: preserve source-backed
+game behavior while making the UI usable across screen sizes and input modes.
+The canonical shared standards are
+[adaptive UI requirements](design/areas/game_client_layout.md#adaptive-ui-requirements)
+and [scene image specifications](ARTWORK.md#shared-scene-image-standard).
+Historical source measurements remain evidence; they do not prohibit these
+deliberate implementation improvements.
+
 ## 1. Truth layers and ownership
 
 | Layer | Canonical owner | Question it answers | Must not claim |
@@ -20,7 +28,7 @@ Neverlands remains the sole game-design authority.
 | Technical guidance | `doc/RUBY_ON_RAILS_GUIDE.md` | How should Rails/Hotwire code satisfy the contract? | Neverlands mechanics |
 | Original artwork production | `doc/ARTWORK.md`, with visual guides in `doc/artwork/` | Which style, exact prompts, visual inputs and packaging steps produced an illustration? | Gameplay rules or verified runtime completion |
 | Runtime authority | code, schema, config/seeds, specs | What currently executes and persists? | Product justification |
-| Session change history | Git and one consolidated `changelogs/**` record per repository-changing session | What changed across the session, why, and how was it verified? | Gameplay authority or a replacement for verification |
+| Optional change history | Git and justified `changelogs/**` notes | Why did a release/architecture change happen? | Workflow state |
 
 When layers disagree:
 
@@ -216,21 +224,12 @@ A moved observation may keep a short alias for historical links. The alias
 points to one canonical domain-scoped record and contains no independent
 evidence.
 
-### 4.9 Consolidated session changelog
+### 4.9 Optional change notes
 
-Every session that changes repository files, including documentation-only
-work, requires one record using `changelogs/CHANGELOG_TEMPLATE.md`. It covers
-the entire session, not just the latest turn or commit. Later verified work in
-the same session updates that record; historical records from other sessions
-remain historical. Read-only conversations require no changelog.
-
-Finalize it after all applicable checks pass, including required manual
-verification, following `AGENTS.md`. Required failed or pending checks keep the
-work incomplete and must be reported honestly. Then validate the final note
-and workflow documentation with `bin/verify docs`, repository-link review, and
-`git diff --check`. Writing the record alone does not require rerunning passed
-runtime checks. The changelog records context, outcomes, verification, and
-remaining gaps; it is not a receipt or state machine used to pass verification.
+Git is the default history. Use `changelogs/CHANGELOG_TEMPLATE.md` only for a
+user-requested record, release/rollout, or durable architectural decision that
+would otherwise be hard to discover. A note records context and verification;
+it is not a receipt, state machine, or prerequisite for `bin/verify`.
 
 ## 5. Neverlands copy boundary
 
@@ -240,6 +239,8 @@ Allowed to reproduce or adapt:
   typography, colors, and CSS-driven behavior;
 - game-domain terminology and local wording that preserves observed meaning;
 - responsive reflow of the same information/controls;
+- adaptive spacing, control sizing and image/target scaling under the shared
+  local requirements, preserving gameplay meaning and access;
 - project-owned CSS, semantic HTML, and text controls such as `X`, `>`, `+`,
   `-`, or short labels.
 
@@ -265,15 +266,17 @@ cannot communicate clearly.
 7. Extend the existing Rails/content/style pipeline; do not create duplicates.
 8. Add applicable focused tests while implementing.
 9. Review the stable diff using `doc/RUBY_ON_RAILS_GUIDE.md`.
-10. Verify desktop fidelity and required tablet/mobile usability when UI changed.
-11. Update the feature handbook after behavior is verified.
-12. Promote parity only when its bounded definition of Done is met.
-13. Pass proportional verification and all other applicable checks from
-    `AGENTS.md`.
-14. Finalize the one consolidated whole-session changelog, then validate final
-    documentation, links, and diff before reporting completion.
+10. Update the feature handbook to reflect verified behavior and pending checks.
+11. Run proportional automated verification from `AGENTS.md`.
+12. After automated checks pass, perform the final local browser flow and
+    applicable adaptive UI checks under
+    [manual browser acceptance](../AGENTS.md#manual-browser-acceptance).
+13. Record actual automated/manual results, tested sizes/input modes, and gaps;
+    audit any resulting documentation edits. Promote parity only when its
+    bounded definition of Done, including applicable browser acceptance, is met.
 
-No implementation receipt or profile declaration is part of this flow.
+No implementation receipt, profile declaration, or mandatory session changelog
+is part of this flow.
 
 ## 7. Adding a domain or document
 

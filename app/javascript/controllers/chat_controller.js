@@ -60,6 +60,9 @@ export default class extends Controller {
     try {
       const response = await fetch(this.pollUrlValue, {
         signal: request.signal,
+        // A background login redirect must not render a second sign-in form
+        // and race its anonymous CSRF cookie against the visible login page.
+        redirect: "error",
         headers: { "Accept": "text/html", "X-Requested-With": "XMLHttpRequest" }
       })
       if (!response.ok) return

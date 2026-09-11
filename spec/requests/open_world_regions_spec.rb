@@ -125,10 +125,18 @@ RSpec.describe "Open-world regions", type: :request do
       create(:map_tile_template, :with_resource_search, zone: region.name, x: position.x, y: position.y)
     end
 
-    it "cancels old offers and issues new keys when the cell state refreshes" do
+    it "preserves keys on an unchanged refresh and replaces them after an authored cell update" do
       get world_path
       first_offer = WorldActionOffer.offered.find_by!(character:, action_type: "search_resources")
+      deadline = first_offer.expires_at
 
+      get world_path
+
+      expect(first_offer.reload).to be_offered
+      expect(first_offer.expires_at).to eq(deadline)
+      expect(response.body).to include(first_offer.action_key)
+
+      tile.update!(metadata: tile.metadata.merge("travel_seconds" => 35))
       get world_path
 
       expect(first_offer.reload).to be_cancelled

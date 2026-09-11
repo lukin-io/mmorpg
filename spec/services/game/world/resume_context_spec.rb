@@ -37,7 +37,7 @@ RSpec.describe Game::World::ResumeContext do
 
     expect(character.reload.gameplay_context).to eq(
       "name" => "shop",
-      "params" => {"mode" => "buy", "category" => "all"}
+      "params" => {"mode" => "buy", "category" => "knives"}
     )
   end
 
@@ -55,7 +55,7 @@ RSpec.describe Game::World::ResumeContext do
       "name" => "shop",
       "params" => {
         "mode" => "buy",
-        "category" => "all",
+        "category" => "knives",
         "min_level" => "0",
         "max_price" => "0"
       }

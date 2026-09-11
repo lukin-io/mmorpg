@@ -22,16 +22,23 @@ Neverlands is the sole game-design authority.
 
 ## 2. Missing runtime contract
 
-`NOT_IMPLEMENTED`: no local Quest entry, dialogue, journal/task state,
-turn-in, reward, cancellation, or completion lifecycle is shipped.
+`NOT_IMPLEMENTED`: the general NPC Quest dialogue, journal/task, reward and
+cancellation lifecycle is absent. The Shop-owned Merchant qualification below
+is a bounded prerequisite and does not complete this broader contract.
 
-No Quest route, authoritative Quest state, mutation, persistence,
-feature-specific Turbo/Stimulus/CSS, or runtime spec is claimed.
+No general Quest engine, NPC dialogue route or journal runtime is claimed here.
 
 ## 3. Existing related handoffs
 
 World owns NPC placement and Arena Combat owns NPC fights. Their existing NPC
 behavior does not create Quest eligibility, progress, dialogue, or rewards.
+
+[Shop and Economy](shop_economy.md) owns the published Merchant license prerequisite:
+Market acceptance, a 1,000-NV Shop receipt and Market completion. That bounded
+persisted flow unlocks trading-license purchases; its temporary garment reward
+and original quest presentation remain incomplete. The September 9 economy
+observation owns its official-wiki evidence. This handoff does not supply a
+general NPC quest system or other profession quests.
 
 ## 4. Prerequisites for implementation
 

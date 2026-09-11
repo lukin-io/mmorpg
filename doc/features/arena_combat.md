@@ -1013,7 +1013,7 @@ World, Inventory, Progression, the game shell, jobs, and Action Cable.
 - `config/gameplay/outdoor_npcs.yml`
 - `config/gameplay/combat_actions.yml`
 - `db/seeds.rb`
-- `db/schema.rb`
+- `db/structure.sql`
 - `db/migrate/20260823220000_add_money_found_to_game_event_types.rb`
 
 ### Integrated feature entry points

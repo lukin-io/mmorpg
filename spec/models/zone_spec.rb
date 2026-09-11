@@ -80,6 +80,16 @@ RSpec.describe Zone, type: :model do
   end
 
   describe "city node identity" do
+    it "accepts authored building silhouettes and rejects unsafe landmark polygon data" do
+      zone = build(:zone, :city_node)
+      zone.metadata["city_presentation"] = Game::World::CityCatalog.presentation("main").deep_dup
+      expect(zone).to be_valid
+
+      zone.metadata["city_presentation"]["landmarks"]["tavern"]["polygon"] = [[0, 0], [100, 0], [0, -1]]
+      expect(zone).not_to be_valid
+      expect(zone.errors[:metadata]).to include("city landmarks polygon must contain 3 to 32 percentage points enclosing an area")
+    end
+
     it "exposes the stable node key and player-facing title" do
       node = build(:zone, :city_node)
 

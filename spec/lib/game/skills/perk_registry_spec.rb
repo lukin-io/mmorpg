@@ -5,7 +5,7 @@ require "rails_helper"
 RSpec.describe Game::Skills::PerkRegistry do
   describe ".all" do
     it "exposes only named source-backed perks" do
-      expect(described_class.all.keys).to eq(%i[more_strength careful_fighter])
+      expect(described_class.all.keys).to eq(%i[more_strength careful_fighter merchant healer])
       expect(described_class.find(:more_strength)).to include(
         source_id: 7,
         name: "More Strength",
@@ -25,6 +25,8 @@ RSpec.describe Game::Skills::PerkRegistry do
     it "looks up captured perks by Neverlands id" do
       expect(described_class.find_by_source_id(7)[:key]).to eq(:more_strength)
       expect(described_class.find_by_source_id(15)[:key]).to eq(:careful_fighter)
+      expect(described_class.find_by_source_id(34)[:key]).to eq(:merchant)
+      expect(described_class.find_by_source_id(35)[:key]).to eq(:healer)
       expect(described_class.find_by_source_id(999)).to be_nil
     end
   end

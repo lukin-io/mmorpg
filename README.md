@@ -56,6 +56,11 @@ has nearby seeded gate, village, resource, and NPC cases. See
 
 ## Development
 
+The schema is stored in `db/structure.sql` so fresh databases retain PostgreSQL
+Shop receipt triggers and constraints. Put compatible PostgreSQL `pg_dump` and
+`psql` client tools on `PATH` before running schema tasks. Existing databases
+advance through `bin/rails db:migrate`; do not reload a schema over player data.
+
 ```bash
 bundle install
 bin/rails db:prepare
@@ -72,19 +77,18 @@ bundle exec rspec spec/services/game/movement spec/requests/world_spec.rb spec/v
 
 Every authorized implementation, bug fix, behavior change, refactor, migration,
 or executable tooling change automatically follows the workflow in `AGENTS.md`.
-No magic prompt, YAML receipt, or profile list is needed. A request such as
-“implement inventory sorting using `AGENTS.md`” is enough. Every session that
-changes repository files requires one consolidated changelog after all
-applicable verification passes.
+No magic prompt, YAML receipt, profile list, or conversation changelog is
+needed. A request such as “implement inventory sorting using `AGENTS.md`” is
+enough.
 
-The workflow connects:
+The workflow connects evidence, implementation, and verification:
 
 ```text
 Neverlands evidence/design
   -> smallest Rails/Hotwire implementation
   -> applicable focused tests
-  -> synchronized canonical docs + proportional verification
-  -> consolidated whole-session changelog + final documentation validation
+  -> synchronized canonical docs + automated verification
+  -> final local browser acceptance for changed player flows
 ```
 
 ### What each file owns
@@ -102,7 +106,7 @@ Neverlands evidence/design
 | `bin/feature-doc-audit` | Objective feature metadata, ownership/path, template-placeholder, duplicate-title, and false-gap-claim checks. |
 | `bin/documentation-architecture-audit` | Domain registry, canonical link/path, alias, and evidence-placeholder checks. |
 | `.github/workflows/ci.yml` | Independent documentation, security, lint, non-system, and system-test jobs. |
-| `changelogs/CHANGELOG_TEMPLATE.md` | Required consolidated session record, finalized after all applicable verification passes. |
+| `changelogs/CHANGELOG_TEMPLATE.md` | Optional release/change/architecture note; never workflow state. |
 
 ### Automatic implementation flow
 
@@ -117,12 +121,11 @@ Neverlands evidence/design
    retry/concurrency coverage while implementing.
 5. Review the stable diff against the relevant Rails-guide questions.
 6. Update only canonical documents whose owned truth changed.
-7. Pass proportional verification and all other applicable checks, including
-   required manual checks.
-8. Finalize one changelog covering the whole session; update the same record
-   for later verified work in that session. Validate final documentation,
-   links, and diff, then report exact outcomes. Required failures or pending
-   checks keep the work incomplete.
+7. Run proportional automated verification.
+8. After those checks pass, personally exercise affected local UI flows under
+   [manual browser acceptance](AGENTS.md#manual-browser-acceptance), including
+   the applicable responsive and visual checks.
+9. Record automated and manual outcomes separately, with any remaining gaps.
 
 A planning-first request stops after evidence extraction, repository scan, and a
 file-by-file plan. Once the user approves it, implementation continues without a
@@ -200,10 +203,8 @@ Documentation is part of implementation, but updates are ownership-based:
 - operational guides are added only for real cross-feature procedures.
 
 Do not touch every document containing the same phrase. Historical records stay
-historical. Follow `AGENTS.md` for the mandatory whole-session changelog after
-all applicable checks pass, including for documentation-only changes. Read-only
-conversations need no changelog. Final note validation does not require rerunning
-passed runtime checks solely because the note was written.
+historical, and optional change notes are created only when a release, rollout,
+user request, or durable architectural decision benefits from one.
 
 ### Technical acceptance in one paragraph
 

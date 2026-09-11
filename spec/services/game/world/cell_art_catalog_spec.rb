@@ -5,6 +5,143 @@ require "rails_helper"
 RSpec.describe Game::World::CellArtCatalog do
   before { described_class.reload! }
 
+  describe ".resolve_for_tile" do
+    let(:zone) do
+      Zone.new(name: "Outpost Surroundings", location_type: "outdoor", width: 1000, height: 1000,
+        metadata: {"source_map" => "m_1001_999"})
+    end
+
+    it "resolves every sparse starter coordinate to its own continuous landscape slice without SQL" do
+      region = zone
+      queries = []
+      measured_thread = Thread.current
+      # Pool maintenance can emit SQL on another thread. Keep every SQL event
+      # from this synchronous lookup, including schema/setup statements.
+      subscriber = lambda do |*arguments|
+        queries << arguments.last.fetch(:sql) if Thread.current.equal?(measured_thread)
+      end
+      presentations = []
+      ActiveSupport::Notifications.subscribed(subscriber, "sql.active_record") do
+        (0..20).each do |x|
+          (2..14).each do |y|
+            art = described_class.resolve_for_tile(nil, zone: region, x:, y:)
+            expect(art).to have_attributes(key: "forpost_starter", column: x, row: y - 2,
+              asset: "world/cells/forpost-starter/#{x}_#{y - 2}.png")
+            presentations << art.asset
+          end
+        end
+      end
+
+      expect(presentations.uniq.size).to eq(273)
+      expect(queries).to be_empty
+    end
+
+    it "resolves all 39 surveyed western margin cells without loading or extending gameplay records" do
+      region = zone
+      queries = []
+      measured_thread = Thread.current
+      subscriber = lambda do |*arguments|
+        queries << arguments.last.fetch(:sql) if Thread.current.equal?(measured_thread)
+      end
+      presentations = []
+      ActiveSupport::Notifications.subscribed(subscriber, "sql.active_record") do
+        (-3..-1).each do |x|
+          (2..14).each do |y|
+            art = described_class.resolve_for_tile(nil, zone: region, x:, y:)
+            expect(art).to have_attributes(key: "forpost_starter_west", column: x + 3, row: y - 2,
+              asset: "world/cells/forpost-starter-west/#{x + 3}_#{y - 2}.png", physical_slice: true,
+              landmarks_in_art: false)
+            presentations << art.asset
+          end
+        end
+      end
+
+      expect(presentations.uniq.size).to eq(39)
+      expect(queries).to be_empty
+      expect(region).to have_attributes(width: 1000, height: 1000)
+    end
+
+    it "preserves explicit valid art at the western margin and fails closed for invalid references" do
+      %w[forpost_terrain forpost_starter forpost_starter_west].each do |key|
+        reference = {"key" => key, "column" => 1, "row" => 1}
+        expect(described_class.resolve_for_tile(reference, zone:, x: -1, y: 9)).to have_attributes(key:, column: 1, row: 1)
+      end
+      ["malformed", {"key" => "unknown"}, {"key" => "forpost_starter_west", "column" => 3}].each do |reference|
+        expect(described_class.resolve_for_tile(reference, zone:, x: -1, y: 9)).to be_nil
+      end
+    end
+
+    it "uses the same coordinate default for the two retired starter-art defaults" do
+      %w[forpost_terrain forpost_pond].each do |key|
+        art = described_class.resolve_for_tile({"key" => key, "column" => 1, "row" => 1}, zone:, x: 11, y: 9)
+        expect(art).to have_attributes(key: "forpost_starter", column: 11, row: 7)
+        expect(art.painted_building?("outpost_east_gate")).to be(true)
+        expect(art.painted_building?("moved_gate")).to be(false)
+      end
+    end
+
+    it "preserves independently authored art and deliberately edited starter coordinates" do
+      config = described_class.config.deep_dup
+      config["managed_art"] = config.fetch("forpost_terrain").deep_dup
+      allow(described_class).to receive(:config).and_return(config)
+      ["managed_art", "forpost_starter"].each do |key|
+        art = described_class.resolve_for_tile({"key" => key, "column" => 3, "row" => 4}, zone:, x: 11, y: 9)
+        expect(art).to have_attributes(key:, column: 3, row: 4)
+      end
+    end
+
+    it "does not replace an explicit invalid reference with a different semantic artwork selection" do
+      ["malformed", {"key" => "missing_custom_art"}, {"key" => "forpost_starter", "column" => 21}].each do |reference|
+        expect(described_class.resolve_for_tile(reference, zone:, x: 11, y: 9)).to be_nil
+      end
+    end
+
+    it "does not extend the starter illustration outside its captured rectangle" do
+      [[-4, 9], [21, 9], [-1, 1], [-1, 15], [11, 1], [11, 15], [nil, 9], [11, "9"]].each do |x, y|
+        expect(described_class.resolve_for_tile(nil, zone:, x:, y:)).to be_nil
+      end
+      reference = {"key" => "forpost_terrain", "column" => 1, "row" => 1}
+      expect(described_class.resolve_for_tile(reference, zone:, x: 21, y: 9)).to have_attributes(key: "forpost_terrain")
+    end
+
+    it "requires the canonical region name, type, bounds and source identity" do
+      [{name: "Another region"}, {location_type: "city"}, {width: 999}, {height: 999},
+        {metadata: {"source_map" => "another_source"}}].each do |attributes|
+        other = zone.dup
+        other.assign_attributes(attributes)
+        expect(described_class.resolve_for_tile(nil, zone: other, x: 11, y: 9)).to be_nil
+        expect(described_class.resolve_for_tile(nil, zone: other, x: -1, y: 9)).to be_nil
+      end
+      expect(described_class.resolve_for_tile(nil, zone: nil, x: 11, y: 9)).to be_nil
+    end
+
+    it "fails closed for the starter default instead of restoring a legacy atlas when its catalog is unavailable" do
+      config = described_class.config.deep_dup.except("forpost_starter")
+      allow(described_class).to receive(:config).and_return(config)
+      reference = {"key" => "forpost_terrain", "column" => 1, "row" => 1}
+
+      expect(described_class.resolve_for_tile(reference, zone:, x: 11, y: 9)).to be_nil
+      expect(described_class.resolve_for_tile(nil, zone:, x: 11, y: 9)).to be_nil
+    end
+
+    it "does not substitute a legacy atlas when the exact starter PNG is missing" do
+      allow(described_class).to receive(:asset_exists?).and_call_original
+      allow(described_class).to receive(:asset_exists?).with("world/cells/forpost-starter/11_7.png").and_return(false)
+      reference = {"key" => "forpost_terrain", "column" => 1, "row" => 1}
+
+      expect(described_class.resolve_for_tile(reference, zone:, x: 11, y: 9)).to be_nil
+      expect(described_class.resolve(reference)).to have_attributes(key: "forpost_terrain")
+    end
+
+    it "does not substitute the western master or another cell when a margin PNG is missing" do
+      allow(described_class).to receive(:asset_exists?).and_call_original
+      allow(described_class).to receive(:asset_exists?).with("world/cells/forpost-starter-west/2_7.png").and_return(false)
+
+      expect(described_class.resolve_for_tile(nil, zone:, x: -1, y: 9)).to be_nil
+      expect(described_class.resolve("key" => "forpost_starter_west", "column" => 2, "row" => 7)).to be_nil
+    end
+  end
+
   describe ".resolve" do
     let(:valid_definition) do
       {
@@ -173,14 +310,10 @@ RSpec.describe Game::World::CellArtCatalog do
         )
       end
 
-      it "recovers the matching master crop when an individual PNG is absent" do
+      it "does not load the authoring master when an individual PNG is absent" do
         allow(described_class).to receive(:asset_exists?).with(slice_asset).and_return(false)
 
-        expect(described_class.resolve(reference)).to have_attributes(
-          asset: "world/forpost-terrain.png", column: 7, row: 9,
-          sheet_width: 1000, sheet_height: 1000, background_x: -700, background_y: -900,
-          physical_slice: false, landmarks_in_art: true
-        )
+        expect(described_class.resolve(reference)).to be_nil
       end
 
       it "rejects unsafe or malformed directories and requests outside the master grid" do
@@ -194,6 +327,7 @@ RSpec.describe Game::World::CellArtCatalog do
       end
 
       it "uses only a strictly boolean catalog landmark flag, ignoring metadata overrides" do
+        allow(described_class).to receive(:asset_exists?).with(slice_asset).and_return(true)
         ["true", 1, nil].each do |invalid|
           slice_definition["landmarks_in_art"] = invalid
           expect(described_class.resolve(reference)).to be_nil
@@ -203,15 +337,65 @@ RSpec.describe Game::World::CellArtCatalog do
         slice_definition["landmarks_in_art"] = true
         expect(described_class.resolve(reference.merge("landmarks_in_art" => false,
           "slices_directory" => "world/attacker", "asset" => "world/attacker.png"))).to have_attributes(
-          landmarks_in_art: true, asset: "world/forpost-terrain.png"
+          landmarks_in_art: true, asset: slice_asset
         )
       end
 
-      it "requires the safe master asset even when a cell PNG exists" do
+      it "resolves the physical PNG without depending on its authoring master being deployed" do
         allow(described_class).to receive(:asset_exists?).with(slice_asset).and_return(true)
         allow(described_class).to receive(:asset_exists?).with("world/forpost-terrain.png").and_return(false)
 
-        expect(described_class.resolve(reference)).to be_nil
+        expect(described_class.resolve(reference)).to have_attributes(asset: slice_asset, physical_slice: true)
+      end
+
+      context "with optional high-density cell PNGs" do
+        let(:high_density_asset) { "world/cells/spec-starter-2x/7_9.png" }
+
+        before do
+          slice_definition["high_density_slices_directory"] = "world/cells/spec-starter-2x"
+          allow(described_class).to receive(:asset_exists?).with(slice_asset).and_return(true)
+          allow(described_class).to receive(:asset_exists?).with(high_density_asset).and_return(true)
+        end
+
+        it "offers the same coordinate at 2x without changing logical cell or background geometry" do
+          expect(described_class.resolve(reference)).to have_attributes(
+            asset: slice_asset, high_density_asset:, column: 7, row: 9,
+            cell_width: 100, cell_height: 100, sheet_width: 100, sheet_height: 100,
+            background_x: 0, background_y: 0, physical_slice: true
+          )
+        end
+
+        it "retains the mandatory 1x image when the optional 2x image is missing" do
+          allow(described_class).to receive(:asset_exists?).with(high_density_asset).and_return(false)
+
+          expect(described_class.resolve(reference)).to have_attributes(asset: slice_asset, high_density_asset: nil)
+        end
+
+        it "rejects a missing base cell even when the high-density PNG exists" do
+          allow(described_class).to receive(:asset_exists?).with(slice_asset).and_return(false)
+
+          expect(described_class.resolve(reference)).to be_nil
+        end
+
+        it "rejects unsafe high-density directories and density configuration for nonsliced sheets" do
+          [nil, false, "", "/world/cells", "world/../cells", "world//cells", "world/cells/", "world/cells.png"].each do |directory|
+            slice_definition["high_density_slices_directory"] = directory
+            expect(described_class.resolve(reference)).to be_nil
+          end
+          slice_definition["high_density_slices_directory"] = "world/cells/spec-starter-2x"
+          slice_definition.delete("slices_directory")
+
+          expect(described_class.resolve(reference)).to be_nil
+        end
+
+        it "ignores per-tile density paths and returns no enhanced image for ordinary catalog entries" do
+          untrusted = reference.merge("high_density_slices_directory" => "world/attacker",
+            "high_density_asset" => "world/attacker.png", "cell_width" => 200)
+
+          expect(described_class.resolve(untrusted)).to have_attributes(high_density_asset:, cell_width: 100)
+          slice_definition.delete("high_density_slices_directory")
+          expect(described_class.resolve(untrusted)).to have_attributes(asset: slice_asset, high_density_asset: nil)
+        end
       end
     end
   end

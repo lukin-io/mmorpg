@@ -16,6 +16,7 @@ class TileBuilding < ApplicationRecord
   LOCATION_KEY_FORMAT = /\A[a-z0-9_-]+\z/
 
   belongs_to :destination_zone, class_name: "Zone", inverse_of: :destination_tile_buildings, optional: true
+  has_one :shop_account, as: :location, dependent: :restrict_with_exception
 
   validates :zone, :x, :y, :building_key, :name, presence: true
   validates :building_type, inclusion: {in: BUILDING_TYPES}

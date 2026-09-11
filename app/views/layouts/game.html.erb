@@ -5,8 +5,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#fcfaf3">
-  <% if @active_airship_journey || (controller_name == "world" && @zone&.outdoor?) %>
-    <%# Cached offers and acquisition timestamps cannot restore current travel. %>
+  <% if @active_airship_journey || controller_name == "character_licenses" || (controller_name == "world" && @zone&.outdoor?) %>
+    <%# Cached offers, license expiry and acquisition timestamps require a fresh read. %>
     <meta name="turbo-cache-control" content="no-cache">
   <% end %>
   <%= csrf_meta_tags %>
@@ -59,7 +59,7 @@
               class: "nl-nav-link nl-nav-link--button",
               data: {game_layout_target: "worldNavigation"},
               disabled: world_actions_locked,
-              form: {class: "nl-nav-action-form"} %>
+              form: {class: "nl-nav-action-form", data: {turbo_frame: ("main_content" if controller_name == "shop")}} %>
         <% end %>
         <% if @active_airship_journey %>
           <% unless controller_name == "airships" %>
@@ -75,7 +75,7 @@
           <% end %>
         <% elsif controller_name == "world_locations" %>
           <%= render "world_locations/navigation" %>
-        <% elsif controller_name == "shop" && @shop_parent_location %>
+        <% elsif controller_name == "shop" %>
           <%= link_to shop_location_return_label, shop_location_return_path,
               class: "nl-nav-link", data: {turbo_frame: "_top"} %>
         <% else %>
@@ -194,14 +194,16 @@
 
     <div class="nl-status-icons">
       <span class="nl-time-display"><%= Time.current.strftime("%H:%M:%S") %></span>
-      <button type="button" class="nl-chat-tool nl-chat-tool--sound" aria-label="Player actions" title="Player actions">...</button>
+      <% if current_character %>
+        <%= link_to "A", character_licenses_path, class: "nl-chat-tool nl-chat-tool--abilities", aria: {label: "Abilities"}, title: "Abilities", data: {turbo_frame: "_top"} %>
+      <% end %>
     </div>
   </footer>
 
   <%# Flash messages %>
   <div class="nl-flash-container" id="flash">
     <% flash.to_hash.except("world_action_result", "world_action_result_offer_id").each do |type, message| %>
-      <div class="nl-flash nl-flash--<%= type %>"><%= message %></div>
+      <%= render "shared/flash", type:, message: %>
     <% end %>
   </div>
 

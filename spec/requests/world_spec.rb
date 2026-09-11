@@ -147,12 +147,12 @@ RSpec.describe "World", type: :request do
       end
 
 
-      it "renders the captured fifteen-by-nine buffer around a thirteen-by-seven viewport" do
+      it "bootstraps a small bounded buffer before the browser reports its viewport" do
         get world_path
 
         document = Nokogiri::HTML(response.body)
-        expect(document.css(".nl-map-tile").size).to eq(135)
-        expect(response.body).to include("world/forpost-terrain", "background-size: 1000px 1000px")
+        expect(document.css(".nl-map-tile").size).to eq(35)
+        expect(document.css(".nl-map-tile").map { |cell| cell["style"] }).to all(eq(""))
         expect(response.body).not_to include("neverlands_outskirts")
       end
 
@@ -176,7 +176,7 @@ RSpec.describe "World", type: :request do
           "background-size: 1000px 1000px"
         )
         expect(fallback_cell["data-cell-art-key"]).to eq("")
-        expect(fallback_cell["style"]).to include("world/forpost-terrain", "background-image", "background-size: 1000px 1000px")
+        expect(fallback_cell["style"]).to eq("")
       end
 
       it "uses the regional fallback for malformed legacy cell-art metadata" do
@@ -190,7 +190,7 @@ RSpec.describe "World", type: :request do
 
         cell = Nokogiri::HTML(response.body).at_css("#tile_4_5")
         expect(cell["data-cell-art-key"]).to eq("")
-        expect(cell["style"]).to include("world/forpost-terrain", "background-image", "background-size: 1000px 1000px")
+        expect(cell["style"]).to eq("")
       end
 
 
@@ -200,10 +200,10 @@ RSpec.describe "World", type: :request do
         get world_path
 
         document = Nokogiri::HTML(response.body)
-        expect(document.css(".nl-map-tile").size).to eq(135)
+        expect(document.css(".nl-map-tile").size).to eq(35)
         expect(document.css(".nl-map-tile--outside")).not_to be_empty
-        expect(response.body).to include('id="tile_-7_-4"')
-        expect(response.body).to include('style="left: 600px; top: 300px;"')
+        expect(response.body).to include('id="tile_-2_-3"')
+        expect(response.body).to include('style="left: 100px; top: 200px;"')
       end
 
       it "includes available tile indicators for adjacent tiles" do
@@ -468,11 +468,10 @@ RSpec.describe "World", type: :request do
       create_explicit_tiles(zone, x_range: 8..12, y_range: 8..12)
     end
 
-    it "renders a fifteen-by-nine buffer around the player" do
+    it "renders a five-by-seven bootstrap buffer around the player" do
       get world_path
 
-      expect(response.body).to include("tile_3_6").or include("data-x=\"3\"")
-      expect(response.body).to include("tile_17_14").or include("data-x=\"17\"")
+      expect(response.body).to include('id="tile_8_7"', 'id="tile_12_13"')
     end
 
     it "marks the current player position" do

@@ -17,11 +17,6 @@ class WorldController < ApplicationController
 
   layout "game"
 
-  # The live world keeps one native 100px buffer cell outside a 13x7 desktop
-  # viewport. Narrow clients retain this 15x9 surface and pan it responsively.
-  MAP_RENDER_X_RADIUS = Game::World::MapBuffer::X_RADIUS
-  MAP_RENDER_Y_RADIUS = Game::World::MapBuffer::Y_RADIUS
-
   before_action :ensure_active_character!
   before_action :ensure_character_position!
   before_action :set_position
@@ -328,6 +323,7 @@ class WorldController < ApplicationController
     @tile = current_tile
     @map_buffer = Game::World::MapBuffer.new(
       position: @position,
+      columns: params[:map_columns], rows: params[:map_rows],
       token: (params[:map_buffer] if request.format.turbo_stream?)
     ).call
     @nearby_tiles = @map_buffer.rows

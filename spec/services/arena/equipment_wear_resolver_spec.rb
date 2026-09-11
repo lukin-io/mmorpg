@@ -26,6 +26,21 @@ RSpec.describe Arena::EquipmentWearResolver do
     expect(participation.reload.metadata.dig("equipment_wear", "item_ids")).to eq([item.id])
   end
 
+  it "preserves a durability snapshot committed after wear selected an item" do
+    participation
+    allow(rng).to receive(:rand).with(10_000) do
+      item.update!(properties: {"max_durability" => 30, "current_durability" => 12, "bound_note" => "retained"})
+      template.update!(durability_max: 20)
+      0
+    end
+
+    result = described_class.new(match:, rng:).call.sole
+
+    expect(result.item_ids).to eq([item.id])
+    expect(item.reload).to have_attributes(current_durability: 11, max_durability: 30)
+    expect(item.properties).to include("bound_note" => "retained")
+  end
+
   it "uses two percent for a wilderness victory and zero for an arena victory" do
     participation.update!(result: :victory)
     allow(rng).to receive(:rand).with(10_000).and_return(9_999)

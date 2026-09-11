@@ -2,7 +2,7 @@
 
 **Full-stack Ruby, Rails, and Hotwire refactoring, maintainability, correctness, and performance guide**
 
-- Updated: 2026-08-26
+- Updated: 2026-09-10
 - Status: subordinate technical guide
 - Scope: Ruby 4.0 and Rails 8.1 monolith; HTML, Turbo, and Stimulus are the primary player surface; JSON is a limited secondary integration surface
 - Primary use: new features, changes to existing features, bug fixes, and refactors
@@ -17,8 +17,11 @@ If the two documents conflict, follow `AGENTS.md`.
 
 Neverlands live behavior and preserved source material remain the only
 game-design authority. This guide can answer how to implement verified behavior
-in Rails, but it cannot justify an invented mechanic, location, action, balance
-value, or visual convention.
+in Rails, but it cannot justify an invented mechanic, location, action or balance
+value. Project-owned adaptive presentation follows the approved
+[UI requirements](design/areas/game_client_layout.md#adaptive-ui-requirements)
+and [image standards](ARTWORK.md#shared-scene-image-standard); it need not copy
+the source's fixed desktop implementation.
 
 The goal is not more abstraction. The goal is changeability: future changes
 should be local, safe, testable, understandable, and no slower by default.
@@ -57,7 +60,9 @@ Default direction:
   IO, browser-owned game state, and service-object soup;
 - add applicable tests, then update the canonical feature handbook after
   implementation is verified;
-- run the repository's real `bin/verify` and feature-document checks.
+- run the repository's real `bin/verify` and feature-document checks, then
+  perform [final local browser acceptance](../AGENTS.md#manual-browser-acceptance)
+  for changed UI flows before completion.
 
 ## 2. How to use this guide
 
@@ -77,8 +82,12 @@ For a new feature, bug fix, behavior change, or refactor:
    lifecycle findings before final verification.
 8. Update canonical documentation only where its owned truth changed, and
    update the feature handbook after implementation checks pass.
-9. Run the proportional `bin/verify` profile and report exact results using the
-   format required by `AGENTS.md`.
+9. Run the proportional `bin/verify` profile.
+10. After automated checks pass, perform
+    [final local browser acceptance](../AGENTS.md#manual-browser-acceptance)
+    for the changed UI scope.
+11. Record and report exact automated/manual results as required by `AGENTS.md`,
+    and audit any resulting documentation edits.
 
 Feature-specific examples in this document are illustrative. Do not copy their
 names, content, or mechanics into unrelated features without Neverlands
@@ -251,7 +260,7 @@ Before changing a feature, identify what applies:
 | Timing/randomness | server timestamps, expiry boundary, persisted duration, seeded RNG |
 | JSON | status and shape only for endpoints that actually support JSON |
 | Background/live update | job retry behavior, broadcast target, committed state |
-| Presentation | Neverlands-backed geometry, retained assets, accessibility behavior |
+| Presentation | Adopted local layout/geometry contracts, project-owned artwork, adaptive and accessibility behavior |
 
 A refactor must preserve applicable contracts unless the requirement explicitly
 changes them. Characterization specs are appropriate when behavior is legacy,
@@ -565,9 +574,10 @@ cleanup.
   subscription, resize listener, or countdown.
 
 Use `requestAnimationFrame` after connect or stream rendering when measurements
-depend on final layout. The World, City, and linked-location controllers use
-this pattern to center fixed-pixel scenes after insertion. Responsive resize
-handlers must be removable and must not change authoritative scene geometry.
+depend on final layout. World, City and linked locations own their appropriate
+centering, scaling or panning behavior on an authored coordinate plane.
+Responsive resize handlers must be removable, keep artwork and targets aligned,
+and never change authoritative game coordinates or submit gameplay actions.
 
 Do not rely on in-memory controller fields surviving a Turbo replacement.
 Reconstruct presentation from typed values, current DOM, or a fresh server
@@ -632,7 +642,7 @@ Use these existing boundaries instead of creating a parallel client path:
 | --- | --- | --- | --- |
 | Authenticated shell | `layouts/game`, `main_content`, `available-actions`, lazy mixed chat/game-event history, and bounded controller-prepared shell state | focus, local preferences, presence refresh, and timeline presentation | character/location state, event audience/body, or shell-wide database retrieval |
 | Outdoor World | `WorldController` plus movement/action services; coherent streams for `game-map`, `location-info`, `available-actions`, and `flash` | submit an opaque offered move, center/pan, animate server timing, and reload at expiry | reachability, travel duration, offer creation, or movement completion |
-| City and linked locations | server-rendered hotspot/feature forms backed by character-owned offers | native-pixel centering, tooltips, keyboard/pointer presentation | whether a hotspot exists, is accessible, or changes location |
+| City and linked locations | server-rendered hotspot/feature forms backed by character-owned offers | authored-plane scaling/centering/panning, tooltips, keyboard/pointer presentation | whether a hotspot exists, is accessible, or changes location |
 | Inventory and progression | inventory/progression services plus multi-target streams and server-rendered partials | selection and allocation previews, keyboard state, and `requestSubmit()` | item ownership, equip/use result, point balance, or derived final stats |
 | Chat and presence | policy/dispatcher, audience-scoped `Chat::Timeline`, stable-key `Chat::EventPublisher`, and signed after-commit Turbo streams | input/focus, auto-scroll, local menu, and refresh presentation | message permission, event audience/body, ignore/privacy rules, or arbitrary message/event HTML |
 | Arena/Fight | combat services, typed per-NPC loot awarder, jobs, authorized channels, broadcaster payloads, and state snapshot | composer preview, countdown, log/vitals/AP DOM patches, and reconnect request | combat resolution, loot roll/grant, AP validation, timeout result, target validity, or victory |
@@ -651,10 +661,20 @@ unrelated feature diff.
 CSS owns presentation, not authority. Geometry may display a map or hotspot but
 cannot decide whether a move or entry is valid.
 
-Preserve retained Neverlands-backed assets. New source-backed art belongs under
-the responsible asset/config boundary with validation and asset coverage. Use
-Propshaft-compatible paths and do not introduce a second frontend bundler
-without a demonstrated need.
+Preserve retained project-owned artwork unless its replacement is in scope.
+Source-backed subjects use original art under the responsible asset/config
+boundary, following [ARTWORK.md](ARTWORK.md). Neverlands-owned images remain
+reference evidence only. Use Propshaft-compatible paths and do not introduce a
+second frontend bundler without a demonstrated need.
+
+For adaptive UI, prefer CSS grid/flex, wrapping and bounded fluid dimensions;
+keep overflow owned by the component that needs it. Read the canonical
+[adaptive requirements](design/areas/game_client_layout.md#adaptive-ui-requirements)
+before deciding to scale, crop or scroll. Reuse the existing City/entrance
+consumer for its shared image profile. An observer may measure real layout
+when CSS cannot express the requirement; it must not create a resize feedback
+loop or a duplicate mobile state pipeline. Declare intrinsic image dimensions
+or aspect ratio so loading does not unexpectedly displace controls.
 
 ### 9.11 Accessibility and resilience
 
@@ -681,7 +701,7 @@ Use layered coverage rather than testing private JavaScript methods:
 - Service/job/channel specs assert that broadcasts happen after the owning
   transition and contain the required scoped event/record fields.
 - System specs cover the meaningful browser contract: form submission,
-  Turbo replacement/reconnect, keyboard behavior, responsive panning,
+  Turbo replacement/reconnect, keyboard behavior, adaptive reflow/scale/panning,
   countdown/state refresh, and HTML fallback where supported.
 
 Do not assert an entire rendered page when the contract is a frame id and three
@@ -1312,19 +1332,16 @@ Implementation documentation follows `AGENTS.md`:
    verified behavior or ownership changed;
 6. run `bin/feature-doc-audit` and, when documentation architecture changed,
    `bin/documentation-architecture-audit`;
-7. pass the proportional completion profile and all other applicable checks,
-   including required manual verification;
-8. finalize the mandatory consolidated changelog for the whole session, then
-   validate final documentation, links, and diff and report exact outcomes.
+7. run the proportional automated completion profile;
+8. after it passes, personally exercise the changed local UI flow under
+   [manual browser acceptance](../AGENTS.md#manual-browser-acceptance);
+9. record and report automated and manual outcomes separately, including any
+   unverified scope, and audit resulting documentation edits.
 
-Every repository-changing session, including documentation-only work, uses
-one `changelogs/CHANGELOG_TEMPLATE.md` record under the rules in `AGENTS.md`.
-Later verified work in the same session updates that record. Read-only
-conversations need no changelog. Required failed or pending checks keep the
-work incomplete. Writing the final record alone does not require repeating
-passed runtime checks; validate the final documentation with `bin/verify docs`,
-repository-link review, and `git diff --check`. The record is history, not a
-receipt or state machine used to make verification pass.
+Git is the default history. Use `changelogs/CHANGELOG_TEMPLATE.md` only when a
+release, rollout, explicit user request, or durable architectural decision
+benefits from a standalone note. It is not workflow state or a verification
+gate.
 
 When one shipped operational workflow crosses several feature owners, update or
 create the responsible `doc/guides/**` runbook as routed by
@@ -1362,9 +1379,11 @@ bin/verify fast
 bin/verify full
 ```
 
-Use `full` when required by `AGENTS.md`, including process/verification contract
-changes, broad cross-feature changes, release/push verification, or explicit
-user request.
+Choose the completion profile by the scope and risk in `AGENTS.md`; use `full`
+for broad/high-risk runtime changes, material migration risk, dependencies,
+release readiness, or an explicit user request. Documentation-only workflow
+edits use `bin/verify docs`; executable process-tooling changes also need their
+applicable focused checks.
 
 Use the documented audit commands only; do not invent similarly named
 verification commands.
@@ -1413,7 +1432,9 @@ replacing one large object with dozens of one-method classes.
 ### 23.5 Verify progressively
 
 Run focused specs and lint after meaningful changes. Recheck the player/runtime
-contract, then run the required completion profile.
+contract, then run the required completion profile. After it passes, complete
+[manual browser acceptance](../AGENTS.md#manual-browser-acceptance) for affected
+UI flows before reporting completion.
 
 ## 24. Anti-patterns
 
@@ -1532,7 +1553,10 @@ Before completion:
 - [ ] Run the focused feature-document audit.
 - [ ] Run the documentation architecture audit when domain/reference/template
       structure or missing-layer records changed.
-- [ ] Run `bin/verify fast` or `bin/verify full` as required.
+- [ ] Run the proportional automated completion profile from `AGENTS.md`.
+- [ ] After automated checks pass, complete final local
+      [manual browser acceptance](../AGENTS.md#manual-browser-acceptance) for the
+      changed UI scope; record actual results or explain blocked/not-applicable scope.
 - [ ] Report exact commands, outcomes, documentation status, and discrepancies
       using the `AGENTS.md` final format.
 

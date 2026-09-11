@@ -3,7 +3,7 @@
 title: Game Shell Feature
 description: Implementation handbook for the Neverlands-based persistent game frame, compact vitals, location presence, mixed chat/game-event timeline, and shell preferences.
 status: Partially Implemented
-updated: 2026-09-09
+updated: 2026-09-11
 owners: Game Shell and Social Presence
 template: feature-v1
 ---
@@ -37,6 +37,7 @@ Supporting documents:
 - `doc/design/reference/world/observations/2026-09-08_forpost_oktal_airship_journey.md` records separate station/route roster labels, waiting-state Inventory/reload recovery, and explicit arrival disembarkation; chat delivery aboard was not exercised.
 - `doc/design/reference/social/observations/legacy_chat_system_analysis.md` records earlier chat observations and explicitly separated unknowns.
 - `doc/design/reference/character/observations/2026-05-11_player_profile_and_development.md` records the player/vitals presentation linked from the shell.
+- `doc/design/reference/economy/observations/2026-09-09_licenses_and_shop_selling.md` records Abilities → Your licenses and its empty ownership state.
 - `doc/design/areas/game_client_layout.md` defines shared client-layout ownership.
 - `doc/design/features/social_chat_presence.md` defines chat, membership, ignore, and presence behavior.
 - `doc/design/features/character_vitals.md` defines authoritative vitals consumed by the header.
@@ -54,7 +55,7 @@ Supporting documents:
 |---|---|---|
 | `doc/features/world.md` | World bootstraps the layout, supplies exact-cell presence, and resolves Character/Inventory shell actions against a possible wilderness NPC interruption. | Game Shell owns the visible controls/frame; World owns position, the allowlisted destination action, hostile handoff, and post-fight return context. |
 | `doc/features/city.md` | City renders its illustrated node surface in the shell's central frame. | City owns node content, navigation, and hotspot mutations; Game Shell owns only surrounding shared controls. |
-| `doc/features/character_progression.md` | Character navigation opens the profile and allocation surfaces, while the header presents current identity/vitals. | Character Progression owns allocations/profile values; Game Shell owns links, frame placement, and compact header presentation. |
+| `doc/features/character_progression.md` | Character navigation opens profile/allocation surfaces; Abilities opens Your licenses. | Character Progression owns allocations, profile values and current-license display; Game Shell owns links, frame placement and compact header presentation. |
 | `doc/features/player_inventory.md` | Inventory navigation opens the carried/equipment surface in the main frame and reports request failures through the shell's stable flash target. | Player Inventory owns stacks, equipment, capacity, mutations, and error copy; Game Shell owns surrounding navigation, vitals, chat, presence, and flash presentation. |
 | `doc/features/shop_economy.md` | The Shop occupies the central gameplay surface after a City or linked-village handoff. | Shop owns catalog and economic mutations; Game Shell owns shared navigation, presence, chat, and flash presentation. |
 | `doc/features/arena_combat.md` | Arena and active fights occupy the authenticated main surface, while `/log/:id` explicitly uses the public layout; authoritative completion and item/NV loot transitions also publish player-facing facts. | Arena Combat owns fight state, typed loot resolution, rewards, and the public log. Game Shell owns the authenticated frame and durable recipient event projection in the shared chat timeline. |
@@ -64,6 +65,13 @@ Supporting documents:
 After login, the player opens the persisted allowlisted gameplay surface through a persistent Neverlands-shaped game frame, with World as the bootstrap/fallback. The live-measured `955 × 817` composition uses a 29px top strip, flexible scrolling main frame, 8px resize band, 240px chat/presence row with a 300px right presence column, 1px separator, and 30px CSS/text chat controls. The header shows name, level, stacked server-rendered HP/MP strips, Character and Inventory actions, contextual Return/Look around, and a CSS/text exit control. Character and Inventory submit the allowlisted World context-action route so a source-backed same-cell hostile encounter can replace navigation with combat and return to the requested destination afterward.
 
 The server owns identity, character state, location presence, social verification, channel visibility, message and game-event persistence, event audience, ignore filtering, and authorization. The browser owns only main-frame navigation, presence sort/refresh preferences, and chat focus/scroll/reset presentation.
+
+Shop uses that same shared Inventory form with `main_content` as its target.
+This Shop-specific frame handoff retains the Shop parent URL while Inventory
+is displayed; reloading restores Shop, and the saved accessible Shop remains
+the login destination. It replaces the removed duplicate Inventory link in
+the Shop body. Other shared navigation contexts retain their existing
+behavior; the controller still validates the allowlisted Inventory action.
 
 Desktop source parity and responsive adaptation are separate contracts. The
 `955 × 817` measurement remains exact at desktop. Tablet and mobile widths
@@ -170,6 +178,47 @@ system label, and event-specific XP/item/money emphasis. Server-published world 
 use an unbranded orange `World` marker and no visible timestamp. Both initial
 history and after-commit Turbo delivery enforce recipient scope on the server;
 ordinary request errors continue to use the stable flash surface.
+
+#### Flash message lifecycle
+
+`#flash` is the stable response target outside `main_content`. Rails session
+flash expiry alone cannot remove its already-rendered messages when a Shop
+filter or other navigation replaces only that frame. The shared
+`shared/flash` partial supplies the same per-message lifecycle for initial
+public/game/manage pages and existing Turbo Stream producers, including local
+chat errors:
+
+- `notice`/`success` messages use `role="status"` and disappear after five
+  seconds; `alert`/`error` messages use `role="alert"` and remain readable
+  until dismissed or navigation clears them.
+- Only those four message types render. Internal flash values such as Devise's
+  boolean `timedout` flag or World result-offer identifiers are not player-facing
+  messages and never appear as `true` or a raw identifier beside an alert.
+- Each message has a keyboard-accessible `X` button labelled
+  `Dismiss notification`. Removing a message leaves `#flash` available for
+  subsequent responses.
+- A `turbo:before-frame-render` event for `main_content` clears previous
+  messages immediately before replacement content renders. Starting a request
+  alone does not clear them. Chat/presence frame refreshes do not clear them.
+- Messages are `data-turbo-temporary` and removed before Turbo snapshot
+  caching, preventing browser Back from restoring stale notices.
+- `flash_controller.js` owns only this DOM lifecycle. Each message owns its
+  timeout and clears it on disconnect, so an old timer cannot dismiss a newer
+  streamed result. Rendered message text remains escaped.
+
+The five-second success lifetime is a local UI correction, not a measured
+Neverlands timing rule. This changes presentation of messages already delivered
+to the shell; it adds no new Shop result delivery or gameplay notification
+pipeline. Durable game-event history and World action-result offer transport
+retain their existing owners and persistence.
+
+The bottom-right `A` control is the Abilities link. It opens the current
+character's read-only Your licenses surface at `GET /character/licenses`,
+matching the September 9 source navigation. Character Progression owns that
+page and its active-license query; Shop owns purchasing and permission rules.
+This link does not activate a license, grant a perk, or implement the remaining
+Abilities actions. The page disables Turbo snapshots so returning requests
+refresh server-owned expiry.
 
 ### 4.4 Exit and integration behavior
 
@@ -351,6 +400,10 @@ If the location changes while a local timeline read is in progress, denied
 `GET /chat/local` responses return `403` without redirecting to their former
 page. A passive poll therefore cannot reopen an old village or overwrite the
 saved resume context. The next poll resolves the current authoritative room.
+Background chat fetches refuse redirects. A login redirect therefore cannot
+fetch a second sign-in form or replace its anonymous CSRF cookie while a
+visible form is awaiting submission. Failed polling retains the current
+timeline; it does not authenticate or navigate the player.
 
 Local/global ordinary messages never publish to shared channel streams, so an
 old signed local token receives no new ordinary messages. The shell retains
@@ -553,6 +606,7 @@ Cancelled/disconnected browser requests cannot replace newer state.
 | `POST /chat/local` | Send to current room | Committed sender Turbo append, HTML redirect, or JSON `201` | Stale/foreign/private/global intent rejected without message |
 | `POST /session_ping` | Refresh this open login's activity | CSRF-protected `204`; missing/closed session unchanged | Authentication/CSRF denial |
 | `GET /world/players` | Refresh exact-cell presence | Shared players-list HTML partial | Authentication/active-position failure |
+| `GET /character/licenses` | Follow the Abilities link to current owned licenses | Read-only game-layout HTML | Authentication/owner denial; expired permissions omitted |
 | `POST /world/context` | Request Character or Inventory from the World shell | Full redirect to the allowlisted destination or the shared hostile fight | Unsupported context falls back to World; anonymous request redirects to login. |
 | `GET /chat_channels/:id` | Render full or compact authorized channel history | HTML page or `chat_messages` frame without layout | Redirect/forbidden/not found |
 | `POST /chat_channels/:chat_channel_id/chat_messages` | Persist an authorized message | Turbo `200`, HTML redirect, or JSON `201` | Turbo/HTML/JSON `422`, or authorization failure |
@@ -562,6 +616,16 @@ Cancelled/disconnected browser requests cannot replace newer state.
 The shell is HTML/Turbo-first. Chat exposes a small internal JSON response but no separately versioned public API or serializer contract. Game-event publication has no HTTP endpoint, so blueprint and Swagger/rswag coverage are not applicable.
 
 ## 10. Client-side and CSS ownership
+
+Shared product requirements now live in
+[Game Client Layout](../design/areas/game_client_layout.md#adaptive-ui-requirements),
+including fluid sizing, readable controls, touch/keyboard access, short panes
+and zoom. City and Shop image production/display rules share
+[`ART-SCENE-001`](../ARTWORK.md#shared-scene-image-standard). These are design
+targets, not a claim that the runtime has passed every new acceptance case.
+The existing verification records below cover their named sizes and flows;
+the broader 320px, short-landscape, coarse-pointer and zoom audit remains open
+under `RESPONSIVE-001`.
 
 `app/javascript/controllers/game_layout_controller.js` owns only:
 
@@ -676,12 +740,26 @@ manager reopens it. Missing rows are not synthesized by heartbeats.
 `ApplicationController#reject_closed_game_session` also checks an existing
 current-device session before gameplay access. If a late background response
 restores a pre-logout authenticated cookie, a closed DB row still rejects the
-next gameplay request: HTML redirects to sign-in; Turbo Stream/JSON reads or
-mutations return `401` and clear authentication. Missing tracking rows do not
-become a new authentication prerequisite. Devise authentication flows remain
-unchanged, and the heartbeat retains its harmless `204` behavior for a missing
-or closed row. This is a local authentication guarantee, not a newly inferred
-Neverlands gameplay rule.
+next gameplay request: top-level HTML redirects to sign-in; background HTML
+XHR/frame reads and Turbo Stream/JSON requests return `401` and clear
+authentication without following a sign-in form. Missing tracking rows do not
+become a new authentication prerequisite. `UserSessionsController` performs the
+same current-device closed-session check before Devise's already-authenticated
+shortcut on sign-in GET/POST. It discards stale authentication so the login
+form renders and the first password submission follows normal Devise credential
+validation. This does not reopen the session or bypass an incorrect password;
+only successful login reopens it. Existing open sessions keep Devise's usual
+already-authenticated redirect. The heartbeat retains its harmless `204`
+behavior for a missing or closed row. This is a local authentication guarantee,
+not a newly inferred Neverlands gameplay rule.
+
+CSRF verification remains enabled on sign-in. If a late response replaces the
+anonymous session that issued the displayed form token, an HTML sign-in POST
+is rejected and redirects with `303` to a fresh form and an expired-form
+message. No password is retained or replayed, and the session remains closed
+until the player explicitly resubmits valid credentials with the fresh token.
+This recovery applies only to sign-in creation; other CSRF failures retain
+their normal rejection behavior.
 
 Arena building entry likewise uses server-persisted state: the accepted city
 action records the current zone in Character metadata through `ResumeContext`.
@@ -805,6 +883,8 @@ creating another login row.
   gameplay history.
 - Unimplemented auxiliary source controls are not represented as complete behavior; client-vitals interpolation remains presentation-only.
 - Central feature navigation never transfers game authority to DOM state or local storage.
+- The Abilities link reaches the owner-only Your licenses page; its server query
+  and expiry boundary remain Character Progression/Shop responsibilities.
 - Character and Inventory shell actions can be interrupted by the authoritative same-cell hostile encounter and resume only through World-owned allowlisted return metadata.
 - The `955 × 817` desktop shell geometry remains unchanged while 820px and
   390px viewports reflow the same controls without whole-page overflow.
@@ -849,6 +929,19 @@ keeps logout confirmation open past a movement deadline and verifies closed
 session timer recovery plus login catch-up. `spec/system/world_map_result_delivery_spec.rb`
 checks pending-result delivery beside a map stream in Chrome.
 
+`spec/views/shared/_flash_spec.rb` checks escaped text, legacy locals, message
+roles, and dismissal/timeout markup. `spec/system/flash_messages_spec.rb`
+checks real login and Shop notice expiry, same-shell Shop filter navigation,
+browser Back, streamed error replacement, unrelated chat refresh, and keyboard
+dismissal. On September 10, 2026, these passed alongside the shell layout,
+local chat, Inventory progression, and World result-delivery checks (75
+examples, zero failures). Manual local Chrome verification also confirmed that
+`Entered Shop.` disappears while staying in Shop and clears on category
+navigation; the player was returned to Central Square without a stale notice.
+The same local verification passed `bin/verify fast`: 2,507 non-system
+examples, 555 files without RuboCop offenses, and both documentation audits.
+These are local results; they do not establish a CI run.
+
 Focused verification command:
 
 ```bash
@@ -871,16 +964,19 @@ bundle exec rspec \
   spec/requests/chat_messages_spec.rb \
   spec/requests/local_chat_spec.rb \
   spec/requests/session_pings_spec.rb \
+  spec/requests/closed_game_sessions_spec.rb \
   spec/requests/user_registrations_spec.rb \
   spec/requests/inventories_spec.rb \
   spec/requests/world_spec.rb \
   spec/requests/world_location_presence_spec.rb \
   spec/requests/city_buildings_spec.rb \
   spec/views/layouts/game_spec.rb \
+  spec/views/shared/_flash_spec.rb \
   spec/views/game_events/_game_event_spec.rb \
   spec/views/shared/_nl_players_list_spec.rb \
   spec/views/shared/_nl_vitals_bar_spec.rb \
   spec/system/social_ui_spec.rb \
+  spec/system/flash_messages_spec.rb \
   spec/system/local_chat_spec.rb \
   spec/system/session_heartbeat_spec.rb \
   spec/system/world_interactions_spec.rb \
@@ -889,7 +985,41 @@ bundle exec rspec \
   spec/system/responsive_neverlands_ui_spec.rb
 ```
 
+`spec/requests/character_licenses_spec.rb` covers the bottom-right Abilities
+link, current-owner license surface, persisted grants, and exact expiry.
+
 Policy behavior is currently exercised through request/system coverage; dedicated `ChatChannelPolicy` and `ChatMessagePolicy` specs are a justified gap for future policy changes. `responsive_neverlands_ui_spec.rb` is the focused full-shell browser contract for mobile header/main/social/bottom row sizes and whole-page overflow. Run the complete suite before release because the shell integrates authentication, sessions, World/City, character state, Turbo Streams, and social persistence.
+
+### September 11 final local browser acceptance
+
+The final `bin/verify full` passed with **2,602 non-system examples and 293
+system examples, zero failures**, 562 Ruby files lint clean, no Brakeman
+warnings or dependency vulnerabilities, and documentation audits covering 11
+feature handbooks and 83 architecture documents. These are local results;
+GitHub Actions is a separate check on the pushed commit.
+
+After that run, the agent used the existing local development player in
+desktop Chrome, through native keyboard/pointer controls and actual forms:
+
+- Resubmitting the previously failed, expired sign-in form through Chrome's
+  Reload/Confirm Form Resubmission UI produced a fresh form and the readable
+  expired-form message. No exception page or automatic login occurred.
+- Entering credentials explicitly into that fresh form restored the saved
+  Shop mode and its persisted wallet/inventory state.
+- A new Shop → X → confirm Exit → sign-in sequence succeeded on the first
+  credential submission and restored the same Shop. The internal boolean
+  flash did not appear.
+- Inventory still showed mass 0, no Penknife and the 54,260.20 NV balance from
+  the verified resale. Reload restored Shop; Buy Goods showed Penknife stock
+  199. The final original-art catalog was visually inspected and left open.
+
+The earlier final-Shop-code purchase/equipment/resale and phone-sized gate
+checks are recorded in [Shop](shop_economy.md#september-11-pre-merge-manual-shop-acceptance)
+and [World](world.md#1511-pre-merge-offer-and-browser-acceptance-2026-09-11).
+This final authentication pass used the normal desktop window without another
+viewport override. Deliberate cookie replay, invalid-password denial and
+redirect suppression are deterministic automated evidence, not claims that
+those states were all manually induced in the browser.
 
 ## 16. Responsible for Implementation Files
 
@@ -916,6 +1046,7 @@ Policy behavior is currently exercised through request/system coverage; dedicate
 - `app/controllers/chat_messages_controller.rb`
 - `app/controllers/session_pings_controller.rb`
 - `app/controllers/user_registrations_controller.rb`
+- `app/controllers/user_sessions_controller.rb`
 - `app/controllers/concerns/current_character_context.rb`
 
 ### Models and policies
@@ -951,6 +1082,7 @@ Policy behavior is currently exercised through request/system coverage; dedicate
 
 - `app/views/layouts/application.html.erb`
 - `app/views/layouts/game.html.erb`
+- `app/views/shared/_flash.html.erb`
 - `app/views/shared/_nl_players_list.html.erb`
 - `app/views/shared/_nl_vitals_bar.html.erb`
 - `app/views/chat_channels/show.html.erb`
@@ -963,6 +1095,7 @@ Policy behavior is currently exercised through request/system coverage; dedicate
 - `app/views/devise/registrations/edit.html.erb`
 - `app/helpers/chat_messages_helper.rb`
 - `app/javascript/controllers/game_layout_controller.js`
+- `app/javascript/controllers/flash_controller.js`
 - `app/javascript/controllers/online_reload_controller.js`
 - `app/javascript/controllers/chat_controller.js`
 - `app/javascript/controllers/chat_input_controller.js`
@@ -978,7 +1111,7 @@ Policy behavior is currently exercised through request/system coverage; dedicate
 ### Content, configuration, seeds, and schema
 
 - `db/seeds.rb`
-- `db/schema.rb`
+- `db/structure.sql`
 - `db/migrate/20251121090100_create_user_sessions.rb`
 - `db/migrate/20251121135236_create_chat_channels.rb`
 - `db/migrate/20251121135259_create_chat_messages.rb`
@@ -1057,6 +1190,8 @@ domain mutations.
 - `spec/requests/world_spec.rb`
 - `spec/requests/world_context_actions_spec.rb`
 - `spec/views/layouts/game_spec.rb`
+- `spec/views/shared/_flash_spec.rb`
+- `spec/system/flash_messages_spec.rb`
 - `spec/views/game_events/_game_event_spec.rb`
 - `spec/views/shared/_nl_players_list_spec.rb`
 - `spec/views/shared/_nl_vitals_bar_spec.rb`

@@ -69,4 +69,46 @@ RSpec.describe "World cell-art assets" do
       )
     end
   end
+
+  it "ships 39 separate western presentation slices without enlarging the 273-cell gameplay landscape" do
+    western = Game::World::CellArtCatalog.config.fetch("forpost_starter_west")
+    directory = Rails.root.join("app/assets/images", western.fetch("slices_directory"))
+    expect(western).to include("columns" => 3, "rows" => 13)
+    expect(png_dimensions(Rails.root.join("app/assets/images", western.fetch("asset")))).to eq([300, 1300])
+    expected_files = (0...13).flat_map { |row| (0...3).map { |column| "#{column}_#{row}.png" } }
+    expect(directory.glob("*.png").map { |path| path.basename.to_s }).to match_array(expected_files)
+
+    expected_files.each do |filename|
+      expect(png_dimensions(directory.join(filename))).to eq([100, 100])
+      column, row = filename.delete_suffix(".png").split("_").map(&:to_i)
+      presentation = Game::World::CellArtCatalog.resolve("key" => "forpost_starter_west", "column" => column, "row" => row)
+      expect(presentation).to have_attributes(
+        asset: "#{western.fetch('slices_directory')}/#{filename}", physical_slice: true,
+        sheet_width: 100, sheet_height: 100, background_x: 0, background_y: 0, landmarks_in_art: false
+      )
+    end
+    expect(Game::World::CellArtCatalog.config.fetch("forpost_starter")).to include("columns" => 21, "rows" => 13)
+  end
+
+  it "ships exactly 32 aligned 200px city alternatives while retaining every mandatory 100px base cell" do
+    starter = Game::World::CellArtCatalog.config.fetch("forpost_starter")
+    directory = Rails.root.join("app/assets/images", starter.fetch("high_density_slices_directory"))
+    expected_files = (5..8).flat_map { |row| (6..13).map { |column| "#{column}_#{row}.png" } }
+    expect(directory.glob("*.png").map { |path| path.basename.to_s }).to match_array(expected_files)
+
+    expected_files.each do |filename|
+      expect(png_dimensions(directory.join(filename))).to eq([200, 200])
+      expect(png_dimensions(Rails.root.join("app/assets/images", starter.fetch("slices_directory"), filename))).to eq([100, 100])
+      column, row = filename.delete_suffix(".png").split("_").map(&:to_i)
+      presentation = Game::World::CellArtCatalog.resolve("key" => "forpost_starter", "column" => column, "row" => row)
+      expect(presentation).to have_attributes(
+        asset: "#{starter.fetch('slices_directory')}/#{filename}",
+        high_density_asset: "#{starter.fetch('high_density_slices_directory')}/#{filename}",
+        sheet_width: 100, sheet_height: 100, background_x: 0, background_y: 0
+      )
+    end
+    [[5, 5], [14, 5], [6, 4], [6, 9]].each do |column, row|
+      expect(Game::World::CellArtCatalog.resolve("key" => "forpost_starter", "column" => column, "row" => row)).to have_attributes(high_density_asset: nil)
+    end
+  end
 end
