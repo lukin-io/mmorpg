@@ -119,7 +119,7 @@ Robber respectively. Source identities remain explicit: Bandit is
 | `wilderness_bandit` — Bandit | 7 → 155; 8 → 185; 9 → 235; 13 → 605; 14 → 835; 15 → 945 | `[14,15]`, atlas bootstrap and strong habitats | [Bandit](../app/assets/images/npc/bandit.png) |
 | `wilderness_robber` — Robber | 8 → 270; 9 → 310; 13 → 695; 14 → 815; 15 → 1005 | Members of Bandit groups and strong solo samples | [Robber](../app/assets/images/npc/robber.png) |
 | `wilderness_ogre` — Ogre | 16 → 1455; 17 → 1570; 18 → 1685 | Remote habitats `[20,6]`, `[20,7]` | [Ogre](../app/assets/images/npc/ogre.png) |
-| `arena_training_dummy` — Training Dummy | Default 1 → 30 | Arena Training Hall application | [Scarecrow](../app/assets/images/npc/scarecrow.png) |
+| `arena_training_dummy` — Training Dummy | Default 1 → 30 | Arena Help/Training applications; acceptor levels0–5 plus hall access | [Scarecrow](../app/assets/images/npc/scarecrow.png) |
 
 The rat's current avatar is a reused project image, not a dedicated rat
 illustration. Existing Wolf/Boar bitmap files do not define supported encounter
@@ -252,7 +252,7 @@ independent even when an image is reused. The early Bandit/Robber profiles do
 not inherit their level-13–15 kit. Higher level does not imply filling every
 empty slot or inventing extra items.
 
-The corrected Skeleton and the Bandit/Robber/Ogre paper-doll portraits are
+The corrected Skeleton/Training Dummy and the Bandit/Robber/Ogre paper-doll portraits are
 **690×1530**, displayed in the **115×255** portrait area with containment.
 Keep complete silhouettes, equipment and padding within the canvas; inspect
 the final UI rather than judging only the source bitmap. Slot geometry and
@@ -337,7 +337,7 @@ level cap and entitlement cap multiplier apply last. More powerful/larger groups
 normally yield more fitted XP; recorded sample totals remain exact exceptions.
 Dead allies can receive final XP for their prior contribution. See
 [FORMULAS.md](FORMULAS.md#6-experience-loot-and-premium) for the equations and
-[NpcExperienceAwarder](../app/services/arena/npc_experience_awarder.rb) for ownership.
+[ExperienceAwarder](../app/services/arena/experience_awarder.rb) for ownership.
 
 ## 7. Encounter and fight lifecycle
 
@@ -472,3 +472,23 @@ Its documentation audit does not constitute a new source fight, database seed
 or browser acceptance run. Remaining source uncertainties include complete
 pools/weights, exact hidden coefficients and missing rat profiles; fitted v1
 behavior is already active and is not held disabled by those uncertainties.
+
+## Arena Dummy and player-side reuse
+
+The level-1 `arena_training_dummy` remains a normal application opponent with
+Wood Chips loot. Its `scarecrow.png` portrait now uses the complete narrow
+690×1530 composition documented in the
+[artwork correction](ARTWORK.md#september-12-training-dummy-portrait-correction).
+`arena_rooms` includes Help (0–5) and Training (5–10); room lookup copies arrays
+so one hall cannot leak NPCs into other halls. New Arena NPC matches are
+physical-only, like player Duels/Groups. The [Arena contract](design/areas/arena.md)
+owns admission and [shared rewards](FORMULAS.md#reward-01--shared-npc-and-player-experience)
+owns capped player/NPC XP. Changing a creature never creates a parallel player
+combat pipeline. [Final Arena acceptance](features/arena_combat.md#final-physical-arena-acceptance)
+records eligible Dummy combat, timeout, original-hall return and chat checks.
+
+The Dummy's authored `arena_acceptor_level_min/max` is **0/5**, separately
+from hall access. Both gates apply: Help allows0–5; Training5–10 therefore
+admits only level5 against this Dummy. These optional integer bounds are
+validated when `config/gameplay/arena_npcs.yml` loads and copied to each new
+application. Other NPCs without explicit bounds retain their hall range.

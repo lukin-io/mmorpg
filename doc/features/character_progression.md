@@ -238,7 +238,7 @@ Relationships must come from the source-backed registries. Categories, display o
 | Surface or behavior | Entry point | MVP status | Owning implementation |
 |---|---|---|---|
 | Public player profile | `GET /player/:name` | Interactive/read-only by viewer | `PlayersController` and profile view |
-| XP and level grants | Shared solo-PvE fight finalization | Interactive downstream entry | `NpcExperienceAwarder`, `LevelUpService`, and progression catalog |
+| XP and level grants | Shared player/NPC fight finalization | Interactive downstream entry | `ExperienceAwarder`, `LevelUpService`, and progression catalog |
 | Primary-stat allocation | `GET/PATCH /characters/:id/stats` | Interactive | `CharactersController` and `Character` |
 | Numeric-skill allocation | `GET/PATCH /characters/:id/skills` | Interactive | `CharactersController`, registry, and formula |
 | Boolean perk allocation | `GET/PATCH /characters/:id/perks` | Interactive subset | `PerkAllocation` and `PerkRegistry` |
@@ -772,7 +772,7 @@ There is no dedicated view spec for each allocation partial; request and system 
 - `app/services/game/inventory/requirement_checker.rb`
 - `app/services/characters/vitals_service.rb`
 - `app/services/game/movement/travel_time.rb`
-- `app/services/arena/npc_experience_awarder.rb`
+- `app/services/arena/experience_awarder.rb`
 - `app/controllers/concerns/outdoor_action_availability.rb`
 
 Character Progression owns saved stats, numeric skills, perks, and their allocation. Inventory owns equipment and item requirements; Vitals/Combat own their downstream formulas; World owns the bounded Wanderer movement formula. Those features may consume only implemented progression values and must capture Neverlands evidence before adding another effect.

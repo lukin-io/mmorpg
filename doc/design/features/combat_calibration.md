@@ -197,8 +197,16 @@ anchors recovery without a fixed resurrection refill. Shell reads and session
 pings recover missed ticks; the job is an optional same-owner caller.
 
 Injury taxonomy and movement/Inventory restrictions are published source rules.
-Ordinary chance follows fight trauma; provisional light/medium/heavy durations
-are 30 min/2 h/6 h with 5/15/30% stat penalties. The captured named light injury is
+Ordinary chance follows fight trauma. The user's September12 correction requires
+independent random severity with light more common than medium and heavy much
+rarer; low-risk fights usually leave no injury. The local conditional weights
+are80/18/2% for light/medium/heavy, configured under `injuries.severity_weights`.
+For10% risk this gives90% no injury,8% light,1.8% medium,0.2% heavy.
+These fitted weights replace the former deterministic risk-to-severity bands;
+they are not measured Neverlands odds. [INJURY-01](../../FORMULAS.md#injury-01--defeat-injury-and-stat-penalty)
+owns the full probability table, configuration validation and update procedure.
+Provisional light/medium/heavy durations are30 min/2 h/6 h with5/15/30% stat
+penalties. The captured named light injury is
 Chest muscle hematoma. Combat injury is guaranteed for explicit combat risk:
 24h +6h per existing injury, 40% fitted penalty. Maximum 99 active injuries;
 total stat penalty caps 90%, primary stats floor 1. Expiry removes the effective
@@ -213,3 +221,25 @@ with fitted numbers. Higher-level content beyond the captured Ogre 16–18 remai
 new content authoring, not part of the 22-fight register. Workshop repair,
 uncaptured spell families and unrelated gathering/production flows are separate
 features; this task adds no pretend source evidence for them.
+
+## Physical Arena extension — September 12
+
+[The Arena capture](../reference/combat/observations/2026-09-12_arena_duels_and_groups.md)
+contains no completed new source player fight. The user authorized pragmatic
+multiplayer inference. Damage, AP, armor, mastery, opposed rolls and defeat are
+unchanged across actors. New Arena matches set `physical_only: true`; this
+removes spell actions without deleting the earlier bounded magic engine.
+
+`ExperienceAwarder` applies the existing NPC XP framework to defeated players:
+use credited HP bounded by maxHP, rather than an NPC template reward. Snapshot
+level/maxHP before awarding anyone. Preserve caps, premium cap-only multipliers,
+20% participation/80% damage shares, zero on a draw and no XP for untouched
+surrender. Trauma10/30/50/80 uses fitted multipliers1/1.1/1.2/1.35 when the
+recipient defeated a player. The wiki supports increasing XP with risk, not
+these exact numbers. [FORMULAS](../../FORMULAS.md#reward-01--shared-npc-and-player-experience)
+is the maintained full equation and edit-impact reference.
+
+Limited-artifact admission uses the existing artifact grade multiplier≤1.1,
+configurable as `arena_rules.limited_artifact_max_multiplier`. This is an
+explicit local approximation; [ITEMS](../../ITEMS.md) owns authored grade inputs.
+Unknown grades fail restricted admission. No clothing/weapons in unarmed offers.

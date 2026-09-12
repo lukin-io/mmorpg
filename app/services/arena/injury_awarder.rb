@@ -20,16 +20,23 @@ module Arena
           combat = @match.metadata.to_h["injury_risk"] == "combat"
           risk = @match.trauma_percent.to_i.clamp(0, 100)
           timeout_injury = @match.timed_out? && @match.winning_team.present? && risk.positive?
-          next unless combat || timeout_injury || @rng.rand(100) < risk
-
-          severity = combat ? "combat" : (timeout_injury || risk >= 80 ? "heavy" : (risk >= 50 ? "medium" : "light"))
+          severity = if combat
+            "combat"
+          elsif timeout_injury
+            "heavy"
+          else
+            Game::Combat::Calibration.injury_severity(risk:, chance_roll: @rng.rand(100), severity_roll: @rng.rand(100))
+          end
+          next unless severity
           duration, penalty, name = {
             "light" => [30.minutes, 5, "Chest muscle hematoma"],
             "medium" => [2.hours, 15, "Muscle strain"],
             "heavy" => [6.hours, 30, "Fracture"],
             "combat" => [24.hours, 40, "Combat injury"]
           }.fetch(severity)
-          duration += count * (combat ? 6.hours : duration / 4)
+          # Float division preserves fractional duration parts when Rails adds
+          # them to a timestamp (2.hours / 4 can otherwise lose half an hour).
+          duration += count * (combat ? 6.hours : duration / 4.0)
           character.character_injuries.create!(arena_match: @match, severity:, name:,
             stat_penalty_percent: penalty, expires_at: @clock.call + duration)
         end

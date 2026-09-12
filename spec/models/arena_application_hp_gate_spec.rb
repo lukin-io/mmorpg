@@ -63,8 +63,8 @@ RSpec.describe ArenaApplication, "HP Recovery Gate" do
     context "when character has max_hp of zero (edge case)" do
       before { acceptor.update!(current_hp: 0, max_hp: 0) }
 
-      it "returns true (avoids division by zero)" do
-        expect(application.character_hp_sufficient?(acceptor)).to be true
+      it "rejects an invalid maximum without dividing by zero" do
+        expect(application.character_hp_sufficient?(acceptor)).to be false
       end
     end
   end

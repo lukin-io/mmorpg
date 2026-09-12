@@ -9,6 +9,10 @@ class ArenaController < ApplicationController
   # GET /arena
   # Arena lobby showing all rooms
   def index
+    if (result = current_character.unfinished_arena_result)
+      redirect_to arena_match_path(result)
+      return
+    end
     # Check if user is already in an active match - redirect them there
     active_participation = current_character.arena_participations
       .joins(:arena_match)
@@ -22,7 +26,11 @@ class ArenaController < ApplicationController
     end
 
     @rooms = ArenaRoom.active.where(zone_id: [nil, current_character.position&.zone_id]).order(:room_type)
-    @current_application = current_character.arena_applications.open.first
+    @current_application = current_character.waiting_arena_application
+    if @current_application
+      redirect_to arena_room_path(@current_application.arena_room, ft: @current_application.team_battle? ? 2 : 1)
+      return
+    end
     @recent_matches = current_character.arena_participations
       .includes(:arena_match)
       .order(created_at: :desc)

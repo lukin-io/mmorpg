@@ -2,7 +2,7 @@
 
 require "rails_helper"
 
-RSpec.describe Arena::NpcExperienceAwarder, "explicit defeat XP" do
+RSpec.describe Arena::ExperienceAwarder, "explicit defeat XP" do
   let(:match) do
     create(:arena_match, :live, metadata: {
       "source" => "world_npc", "is_npc_fight" => true,

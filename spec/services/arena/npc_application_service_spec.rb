@@ -17,6 +17,14 @@ RSpec.describe Arena::NpcApplicationService do
         expect(result.application.status).to eq("open")
       end
 
+      it "keeps the Dummy open-side gate independent of a higher hall range" do
+        arena_room.update!(level_min: 5, level_max: 10)
+        application = service.create_for_room(room: arena_room).application
+        expect(application).to have_attributes(team_level_min: 0, team_level_max: 5)
+        expect(application.acceptable_by?(create(:character, level: 5))).to be(true)
+        expect(application.acceptable_by?(create(:character, level: 6))).to be(false)
+      end
+
       it "uses the captured mannequin application contract in the training room" do
         result = service.create_for_room(room: arena_room)
 

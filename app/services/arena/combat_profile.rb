@@ -79,16 +79,20 @@ module Arena
         "physical_attack_cost_seed" => seed,
         "simple_attack_cost" => seed,
         "aimed_attack_cost" => seed + AIMED_ATTACK_SURCHARGE,
-        "max_magic_mana" => magic_limit,
+        "max_magic_mana" => physical_only? ? 0 : magic_limit,
         "block_table" => block_table,
-        "injected_attack_keys" => injected_attack_keys,
-        "injected_block_keys" => injected_block_keys
+        "injected_attack_keys" => physical_only? ? [] : injected_attack_keys,
+        "injected_block_keys" => physical_only? ? [] : injected_block_keys
       }
     end
 
     private
 
     attr_reader :participation
+
+    def physical_only?
+      participation&.arena_match&.metadata.to_h["physical_only"] == true
+    end
 
     def stored_profile
       @stored_profile ||= (participation&.metadata || {}).fetch(METADATA_KEY, {})

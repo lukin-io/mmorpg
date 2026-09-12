@@ -8,6 +8,11 @@ puts "Seeding Arena Rooms..."
 if defined?(ArenaRoom)
   arena_rooms = [
     {
+      name: "Help Hall", slug: "help", room_type: :help,
+      level_min: 0, level_max: 5, alignment_restriction: nil,
+      description: "Source-backed first Arena hall for levels 0-5."
+    },
+    {
       name: "Training Hall",
       slug: "training",
       room_type: :training,
@@ -26,6 +31,14 @@ if defined?(ArenaRoom)
       description: "Source-backed unrestricted Arena room for levels 5-33."
     }
   ]
+  arena_rooms.concat([
+    {name: "Initiation Hall", slug: "initiation", room_type: :initiation, level_min: 9, level_max: 33},
+    {name: "Patrons Hall", slug: "patron", room_type: :patron, level_min: 16, level_max: 33}
+  ])
+  %w[law light balance chaos dark].each do |alignment|
+    arena_rooms << {name: "#{alignment.titleize} Hall", slug: alignment, room_type: alignment.to_sym,
+                   level_min: 0, level_max: 33, alignment_restriction: alignment}
+  end
 
   arena_rooms.each do |room_data|
     room = ArenaRoom.find_or_initialize_by(slug: room_data[:slug])

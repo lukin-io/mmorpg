@@ -4,11 +4,14 @@ class ApplicationController < ActionController::Base
   include CurrentCharacterContext
   include ArenaEntryGate
   include AirshipContext
+  include ArenaReservation
   include Pundit::Authorization
 
   before_action :authenticate_user!
   before_action :ensure_device_identifier
   before_action :reject_closed_game_session
+  before_action :recover_arena_applications
+  around_action :with_arena_reservation
   around_action :with_airship_context
   before_action :prepare_game_shell_context, if: :game_shell_context_request?
 

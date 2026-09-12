@@ -18,6 +18,9 @@ artifact_multipliers:
   small: 1.1
   medium: 1.2
   large: 1.3
+# Local admission fit pending source category details; never inferred from rarity.
+arena_rules:
+  limited_artifact_max_multiplier: 1.1
 npc_families:
   wilderness_ogre: {weapon_damage: 40, damage_multiplier: 2.55, armor_multiplier: 3.0}
   wilderness_bandit: {weapon_damage: 19, damage_multiplier: 1.0, armor_multiplier: 1.0}
@@ -30,6 +33,8 @@ experience:
   group_bonus_per_extra_npc: 0.45
   loss_multiplier: 0.1
   participation_share: 0.2
+  # Monotonic fitted PvP reward risk factor, not recovered source coefficients.
+  pvp_trauma_multiplier: {10: 1.0, 30: 1.1, 50: 1.2, 80: 1.35}
 loot:
   observation_scale: 100.0
   observation_max_bonus: 1.0
@@ -40,3 +45,7 @@ recovery:
   hp_full_seconds: 600
   mp_full_seconds: 900
   skill_divisor: 100.0
+# Conditional on an ordinary injury occurring. Fight trauma controls occurrence,
+# not severity. User-directed rarity fit; not measured Neverlands coefficients.
+injuries:
+  severity_weights: {light: 80, medium: 18, heavy: 2}

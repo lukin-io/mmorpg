@@ -74,4 +74,22 @@ RSpec.describe Characters::TreatInjury do
       expect { service.request!(price: 0) }.to raise_error(described_class::Unavailable, /healed/)
     end
   end
+
+  %w[light medium heavy].each do |severity|
+    it "heals a randomly awarded #{severity} injury through the shared healer workflow" do
+      match = create(:arena_match, status: :completed, trauma_percent: 10)
+      create(:arena_participation, arena_match: match, character: patient, user: patient.user, result: :defeat)
+      rng = instance_double(Random)
+      allow(rng).to receive(:rand).with(100).and_return(0, {"light" => 0, "medium" => 80, "heavy" => 98}.fetch(severity))
+      awarded = Arena::InjuryAwarder.new(match:, rng:).call.sole
+      expect(awarded.severity).to eq(severity)
+      template.update!(stat_modifiers: {"heals_injury" => severity})
+      treatment = described_class.new(healer:, injury: awarded, bag:).request!(price: 0)
+      expect(treatment.status).to eq("completed")
+      expect(awarded.reload).not_to be_active
+      expect(awarded).not_to be_blocks_movement
+      expect(bag.reload.current_durability).to eq(9)
+      expect(patient.user.currency_wallet.reload.nv_balance).to eq(1000)
+    end
+  end
 end

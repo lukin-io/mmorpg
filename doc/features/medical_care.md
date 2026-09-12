@@ -42,6 +42,15 @@ to Medical care, showing severity, remaining duration and stat penalty. Heavy
 injuries block movement; combat injuries also block Inventory. Natural expiry
 or healing removes the effect without changing historical fight logs.
 
+Ordinary injuries have three random severities: light, medium and heavy. Fight
+trauma is the chance of receiving any injury; a separate weighted roll selects
+80% light,18% medium,2% heavy **among injuries**. Thus10%-risk ordinary defeats
+leave90% uninjured and only0.2% heavily injured. These user-directed fitted
+weights live in [INJURY-01](../FORMULAS.md#injury-01--defeat-injury-and-stat-penalty),
+with its configuration/update rules. Special combat injuries and guaranteed
+decisive-timeout heavy injuries retain their published exception paths. All
+three ordinary severities use the same healer workflow and matching bag below.
+
 Medical care is reachable from Inventory and Hospital. A healer selects an
 owned usable bag, patient name and price. Free treatment completes immediately;
 paid treatment produces an expiring request for the patient to accept or decline.
@@ -131,17 +140,57 @@ Screenshots were inspected in the task. Purchases/treatments used actual UI;
 fixture creation, licenses and initial injuries were prepared separately and
 are not claimed as player actions or Neverlands observations.
 
+### September 12 weighted-injury acceptance
+
+The ordinary severity roll now uses the user-directed rarity fit documented
+in [INJURY-01](../FORMULAS.md#injury-01--defeat-injury-and-stat-penalty).
+`Calibration.injury_severity(risk:, chance_roll:, severity_roll:)` is pure;
+`InjuryAwarder` persists the result under the existing match/character guards.
+The duration extension divides Rails durations by4.0, preserving fractional
+hours/minutes when added to the server timestamp. Previously integer division
+could truncate a medium extension from30 minutes to0, or a heavy extension
+from90 minutes to60. Existing saved injuries are not rewritten.
+
+Final focused checks passed **30 examples**, including all10,000 independent
+roll pairs at each of10/30/50/80% risk, exact boundaries, malformed weights,
+all three severities, guaranteed exceptions, uninjured-finalization replay,
+fractional extensions and healer treatment. `bin/verify combat` then passed
+**496 examples, 613 Ruby files lint-clean**, plus12 feature and88 architecture
+documents. Logs: `/tmp/injury-weight-focused-final.log` and
+`/tmp/injury-weight-combat-final.log`. These are local checks, not new CI or
+Neverlands evidence.
+
+After those checks, Chrome1728×853 with pointer/form input exercised header
+Injury → Medical care for the isolated patient. Three initial injuries were
+prepared through the actual awarder with controlled rolls, as fixture setup,
+not three claimed browser fights. Light/medium/heavy displayed5/15/30% penalties
+and the heavy movement restriction; stacked remaining durations began near
+30 minutes/2.5 hours/9 hours, correctly including earlier injuries.
+
+A separate qualified local healer used City → Hospital → Medical care and
+the three actual Treat forms at0 NV. Beginner/Skilled/Experienced bags each
+went10→9 uses; light, medium and heavy injuries healed at17:56:49,17:57:00 and
+17:57:26 respectively. Three distinct private notices persisted after reload
+for both healer and patient. Fresh patient login removed the header injury
+link; Hospital → Medical care showed no active injuries after reload, then
+Return restored the city. Document width remained1728px. No CSS/artwork changed.
+The fixture's license, bags and initial injuries were prepared independently;
+all treatment and navigation actions used the UI. The pre-existing Doctor
+proficiency enforcement gap in section1 remains separate from these checks.
+
 ## 7. Responsible files and operations
 
 - `app/models/character_injury.rb`
 - `app/models/injury_treatment.rb`
 - `app/services/arena/injury_awarder.rb`
+- `app/lib/game/combat/calibration.rb` and `config/gameplay/combat_calibration.yml`
 - `app/services/characters/treat_injury.rb`
 - `app/services/game/inventory/requirement_checker.rb`
 - `app/controllers/medical_care_controller.rb`
 - `app/views/medical_care/show.html.erb`
 - `spec/services/characters/treat_injury_spec.rb`
 - `spec/services/arena/injury_awarder_spec.rb`
+- `spec/lib/game/combat/calibration_spec.rb`
 
 ## 8. Gaps and version history
 

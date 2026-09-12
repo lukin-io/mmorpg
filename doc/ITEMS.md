@@ -471,3 +471,7 @@ against the source declarations; label retained/unavailable content honestly.
 Detailed equations stay in FORMULAS, NPC pools in NPC, location stock ownership
 in WORLD/Shop, and exact art prompts in ARTWORK. The shared maintenance rule is
 in [DOCUMENTATION](DOCUMENTATION.md#410-game-reference-books).
+
+## Arena equipment admission
+
+[EquipmentRule](../app/services/arena/equipment_rule.rb) reads all equipped items and authoritative character/item `artifact_grade`. Unarmed means no equipment, including clothing; no-artifacts requires `none`; limited-artifacts permits calibrated multiplier≤1.1. Unknown grades reject restricted entry. Item effective modifiers override template data through the existing merge; no price/name/rarity heuristic determines grade. The [formula book](FORMULAS.md#arena-01--admission-and-deadlines) owns the editable threshold; [Arena](design/areas/arena.md) rechecks it on creation, joining and group start. Waiting membership locks equipment navigation/mutations until withdrawal or completion.

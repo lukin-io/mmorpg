@@ -160,13 +160,16 @@
           </div>
 
           <div class="nl-fight-budget">
-            Mana: <b>5..<%= combat_profile["max_magic_mana"] %></b>
+            <% if combat_profile["max_magic_mana"].positive? %>
+              Mana: <b>5..<%= combat_profile["max_magic_mana"] %></b>
+            <% end %>
             <span>Action points: <b><%= ap_limit %></b></span>
             <span>Used: <b data-arena-match-target="turnCostValue">0</b>/<%= ap_limit %></span>
             <span class="nl-fight-penalty" data-arena-match-target="turnPenalty" hidden></span>
             <strong class="nl-fight-over-budget" data-arena-match-target="turnOverBudget" hidden>OVER LIMIT!</strong>
           </div>
 
+          <% unless @arena_match.metadata.to_h["physical_only"] == true %>
           <div class="nl-fight-magic-slots" aria-label="Combat quick slots">
             <% configured_magic = magic_options.select { |_key, config| config["action_cost"].to_i.positive? }.to_a.first(5) %>
             <% 5.times do |slot_index| %>
@@ -190,6 +193,8 @@
               <% end %>
             <% end %>
           </div>
+
+          <% end %>
 
           <div class="arena-turn-composer nl-fight-turn-composer">
             <table class="nl-fight-selector-table">

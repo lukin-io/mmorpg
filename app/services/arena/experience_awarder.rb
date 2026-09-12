@@ -1,14 +1,14 @@
 # frozen_string_literal: true
 
 module Arena
-  # Awards configured solo PvE XP with the recipient's level/entitlement cap.
+  # Awards shared player/NPC encounter XP with the recipient's level/entitlement cap.
   # encounter_experience_reward is victory-only. A loss to an NPC side may use
   # the separate integer encounter_defeat_experience_reward only after the
   # player defeated an enemy NPC. Unconfigured rewards use the documented v1 calibrated model.
   # Benefits multiply the maximum, never the earned XP. The caller owns the
   # match lock and rewards_processed_at guard; call persists XP/level grants
   # and returns their actual character recipient, amount, and levels gained.
-  class NpcExperienceAwarder
+  class ExperienceAwarder
     Result = Data.define(:character_id, :experience_awarded, :levels_gained, :skipped_reason)
 
     def initialize(match:, winning_team:)
@@ -27,15 +27,18 @@ module Arena
       return [skipped("draw")] if winning_team.blank?
       return [skipped("invalid_winner")] unless match.arena_participations.exists?(team: winning_team)
 
-      players = match.arena_participations.players.includes(:character).order(:character_id).to_a
+      # Snapshot opponents before any recipient levels up during settlement.
+      @combatants = match.arena_participations.includes(:character, :npc_template).to_a
+      @reward_inputs = @combatants.index_with { |entry| [entry.participant_level, entry.max_hp] }
+      players = @combatants.select(&:player?).sort_by(&:character_id)
       players.group_by(&:team).flat_map do |team, members|
-        npcs = defeated_enemy_npcs(team)
-        next members.map { skipped("no_defeated_enemy_npc") } if npcs.empty?
+        enemies = defeated_enemies(team)
+        next members.map { skipped("no_defeated_enemy") } if enemies.empty?
 
         total_damage = members.sum { |member| member.metadata.to_h["damage_dealt"].to_i }
         members.map do |player|
           recipient = player.character
-          amount = configured_or_calculated_experience(player, npcs, solo: players.one?)
+          amount = configured_or_calculated_experience(player, enemies, solo: players.one?)
           unless members.one?
             contribution = total_damage.positive? ? player.metadata.to_h["damage_dealt"].to_f / total_damage : 1.0 / members.size
             shared = parameters.fetch("participation_share")
@@ -50,30 +53,37 @@ module Arena
 
     attr_reader :match, :winning_team
 
-    def defeated_enemy_npcs(player_team)
-      match.arena_participations.npcs.where.not(team: player_team).includes(:npc_template).select(&:defeat?)
+    def defeated_enemies(player_team)
+      @combatants.reject { |entry| entry.team == player_team }.select(&:defeat?)
     end
 
     def parameters
       Game::Combat::Calibration.config.fetch("experience")
     end
 
-    def configured_or_calculated_experience(player, npcs, solo:)
+    def configured_or_calculated_experience(player, enemies, solo:)
       victory = player.team == winning_team
       key = victory ? "encounter_experience_reward" : "encounter_defeat_experience_reward"
       configured = match.metadata.to_h[key]
       return configured.is_a?(Integer) && configured >= 0 ? configured : 0 if solo && match.metadata.to_h.key?(key)
 
-      base = npcs.sum do |npc|
-        if npcs.one? && npc.npc_template.xp_reward.positive?
-          npc.npc_template.xp_reward
+      base = enemies.sum do |enemy|
+        if enemies.one? && enemy.npc? && enemy.npc_template.xp_reward.positive?
+          enemy.npc_template.xp_reward
         else
-          difference = [player.participant_level - npc.participant_level - 2, 0].max
-          npc.max_hp * parameters.fetch("hp_rate") * 0.75**difference
+          level, health = @reward_inputs.fetch(enemy)
+          difference = [@reward_inputs.fetch(player).first - level - 2, 0].max
+          health = [health, enemy.metadata.to_h["damage_taken"].to_i].min if enemy.player?
+          health * parameters.fetch("hp_rate") * 0.75**difference
         end
       end
-      group_bonus = 1 + [npcs.size - 1, 0].max * parameters.fetch("group_bonus_per_extra_npc")
-      (base * group_bonus * (victory ? 1 : parameters.fetch("loss_multiplier"))).round
+      group_bonus = 1 + [enemies.size - 1, 0].max * parameters.fetch("group_bonus_per_extra_npc")
+      risk = if enemies.any?(&:player?)
+        parameters.fetch("pvp_trauma_multiplier").fetch(match.trauma_percent.to_s, 1.0)
+      else
+        1.0
+      end
+      (base * group_bonus * risk * (victory ? 1 : parameters.fetch("loss_multiplier"))).round
     end
 
     def award(recipient, amount)

@@ -3561,7 +3561,104 @@ ALTER TABLE ONLY public.airship_journeys
 
 SET search_path TO "$user", public;
 
+--
+-- Name: arena_application_memberships; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.arena_application_memberships (
+    id bigint NOT NULL,
+    arena_application_id bigint NOT NULL,
+    character_id bigint NOT NULL,
+    team character varying NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL,
+    CONSTRAINT arena_membership_team CHECK (((team)::text = ANY ((ARRAY['a'::character varying, 'b'::character varying])::text[])))
+);
+
+
+
+--
+-- Name: arena_application_memberships_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.arena_application_memberships_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+
+--
+-- Name: arena_application_memberships_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.arena_application_memberships_id_seq OWNED BY public.arena_application_memberships.id;
+
+
+
+--
+-- Name: arena_application_memberships id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.arena_application_memberships ALTER COLUMN id SET DEFAULT nextval('public.arena_application_memberships_id_seq'::regclass);
+
+
+
+--
+-- Name: arena_application_memberships arena_application_memberships_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.arena_application_memberships
+    ADD CONSTRAINT arena_application_memberships_pkey PRIMARY KEY (id);
+
+
+
+--
+-- Name: index_arena_application_memberships_on_arena_application_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_arena_application_memberships_on_arena_application_id ON public.arena_application_memberships USING btree (arena_application_id);
+
+
+
+--
+-- Name: index_arena_application_memberships_on_character_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_arena_application_memberships_on_character_id ON public.arena_application_memberships USING btree (character_id);
+
+
+
+--
+-- Name: index_arena_memberships_on_application_and_character; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_arena_memberships_on_application_and_character ON public.arena_application_memberships USING btree (arena_application_id, character_id);
+
+
+
+--
+-- Name: arena_application_memberships fk_rails_039540a116; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.arena_application_memberships
+    ADD CONSTRAINT fk_rails_039540a116 FOREIGN KEY (character_id) REFERENCES public.characters(id);
+
+
+
+--
+-- Name: arena_application_memberships fk_rails_6698db9671; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.arena_application_memberships
+    ADD CONSTRAINT fk_rails_6698db9671 FOREIGN KEY (arena_application_id) REFERENCES public.arena_applications(id);
+
+
+
 INSERT INTO "schema_migrations" (version) VALUES
+('20260912120000'),
 ('20260912090000'),
 ('20260910170000'),
 ('20260909160000'),

@@ -81,7 +81,7 @@ partial fight creation; this does not add uncaptured opponents to seeded cells.
 - `app/services/arena/combat_processor.rb`
 - `app/services/arena/combat_profile.rb`
 - `app/lib/game/combat/action_catalog.rb`
-- `app/services/arena/npc_experience_awarder.rb`
+- `app/services/arena/experience_awarder.rb`
 - `app/services/arena/equipment_wear_resolver.rb`
 - `app/services/arena/npc_loot_awarder.rb`
 - `app/services/game/loot_entry.rb`
@@ -128,3 +128,7 @@ source's complete pool, weights, or timing distribution. The current
 `floor(mastery / 15)`, now implemented and indexed in
 [FORMULAS.md](../FORMULAS.md). It remains a calibrated coefficient rather than
 a recovered source equation.
+
+## September 12 Arena extension
+
+[Fresh Duel/Group observations](../design/reference/combat/observations/2026-09-12_arena_duels_and_groups.md) feed [Arena design](../design/areas/arena.md), [FORMULAS](../FORMULAS.md) and `doc/features/arena_combat.md`. Physical player applications and persisted group assembly use the existing shared fight pipeline. No new source player fight was possible; local multiplayer acceptance is separate evidence.

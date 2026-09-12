@@ -19,8 +19,12 @@ RSpec.describe "Arena match transition and reconciliation", type: :system do
     hotspot = create(:city_hotspot, :arena, zone:, active: true, required_level: 1)
 
     visit world_path
-    within(".city-actions") { click_button hotspot.name }
-    expect(page).to have_current_path(arena_index_path)
+    if character.waiting_arena_application
+      expect(page).to have_current_path(arena_room_path(character.waiting_arena_application.arena_room, ft: 1))
+    else
+      within(".city-actions") { click_button hotspot.name }
+      expect(page).to have_current_path(arena_index_path)
+    end
   end
 
   # ===========================================================================
@@ -77,7 +81,7 @@ RSpec.describe "Arena match transition and reconciliation", type: :system do
         expect(application.reload.status).to eq("matched")
       end
 
-      it "redirects an applicant waiting on the Arena index from persisted match state" do
+      it "restores the reserved room and reconciles the persisted match" do
         login_as user_a, scope: :user
         enter_arena_from_city!(character_a)
         visit arena_index_path
@@ -88,7 +92,7 @@ RSpec.describe "Arena match transition and reconciliation", type: :system do
         )
 
         expect(result.success?).to be(true)
-        expect(page).to have_current_path(arena_index_path)
+        expect(page).to have_current_path(arena_room_path(arena_room, ft: 1))
 
         visit arena_index_path
 
@@ -297,7 +301,7 @@ RSpec.describe "Arena match transition and reconciliation", type: :system do
 
       # Should see their own application without accept button
       within "[data-application-id='#{application.id}']" do
-        expect(page).to have_content("Your application")
+        expect(page).to have_button("Cancel Application")
         expect(page).not_to have_button("Accept")
       end
     end
@@ -321,5 +325,66 @@ RSpec.describe "Arena match transition and reconciliation", type: :system do
         expect(page).not_to have_content("Your application")
       end
     end
+  end
+  it "posts a Group form, joins the selected side and releases a withdrawn place", js: true do
+    login_as user_a, scope: :user
+    enter_arena_from_city!(character_a)
+    visit arena_room_path(arena_room, ft: 2)
+    select "Free", from: "fight_kind"
+    select "4 min", from: "timeout_seconds"
+    select "high (50%)", from: "trauma_percent"
+    select "5 min", from: "wait_minutes"
+    expect(page).to have_field("team_count", with: "")
+    {"team_count" => 2, "enemy_count" => 2,
+     "team_level_min" => 10, "team_level_max" => 25,
+     "enemy_level_min" => 10, "enemy_level_max" => 25}.each do |field, value|
+      fill_in field, with: value
+    end
+    click_button "Submit Application"
+    expect(page).to have_content("Waiting for the fight to begin!")
+    application = ArenaApplication.find_by!(applicant: character_a, status: :open)
+    expect(application).to have_attributes(team_count: 2, enemy_count: 2, timeout_seconds: 240, trauma_percent: 50)
+
+    click_button "Show building scheme"
+    expect(page).to have_css("[data-arena-target='roomGrid']", visible: true)
+    # Recovery polling must not discard scheme/focus while the offer is waiting.
+    sleep 6
+    expect(page).to have_css("[data-arena-target='roomGrid']", visible: true)
+
+    Capybara.using_session(:group_opponent) do
+      # Use this browser's login form: Warden's global next-request callback
+      # can otherwise be consumed by the applicant's background refresh.
+      visit new_user_session_path
+      fill_in "Email", with: user_b.email
+      fill_in "Password", with: "password123"
+      click_button "Enter"
+      expect(page).to have_current_path(world_path)
+      enter_arena_from_city!(character_b)
+      visit arena_room_path(arena_room, ft: 2)
+      choose "application_#{application.id}_b"
+      click_button "Accept"
+      expect(page).to have_button("Leave Group")
+      expect(application.reload.members_for("b").map(&:character_id)).to eq([character_b.id])
+      click_button "Leave Group"
+      expect(page).to have_button("Submit Application")
+      expect(character_b.waiting_arena_application).to be_nil
+    end
+    click_button "Cancel Application"
+    expect(page).to have_button("Submit Application")
+    expect(application.reload).to be_cancelled
+  end
+
+  it "opens a recent fight log outside the game frame and follows its statistics", js: true do
+    match = create(:arena_match, :completed, arena_room:)
+    create(:arena_participation, :defeat, arena_match: match, character: character_a, user: user_a)
+    login_as user_a, scope: :user
+    enter_arena_from_city!(character_a)
+
+    within(".nl-arena-recent") { click_link "log" }
+    expect(page).to have_current_path(public_fight_log_path(match))
+    expect(page).not_to have_content("Content missing")
+    click_link "Statistics"
+    expect(page).to have_current_path(public_fight_log_path(match, stat: 1))
+    expect(page).to have_content(character_a.name)
   end
 end

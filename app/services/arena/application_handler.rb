@@ -55,7 +55,19 @@ module Arena
             wait_minutes: params[:wait_minutes] || 10
           )
 
-          if application.save
+          # The captured Group form normalizes a requested 1x1 to 1x2.
+          if application.team_battle? && [application.team_count_before_type_cast, application.enemy_count_before_type_cast].all? { |value| value.to_s == "1" }
+            application.enemy_count = 2
+          end
+
+          equipment_error = EquipmentRule.new(application.fight_kind).rejection_reason(character)
+          if equipment_error
+            Result.new(success?: false, errors: [equipment_error])
+          elsif application.save
+            if application.team_battle?
+              application.arena_application_memberships.create!(character:, team: "a")
+              ActiveRecord.after_all_transactions_commit { enqueue_application_deadline(application) }
+            end
             Result.new(success?: true, application: application)
           else
             Result.new(success?: false, errors: application.errors.full_messages)
@@ -63,8 +75,10 @@ module Arena
         end
       end
 
-      broadcast_new_application(result.application) if result.success?
+      ActiveRecord.after_all_transactions_commit { broadcast_new_application(result.application) } if result.success?
       result
+    rescue ArgumentError, ActiveRecord::RecordInvalid => error
+      Result.new(success?: false, errors: [error.message])
     end
 
     # Accept an existing application (start the fight)
@@ -72,7 +86,8 @@ module Arena
     # @param application [ArenaApplication] the application to accept
     # @param acceptor [Character] the character accepting
     # @return [Result] result with match or errors
-    def accept(application:, acceptor:)
+    def accept(application:, acceptor:, team: nil)
+      return GroupAssembly.new(publisher:).join(application:, character: acceptor, team:) if application.team_battle?
       # NPC applications have different acceptance rules
       if application.npc_application?
         return accept_npc_application(application: application, acceptor: acceptor)
@@ -149,8 +164,11 @@ module Arena
         end
 
         # Check if player already in combat
-        if acceptor.in_combat?
+        if character_has_active_match?(acceptor)
           next Result.new(success?: false, errors: ["You are already in combat"])
+        end
+        if character_has_active_application?(acceptor)
+          next Result.new(success?: false, errors: ["You already have an active fight application"])
         end
 
         # Create the match
@@ -183,6 +201,7 @@ module Arena
     # @param character [Character] the character cancelling (must be applicant)
     # @return [Result] result with success status
     def cancel(application:, character:)
+      return GroupAssembly.new(publisher:).withdraw(application:, character:) if application.team_battle?
       ActiveRecord::Base.transaction do
         application.lock!
 
@@ -210,6 +229,7 @@ module Arena
       return "You are already in an active fight" if character_has_active_match?(character)
       return "You already have an active fight application" if character_has_active_application?(character)
       return "Arena room is full" unless room.has_capacity?
+      return "Recover before fighting: minimum 50% HP" unless ArenaApplication.new.character_hp_sufficient?(character)
 
       nil
     end
@@ -220,17 +240,20 @@ module Arena
       return "You are already in an active fight" if character_has_active_match?(acceptor)
       return "You already have an active fight application" if character_has_active_application?(acceptor)
       return "Applicant is already in an active fight" if character_has_active_match?(application.applicant)
+      return "Applicant must recover before fighting" unless application.character_hp_sufficient?(application.applicant)
+      equipment_error = EquipmentRule.new(application.fight_kind).rejection_reason(application.applicant)
+      return equipment_error if equipment_error
       return "Arena room is full" unless room.has_capacity?
 
       nil
     end
 
     def character_has_active_application?(character)
-      ArenaApplication.active.exists?(applicant: character)
+      character.waiting_arena_application.present? || ArenaApplication.active.exists?(applicant: character)
     end
 
     def character_has_active_match?(character)
-      character.in_combat? || character.arena_participations
+      character.in_combat? || character.unfinished_arena_result.present? || character.arena_participations
         .joins(:arena_match)
         .merge(ArenaMatch.active)
         .exists?
@@ -250,7 +273,9 @@ module Arena
         turn_timeout_seconds: application.timeout_seconds,
         trauma_percent: application.trauma_percent,
         metadata: {
-          fight_kind: application.fight_kind
+          fight_kind: application.fight_kind,
+          fight_timeout_seconds: 300,
+          physical_only: true
         }
       )
 
@@ -278,6 +303,8 @@ module Arena
       npc = application.npc_template
       match_metadata = {
         fight_kind: application.fight_kind,
+        physical_only: true,
+        fight_timeout_seconds: 300,
         is_npc_fight: true,
         npc_template_id: npc.id,
         npc_name: npc.name,
@@ -332,6 +359,12 @@ module Arena
         "[Arena::ApplicationHandler] match_start_enqueue_failed " \
         "match_id=#{match.id} error=#{error.class}"
       )
+    end
+
+    def enqueue_application_deadline(application)
+      ApplicationDeadlineJob.set(wait_until: application.expires_at).perform_later(application.id)
+    rescue StandardError => error
+      logger.error("[Arena::ApplicationHandler] application_deadline_enqueue_failed application_id=#{application.id} error=#{error.class}")
     end
 
     def broadcast_new_application(application)

@@ -142,7 +142,12 @@ class ArenaMatchesController < ApplicationController
       participation.save!
       Arena::CombatProcessor.new(@arena_match).publish_npc_finish_notice!(participation)
     end
-    current_character.exit_combat! if current_character.in_combat?
+    current_character.with_lock do
+      # Replaying an old Finish must never clear a newer fight's state.
+      unless current_character.arena_participations.joins(:arena_match).merge(ArenaMatch.active).exists?
+        current_character.exit_combat! if current_character.in_combat?
+      end
+    end
 
     redirect_to finish_destination_path, notice: "Fight finished.", status: :see_other
   end
@@ -263,6 +268,11 @@ class ArenaMatchesController < ApplicationController
   end
 
   def finish_destination_path
+    if @arena_match.metadata.to_h["physical_only"]
+      room = @arena_match.arena_room
+      context = Game::World::ResumeContext.new(character: current_character)
+      return arena_room_path(room, ft: @arena_match.team_battle? ? 2 : 1) if context.remember_arena_room!(room:)
+    end
     return arena_index_path unless @arena_match.metadata.to_h["source"] == "world_npc"
 
     Game::World::CombatReturnContext.new(character: current_character).path_for(

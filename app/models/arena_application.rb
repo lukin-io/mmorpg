@@ -27,6 +27,8 @@ class ArenaApplication < ApplicationRecord
     no_weapons: 0,        # Bare-handed combat only
     free: 1,              # Freestyle
     alignment_vs_alignment: 3,
+    alignment_vs_all: 4,
+    closed: 6,
     no_artifacts: 7,
     limited_artifacts: 8
   }.freeze
@@ -41,6 +43,10 @@ class ArenaApplication < ApplicationRecord
 
   VALID_TIMEOUTS = [120, 180, 240, 300].freeze
   VALID_TRAUMA_PERCENTS = [10, 30, 50, 80].freeze
+  AVAILABLE_FIGHT_TYPES = %w[duel team_battle].freeze
+  VALID_WAIT_MINUTES = [5, 10, 15, 30, 45, 60].freeze
+  DUEL_KINDS = %w[no_weapons no_artifacts limited_artifacts free].freeze
+  GROUP_KINDS = (DUEL_KINDS + %w[alignment_vs_alignment alignment_vs_all closed]).freeze
   MIN_HP_PERCENT_FOR_ARENA = 50 # Minimum HP% required to accept fights
 
   enum :fight_type, FIGHT_TYPES
@@ -52,13 +58,18 @@ class ArenaApplication < ApplicationRecord
   belongs_to :npc_template, optional: true
   belongs_to :matched_with, class_name: "ArenaApplication", optional: true
   belongs_to :arena_match, optional: true
+  has_many :arena_application_memberships, dependent: :destroy
 
+  validates :timeout_seconds, :trauma_percent, :wait_minutes, numericality: {only_integer: true}, allow_nil: true
   validates :timeout_seconds, inclusion: {in: VALID_TIMEOUTS}
   validates :trauma_percent, inclusion: {in: VALID_TRAUMA_PERCENTS}
   validate :applicant_can_access_room, on: :create, unless: :npc_application?
   validate :npc_can_appear_in_room, on: :create, if: :npc_application?
   validate :group_params_valid, if: :team_battle?
   validate :has_applicant_or_npc
+  validate :fight_kind_available
+  validates :fight_type, inclusion: {in: AVAILABLE_FIGHT_TYPES}, on: :create
+  validates :wait_minutes, inclusion: {in: VALID_WAIT_MINUTES}, allow_nil: true
 
   before_create :set_expiration
 
@@ -106,11 +117,13 @@ class ArenaApplication < ApplicationRecord
   # @param character [Character] the character wanting to accept
   # @return [Boolean] true if character can accept this application
   def acceptable_by?(character)
-    return false unless open?
+    return false unless open? && !deadline_passed?
+    return %w[a b].any? { |team| group_rejection_reason(character, team:).nil? } if team_battle?
     return false if applicant == character
     return false unless arena_room.accessible_by?(character)
     return false if alignment_restricted? && !alignment_matches?(character)
     return false unless character_hp_sufficient?(character)
+    return false if Arena::EquipmentRule.new(fight_kind).rejection_reason(character)
 
     level_matches?(character)
   end
@@ -121,10 +134,9 @@ class ArenaApplication < ApplicationRecord
   # @param character [Character] the character to check
   # @return [Boolean] true if character has enough HP
   def character_hp_sufficient?(character)
-    return true if character.max_hp.nil? || character.max_hp.zero?
+    return false unless character && character.max_hp.to_i.positive?
 
-    hp_percent = (character.current_hp.to_f / character.max_hp * 100).round
-    hp_percent >= MIN_HP_PERCENT_FOR_ARENA
+    character.current_hp.to_i * 100 >= character.max_hp * MIN_HP_PERCENT_FOR_ARENA
   end
 
   # Get rejection reason for a character who cannot accept
@@ -133,13 +145,58 @@ class ArenaApplication < ApplicationRecord
   # @return [String, nil] reason why character cannot accept, or nil if they can
   def rejection_reason_for(character)
     return "Application is closed" unless open?
+    return "Application has expired" if deadline_passed?
+    return "Choose an available group side" if team_battle?
     return "You cannot accept your own application" if applicant == character
     return "Arena room is unavailable" unless arena_room.accessible_by?(character)
     return "Alignment does not match" if alignment_restricted? && !alignment_matches?(character)
     return "Recover before fighting: minimum #{MIN_HP_PERCENT_FOR_ARENA}% HP" unless character_hp_sufficient?(character)
     return "Level does not match" unless level_matches?(character)
+    Arena::EquipmentRule.new(fight_kind).rejection_reason(character)
+  end
 
-    nil
+  def deadline_passed?(now: Time.current)
+    expires_at.present? && now >= expires_at
+  end
+
+  def members_for(team)
+    arena_application_memberships.select { |entry| entry.team == team }
+  end
+
+  def side_capacity(team)
+    team == "a" ? team_count : enemy_count
+  end
+
+  def side_level_range(team)
+    minimum, maximum = team == "a" ? [team_level_min, team_level_max] : [enemy_level_min, enemy_level_max]
+    (minimum || arena_room.level_min)..(maximum || arena_room.level_max)
+  end
+
+  def member?(character)
+    applicant_id == character.id || arena_application_memberships.any? { |entry| entry.character_id == character.id }
+  end
+
+  def group_rejection_reason(character, team:)
+    return "Application is closed" unless open? && !deadline_passed?
+    return "Choose a group side" unless team.in?(%w[a b])
+    return "You already joined this application" if member?(character)
+    return "Arena room is unavailable" unless arena_room.accessible_by?(character)
+    return "This side is full" if members_for(team).size >= side_capacity(team).to_i
+    return "Level does not match this side" unless side_level_range(team).cover?(character.level)
+    return "Recover before fighting: minimum #{MIN_HP_PERCENT_FOR_ARENA}% HP" unless character_hp_sufficient?(character)
+    if alignment_vs_alignment? || alignment_vs_all?
+      return "Alignment does not match this side" unless group_alignment_matches?(character, team:)
+    end
+    Arena::EquipmentRule.new(fight_kind).rejection_reason(character)
+  end
+
+  def group_alignment_matches?(character, team:)
+    return true if alignment_vs_all? && team == "b"
+    return false if character.alignment == Character::ALIGNMENTS[:none]
+    return character.alignment == applicant.alignment if team == "a"
+
+    opponent_alignment = members_for("b").first&.character&.alignment
+    character.alignment != applicant.alignment && (opponent_alignment.nil? || character.alignment == opponent_alignment)
   end
 
   # Check if the fight has level restrictions
@@ -225,11 +282,27 @@ class ArenaApplication < ApplicationRecord
   end
 
   def group_params_valid
-    if team_count.nil? || team_count < 1
-      errors.add(:team_count, "is required for group fights")
+    capacity = closed? ? 10 : 30
+    %i[team_count enemy_count].each do |field|
+      value = Integer(public_send("#{field}_before_type_cast").to_s, exception: false)
+      errors.add(field, "must be between 1 and #{capacity}") unless value&.between?(1, capacity)
     end
-    if enemy_count.nil? || enemy_count < 1
-      errors.add(:enemy_count, "is required for group fights")
+    %w[team enemy].each do |side|
+      minimum, maximum = %w[min max].map { |bound| Integer(public_send("#{side}_level_#{bound}_before_type_cast").to_s, exception: false) }
+      unless minimum.is_a?(Integer) && maximum.is_a?(Integer) && minimum.between?(0, 33) && maximum.between?(minimum, 33)
+        errors.add(:base, "#{side.humanize} levels must be an ordered range within 0-33")
+      end
+    end
+    if applicant && team_level_min && team_level_max && !side_level_range("a").cover?(applicant.level)
+      errors.add(:applicant, "must fit the first side's level range")
+    end
+  end
+
+  def fight_kind_available
+    available = team_battle? ? GROUP_KINDS : DUEL_KINDS
+    errors.add(:fight_kind, "is unavailable for this mode") unless available.include?(fight_kind)
+    if applicant && (alignment_vs_alignment? || alignment_vs_all?) && applicant.alignment == Character::ALIGNMENTS[:none]
+      errors.add(:applicant, "requires an alignment for this fight")
     end
   end
 

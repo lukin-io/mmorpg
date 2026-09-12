@@ -44,6 +44,10 @@ FactoryBot.define do
       fight_type { :team_battle }
       team_count { 2 }
       enemy_count { 2 }
+      team_level_min { 0 }
+      team_level_max { 33 }
+      enemy_level_min { 0 }
+      enemy_level_max { 33 }
     end
 
     trait :sacrifice do

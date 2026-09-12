@@ -243,7 +243,7 @@ probability, or relationship to the detailed combat log.
 - `app/services/arena/combat_processor.rb`
 - `app/services/arena/combat_profile.rb`
 - `app/lib/game/combat/action_catalog.rb`
-- `app/services/arena/npc_experience_awarder.rb`
+- `app/services/arena/experience_awarder.rb`
 - `app/services/arena/equipment_wear_resolver.rb`
 - `app/services/arena/npc_loot_awarder.rb`
 - `app/services/arena/combat_resolver.rb`
@@ -262,3 +262,7 @@ The completed22-fight register feeds [calibration v1](../../features/combat_cali
 The user authorized fitted coefficients and complete implementation without
 waiting for proprietary source code. This changes local delivery policy, not
 the provenance or certainty of the preserved observations.
+
+## September 12 Arena lobby cycle
+
+[Duels and Groups](observations/2026-09-12_arena_duels_and_groups.md) records city entry, ten-hall gates, equipment/timeout/risk forms, side fields, posting/cancellation, waiting navigation lock, 1×1→1×2 normalization and empty-opponent expiry. Level17 Dummy acceptance remained unavailable. New completed source Arena fights: **0**. The user authorizes pragmatic local physical PvP; [Arena design](../../areas/arena.md) records inferred start/admission rules and the runtime handbook owns local verification.

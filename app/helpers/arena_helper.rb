@@ -20,18 +20,25 @@ module ArenaHelper
   # Fight type configuration
   FIGHT_TYPE_CONFIG = {
     duel: {label: "Duels"},
-    team_battle: {label: "Team Battles"},
-    sacrifice: {label: "Sacrifice"}
+    team_battle: {label: "Groups"}
   }.freeze
 
   # Fight kind configuration
   FIGHT_KIND_CONFIG = {
-    no_weapons: {label: "No Weapons"},
+    no_weapons: {label: "Unarmed (no equipment)"},
     free: {label: "Free"},
     alignment_vs_alignment: {label: "Alignment vs Alignment"},
+    alignment_vs_all: {label: "Alignment vs All"},
+    closed: {label: "Closed (up to 10 vs 10)"},
     no_artifacts: {label: "No Artifacts"},
     limited_artifacts: {label: "Limited Artifacts"}
   }.freeze
+
+  # Options supported by each application mode.
+  def arena_fight_kind_options(type)
+    kinds = type == "team_battle" ? ArenaApplication::GROUP_KINDS : ArenaApplication::DUEL_KINDS
+    kinds.map { |kind| [fight_kind_label(kind), kind] }
+  end
 
   # Match status labels
   MATCH_STATUS_CONFIG = {

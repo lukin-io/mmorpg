@@ -2,7 +2,7 @@
 
 require "rails_helper"
 
-RSpec.describe Arena::NpcExperienceAwarder do
+RSpec.describe Arena::ExperienceAwarder do
   let(:match) { create(:arena_match, :live, metadata: {"source" => "world_npc", "is_npc_fight" => true}) }
   let(:winner) { create(:character, :neverlands_starter) }
 

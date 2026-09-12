@@ -20,7 +20,7 @@ module Combat
     def by_participant
       @by_participant ||= participants.map do |participant|
         metadata = participant.metadata.to_h
-        damage = if metadata.key?("damage_dealt")
+        damage = if metadata.key?("damage_dealt") || credited_results?
           metadata["damage_dealt"].to_i
         else
           actor_total(damage_by_actor, participant)
@@ -35,7 +35,7 @@ module Combat
           physical_damage: metadata.fetch("damage_by_element", {}).fetch("physical", metadata.key?("damage_by_element") ? 0 : damage),
           magical_damage: metadata.fetch("damage_by_element", {}).except("physical").values.sum,
           total_damage: damage,
-          opponents_defeated: metadata["opponents_defeated"]&.to_i,
+          opponents_defeated: (metadata["opponents_defeated"].to_i if metadata.key?("opponents_defeated") || credited_results?),
           total_hits: actor_total(hits_by_actor, participant),
           xp_earned: experience_for(participant)
         }
@@ -62,7 +62,7 @@ module Combat
       # Preserve the old whole-log total (including unattributed events) when
       # no participant has recorded credited damage. Mixed older/newer rows
       # otherwise use the same per-participant fallback as the visible table.
-      return damage_by_actor.values.sum unless participants.any? { |participant| participant.metadata.to_h.key?("damage_dealt") }
+      return damage_by_actor.values.sum unless credited_results? || participants.any? { |participant| participant.metadata.to_h.key?("damage_dealt") }
 
       by_participant.sum { |row| row[:total_damage] }
     end
@@ -111,6 +111,13 @@ module Combat
     end
 
     private
+
+    # The shared processor finalizes credited totals even for a combatant whose
+    # only strike lands after simultaneous damage has already exhausted HP.
+    # Such a combatant has no positive-damage counter: missing means zero here.
+    def credited_results?
+      fight.metadata.to_h["rewards_processed_at"].present?
+    end
 
     def participants
       @participants ||= fight.arena_participations.includes(:character, :npc_template).to_a

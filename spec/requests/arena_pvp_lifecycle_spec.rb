@@ -68,6 +68,7 @@ RSpec.describe "Physical 1x1 PvP lifecycle", type: :request do
     expect(response).to have_http_status(:ok)
     match = ArenaMatch.find(response.parsed_body.fetch("match_id"))
     expect(match).to be_pending
+    expect(match.metadata).to include("physical_only" => true, "fight_timeout_seconds" => 300)
     expect(match.arena_applications.count).to eq(2)
     expect(match.arena_applications).to all(be_matched)
 
@@ -77,6 +78,20 @@ RSpec.describe "Physical 1x1 PvP lifecycle", type: :request do
     expect(match.current_turn_number).to eq(1)
     expect(match.arena_applications.reload).to all(be_started)
     expect([first_character.reload.in_combat?, second_character.reload.in_combat?]).to all(be(true))
+
+    get arena_match_path(match)
+    expect(response.body).not_to include('data-skill-key=')
+    [
+      {attacks: [{action_key: "spirit_arrow", body_part: "torso"}]},
+      {blocks: [{action_key: "magic_shield", body_parts: ["torso"]}]},
+      {skills: [{key: "heal"}]}
+    ].each do |forged|
+      hp = [first_character.reload.current_hp, second_character.reload.current_hp]
+      post action_arena_match_path(match), params: turn_params.merge(target_id: first_character.id).merge(forged), as: :json
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect([first_character.reload.current_hp, second_character.reload.current_hp]).to eq(hp)
+      expect(match.reload.current_turn_number).to eq(1)
+    end
 
     post action_arena_match_path(match),
       params: turn_params.merge(target_id: first_character.id),

@@ -582,8 +582,8 @@ Required behavior:
   until all live players submit, then resolve together;
 - fights with only one live player-controlled side and NPC opponents use the
   same combat resolver and turn package, with NPC AI submitting actions;
-- combat UI supports AP, body-part attacks, one active block, magic/action
-  slots, HP/MP, combat log, waiting state, timeout, and finish result;
+- combat UI supports AP, physical body-part attacks, one active block, HP/MP,
+  combat log, waiting state, timeout, and finish result; magic is after MVP;
 - every fight writes a durable event stream keyed by the fight id, with public
   paginated log pages and `stat=1` aggregate statistics rendered from that same
   stream;
@@ -596,6 +596,19 @@ Required behavior:
 - completed fights require an explicit finish action before returning to arena
   or world.
 
+### September 12 Arena scope refinement
+
+Only Duels and Groups are in this stage. Their forms drive persisted equipment,
+turn/risk and group-side admission terms, deadline assembly and cancellation.
+The shared physical engine handles real player sides and NPC participants;
+there is no separate PvP resolver. [Arena design](areas/arena.md) owns the exact
+contract and explicit inferred start/artifact rules. [Arena Combat](../features/arena_combat.md#final-physical-arena-acceptance)
+owns current verification and browser acceptance. The fresh source Arena count
+is zero completed fights; source opponent availability does not block locally
+verified two-player/group behavior, as explicitly authorized by the user.
+Clan modes, hired intervention, excluded mode tabs and an outdoor attack entry
+are outside this basic Arena delivery. Future outdoor PvP must reuse this engine.
+
 ### Build Guidance
 
 - Arena area design is documented in `doc/design/areas/arena.md`.
@@ -605,7 +618,7 @@ Required behavior:
 - Combat profiles support per-participant AP and dynamic physical attack costs.
 - The active combat screen follows a compact three-zone fight UI.
 - NPC training fights use the shared combat resolver path.
-- Magic/action slots are resolved through `Game::Combat::ActionCatalog` and the
+- Existing bounded magic capability is retained for post-MVP work and resolves through `Game::Combat::ActionCatalog` and the
   shared turn processor. Do not reintroduce a separate generic active-skill
   executor or arbitrary combat effect records.
 - Treat the Neverlands `logs.fcg?fid=<id>` shape as a product contract, not a
@@ -712,7 +725,8 @@ and magic calculations, mastery AP reduction, fatigue, general/group NPC XP,
 Observation and typed loot pools, elapsed HP/MP recovery, persisted injuries,
 patient-approved healer treatment, Hospital bag purchases, remote stronger
 habitats and Ogre activation. Original medical artwork is in ARTWORK. The
-next Arena/PvE observation stage must refine this same engine and interface.
+subsequent physical Arena stage extends this same engine and interface; its
+current scope and acceptance are recorded above.
 
 Workshop repairs and unrelated gathering/production are separate feature work;
 no transaction from those systems was observed in the22-fight cycle.
@@ -728,7 +742,7 @@ following separates delivered local behavior from unresolved source equations;
 
 | Requested concern | Current delivery and remaining boundary |
 |---|---|
-| Shared Arena, PvP, PvE and mixed teams | One participation/processor/resolver pipeline. Independent member snapshots, committed exchanges and living-target selection remain shared. The next Arena/PvE stage will refine arbitration in this engine. |
+| Shared Arena, PvP, PvE and mixed teams | One participation/processor/resolver pipeline. Independent member snapshots, committed exchanges and living-target selection remain shared. Physical Arena now adds real Duel/Group admission, deadline assembly and per-player result recovery; [final local acceptance](../features/arena_combat.md#final-physical-arena-acceptance) covers player sides and Dummy fights. |
 | Defeated combatants | Defeat is terminal for active cards, rosters, targets, readiness and future turns. Committed returns resolve; results, XP and logs retain historical participants. |
 | Combat inputs and progression | Versioned physical/magic calculations use effective stats, weapon mastery, armor, modifiers, fatigue and trusted artifact grade. Published per-level grants and cumulative XP costs remain authoritative; fitted coefficients are documented in [calibration](features/combat_calibration.md). |
 | Timers and aftermath | Five-minute global deadline; persisted sampled encounter delays; Finish restores the same location. Server elapsed-time HP/MP recovery includes skills and fatigue without reviving an active defeated participant. |
@@ -817,7 +831,11 @@ remain evidence for the versions and flows originally exercised.
 - Arena player, player-team, Arena NPC, and wild NPC physical paths use the same
   shared combat processor. The bounded `3x3` browser/request gate is complete;
   team reward distribution uses the calibrated `COMBAT-XP-GROUP` owner and
-  remains subject to refinement in the next Arena observation stage.
+  now covers physical Arena PvP. The September12 Duel/Group application stage
+  adds real side assembly, physical-only admission, per-player result recovery
+  and original row icons; its final acceptance is recorded in the
+  [Arena handbook](../features/arena_combat.md#september-12-physical-arena-applications).
+  Unobserved coefficients remain fitted, with later evidence refining this owner.
 - Explicit captured victory/defeat XP has bounded implementation and focused
   coverage; stage2 full/manual acceptance passed. General solo/multi-NPC calculation is now enabled under the calibrated `COMBAT-XP-GENERAL` row.
 - Captured magic selectors, MP cost, damage buckets and barriers are implemented with fitted resolution. Uncaptured spell families need their own source catalog before content authoring.
@@ -984,7 +1002,7 @@ the next implementation step is.
 | NPCs and drops | Yes: hostile behavior, arena mannequin drops, paired wild rat-tail drops, supplied `24 NV` result, participant-level defeat, XP caps, and source-backed return context. | Implemented for the declared encounter/typed-award pipeline: explicit paired rats, distinct targeting, selected-NPC committed response, atomic retry-safe item/NV awards, exact `35` total paired-encounter XP, fixed-anchor final defeat, sampled-anchor post-victory eligibility, surrender-compatible sides, and allowlisted return. The active Training Dummy chance remains explicit; Plague Rat uses the authorized fitted 3% chance. Observation, independent typed item/NV rolls and general/group XP are enabled under combat calibration v1. | Refine fitted chances and reward shares from new source evidence in the same owners; quest NPC behavior remains separate. |
 | NPC quest interactions | Needs dedicated Neverlands capture. | General NPC quest/story stack remains absent. Shop implements the published Merchant license-qualification steps, with original dialogue and garment reward incomplete. | Capture exact quest UI, NPC dialogue flow, task/journal state, reward/turn-in rules, and location gating before implementation. |
 | Combat | Yes: combat captures, public logs, wiki AP/critical/wear/XP constants, item/NV search outputs, magic, equipment effects, and result flow. | Bounded physical MVP: `DONE`; the 22-fight observation scope and pragmatic calibration are tracked by the current completion matrix. Uncaptured Workshop and later Arena catalog work remain separate. | Use the canonical Combat Completion Matrix for each mechanic and exact next gate. |
-| Arena combat | Yes: arena rooms/applications, NPC training, wilderness NPC captures, and public-log captures. | Bounded lifecycle, physical `1x1` PvP/PvE, `3x3` team turns, captured active/result states, and public log: `DONE`. | Reuse these gates and the September12 calibrated formulas, group XP, habitats and interface in the next Arena/PvE observation stage. |
+| Arena combat | Yes: arena rooms/applications, NPC training, wilderness NPC captures, and public-log captures. September12 adds live Duel/Group form observations; no new completed source Arena fights. | Physical Duels/Groups, server-enforced application terms, real side assembly, shared turns/rewards, offline results, original-hall Finish and compliant artwork are implemented and locally accepted. | [Final acceptance](../features/arena_combat.md#final-physical-arena-acceptance) owns exact automated/browser results. Source-only uncertainties remain explicit; clan/intervention and outdoor attack entry are separate scope. |
 | Character vitals | Yes: live player capture, wiki HP/MP maxima, and vitals doc. | Exact starter/base `Health × 5` HP and `Knowledge × 7` MP are implemented; elapsed server recovery now uses calibrated timing, effective recovery skills, fatigue and persisted fractions. | Refine the fitted recovery timing from later measurements; the implemented pipeline remains active. |
 | Progression, stats, and skills | Yes: live profile allocation, wiki level/AP/formulas, exact numeric IDs/rates, More Strength, Careful Fighter, and Wanderer. | Fully implemented for the declared handbook boundary: level-0/table grants, locked allocations, exact HP/MP/mass/AP and bounded perk formulas, public display, and explicit solo-encounter XP. | Mastery and general/group XP now use the authorized calibration. Keep unrelated uncaptured skill effects, level `28+` grants and profession counters outside this bounded delivery. |
 | Items, inventory, equipment | Yes: inventory/equipment, wiki mass/wear/repair direction, 2026-06-01 item-row/equip capture, NPC item-found output, and shop rows. | Captured subset implemented, including persisted successful NPC item awards, derived mass enforcement, source-result combat wear with Careful Fighter, and zero-durability sale rejection. | Capture one authenticated repair/workshop flow, exact layered armor/belt/pocket/relic rules, and remaining family UX. |

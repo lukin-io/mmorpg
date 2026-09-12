@@ -126,13 +126,14 @@ Rows beyond level `27` are not implemented because the audited wiki rows are
 incomplete. A character at the highest complete row can keep experience, but
 the server does not invent a threshold or rewards for level `28`.
 
-Configured solo NPC experience is awarded at shared fight completion and
-capped by the recipient's current table row and active entitlement. An explicit
-observed defeat award remains separate from the victory reward; a loss cannot
-reuse the victory amount. Larger/higher-level groups offer greater XP potential,
-but the source samples do not establish a universal sum or level multiplier. Neverlands group experience uses a
-more complex distribution that is not completely captured, so a winning side
-with multiple player participants currently receives no invented PvE XP split.
+Shared player/NPC experience is awarded at fight completion and capped by the
+recipient's current table row and active entitlement. Explicit observed solo
+NPC victory/defeat totals retain precedence. The user-authorized calibrated
+fallback handles defeated player/NPC opponents and contributing group members;
+these coefficients are local fits, not recovered source equations. Read
+[FORMULAS](../../FORMULAS.md#reward-01--shared-npc-and-player-experience) for
+credited HP, level discount, risk, team shares, caps and edit impact. Progression
+still owns applying XP and the same per-level grants to every recipient.
 The persistent chat timeline may display the exact awarded amount in a concise
 fight-completion row after finalization. Character progression remains the XP,
 threshold, and grant authority; that feedback row cannot award or recalculate

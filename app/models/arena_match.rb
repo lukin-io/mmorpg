@@ -4,7 +4,7 @@
 # Tracks fight status, participants, and results
 #
 # @example Create a match from applications
-#   Arena::Matchmaker.new.create_match(application1, application2)
+#   Arena::ApplicationHandler.new.accept(application: application, acceptor: character)
 #
 # @example Subscribe to match updates
 #   ArenaMatchChannel.subscribed(match_id: match.id)

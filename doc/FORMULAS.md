@@ -526,11 +526,11 @@ Reward/finalization owner: [Arena Combat](features/arena_combat.md);
 and the [event catalog](features/game_shell.md#gameplay-event-catalog) own item,
 wallet and notice handoffs respectively.
 
-### REWARD-01 — NPC experience
+### REWARD-01 — Shared NPC and player experience
 
-Owner: [NpcExperienceAwarder](../app/services/arena/npc_experience_awarder.rb).
+Owner: [ExperienceAwarder](../app/services/arena/experience_awarder.rb).
 Captured solo totals have precedence; the general fallback is calibrated.
-Draws, invalid winners and no defeated enemy NPCs yield no award.
+Draws, invalid winners and no defeated enemies yield no award.
 
 For a match containing exactly one player, the applicable explicit
 `encounter_experience_reward` or `encounter_defeat_experience_reward` is the
@@ -540,10 +540,13 @@ suppresses fallback. A loss award still requires a defeated enemy NPC.
 Otherwise, for each recipient at their participant level:
 
 ```text
-n = count of defeated enemy NPCs (not initial or surviving NPCs)
+n = count of defeated enemies (not initial or surviving fighters)
 NPC contribution = maxHP * 0.85 * 0.75^max(playerLevel - npcLevel - 2, 0)
-if n == 1 and template XP > 0: use that positive template XP instead
-gross = round(sum(contributions) * (1 + 0.45*(n-1)) * (winning team ? 1 : 0.1))
+Player contribution = min(maxHP, credited damage taken) * 0.85
+                      * 0.75^max(playerLevel - enemyLevel - 2, 0)
+if n == 1 and enemy is NPC and template XP > 0: use template XP instead
+risk = 1 for NPC-only enemies; otherwise trauma 10/30/50/80 => 1/1.1/1.2/1.35
+gross = round(sum(contributions) * (1 + 0.45*(n-1)) * risk * (winning team ? 1 : 0.1))
 ```
 
 With more than one player on the recipient's team, let `p` be team size and
@@ -559,10 +562,30 @@ final XP = min(earned, floor(current level fight cap * entitlement cap multiplie
 A one-player team uses gross directly. Each recipient's gross is computed at
 their level; this is not one common XP pot divided irrespective of levels.
 The credited damage field includes the team's credited combat damage, not a
-separate NPC-only contribution counter. Pure PvP has no NPC XP award formula.
+separate NPC-only contribution counter. Untouched player surrender awards no XP.
+Player levels/maxHP are snapshotted before settlement grants to prevent an
+earlier recipient level-up changing a later recipient calculation. Trauma
+factors are monotonic local fits to the wiki's qualitative higher-risk/higher-XP
+rule, not measured Neverlands constants.
 Finalization guards against duplicate grants and uses the shared level-up
 service. Template XP is a current template read; encounter totals are match
 metadata.
+
+### ARENA-01 — Admission and deadlines
+
+[Arena design](design/areas/arena.md) owns the application contract;
+[EquipmentRule](../app/services/arena/equipment_rule.rb) reads equipped items and
+character `artifact_grade`. Unarmed accepts no equipment; no-artifacts accepts
+only `none`; limited accepts configured grades whose artifact multiplier is
+at most `arena_rules.limited_artifact_max_multiplier` (currently1.1). This
+threshold is fitted. Unknown grades reject restricted offers.
+
+HP admission requires positive maxHP and exact `currentHP * 100 >= maxHP * 50`,
+without rounded display percentages. Group ranges must be integer0–33, min≤max; capacity1–30 (closed10),
+1×1 normalizes to1×2. Allowed waits5/10/15/30/45/60 minutes determine
+`expires_at = created server time + wait`; a deadline is reached at `now >=
+expires_at`. Turn timeout is120/180/240/300 seconds, global fight deadline300.
+Changing these rules requires model/service/HTTP coverage plus lobby UI review.
 
 ### REWARD-02 — Premium limits
 
@@ -668,8 +691,30 @@ categories/state with explicit local award/duration policy:
 - Combat injury flag always awards combat severity. Otherwise a decisive
   timeout with positive trauma always awards heavy severity. Otherwise roll
   `rand(100) < clamp(trauma_percent,0,100)`.
-- After a successful normal roll, trauma ≥80 selects heavy, ≥50 medium,
-  otherwise light. These are risk thresholds, not thresholds on damage dealt.
+- After a successful ordinary roll, an **independent** `rand(100)` chooses
+  light80%, medium18%, heavy2%. Fight risk controls occurrence, never a fixed
+  severity; a high-risk ordinary fight can still leave no injury or a light one.
+  These are user-directed local rarity weights, not recovered source odds.
+
+`P(no injury) = 1 - risk/100` and
+`P(severity) = risk/100 * severity_weight/100` for ordinary defeated players.
+
+| Fight risk | No injury | Light | Medium | Heavy |
+|---|---:|---:|---:|---:|
+| 10% | 90% | 8% | 1.8% | 0.2% |
+| 30% | 70% | 24% | 5.4% | 0.6% |
+| 50% | 50% | 40% | 9% | 1% |
+| 80% | 20% | 64% | 14.4% | 1.6% |
+
+Edit `injuries.severity_weights` in
+[combat_calibration.yml](../config/gameplay/combat_calibration.yml) to tune the
+conditional mix. The loader requires exactly light/medium/heavy, nonnegative
+integer percentages totaling100. Restart the app/workers after configuration
+changes. [Calibration.injury_severity](../app/lib/game/combat/calibration.rb)
+is a pure calculation with explicit chance/severity rolls; the shared match
+finalizer supplies server RNG and prevents retries from rerolling a completed
+uninjured result. Existing injuries retain their saved severity and expiry.
+The separate source-backed combat/decisive-timeout cases bypass this table.
 
 | Severity | Base duration | Primary-stat penalty | Added duration for each already active injury |
 |---|---|---:|---|
@@ -966,7 +1011,7 @@ migration or reconciliation of earned player state.
 | Skill rates and band crossing | [skill formula specs](../spec/lib/game/formulas/skill_progression_formula_spec.rb), allocation request/service specs |
 | Physical damage and probabilities | [calibration specs](../spec/lib/game/combat/calibration_spec.rb), [mastery specs](../spec/services/arena/mastery_calibration_spec.rb), CombatResolver specs |
 | Magic and barriers | [magic calibration specs](../spec/services/arena/magic_calibration_spec.rb) |
-| Group/defeat XP | [defeat experience specs](../spec/services/arena/npc_defeat_experience_spec.rb), NpcExperienceAwarder specs |
+| Group/defeat XP | [defeat experience specs](../spec/services/arena/npc_defeat_experience_spec.rb), ExperienceAwarder specs |
 | Loot, entitlement limits and retry | NpcLootAwarder/PremiumBenefits specs, [World combat lifecycle](../spec/requests/world_npc_combat_lifecycle_spec.rb) |
 | Fractional recovery | [elapsed recovery specs](../spec/services/characters/vitals_elapsed_recovery_spec.rb) |
 | Medical transitions | [treatment specs](../spec/services/characters/treat_injury_spec.rb) |

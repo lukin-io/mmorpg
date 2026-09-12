@@ -20,9 +20,14 @@ module ArenaEntryGate
 
   def require_city_arena_entry!
     return if current_character_has_active_arena_match?
+    return if current_character&.unfinished_arena_result
     if current_character
       context = Game::World::ResumeContext.new(character: current_character)
       return if context.arena_entered? || context.arena_room
+      # A persisted application is prior Arena entry evidence, including offers
+      # created before room resume was recorded. Recheck the current city/hall.
+      application = current_character.waiting_arena_application
+      return if application && context.remember_arena_room!(room: application.arena_room)
     end
 
     respond_to do |format|

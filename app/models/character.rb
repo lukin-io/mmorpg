@@ -89,6 +89,8 @@ class Character < ApplicationRecord
   has_many :character_injuries, dependent: :restrict_with_error
   has_many :active_injuries, -> { active_at(Time.current) }, class_name: "CharacterInjury"
   has_many :arena_applications, foreign_key: :applicant_id, dependent: :destroy
+  has_many :arena_application_memberships, dependent: :destroy
+
   has_many :arena_participations, dependent: :destroy
 
   has_many :movement_commands, dependent: :destroy
@@ -107,6 +109,22 @@ class Character < ApplicationRecord
   validate :respect_character_limit, on: :create
 
   after_create :ensure_inventory!
+
+  # An open owned offer or joined group place reserves this character.
+  def waiting_arena_application
+    ArenaApplication.open.where(applicant_id: id).or(
+      ArenaApplication.open.where(id: arena_application_memberships.select(:arena_application_id))
+    ).first
+  end
+
+  # Each player acknowledges the physical Arena result independently. Reloads
+  # and a fresh login must retain this screen after another player ends a fight.
+  def unfinished_arena_result
+    arena_participations.joins(:arena_match).merge(ArenaMatch.completed)
+      .where("arena_matches.metadata @> ?", {physical_only: true}.to_json)
+      .where("NULLIF(arena_participations.metadata ->> 'finished_at', '') IS NULL")
+      .order("arena_matches.ended_at DESC NULLS LAST", id: :desc).first&.arena_match
+  end
 
   # Query fresh state: boarding and disembarkation can happen in another tab.
   def active_airship_journey

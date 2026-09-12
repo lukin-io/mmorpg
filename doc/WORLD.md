@@ -380,3 +380,7 @@ ARTWORK.md. Do not mark a visible label or an unconfigured route as playable.
 The documentation maintenance contract is in
 [DOCUMENTATION](DOCUMENTATION.md#410-game-reference-books). This guide does not
 constitute a seed run, new Neverlands observation or browser acceptance.
+
+## Arena reservation and future outdoor PvP
+
+A posted or joined Arena offer reserves the player: City/world travel, Inventory/equipment, Character and other location-changing requests return to the reserved room. Due offers recover before this guard; cancelled/expired offers release navigation. Active physical Arena fights and each player's unfinished result return to their match, including after login. Finish restores the accessible original hall/tab. [Arena](design/areas/arena.md) owns this contract and [Arena Combat](features/arena_combat.md) its acceptance. Future same-cell PvP should authorize the attacker and target at the world boundary then create participations in the shared engine; this stage adds no outdoor attack endpoint.

@@ -112,7 +112,7 @@ RSpec.describe ArenaHelper, type: :helper do
 
     it "returns label for team_battle" do
       result = helper.fight_type_with_icon("team_battle")
-      expect(result).to eq("Team Battles")
+      expect(result).to eq("Groups")
     end
 
     it "handles unknown fight types gracefully" do

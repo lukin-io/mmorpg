@@ -33,6 +33,17 @@ authored. The former inherited equation did not reproduce source player hits0 ve
 
 Domain navigation: `doc/domains/combat.md`.
 
+## Physical Arena delivery scope
+
+The [September12 Arena contract](../areas/arena.md#september-12-physical-arena-contract)
+uses the same resolver, participation model, live-player turn waiting, injuries,
+credited damage, XP, public log and result UI. New Duels, Groups and Arena Dummy
+matches disable magic on the server and in selectors; magic is after MVP per
+the user's direction. Earlier bounded wilderness magic evidence/code below is
+retained as future capability, not a requirement to expose spells in Arena.
+Group membership belongs to the application until its deadline, then becomes
+ordinary match participations. Dead combatants never rejoin active play.
+
 ## Purpose
 
 Combat is a turn-based tactical feature built around explicit choices:
@@ -762,8 +773,12 @@ listings, kit/material use, and ordinary-item maximum-durability loss, but one
 authenticated request/payment/failure/retrieval flow is still required before
 shipping it. Injury taxonomy and several guaranteed cases are known, while the
 ordinary probability/duration mapping is not. The September12 authorized
-calibration uses the match trauma percentage as the local chance and maps it
-to documented provisional severity/duration bands.
+calibration uses the match trauma percentage as the local occurrence chance.
+The user's subsequent correction separates severity into an independent weighted
+roll: light80%, medium18%, heavy2% among ordinary injuries, with most10%-risk
+defeats uninjured. [INJURY-01](../../FORMULAS.md#injury-01--defeat-injury-and-stat-penalty)
+owns these explicitly fitted weights and provisional durations; guaranteed
+combat/decisive-timeout cases remain separate.
 The stronger cycle adds one named light injury and a remaining-duration
 display, but does not establish its initial duration, probability or isolated
 stat penalty. The separately captured [published Injury/Doctor rules](../reference/combat/observations/2026-09-11_stronger_npc_loot_combat_cycle.md#published-injury-and-doctor-rules)

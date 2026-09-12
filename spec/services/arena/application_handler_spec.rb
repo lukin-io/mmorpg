@@ -504,7 +504,7 @@ RSpec.describe Arena::ApplicationHandler do
         expect(npc_participation.metadata["max_hp"]).to eq(expected_hp)
       end
 
-      it "copies captured selector injections into the shared match profile" do
+      it "retains the captured profile but disables magic for physical Arena launch fights" do
         result = handler.accept_npc_application(
           application: npc_application,
           acceptor: character
@@ -519,7 +519,7 @@ RSpec.describe Arena::ApplicationHandler do
         expect(result.match.arena_participations.players.sole.metadata.dig(
           "combat_profile",
           "injected_block_keys"
-        )).to eq(%w[magic_shield rainbow_barrier crystal_sphere])
+        )).to eq([])
       end
     end
   end
@@ -619,5 +619,23 @@ RSpec.describe Arena::ApplicationHandler do
         expect(publisher).not_to have_received(:publish)
       end
     end
+  end
+  it "does not publish a new offer before an enclosing transaction commits" do
+    publisher = instance_double(Arena::RealtimePublisher, publish: true)
+    service = described_class.new(publisher:)
+    ArenaApplication.transaction do
+      expect(service.create(character:, room: arena_room, params: {fight_kind: "free"})).to be_success
+      expect(publisher).not_to have_received(:publish)
+      raise ActiveRecord::Rollback
+    end
+    expect(publisher).not_to have_received(:publish)
+    expect(character.waiting_arena_application).to be_nil
+  end
+
+  it "uses the exact half-health boundary and rejects invalid maximum health" do
+    application = ArenaApplication.new
+    expect(application.character_hp_sufficient?(build(:character, max_hp: 1_000, current_hp: 499))).to be(false)
+    expect(application.character_hp_sufficient?(build(:character, max_hp: 1_000, current_hp: 500))).to be(true)
+    expect(application.character_hp_sufficient?(build(:character, max_hp: 0, current_hp: 0))).to be(false)
   end
 end

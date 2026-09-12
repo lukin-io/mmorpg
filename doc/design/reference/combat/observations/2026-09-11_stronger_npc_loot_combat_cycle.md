@@ -360,7 +360,7 @@ historical captures or silently promote a sampled value to a general formula.
 ### Responsible implementation files
 
 - `app/services/arena/combat_processor.rb`
-- `app/services/arena/npc_experience_awarder.rb`
+- `app/services/arena/experience_awarder.rb`
 - `app/services/arena/npc_loot_awarder.rb`
 - `app/views/arena_matches/show.html.erb`
 

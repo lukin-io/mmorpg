@@ -1241,7 +1241,7 @@ module Arena
     def finalize_rewards!(winning_team)
       return if match.metadata.to_h["rewards_processed_at"].present?
 
-      xp_results = npc_fight? ? Arena::NpcExperienceAwarder.new(match:, winning_team:).call_all : []
+      xp_results = Arena::ExperienceAwarder.new(match:, winning_team:).call_all
       xp_result = xp_results.first
       Arena::InjuryAwarder.new(match:, rng:).call.each do |injury|
         log_entry("injury", injury.character, "#{injury.character.name} received a #{injury.severity} injury «#{injury.name}».")
@@ -1441,6 +1441,7 @@ module Arena
       unless valid_neverlands_turn_shape?(attacks, blocks, skills)
         errors << "Choose at least one valid attack, block, or magic/action slot"
       end
+      errors << "Magic is unavailable in this physical fight" if match.metadata.to_h["physical_only"] == true && skills.any?
       errors << "Only one block can be selected per turn" if blocks.size > 1
       errors << "Only up to 4 attacks can be selected per turn" if attacks.size > 4
       attack_parts = attacks.map { |attack| attack[:body_part] }

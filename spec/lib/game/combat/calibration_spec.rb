@@ -49,4 +49,45 @@ RSpec.describe Game::Combat::Calibration do
       expect { described_class.load(file.path) }.to raise_error(ArgumentError, /hp_full_seconds must be positive/)
     end
   end
+
+  describe ".injury_severity" do
+    {10 => {nil => 9000, "light" => 800, "medium" => 180, "heavy" => 20},
+     30 => {nil => 7000, "light" => 2400, "medium" => 540, "heavy" => 60},
+     50 => {nil => 5000, "light" => 4000, "medium" => 900, "heavy" => 100},
+     80 => {nil => 2000, "light" => 6400, "medium" => 1440, "heavy" => 160}}.each do |risk, expected|
+      it "gives the exact independent outcome distribution at #{risk}% risk" do
+        outcomes = (0...100).flat_map do |chance_roll|
+          (0...100).map { |severity_roll| described_class.injury_severity(risk:, chance_roll:, severity_roll:) }
+        end
+        expect(outcomes.tally).to eq(expected)
+      end
+    end
+
+    it "keeps zero risk injury-free and includes the exact probability boundaries" do
+      [nil, -1, 0].each do |risk|
+        expect(described_class.injury_severity(risk:, chance_roll: 0, severity_roll: 99)).to be_nil
+      end
+      expect(described_class.injury_severity(risk: 10, chance_roll: 9, severity_roll: 79)).to eq("light")
+      expect(described_class.injury_severity(risk: 10, chance_roll: 10, severity_roll: 0)).to be_nil
+      expect(described_class.injury_severity(risk: 10, chance_roll: 0, severity_roll: 80)).to eq("medium")
+      expect(described_class.injury_severity(risk: 10, chance_roll: 0, severity_roll: 97)).to eq("medium")
+      expect(described_class.injury_severity(risk: 10, chance_roll: 0, severity_roll: 98)).to eq("heavy")
+      expect(described_class.injury_severity(risk: 200, chance_roll: 99, severity_roll: 99)).to eq("heavy")
+    end
+  end
+
+  it "rejects missing, fractional, negative, extra and incorrectly totaled injury weights" do
+    invalid_weights = [nil, 100, {"light" => 100}, {"light" => 80, "medium" => 18, "heavy" => 1},
+      {"light" => 80.0, "medium" => 18, "heavy" => 2}, {"light" => 80, "medium" => 21, "heavy" => -1},
+      {"light" => 80, "medium" => 18, "heavy" => 2, "combat" => 0}]
+    invalid_weights.each do |weights|
+      Tempfile.create(["combat-injury-calibration", ".yml"]) do |file|
+        values = YAML.safe_load_file(Rails.root.join("config/gameplay/combat_calibration.yml"))
+        values["injuries"] = {"severity_weights" => weights}
+        file.write(values.to_yaml)
+        file.flush
+        expect { described_class.load(file.path) }.to raise_error(ArgumentError)
+      end
+    end
+  end
 end

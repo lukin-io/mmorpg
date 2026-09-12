@@ -25,6 +25,11 @@ module Game
           ["recovery", "skill_divisor"], ["loot", "observation_scale"]].each do |section, key|
           raise ArgumentError, "Combat calibration #{section}.#{key} must be positive" unless values.fetch(section).fetch(key).positive?
         end
+        weights = values["injuries"]["severity_weights"] if values["injuries"].is_a?(Hash)
+        unless weights.is_a?(Hash) && weights.keys.sort == %w[heavy light medium] &&
+            weights.values.all? { |weight| weight.is_a?(Integer) } && weights.values.sum == 100
+          raise ArgumentError, "Combat calibration injury severity weights must contain light, medium and heavy integer percentages totaling 100"
+        end
         JSON.parse(values.to_json, freeze: true)
       end
 
@@ -41,6 +46,19 @@ module Game
       def self.fatigue_factor(fatigue)
         excess = (fatigue.to_f - config.fetch("fatigue_threshold")).clamp(0, 50)
         1 - excess / 50 * config.fetch("fatigue_max_penalty")
+      end
+
+      # Ordinary defeat only: independent server rolls in 0...100 decide whether
+      # an injury occurs and its severity. Returns nil or light/medium/heavy;
+      # guaranteed timeout/combat injuries remain the awarder's responsibility.
+      def self.injury_severity(risk:, chance_roll:, severity_roll:)
+        return unless chance_roll < risk.to_i.clamp(0, 100)
+
+        threshold = 0
+        config.fetch("injuries").fetch("severity_weights").each do |severity, weight|
+          threshold += weight
+          return severity if severity_roll < threshold
+        end
       end
 
       def self.attack(attributes)

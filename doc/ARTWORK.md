@@ -9,6 +9,75 @@ the exact production record here, affected catalog links and that handbook's
 integration/visual acceptance together. Content identity, stats and availability
 remain with those owners; dimensions and exact prompts remain here.
 
+## September 12 Arena application icons
+
+Consumer: [Arena application rows](features/arena_combat.md#september-12-physical-arena-applications),
+from [live lobby evidence](design/reference/combat/observations/2026-09-12_arena_duels_and_groups.md).
+The source uses tiny rule, time and trauma symbols in dense white rows. Three
+original painted images were generated with the built-in image tool, without
+Neverlands bitmap input. No large lobby banner is appropriate to this evidence.
+
+| Category | Runtime file under `app/assets/images/arena/` | Selected generator output |
+|---|---|---|
+| Equipment rule | `rule.png` | `exec-4a1b7eb3-55fa-41fe-a87b-8f924725e317.png` |
+| Turn timeout | `timeout.png` | `exec-b4763b5f-3f57-48c2-9378-3fa20bdcee0d.png` |
+| Injury probability | `trauma.png` | `exec-d1391f87-0162-49f8-9b53-b5134ba143c2.png` |
+
+Requested1024×1024, returned native1254×1254 PNG. Selected originals remain in
+`/Users/sesharim/.codex/generated_images/01a09048-8cf7-7d32-8832-36d18025f07c/`.
+Delivery is a uniform full-canvas downscale to **64×64**, rendered at **16×16
+CSS px**, `object-fit: contain`, four-times density. No cropping, stretching,
+source logos or text baked into art. Packaging: `sips -z 64 64 <runtime-file>`.
+All three whole objects/padding were visually inspected; the asset spec checks
+delivery dimensions. Final in-context acceptance belongs to the runtime
+handbook. One initial clock generation was interrupted without a selected
+output; the same prompt was repeated and the output above selected. Rule and
+trauma each had one selected generation.
+
+Exact equipment-rule prompt:
+
+```text
+Use case: stylized-concept. Create one original tiny painted fantasy browser-RPG lobby icon showing two short crossed steel swords with plain worn leather grips. Square composition; all tips and handles visible, generous 15 percent padding. Muted steel, dark brown, small brass accents, crisp simple silhouette legible at 16x16 CSS pixels. Early-2000s hand-painted inventory-icon materials, restrained highlights. Uniform pure white background. No lettering, numerals, border, UI, glow, scenery, people, logo or watermark. Original design, no Neverlands bitmap input. Requested 1024x1024.
+```
+
+Exact timeout prompt, including the repeated request:
+
+```text
+Use case: stylized-concept. Create one original tiny painted fantasy browser-RPG lobby icon: a simple round timepiece with dull blue-green metal rim, pale ivory face, two dark clock hands, no numbers or lettering. Square composition, entire circle within generous 15 percent padding. Restrained early-2000s painted game-icon materials, clear dark silhouette legible at16x16 CSS pixels. Uniform pure white background. No chain, stand, extra objects, border, UI, glow, scenery, logo or watermark. Original design, no Neverlands bitmap input. Requested1024x1024.
+```
+
+Exact trauma prompt:
+
+```text
+Use case: stylized-concept. Create one original tiny painted fantasy browser-RPG injury-probability icon: a single upright dark ruby-red droplet, rounded at bottom with a narrow point above and a restrained small pale reflection. Complete centered droplet, generous 15 percent padding, square canvas, simple crisp silhouette readable at16x16 CSS pixels. Early-2000s painted RPG icon, muted red with a dark edge. Uniform pure white background. No wounds, splatter, people, letters, numbers, border, UI, glow, scenery, logo or watermark. Original design, no Neverlands bitmap input. Requested1024x1024.
+```
+
+## September 12 Training Dummy portrait correction
+
+The Arena browser pass found the existing `npc/scarecrow.png` at1024×1536,
+shrinking its wide stance inside the115×255 portrait rails. This correction
+uses that original project image as the sole edit target, preserving its
+identity/materials while redrawing a narrow complete pose. No source-game
+bitmap or new NPC equipment/stat data was introduced. The original asset's
+earlier generation prompt was not preserved; none is invented here.
+
+One built-in edit produced `exec-274ee6f6-6592-4a65-aa39-27178256c882.png` under
+the generated-image directory recorded above, native889×1770. A uniform
+`sips -Z 1530` downscale followed by centered `sips -c 1530 690` removed only
+side background, delivering **690×1530**, exactly6× the115×255 consumer.
+The complete hat, head, hands, feet and straw remain inside the image; no
+stretching or clipped anatomy. Runtime path remains
+[`app/assets/images/npc/scarecrow.png`](../app/assets/images/npc/scarecrow.png).
+The asset spec checks encoded dimensions; [Arena Combat](features/arena_combat.md#september-12-physical-arena-applications)
+records the final in-context inspection. [NPC](NPC.md#5-equipment-and-artwork)
+owns the unchanged creature mapping.
+
+Exact submitted edit prompt:
+
+```text
+Use case: precise-object-edit. Edit the attached ORIGINAL PROJECT scarecrow portrait used by the Arena Training Dummy. Preserve its recognizable carved wooden face, warm amber eye accents, battered pointed cloth hat, ragged dark blue-gray tunic, rope ties, straw and twig limbs, matte painted wood and cloth, and quiet dark charcoal-brown backdrop. Recompose the figure for a very tall narrow combat paper-doll canvas, EXACT aspect ratio 23:51 (115:255), requested 920 by 2040 pixels. Bring both arms close alongside the body and both feet closer together into a natural narrow standing stance; narrow the hat brim through the pose/perspective without cutting it. Entire hat, head, both hands, both feet and all straw extremities must fit inside the canvas with a small clear margin. Figure fills about 90 percent of canvas height, large and readable at 115 by 255 CSS pixels. Redraw the stance and composition, never squeeze or stretch anatomy. Keep detailed early-2000s painted fantasy material treatment and restrained earthy highlights. Replace excess ground and empty space with a quiet neutral dark background and a small contact shadow. Do not add equipment, weapons, shields, figures, scenery, magical haze, text, numbers, nameplates, UI, frames, logos or watermarks. No existing-game bitmap inputs; the attached project image is the sole edit target. Output one complete narrow full-body portrait, not a wide image letterboxed into a tall canvas.
+```
+
 ## September 12 medical category illustrations
 
 The built-in imagegen tool generated two original images, with no Neverlands

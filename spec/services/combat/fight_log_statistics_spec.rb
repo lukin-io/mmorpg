@@ -87,6 +87,18 @@ RSpec.describe Combat::FightLogStatistics do
     expect(statistics.total_damage).to eq(0)
   end
 
+  it "retains zero credited damage for a finalized simultaneous strike after its target was defeated" do
+    player.update!(metadata: {"experience_awarded" => 1})
+    match.update!(metadata: match.metadata.merge("rewards_processed_at" => Time.current.iso8601))
+    log_damage(player, 70)
+
+    expect(statistics.by_participant.find { |row| row[:id] == player.id }).to include(
+      physical_damage: 0, total_damage: 0, opponents_defeated: 0, total_hits: 1, xp_earned: 1
+    )
+    expect(statistics.total_damage).to eq(0)
+    expect(statistics.round_summary.first[:total_damage]).to eq(70)
+  end
+
   it "keeps identical NPC names distinct by participation identity" do
     other_npc = create(:arena_participation, :npc, arena_match: match, npc_template: npc.npc_template,
       team: "b", metadata: {"current_hp" => 40, "max_hp" => 100, "damage_dealt" => 25, "opponents_defeated" => 1})

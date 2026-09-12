@@ -17,6 +17,18 @@ RSpec.describe Game::World::ArenaNpcConfig do
       expect(entries).to all(satisfy { |entry| Game::LootEntry.new(entry).chance_percent.between?(0, 100) })
     end
 
+    it "rejects partial or inverted authored open-side level bounds" do
+      [{arena_acceptor_level_min: 0}, {arena_acceptor_level_min: 6, arena_acceptor_level_max: 5},
+        {arena_acceptor_level_min: "0", arena_acceptor_level_max: 5}].each do |metadata|
+        allow(YAML).to receive(:load_file).with(described_class::CONFIG_PATH)
+          .and_return(training: {npcs: [{key: "invalid_gate", metadata:}]})
+        described_class.instance_variable_set(:@config, nil)
+        expect { described_class.config }.to raise_error(described_class::InvalidConfigurationError, /invalid Arena acceptor/)
+      end
+    ensure
+      described_class.instance_variable_set(:@config, nil)
+    end
+
     it "rejects a developer-authored loot entry without an explicit chance" do
       invalid_config = {
         training: {

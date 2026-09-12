@@ -1915,6 +1915,10 @@ Available cells remain semantic buttons with labels, while movement status is ex
 - its linked Shop may resume under the same entrance-cell check;
 - an authorized selected Arena room resumes only with current city/hotspot and
   room access, without requiring a previous login's entry cookie;
+- an unfinished physical Arena result takes priority over the saved ground
+  surface until that participant clicks Finish; an aboard journey retains its
+  existing priority. [Arena Combat](arena_combat.md#september-12-physical-arena-applications)
+  owns result recovery, the protected-navigation reservation and hall return;
 - an invalid saved interior context falls back to the world without relocating the character.
 
 The only location bootstrap is for a playable character with no position row: Central Square in Forpost at `[0, 0]`. A normal login never respawns or recenters an existing character.
