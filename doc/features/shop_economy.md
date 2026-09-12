@@ -3,7 +3,7 @@
 title: Shop and Economy Feature
 description: Implementation handbook for the Neverlands-based city shop, NV wallet, catalog buying, inventory selling, and transaction ledger.
 status: Partially Implemented
-updated: 2026-09-11
+updated: 2026-09-12
 owners: Shop and Economy
 template: feature-v1
 ---
@@ -14,7 +14,29 @@ This document is the implementation contract for the current Shop and Economy fe
 
 It describes what exists now. It does not treat every captured Neverlands city counter, license rule, novice service, or generic marketplace mechanic as shipped behavior.
 
+### September 12 Hospital purchase handoff
+
+[Medical Care](medical_care.md) adds the captured Hospital bag assortment using
+`Game::Shop::Location`, `TradeOffers` and `Purchase`, not a second purchase
+pipeline. Saved Hospital context/current node selects a separate ShopAccount
+and ShopStock. Existing quotes, locks, capacity, price, funds, stock, receipt
+and duplicate-offer checks apply. Stock seeds preserve traded quantities.
+Doctor licenses now qualify the bounded injury-treatment service together with
+Healer, bag and effective Knowledge checks. Authored Doctor proficiency
+thresholds remain unenforced; Medical Care records the current implementation
+gap. Qualification quests,
+medical crafting and unrelated exchange/market work remain outside this flow.
+Final Hospital purchase and treatment checks are recorded in [Medical Care](medical_care.md#6-acceptance-and-tests).
+
 ## 1. Design authority and related documents
+
+Read [ITEMS](../ITEMS.md) for definitions, eligibility and licenses,
+[FORMULAS](../FORMULAS.md#9-inventory-and-economy) for prices/capacity and
+[WORLD](../WORLD.md) for merchant locations. [Inventory](player_inventory.md)
+owns carried goods; [Medical Care](medical_care.md) owns treatment;
+the [event catalog](game_shell.md#gameplay-event-catalog) distinguishes receipts
+from chat events. Read and update affected references under the
+[context/update map](../DOCUMENTATION.md#21-required-context-and-update-map).
 
 Domain navigation: `doc/domains/economy.md`.
 
@@ -296,7 +318,7 @@ profession-specific checks in addition to ordinary transaction eligibility:
 | License | Current server check | Playable local state |
 |---|---|---|
 | Trading I–III | `owns_perk?(:merchant)` and `metadata.profession_unlocks.merchant == true` | Merchant qualification below unlocks purchases. No positive numeric Trading prerequisite is imposed. |
-| Doctor I | `owns_perk?(:healer)` | Purchase and timed permission are implemented. This does not provide treatment or medical crafting. |
+| Doctor I | `owns_perk?(:healer)` | Purchase and timed permission are implemented. Treatment now uses Medical Care; crafting remains separate. |
 | Doctor II–III | `owns_perk?(:healer)` and `metadata.profession_unlocks.traumatologist == true` | Definitions and the completion check exist; normal-play purchase remains blocked because the Traumatologist quest is unimplemented. |
 
 The source's 100 Doctor skill threshold governs entry to the Traumatologist
@@ -429,8 +451,7 @@ row. Item loot never enters the wallet; Inventory remains its authority.
 
 ### 6.4 Deferred behavior boundary
 
-Licenses grant their explicitly typed timed permissions. Doctor ownership does
-not implement injury treatment and cannot authorize trading. Doctor qualification
+Licenses grant their explicitly typed timed permissions. Doctor ownership alone cannot treat an injury or authorize trading; Medical Care also validates the bag, effective requirements, patient and consent. Doctor qualification
 quests, renewal/stacking policy and expiry cleanup must not be inferred from a
 card title. Merchant qualification implements the published license-unlock steps
 above; its garment reward and original dialogue/receipt presentation remain

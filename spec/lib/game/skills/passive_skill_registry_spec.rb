@@ -209,6 +209,39 @@ RSpec.describe Game::Skills::PassiveSkillRegistry do
     end
   end
 
+  describe ".can_spend? with equipment" do
+    let(:character) { create(:character, combat_skill_points: 1, passive_skills: {"knife_mastery" => 98}) }
+
+    it "allows spending below the learned cap when the effective skill exceeds 100" do
+      template = create(:item_template, stat_modifiers: {"knife_skill" => 30})
+      create(:inventory_item, :equipped, inventory: character.inventory, item_template: template)
+
+      expect(character.passive_skill_level(:knife_mastery)).to eq(128)
+      expect(described_class.can_spend?(:knife_mastery, character)).to eq(allowed: true, reason: nil)
+      expect(described_class.available_for(character)).to include(:knife_mastery)
+    end
+
+    it "rejects the learned cap even when an item lowers the effective level" do
+      character.update!(passive_skills: {"knife_mastery" => 100})
+      template = create(:item_template, stat_modifiers: {"knife_skill" => -10})
+      create(:inventory_item, :equipped, inventory: character.inventory, item_template: template)
+
+      expect(character.passive_skill_level(:knife_mastery)).to eq(90)
+      expect(described_class.can_spend?(:knife_mastery, character)).to include(
+        allowed: false, reason: "Skill is at maximum level"
+      )
+      expect(described_class.available_for(character)).not_to include(:knife_mastery)
+    end
+
+    it "still requires an available point from the correct pool" do
+      character.update!(combat_skill_points: 0, peace_skill_points: 1)
+
+      expect(described_class.can_spend?(:knife_mastery, character)).to include(
+        allowed: false, reason: "No combat skill points available"
+      )
+    end
+  end
+
   describe ".prerequisites" do
     it "does not define uncaptured prerequisite rules" do
       expect(described_class.prerequisites(:sword_mastery)).to be_nil

@@ -10,21 +10,25 @@ flows.
 
 ## Documentation chain
 
-- Neverlands source summary: `doc/design/reference/economy/README.md`
-- Current observations: `doc/design/reference/economy/observations/`
+- [Required working context and update rules](../DOCUMENTATION.md#21-required-context-and-update-map)
+- General references: [item definitions and availability](../ITEMS.md),
+  [city and linked-location services](../WORLD.md)
+- Price, capacity and license calculations: [FORMULAS](../FORMULAS.md#9-inventory-and-economy)
+- Neverlands source summary: [doc/design/reference/economy/README.md](../design/reference/economy/README.md)
+- Current observations: [doc/design/reference/economy/observations/](../design/reference/economy/observations)
 - License requirements and sale economics:
-  `doc/design/reference/economy/observations/2026-09-09_licenses_and_shop_selling.md`
+  [doc/design/reference/economy/observations/2026-09-09_licenses_and_shop_selling.md](../design/reference/economy/observations/2026-09-09_licenses_and_shop_selling.md)
 - Completed Shop purchase/Inventory handoff:
-  `doc/design/reference/economy/observations/2026-09-09_city_shop_purchase.md`
+  [doc/design/reference/economy/observations/2026-09-09_city_shop_purchase.md](../design/reference/economy/observations/2026-09-09_city_shop_purchase.md)
 - Mine/exchange operation gaps:
   [capture backlog](../design/reference/economy/observations/evidence_needed_mine_exchange_operations.md)
 - Cross-domain NPC-money observation:
-  `doc/design/reference/social/observations/2026-08-23_chat_game_event_timeline.md`
+  [doc/design/reference/social/observations/2026-08-23_chat_game_event_timeline.md](../design/reference/social/observations/2026-08-23_chat_game_event_timeline.md)
 - [September 10 starter assortment capture](../design/reference/economy/observations/2026-09-10_starter_shop_catalog.md)
-- Normalized design: `doc/design/features/economy_trading_shops.md`
+- Normalized design: [doc/design/features/economy_trading_shops.md](../design/features/economy_trading_shops.md)
 - Delivery IDs: `ECONOMY-SHOP-001` and `ECONOMY-TRANSACTIONS-001` in
-  `doc/design/launch_mvp_plan.md`
-- Current implementation: `doc/features/shop_economy.md`
+  [doc/design/launch_mvp_plan.md](../design/launch_mvp_plan.md)
+- Current implementation: `doc/features/shop_economy.md` ([handbook](../features/shop_economy.md))
 
 ## Current RPG status
 

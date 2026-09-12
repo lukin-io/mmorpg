@@ -2,24 +2,219 @@
 ---
 title: Arena Combat Runtime Feature
 description: Implementation handbook for arena applications, shared player and NPC turn combat, combat presentation, completion, and public fight logs.
-status: Fully Implemented
-updated: 2026-09-08
+status: Partially Implemented
+updated: 2026-09-12
 owners: Arena and Combat
 template: feature-v1
 ---
 
 # Arena Combat Runtime
 
-This document is the shipped implementation contract for the bounded Arena and
-shared Fight runtime. It covers city-gated Arena entry, fight applications,
+This document describes the bounded Arena and shared Fight runtime, including
+the locally accepted stage2 stronger-NPC changes. It covers city-gated Arena entry, fight applications,
 player/NPC match creation, server-authoritative turn resolution, the active
 fight surface, explicit completion, and the shell-free public fight log.
 Measurable desktop UI/UX parity and overall delivery completion are tracked in
 the Combat Completion Matrix under Pillar 3 of
-`doc/design/launch_mvp_plan.md`; this handbook's `Fully Implemented` status is
-limited to its declared bounded runtime contract.
+`doc/design/launch_mvp_plan.md`. Earlier bounded acceptance remains recorded
+below; the September 11 stage2 section owns the subsequent acceptance.
+
+### September 12 calibrated completion work
+
+The user authorized evidence-grounded approximations after the22-fight register.
+[Combat calibration v1](../design/features/combat_calibration.md) now owns the
+complete fitted equations, numerical anchors and content assumptions. Shared
+resolution uses effective weapon mastery, Strength, armor/penetration,
+resistance, opposed Accuracy/Evasion and Crushing/Fortitude, artifact grades and
+fatigue. Explicit AP captures still override derived weapon costs. Magic uses
+MP/Knowledge/resistance and temporary barriers, with separate credited buckets.
+General NPC XP and player-group shares retain capped, guarded finalization;
+actual recipient awards drive result, public statistics and chat. Typed loot
+adds authored calibrated pools and Observation. Named injuries now persist
+and hand off to [Medical Care](medical_care.md).
+
+Ogre declarations are enabled under `calibrated_v1`; the old
+`unverified_damage_coefficients` bootstrap hold is upgraded without rewriting
+custom managed disabled/moved placements. Defeated fighters remain terminal.
+The [September 12 final acceptance](#september-12-final-calibrated-acceptance)
+owns the new checks; September 11 records below remain historical.
+
+### September 12 final calibrated acceptance
+
+Local acceptance used a separate Chrome tab and three isolated development
+players. The fighter reproduced the source level-17 primary/equipment inputs
+through named composite fixtures; this is not a claim that the fixture gear is
+a captured source loadout. No source login, source-account move or new source
+fight is part of this implementation pass. The source register remains 22.
+
+| Actual local UI path | Observed outcome |
+|---|---|
+| World → passive Orc 4/3 fight → two turns → log/statistics → Finish | Raw critical 1636 removed only 110 HP; the dead Orc left cards, roster and switching. A later committed overkill strike remained in the log without extra credit. Result 175 damage, two defeats, 1 XP; Finish/reload retained location and chat reward. |
+| Inventory action interrupted by paired Goblins → fight → Finish | The action interruption entered the same engine, with 190 credited damage/two defeats/1 XP. Finish resumed Inventory. |
+| Inventory → wear dagger → reload → wear shield → reload | The same profile derived 65 AP with dual weapons and 62 AP with the mace/shield, armor 528. The preview no longer displays the legacy constant 45 AP. |
+| Remote [19,10] → Bandit 14 → Spirit Arrow → physical finish | Spirit Arrow cost 5 MP and critically dealt 10; the physical strike removed the remaining 825 HP. Result and public statistics split 825 physical +10 magic =835 total, one defeat, 631 XP. |
+| Remote [20,6] → Ogre 16/16/17 → shield exchanges and keyboard target switch | Connected physical hits dealt zero. Shield pierces returned 231 and 327, then a critical 709. The player lost after the next 273 raw hit; zero credited damage/XP omitted the personal result table. Original full-body Ogre and independently mapped equipment remained visible. |
+| Hospital → purchase → Inventory → Medical care → free/paid treatment | See [Medical Care](medical_care.md#6-acceptance-and-tests) for actual balances, bag consumption, injury restrictions, header updates and reload checks. |
+
+The browser pass found and corrected stale Turbo header/flash navigation,
+the hard-coded profile AP preview, missing magic in the final result columns,
+a missing defeated-player name, a passive deadline surviving action-triggered
+combat, and profile loss counters that stayed zero. Focused regressions cover
+the corrected ownership, actual persisted outcomes and retry behavior.
+
+Final local `bin/verify full` passed: **601 Ruby files lint-clean, 2,972
+non-system examples and 298 system examples, zero failures**; Brakeman,
+Bundler Audit and Importmap audit found no issues; 12 feature handbooks and
+87 architecture documents passed. Log: `/tmp/mmorpg-final-combat-accepted.log`.
+This is local validation, not CI. Earlier failed/intermediate runs are retained
+in temporary logs; only this run includes the final counter correction.
+
+After that final gate, the agent repeated the affected UI flow with another
+four-Ogre encounter. The isolated fixture started at 200 HP to shorten the
+loss check; stats and combat RNG were unchanged. A real shield exchange produced
+a zero-damage critical attack, 246 incoming raw damage and the correctly named
+defeat sentence. Finish returned to **[20,6]**, and reload kept the player there
+without reusing the old pending encounter timer. Header HP recovered **0→19→47**
+from server time. Inventory then showed **NPC wins 3, NPC losses 1, AP 62**;
+reload retained the result. The prior losses predated the counter fix and were
+not silently backfilled. Separate public-log navigation still displayed the
+historically defeated fighter at **0/1375** after current HP recovered.
+
+The corrected mixed-damage result and public Statistics were revisited after
+the final gate: **825 physical +10 magic =835**, one defeat, 631 XP. Chrome's
+actual **200%** zoom gave an **864×416** CSS viewport; the result row remained
+readable through the main pane's scrolling, and Fight log → Statistics → back
+→ Return controls worked. The already-finished result correctly offers Return
+instead of another Finish action. Zoom was restored to 100%, **1728×833**.
+At **320×780**, the public table's focused horizontal region responded to
+keyboard arrows and exposed the final XP/Defeated columns without document
+overflow. At **390×844**, the active Ogre portrait retained its 690×1530
+native source and contain fit; the complete body and gear stayed visible and
+the turn was submitted through the responsive controls. Earlier medical checks
+cover 320/390 widths. These are pointer/keyboard and viewport checks, not
+physical touch-device evidence. Screenshots were inspected in the task.
+
+Local fixture setup and shortened waits are separate from gameplay acceptance:
+all purchases, equipment changes, treatment requests/acceptance, attack/block
+submissions, switches, Finish and navigation above used real UI controls.
+Cleanup kept isolated QA players and histories, parked the fighter safely in
+the city, and restored exactly the three QA Hospital purchases to shared stock
+and funds. Original player data and source sessions were not changed by these
+fixtures. Evidence-only documentation synchronization followed the browser pass.
+Cleanup readback confirmed zero active fixture fights or pending encounter waits,
+Hospital NV restored to 0 and bag stock restored to 33/28/143/1. The isolated
+Chrome tab was closed; the existing source and user tabs remain open. Final
+`bin/verify docs` and `git diff --check` passed after evidence synchronization.
 
 ## 1. Design authority and related documents
+
+Read the [combat formulas](../FORMULAS.md#5-combat),
+[NPC lifecycle and groups](../NPC.md#7-encounter-and-fight-lifecycle),
+[item inputs](../ITEMS.md#3-fields-slots-and-effective-properties),
+[world return context](../WORLD.md#5-travel-context-and-return-behavior) and
+[event catalog](game_shell.md#gameplay-event-catalog) when changing this shared
+pipeline. Use [ARTWORK](../ARTWORK.md) for fight images and
+[Medical Care](medical_care.md) for injury treatment. Follow the
+[context/update map](../DOCUMENTATION.md#21-required-context-and-update-map)
+to synchronize affected reference entries and handoffs in the same task.
+
+### Historical September 11 Ogre and terminal-defeat follow-up
+
+The [final two source fights](../design/reference/combat/observations/2026-09-11_ogre_combat_cycle.md)
+complete the 22-fight observation register. Original Ogre portrait/equipment
+assets and independent 16–18 profiles use the existing paper doll and
+`ArenaParticipation#npc_combat_data` snapshots. The captured three/four-member
+rosters are authored for the two compatible starter habitats. Their initial
+World placements initially remained inactive: local damage coefficients do not reproduce
+the observed player 0-damage hits and NPC 502–801 critical replies.
+
+`ArenaParticipation#combat_alive?` is the shared no-IO eligibility rule:
+positive current HP **and no recorded defeat**. It is used by active cards,
+rosters, selection, player submission, NPC target selection, next-round
+readiness and team survival. Recovery cannot restore a defeated participant
+to this fight. Live HTML/JSON/vitals broadcasts retain zero combat HP for a
+recorded defeat while leaving the recovered Character HP intact. WebSocket
+reconnect snapshots also keep defeated participants dead and clear their
+waiting presentation. Committed
+exchanges snapshot only participants alive at their start, preserving already
+committed lethal returns. Results, credited damage, XP and historical logs
+retain the participation records.
+
+Focused coverage: `spec/requests/arena_opponent_selection_spec.rb`,
+`spec/models/arena_participation_spec.rb`,
+`spec/models/ogre_combat_content_spec.rb`, `spec/channels/arena_match_channel_spec.rb`,
+`spec/services/arena/npc_combat_ai_spec.rb`,
+`spec/services/arena/combat_broadcaster_spec.rb` and
+`spec/services/arena/committed_exchange_spec.rb`. Artwork dimensions are checked
+in `spec/assets/ogre_artwork_spec.rb`. The stage2 acceptance below is historical;
+this follow-up's final gate/browser record follows.
+
+#### Final Ogre acceptance — September 12 local date
+
+`bin/verify full` passed on the final runtime: **579 Ruby files without lint
+offenses, 2,942 non-system examples and 298 system examples without failures**;
+Brakeman reported zero warnings, Bundler/Importmap audits found no vulnerable
+dependencies, and documentation audits passed for 11 feature / 87 architecture
+documents. Local output: `/tmp/mmorpg-ogre-full-accepted.log`. This is local
+verification, not CI or proof of Neverlands formula parity.
+
+Earlier checks remain distinguishable: the old landscape seed expectation
+failed because it assumed every cell used the original sheet and painted
+landmarks. Its corrected focused file passed four examples. Two intermediate
+full runs were stopped during review to complete the defeat/reconnect fixes.
+The subsequent full run passed non-system specs but failed the lifecycle test
+whose one-second countdown expired before the initial Waiting assertion.
+That test now gives browser setup two minutes and explicitly runs the same
+starter job; its focused file passed 36 examples before the successful final
+full run. The combined defeat HTTP/channel/helper check passed 48 examples.
+
+After that final gate, the agent personally used Chrome on `localhost:3000`
+with the dedicated level-17 development player, mouse and Enter-key input,
+at **1728×833** and **390×844**, DPR 1 and normal zoom. World also received
+the **320×844** check recorded in its handbook. Temporary fixture preparation
+enabled only one captured four-Ogre roster and raised test-player combat
+stats to make removal/completion practical. These test values are not authored
+Ogre balance. Matches and turns were created by World waiting and real UI
+actions, not a runner calling combat creation/resolution.
+
+- Match **34** started through World's targetless passive check with Ogre
+  16/16/16/18, HP 1455/1455/1455/1685. Attack/block selectors and Turn worked
+  at phone width. The first defeat reduced active cards/roster from four to
+  three. The fixture then changed that already-defeated NPC's stored HP to
+  500; reload still excluded it from cards and roster, and later rounds
+  completed without targeting or crediting it again. This is synthetic
+  recovery coverage, not an implemented healer flow.
+- Desktop switching reached Ogre 18 and displayed Strength 151, Armor 535,
+  Accuracy 495, Crushing 870, Fortitude 730 and Pierce 85, distinct from Ogre
+  16. The visible portrait measured **115×255**, natural **690×1530**, contain
+  fit. Helmet, amulet, club, boots, two rings, bracers, gloves, armor and belt
+  rendered with complete silhouettes and no missing images. Phone reflow
+  retained the same equipment and controls without horizontal page overflow.
+- Victory removed all opposing cards and active roster entries. Fight log →
+  Statistics retained all five participants and showed **6,050 credited
+  damage, four defeated opponents and zero XP** for this fixture. The recovered
+  defeated NPC remained zero HP in the historical display. Raw body-part
+  damage was separately 271,466. Back → Back → Finish Fight returned to
+  `[20,7]`; reload retained that coordinate.
+- A second final match, **35**, specifically verified keyboard access to
+  Switch opponent in the horizontally scrollable 390px toolbar: Enter
+  decreased its allowance **3→2**. Earlier pointer attempts outside the visible
+  toolbar portion had not submitted a switch and are not counted as successful
+  pointer acceptance. Five real attack/block turns, including one miss,
+  completed the group; Finish and reload again returned to `[20,7]`.
+
+Preliminary match 33 and pre-gate screenshots are exploratory only. Final
+task screenshots show the habitat at 320px and Ogre combat at phone/desktop
+widths. The test player's original stats/metadata/location were restored,
+both Ogre placements restored inactive, and no acceptance match remained
+active. Normal viewport settings were restored. This pass does not repeat
+the earlier stage2 200%-zoom check or certify every shell/presence variant.
+During cleanup, restoring the original hostile `[4,11]` position while the
+World tab was still open triggered an additional two-Skeleton match 36.
+It was completed through four UI turns and Finish, then the agent-owned tab
+was closed before restoring again. Final database inspection confirmed zero
+active test-player matches and both Ogre placements inactive. That cleanup
+fight is not another Neverlands observation or Ogre acceptance sample.
 
 Domain navigation: `doc/domains/combat.md`.
 
@@ -42,11 +237,17 @@ The supplied mixed-chat fight/item/NV evidence lives in
 The official ten-member NPC capacity and distinct Arena-room chat/presence
 evidence live in
 `doc/design/reference/social/observations/2026-09-07_cell_chat_and_presence_boundaries.md`.
+The [stronger-NPC observation](../design/reference/combat/observations/2026-09-11_stronger_npc_loot_combat_cycle.md)
+owns the second cycle's current evidence. The
+[progression source recheck](../design/reference/character/observations/2026-09-11_level_grants_and_combat_inputs.md)
+and [progression handbook](character_progression.md#level-grants-and-the-combat-handoff)
+own level grants and the effective-value handoff.
 The Combat Completion Matrix in `doc/design/launch_mvp_plan.md` is the
-delivery-status authority; its bounded physical MVP is `DONE`, while full
-Neverlands Combat is `EVIDENCE_NEEDED`. Physical `1x1` PvP, bounded physical
+delivery-status authority. The bounded physical MVP is `DONE` within the matrix's declared scope, while
+full Neverlands Combat remains `EVIDENCE_NEEDED`. Physical `1x1` PvP, bounded physical
 PvE `1x1`/`1xN`, `3x3` team synchronization, the captured fight-state UI, and
-the public fight log have completed their local seeded/synthetic browser gates.
+the public fight log completed the earlier recorded local seeded/synthetic
+browser gates. Stage2 completed its final full gate and affected manual browser flows below.
 
 ### 1.1 Cross-feature relationships
 
@@ -77,15 +278,16 @@ During a live fight the authenticated player sees two equipment-style fighter
 rails and a fluid center composer. The center shows the AP budget and the
 profile's `5..N` per-magical-hit mana ceiling, five action slots, attack and
 block selectors, Turn/reset controls, the selected opponent, and the
-chronological combat log. The server separately validates both the ceiling and
+newest-first active combat log. The server separately validates both the ceiling and
 current MP, plus participant, target, action catalog, AP, body parts, current
 match state, posted round, and timeout. In a multi-opponent fight, Switch
-opponent cycles through living enemy participations; an accepted pending turn
+opponent cycles through living enemy participations with a persisted finite
+allowance (initial opposing roster size minus one); an accepted pending turn
 retains that target through waiting-state reload. Completion
 requires the participant to finish the result before the stored Arena or World
-destination is restored. Match finalization publishes one recipient-only fight
-completion row per player participation, including actual awarded NPC XP where
-applicable. Each defeated NPC resolves its typed loot table once: consumables,
+destination is restored. Solo-NPC Finish publishes one recipient-only completion row only when XP
+was awarded; finalization already persists XP and rewards. Other player/team
+finalizations retain their per-participant completion rows. Each defeated NPC resolves its typed loot table once: consumables,
 weapons, armor, and other item templates persist through Inventory, NV awards
 persist through the Economy wallet ledger, and each success publishes the
 matching item- or money-found row. All appear in the persistent shell chat
@@ -186,10 +388,10 @@ application layout, including when an authenticated session exists.
 
 At desktop widths the active fight is a full-width three-zone composition:
 fixed equipment-style participant rails on the left and right, and a flexible
-center composer/log. Name, level, HP/MP, equipment silhouette, and visible
+center composer/log. Name, level, HP/MP, equipment paper doll, and visible
 opponent stats stay attached to the owning rail. The center orders the budget,
 five quick slots, two selector columns, Turn/reset controls, target/HP line,
-and chronological log as observed in the clearer Neverlands capture.
+and newest-first active log as confirmed by the September 11 capture.
 
 At `721..940px`, participant rails compact while the center remains fluid. At
 `<=720px`, both rails share the first row and the center occupies the full row
@@ -231,29 +433,305 @@ for the next round. Allied, foreign-match, and defeated targets are rejected;
 opponent switching uses only living enemy participation IDs.
 
 Successful NPC item and NV awards create recipient-only item- or money-found
-rows only after Inventory or wallet-ledger persistence. Finalization
-creates one recipient-only fight-completion row for every player participation;
-the eligible NPC winner receives the authoritative awarded XP amount and other
-participants receive zero. These rows are durable feedback projections and do
+rows only after Inventory or wallet-ledger persistence. A solo-NPC Finish
+creates the recipient-only positive-XP completion row once; zero-XP solo NPC
+fights have no completion chat row. Other player/team finalizations keep their
+per-participant completion projection. These rows are durable feedback projections and do
 not affect match resolution or reward authority.
 
 Validation failures preserve authoritative state and return alert feedback or
 an unprocessable HTML/Turbo/JSON response. The client AP counter is preview
 only; the processor calculates and rechecks the submitted package.
 
-In a solo-PvE match, one complete player package resolves immediately with all
-living opposing NPC responses. If an opponent survives, the locked processor
+In a solo-PvE match, one complete player package resolves immediately with
+the selected NPC's committed response package. Both sides finish all committed
+strikes before defeat/rewards, even if a first strike is lethal. A selected
+block protects every covered incoming strike in the exchange. If an opponent survives, the locked processor
 opens exactly one next round, clears round-local block state, restores the
 player's full snapshotted AP budget, and rejects a replay carrying the resolved
-round number. Defeated targets cannot remain selected: an omitted or stale
-target falls back to a living opponent. Raw overkill remains in the log while
+round number. Defeated targets cannot remain selected: an omitted selection
+falls back to the first living opponent; an explicit dead target is rejected. Raw overkill remains in the log while
 participation/result damage counts only HP actually removed.
 
-A World-created fight snapshots the source-displayed `300`-second global fight
+A World-created fight snapshots the user-reaffirmed `300`-second global fight
 deadline. Match views, timeout jobs, turn submissions, and timeout claims
 recheck that deadline; at or after it the match finalizes as a draw by timeout
 before another intent can advance the round or claim a victory. Other match
 types retain their existing per-turn timeout and stale-recovery rules.
+
+### September 11: low-level mixed-roster cycle
+
+The ten-source-fight evidence register is
+`doc/design/reference/combat/observations/2026-09-11_low_level_two_cell_combat_cycle.md`.
+Local `[4,12]` replays Orc/Goblin levels 3–4, including two Orcs plus a Goblin;
+`[4,11]` replays captured Skeleton groups at levels 7–9. Complete samples retain
+exact member order/level/HP and sampled encounter XP. Their equal selection
+weights and existing 300–360-second scheduling window are MVP calibration;
+the source's hidden spawn/XP/AI distribution is not claimed.
+
+`NpcTemplate` metadata owns `level_profiles`, explicit `display_stats`, engine
+`stats`, `max_mp`, `equipment`, original `avatar_image`, observed
+`response_attack_counts` and `response_block_keys`. Equipment uses known
+paper-doll slots, item names, optional bounded properties and allowlisted art.
+It does not grant player inventory or infer combat stats from portrait props.
+Captured visible totals and engine totals remain explicit; editing a displayed
+item name cannot secretly change damage. New templates must supply observed
+stats and document any remaining coefficients. Unknown damage/drop values are
+not populated from generic level formulas.
+
+`ArenaParticipation#snapshot_npc_combat_data!` freezes template, exact-level
+profile and per-roster overrides when combat starts. All repeated participants
+keep distinct health, mana, stats, equipment and target ids. Each authored
+equipment map is a complete slot set: participant overrides replace the
+exact-level set, which replaces the template set. Empty and smaller sets do
+not inherit missing slots. New Bandit/Robber gear belongs to independently
+captured level13–15 profiles, not template-root equipment that would leak into
+uncaptured lower levels. NPC physical
+responses can contain the captured one/two strikes and a block prepared before
+the player's package. The minimally exposed block zones and uniform package
+choice are bounded replay inputs, not the full hidden Neverlands AI policy.
+Mixed player/NPC rounds collect selected NPC commitments once and resolve them
+through the same block/damage/defeat boundary; first targeting player order is
+the local arbitration when several players choose one NPC. Exact large mixed
+player targeting and reward allocation remain source-evidence gaps. Independent
+NPC-versus-NPC target selection, AI and fight progression are not verified by
+these mixed player/NPC examples.
+
+`switch_opponent` is a policy-protected POST. The match lock, expected-use
+counter, waiting/dead/state checks and server revalidation prevent stale
+requests or forged turn targets from bypassing the finite allowance. Selection
+survives reload; automatic handoff is free. No browser-controlled value grants
+additional switches.
+
+At the next fight's start, the current equipped item's explicit shield tier
+selects the block table. A previous exchange's transient character
+`block_table` cannot override newly equipped gear or preserve a removed
+shield's coverage. A started fight retains its own persisted combat profile.
+
+The actor stays at left, the selected opponent at right, and the compact center
+roster retains all living members. The active log is newest first; public logs
+remain chronological. NPC mana is carried through HTML, JSON and Cable without
+being replaced by a fabricated `0/0`. Original Orc/Goblin/player and equipment
+art and the corrected 690 × 1530 Skeleton portrait are registered in
+`doc/ARTWORK.md`; Skeletons retain empty equipment slots.
+After the committed exchange resolves, defeated NPCs and players are omitted
+entirely from live fighter cards, the active roster, selectable targets and
+subsequent turn readiness/actions. Their participation records remain for
+credited damage, experience, completed statistics and logs. A lethal strike
+does not erase the other side's already committed return within that exchange.
+Automatic handoff uses a stable participation-id order in both server
+validation and rendered cards. Database row order cannot select a different
+remaining opponent and incorrectly charge an exhausted manual switch.
+Completed results remove the opponent cards and active roster, including
+surviving opponents after player defeat. Historical side names remain in the
+log and result wording. Results replace the composer above the central log, with compact
+statistics and the explicit Finish button. Rails renders the sole result
+fragment (`app/views/arena_matches/_result.html.erb`); the unused client result
+builder was removed. The original player portrait also replaces the shared
+Profile/Inventory silhouette.
+Solo-NPC zero-XP results omit the statistics table and chat notice. Positive XP
+is durable at finalization, and the existing idempotent private event is
+published on Finish. NPC search eligibility uses the recipient's current
+entitlement window and any narrower authored NPC limit. Explicitly disabled
+hunters remain unsearched regardless of entitlement.
+
+The user reaffirmed five minutes as the MVP global limit after the official
+wiki's longer NPC limit was reviewed. No longer deadline was introduced.
+The September12 calibration replaces inherited hit/dodge/critical/block/armor/weapon
+constants with the documented fitted model. The low-level cycle alone does not
+establish exact coefficients; stronger and Ogre anchors constrain the local fit.
+
+#### September 11 first-cycle verification and browser acceptance
+
+Final `bin/verify full` passed: **565 Ruby files lint-clean, 2,621 non-system
+examples and 295 system examples, zero failures**, Brakeman/Bundler/importmap
+security checks, 11 feature handbooks and 84 documentation architecture
+documents. Focused profile/exchange/selection coverage also passed
+**24 examples**. These are local results, not a claim about CI.
+
+Manual acceptance used the running development app and disposable
+`CombatAcceptance0911` character. Its deliberately high HP/stats and 200 AP
+keep these lifecycle checks short; they do not validate
+Neverlands damage balance. Only the two new encounter anchors were temporarily
+restricted to exact captured samples, with a short due time. Actual World UI
+polls started fights; buttons/forms performed turns, switching, equipment
+changes, movement and Finish. No database-created fight or direct HTTP action
+was counted as browser acceptance.
+
+| Flow | Actual manual result |
+|---|---|
+| Mixed species, local fight 20 | Orc 3 + Orc 3 + Goblin 3; Switch counted 2 → 1 → absent and persisted after reload. Two committed player strikes remained in the log after lethal damage, while only removed HP contributed to the final **185(3), 1 XP**. Automatic handoff accepted the next living Orc without restoring or spending a switch. |
+| Skeleton art and defeated members, local fights 22 and 25 | New portrait loaded at **690 × 1530**, rendered **115 × 255**, with complete skull, hands, feet and sword. Skeleton equipment slots were empty. After defeating Skeleton 8 (80 HP), the live page and reloaded page contained exactly one enemy card/roster member: Skeleton 7 (70 HP). The defeated member remained only in the log until completed history. The surviving NPC alone supplied the next two-strike response. Result retained **150(2), 5 XP**. Fight 25 repeated this on the final code after the shield fix. |
+| Equipment and next-fight profile, local fights 24 → 25 | Inventory Wear equipped the isolated shield, Profile showed it, and reload retained it. A fixture-only `shield_90` item property exercised the already captured advanced tier. Fight 24 displayed the upper/lower 90-AP options; Reset cleared selection, shield-only Turn was a no-op, and aimed head + upper shield used **155/200 AP**. The Orc's committed head return was blocked. Removing the shield through Inventory persisted; fight 25 returned to normal blocks despite the prior shield stance. |
+| Finish and private chat | Positive 5-XP notice appeared only after Finish and remained single after reload (fight 25's local-app timestamp: **14:22:33**). Zero-XP fight 24 omitted the result table and added no chat notice. Finish returned to World; north/south movement used actual buttons and completed at the adjacent authored cell. |
+| Responsive and keyboard | In-app browser at **1366 × 768**, **820 × 900**, **390 × 844**, **320 × 740**, and **844 × 390**; pointer selection and Enter submission/Finish worked, including scrollable controls in short/narrow panes. No page-width overflow at the measured phone/landscape sizes. Full portraits and equipment rails remained visible; labels and result controls remained reachable. Chrome's isolated local hostname was also exercised at **200% zoom**, including result Return and Inventory Wear; zoom was reset with Cmd-0. In-app viewport override was reset. Screenshots were inspected in the task. |
+
+Browser exploration found two concrete failures before acceptance: unstable
+database order could make a rendered automatic target consume an exhausted
+switch, and the previous character block stance could override newly equipped
+shield controls. Both were fixed with focused regressions, followed by full
+verification and successful affected browser replays. The final shield and
+Skeleton flows ran after the last full check passed.
+
+Cleanup restored both anchors to active canonical **five-sample pools**, removed
+the isolated shield-property override and temporary encounter schedule, and
+left the test character out of combat in Inventory. Shared item templates,
+other players and the source Neverlands player were not changed by this local
+fixture cleanup. This was the first-cycle handoff; the user has since relocated
+the source player; the second cycle and its bounded acceptance follow below. Numeric combat coefficients, general XP/drop probabilities
+and large mixed-player arbitration remain the evidence gaps listed above.
+
+### September 11 stage2: stronger NPCs (bounded acceptance complete)
+
+At this handoff, **all ten fresh source fights are complete** in the
+stronger-NPC observation linked above. Fight 10 ran from 22:03 to 22:08 against
+Robber 14 with 815 HP: critical 762 followed by lethal critical 1089, an empty
+search, result `815(1)` and `493` XP, then Finish chat at 22:09:02. The earlier
+Robber 14 solo capture awarded 494 XP; neither value is a universal formula.
+The later 22:11:17 chat row reporting 762 XP has no observed fight/turn and is
+excluded from the controlled register and presets. Subsequent Inventory clicks
+did not establish arrival in Inventory; they are not navigation acceptance.
+Local verification progressed from 308 focused examples to 187 review examples.
+The first full gate passed 2,925 non-system / 296 system examples, then manual
+acceptance found stale header maxima, a Turbo-frame Fight Log failure, an empty
+completed roster and narrow statistics clipping. Fixes passed 83 focused examples
+and a second full gate: **2,929 non-system / 297 system, zero failures**, with
+lint, security and documentation audits green. Output:
+`/tmp/mmorpg-stage2-verify-full-final.log`. The subsequent mobile long-name/header
+repair passed 50 focused system examples; the final `bin/verify full` then
+passed **2,929 non-system / 298 system examples, zero failures**, 577 linted Ruby
+files, Brakeman/Bundler/Importmap audits, 11 feature documents and 86 architecture
+documents. Output: `/tmp/mmorpg-stage2-verify-full-accepted.log`. These are local
+results, not CI. Subsequent changes only record acceptance evidence.
+
+#### Manual stronger-cycle acceptance
+
+The in-app browser used the isolated development player and an existing
+`[4,11]` test anchor temporarily restricted to one recorded preset. Its high
+stats, 200 AP, active Gold fixture, gear bonuses and deterministic 25-NV fixture
+exercise lifecycle behavior; they do not validate source damage balance or drop
+probability. World polling created every fight; actual UI controls selected
+attacks/blocks, switched targets, changed equipment and finished results. The
+anchor was paused during each fight to avoid another incidental encounter.
+
+| Flow | Observed local outcome after the second full gate |
+|---|---|
+| Mixed roster, fight 28 | Bandit 13 ×2, Robber 13/14/15/15. A shield-blocked return and a dodged incoming attempt were visible. The first kill logged raw 966 but credited 605(1). Switch 5 → 3 persisted on reload with Robber 14 selected. Each defeated member disappeared from cards/roster/next-target selection; committed returns remained logged. A lethal 1536 plus post-lethal 545 increased raw by 1536 only. Final result was **4730(6), 13183 XP**, with no completed NPC card, selector or empty roster. |
+| Portraits and gear | At 1366 × 768, Bandit and Robber full figures, complete sword/club and independent equipped/empty slot sets were inspected. No figure cropping; both portraits are 690 × 1530 rendered at the shared 115 × 255 ratio. Robber 14 retained its empty off-hand and pants; Bandit had a dagger. |
+| Public history | Actual Fight log → Statistics left the game frame successfully. Credited 4730, defeated 6 and actual 13183 XP agreed with the result; Hits remained a distinct 10-event diagnostic. All six defeated NPCs remained in history with 0 HP. At 320 × 740, keyboard arrows scrolled the focusable statistics region to the XP column while the page and panel stayed inside the viewport. Browser Back returned to the fight and Finish returned to World `[4,11]`; reload retained the result/event. |
+| Currency, fight 29 | A separate explicitly named Acceptance Bandit 0911 cloned the captured level-14 profile but guaranteed **25 NV** only for local testing. One actual two-strike turn ended **835(1), 631 XP**. Search chat appeared at 19:56:10 before Finish; reload did not duplicate it. Finish at 19:56:37 emitted 631 XP. Your character showed **25.0 NV** in the wallet. |
+| Skills/equipment | Your character → Skills → plus → Save, then Inventory Remove/Wear and reopening Skills, proved base 98 → 100, effective 128 → 130, exactly one spent point and disabled MAX after reload. See the [Progression acceptance](character_progression.md#september-11-equipment-aware-allocation-acceptance). |
+| Responsive inspection | Public statistics were checked at 320 × 740, 390 × 844, 820 × 900, 844 × 390 and 1920 × 1080. Pointer/keyboard controls and contained overflow were exercised. Active and completed fights were also operated at 390 × 844. That pass found long-name header clipping; the correction and final rerun are recorded below. These sizes do not claim physical touch-device testing. |
+
+A previous incidental local fight 27 timed out at five minutes while tests ran;
+its Draw/Finish was cleared through the UI before this pass. The in-app Surrender
+confirmation in fight 30 blocked its browser-control API; dialog acceptance and
+close both timed out. That attempt is not successful surrender acceptance. The
+remaining work moved to isolated `localhost` Chrome without replacing the user's
+`127.0.0.1` or Neverlands sessions. Chrome's native accessibility controls accepted its confirmation successfully;
+the browser automation API itself could not handle that modal. Fight 30 had
+already timed out and was finished as a Draw; it is excluded from loss-XP proof.
+
+#### Final Chrome acceptance and cleanup
+
+After the final full gate, isolated Chrome on `localhost` verified the repaired
+header at **390 × 844 and 320 × 740**: complete HP/MP pairs and level remain
+visible, with compact bars and an ellipsis on the long name. Profile → Skills
+→ Return retained the effective 130 mastery. At 320px, actual selectors and
+Turn completed the first Bandit 13 kill in fight **31**, leaving only two living
+Bandit 14s. Surrender → native OK completed a loss with **605(1), 57 XP**.
+Fight Log → Statistics showed damage 605, defeated 1 and XP 57, retained the
+losing player at 0 HP in history, and preserved the living opponents. Browser
+Back → Finish returned to `[4,11]` and emitted **57 XP at 20:09:10** once.
+
+Fight **32** used the same guaranteed-25-NV level-14 fixture with an expired
+Gold entitlement. The actual kill awarded **835(1), 631 XP** but performed no
+search/drop outside the standard ±2 range for the level-17 player. Reload and
+Profile confirmed the wallet remained **25.0 NV** and the earlier money-found
+row was still the only one. This validates eligibility, not a source drop chance.
+At actual **200% Chrome zoom** (864 × 416 CSS viewport), Finish → Profile → Return
+remained operable inside the scrolling pane. Zoom reset to 100% and default
+1728 × 833; the in-app viewport override was also reset.
+
+Cleanup closed both isolated browser tabs and restored the test player's prior
+stats, skills, equipment properties and anchor metadata. Earned local test XP,
+25 NV and history remain on that disposable character. Read-back confirmed
+`in_combat=false`, zero active matches and, for fights 28/29/31/32, exactly four
+completion events plus one money-found event. Screenshots were visually inspected
+in the task. No Neverlands session was relogged during acceptance. No physical
+touch device was tested. Medical state/treatment, general resolution coefficients,
+weapon-mastery formulas, unknown loot probabilities and stronger Forpost placement
+remain explicit evidence/implementation gaps; this is bounded local acceptance.
+
+`PublicFightLogsHelper#combat_log_message` supplies escaped rich text to live
+and public logs: historical participant names, damage, body-part labels,
+defeat/result phrases and quoted injury names receive selective emphasis.
+Critical damage and named injury text are red; timestamps/body parts are gray.
+Critical attempts may be dodged without damage or defeat credit. This records
+the observed outcome, not Neverlands' hidden random-roll order or coefficients.
+The September12 runtime adds injury generation, persisted penalties/duration,
+elapsed recovery and healer treatment; [Medical care](medical_care.md) owns the workflow.
+The [published Injury/Doctor rules](../design/reference/combat/observations/2026-09-11_stronger_npc_loot_combat_cycle.md#published-injury-and-doctor-rules)
+now supply injury restrictions, the guaranteed combat-injury duration and
+treatment prerequisites. They do not establish the ordinary light-injury
+formula or a successful treatment flow; the Knowledge 1 source player did not
+treat an injury. The normalized [Combat gap](../design/features/combat.md#combat-rewards-and-loot-checks)
+keeps published rules distinct from calibrated ordinary injury durations and penalties.
+
+Live statistics separate `raw_damage_dealt`, credited `damage_dealt` and
+`opponents_defeated`. Lethal overkill contributes to raw totals; credited
+damage is capped by HP removed. Post-lethal committed strikes remain in the
+log but increase neither total. Superscript parentheses in live/result views
+count defeated opponents, not hits. The first-cycle one-hit kills did not
+distinguish those interpretations; the stronger cycle supersedes that reading.
+Internal `damage_hits` remains a separate diagnostic counter.
+
+`Combat::FightLogStatistics` now uses persisted credited `damage_dealt` for
+participant/team/overall totals and the separate physical/magic element buckets. It
+returns `opponents_defeated` independently from log-event `total_hits`, and
+reads actual XP from the persisted reward's character recipient even after a
+loss. Missing defeat counters return nil, not a guessed hit count. Historical
+rows without credited metadata fall back to logged damage, which can include
+overkill; when no participant has credited metadata, the old whole-log total
+also retains unattributed events. Body-part and round breakdowns remain raw
+log diagnostics. Two grouped actor queries supply participant damage/hits,
+with legacy Character actors included and same-named NPCs kept distinct by id.
+
+Public HTML exposes credited
+Damage, Defeated, diagnostic Hits and actual XP; an unknown historical defeat
+count renders an em dash. JSON and HTML expose physical, magic and total credited damage.
+Persisted defeat keeps historical participants dead with displayed 0 HP even
+after their character recovers, without removing statistics or log history.
+Survivor HP and maxima still use current values; this is not a full historical
+vitals snapshot. The statistics table owns horizontal overflow in a focusable, labeled region;
+keyboard arrows and pointer scrolling reach all columns at narrow widths.
+The Fight log link leaves the game Turbo frame for the standalone public page.
+
+Bandit/Robber portraits and complete level 13–15 loadouts use original art
+registered in [ARTWORK.md](../ARTWORK.md). The per-level set is independent
+content, not an inventory grant or a formula inferred from the portrait.
+Reusable `encounter_presets` in `outdoor_npcs.yml` now retain all ten
+captured rosters/rewards and source player level 17. These profiles are reused at two September12 authorized remote local
+habitats, [19,9]/[19,10]. Their exact source origin remains unknown;
+World documents the provisional local placement separately from the atlas.
+Player projections, shared header vitals, Channel responses and broadcasts use
+effective HP/MP maxima without rewriting persisted base maxima or refilling
+resources. Public turn intents require a positive canonical round number and
+reject missing, malformed or stale values under the match lock before profile
+preparation. NPC defenses are prepared before incoming strikes, once per round.
+Each committed return strike reloads the target so stale copies cannot restore HP.
+ Armor class, Accuracy, Evasion, Crushing
+and Fortitude remain separate inputs; Fortitude is not Health or physical
+resistance. Effective skills add usable equipment once and may exceed 100;
+the saved allocation cap remains 100. Weapon-mastery attack-cost/damage calculations now use the versioned
+calibration; original source coefficients remain unknown.
+
+The progression recheck now distinguishes each wiki row's **per-level XP
+cost** from the cumulative threshold obtained by summing costs. The source
+level 17 proof is `29,946,496 + 20,053,504 = 50,000,000`, matching rows 0–17
+summed for the next level. Stat grants remain verified. `Catalog#experience_threshold_to_reach` now sums the preceding row costs;
+The source evidence establishes the correction; local validation is recorded
+with the shared stage2 gate below, and does not validate the older interpretation.
 
 ### 4.4 Exit and integration behavior
 
@@ -303,8 +781,8 @@ The shipped topology is:
 | Passive wilderness handoff | `POST /world/encounter_check` | Interactive on outdoor World only | World-owned authority/check; shared Arena match after creation |
 | Incremental match log | `GET /arena_matches/:id/log` | Authenticated HTML/JSON | Presenter and match controller |
 | Public durable log | `GET /log/:id` | Public HTML/JSON | Public controller/helper/view and statistics service |
-| Recipient chat feedback | Successful NPC item/NV loot and match finalization | Durable/streamed projection | Arena producer facts through injected `Chat::EventPublisher`; Game Shell owns storage/rendering |
-| Captured bounded fight UI states | Launch parity matrix | Browser-verified | Fight views/Stimulus/CSS plus request/system acceptance matrix |
+| Recipient chat feedback | Successful NPC item/NV loot; positive solo NPC XP on Finish; other player/team completion at finalization | Durable/streamed projection | Arena producer facts through injected `Chat::EventPublisher`; Game Shell owns storage/rendering |
+| Captured bounded fight UI states | Launch parity matrix | Earlier gates plus stage2 full/manual acceptance verified | Fight views/Stimulus/CSS plus request/system acceptance matrix |
 
 ### 6.2 Arena applications and match start
 
@@ -370,11 +848,11 @@ one `loot_resolution` marker per NPC participation. It persists item awards
 through the Inventory manager's locked savepoint or NV through
 `CurrencyWallet#adjust!` and publishes the corresponding event inside the same
 outer transaction. Failed capacity or invalid-entry outcomes publish no success
-row and cannot retain a partially filled item stack. Fight-completion
-events are emitted under finalization before
-the reward marker is committed; the surrounding transaction and stable keys
-make retry safe. `finish` is a later presentation/result acknowledgement and
-does not rerun rewards or publish another completion row.
+row and cannot retain a partially filled item stack. Solo-NPC finalization
+persists XP/rewards; Finish publishes the positive-XP completion fact once
+from that stored result. Zero-XP solo results publish no completion notice.
+Other player/team completion events remain tied to finalization. Stable event
+keys and transaction boundaries make retries safe; Finish never reruns rewards.
 
 The recipient-first reward lock order also matches the outdoor travel/Look
 request guard. It prevents an Inventory request and a physical killing turn
@@ -399,7 +877,7 @@ Before that per-turn path, World-created matches enforce their explicit global
 `300`-second deadline and finalize once rather than extending the fight.
 
 Solo-NPC turns use the same processor under the match lock but resolve
-immediately: one accepted player package, every living NPC response, and then
+immediately: the accepted player package and selected NPC's committed response, then
 either finalization or exactly one fresh round with full player AP. The posted
 round number is an optimistic stale-intent guard for both solo-NPC and
 player/team turns; it is never authority for advancing the match.
@@ -411,6 +889,14 @@ override derivation. Physical attack seed remains profile-owned. The profile
 also owns the displayed per-magical-hit mana ceiling and allowlists
 source-injected Spirit Arrow/Mind Blast and magic block keys. Current MP is a
 separate affordability constraint and is not substituted for that ceiling.
+Profile precedence is by key presence: participation profile, participation
+root, NPC content profile where applicable, allowed match fields, character
+profile and supported character root fields. Explicit empty injected lists
+disable inherited actions. NPCs inherit only AP/magic-limit fields from the
+match, not its physical seed, shield or injected actions. Item seeds, shield
+tables and signed cost adjustments use merged `InventoryItem#effect_modifiers`
+before legacy root properties. The character's transient root `block_table`
+never supplies a new fight's equipment tier.
 
 `Game::Combat::ActionCatalog` owns the exact normal and shield `40`, `70`, and
 `90` selector tables. A shield item must author its table identity; family
@@ -422,29 +908,72 @@ different shield tier cannot change AP or protection.
 `NpcExperienceAwarder` uses one configured NPC reward or an explicit
 encounter-level total. The captured paired Plague Rat encounter stores `35` XP
 for the whole fight and is not summed to `70`; uncaptured multi-NPC totals and
-multi-player distribution fail closed. `EquipmentWearResolver` rolls each
+multi-player distribution fail closed.
+
+The normalized reward direction is that higher-level NPCs and larger NPC
+groups should yield more XP per fight. Captured rewards depend strongly on
+composition and level, while combat contribution and the recipient's cap also
+matter. Author the actual observed award for each encounter; this direction
+does not supply coefficients, a per-NPC sum or a guaranteed increase in the
+capped award. The stronger cycle's Robber 14 solo results of 493/494 XP also
+show why a matching visible profile does not establish one universal reward.
+
+A losing solo player may instead receive
+an explicit positive integer `encounter_defeat_experience_reward`, only when
+an enemy NPC was defeated and the winning side contains NPCs. The captured
+`57` XP is exercised through finalization, result HTML, Finish and the private
+completion event in `spec/requests/arena_defeat_experience_spec.rb`; the service
+spec covers missing/invalid values, draw, no defeated enemy, group and cap
+boundaries. The loss path never falls back to victory or template XP. It does
+not award a victory counter or implement XP deductions.
+
+`Character#combat_benefits` reads trusted server `combat_entitlement` metadata
+(`tier`, timezone-qualified `expires_at`). Public update requests cannot grant
+it. `Game::Combat::PremiumBenefits` evaluates the server clock at each XP or
+loot decision; absent, malformed, unknown or expired values use standard limits.
+`config/gameplay/combat_benefits.yml` owns these captured limits:
+
+| Entitlement | Total NPC level window | Maximum fight-XP multiplier |
+|---|---:|---:|
+| Standard / Worker | ±2 | ×1.0 |
+| Premium | ±2 | ×1.5 |
+| Gold | ±4 | ×2.0 |
+| VIP | ±6 | ×2.5 |
+
+Windows are inclusive and bounded at NPC level0. Authored NPC limits can
+narrow them, never widen them; `search_enabled: false` still disables search.
+The multiplier adjusts the recipient's level-table cap with integer flooring,
+never earned XP: award the smaller of authored XP and the adjusted cap.
+Unsupported levels retain a zero cap. Entitlement does not generate drops,
+change authored probabilities or implement paid-service purchase/activation.
+
+`EquipmentWearResolver` rolls each
 equipped durable item at basis-point precision and applies Careful Fighter's
 half chance, including `0.5%` after an arena defeat.
 
-Solo NPC finalization increments the winning character's persisted `npc_wins`
-metadata once per encounter inside the existing idempotent reward boundary.
-It does not increment per defeated NPC and deliberately does not infer a
-multi-player ownership/distribution rule. The completed fight surface renders
-source-shaped Physical, Total, and awarded-XP columns from authoritative
-participation and reward metadata. Physical and Total are currently the same
-bounded physical bucket; uncaptured damage families are not invented.
+Finalization records each player's persisted win/loss once per encounter inside
+the existing reward guard, independently of XP or number of defeated opponents.
+An entirely NPC opposing side uses `npc_wins`/`npc_losses`; otherwise it uses
+`player_wins`/`player_losses`. Draws add neither, and terminal individual defeat
+remains a loss. Mixed-side classification is the documented fitted convention.
+This affects subsequent finalizations; pre-existing profile counters are not
+silently reconstructed from historical matches.
+The result renders Physical, Magic, Total and awarded XP from authoritative
+participation metadata. Physical and magic credited buckets sum to Total;
+defeated-opponent superscripts remain separate from damaging hits. Live
+statistics additionally show raw damage, including overkill.
 
 ### 6.4 Deferred behavior boundary
 
 Unobserved fight variants, quest/reputation loot effects, the full Neverlands
-spell/item action catalog, complete group/sacrifice rules, fatigue/mastery
-coefficients, ordinary injury outcomes, the repair workshop transaction, and
-uncaptured Arena-room presentation states
-remain outside this bounded runtime contract. They must be observed before
-implementation. Source artwork is documentation evidence and must not be
-copied into runtime assets. The typed awarder is intentionally small: add a new
-kind only when its authoritative owner and source behavior are captured. No
-production NPC receives an invented NV entry from the supplied standalone row.
+spell/item catalog, complete sacrifice rules, the repair workshop transaction
+and uncaptured Arena-room presentation remain outside the 22-fight contract.
+The September12 user-authorized calibration implements fatigue/mastery,
+general/group XP, ordinary injuries and NPC loot probabilities; it does not
+claim recovery of source equations. Source artwork is documentation evidence
+and is not copied into runtime assets. The typed awarder remains small: new
+award kinds need an authoritative owner and source behavior; fitted NV/item
+pools use the existing owners.
 Neverlands now also confirms variable same-context groups (`1x3`, `1x1`,
 `1x1`, then `1x2`), mixed bot identities/levels, two bounded exact-cell passive
 idle intervals, and a later no-coordinate `1x7 -> 1x3`/`4..64`-second chain.
@@ -595,6 +1124,7 @@ state plus HTML/JSON reload is the recovery authority.
 | `DELETE /arena_applications/:id/cancel` | Cancel own open application | Redirect or JSON |
 | `GET /arena_matches/:id` | Active/waiting/result fight | Authenticated HTML/JSON |
 | `POST /arena_matches/:id/action` | Submit turn or surrender intent | Redirect, Turbo status, or JSON |
+| `POST /arena_matches/:id/switch_opponent` | Consume one manual target switch | Redirect or JSON |
 | `POST /arena_matches/:id/claim_timeout` | Claim eligible timeout result | Redirect or JSON |
 | `POST /arena_matches/:id/finish` | Acknowledge completed result | Redirect only |
 | `GET /arena_matches/:id/log` | Authenticated incremental log | HTML partial or JSON |
@@ -623,7 +1153,8 @@ Turn submission remains subject to server validation.
 
 `arena.css` owns Arena rows and the active fight composition. It fixes source
 geometry at desktop, compacts the rails for tablet, and moves the center below
-two fighter rails on mobile. `fight_logs.css` owns only the public log. Shared
+two fighter rails on mobile. `fight_logs.css` owns the public log layout and
+shared rich-log token styling consumed by live and public views. Shared
 paper-doll markup remains in `_equipment_paperdoll.html.erb`; Inventory owns the
 actual equipped state. The flat SRP-by-domain stylesheet structure has no
 Tailwind dependency and no nested `nl/` folder.
@@ -733,9 +1264,10 @@ reload.
   can submit.
 - PvP pending turns, NPC responses, surrender, timeout, defeat, wear, logs, and
   final rewards use the shared processor and persist once.
-- Solo PvE resolves one player package and all living NPC responses under one
-  match lock, restores full AP for a surviving next round, rejects stale-round
-  replay, and switches away from defeated targets.
+- Solo PvE resolves the player and selected NPC commitments under one match
+  lock, including lethal return strikes; it restores full AP for a surviving
+  next round, clears blocks, rejects stale-round replay, and automatically
+  hands off defeated targets without restoring spent manual switches.
 - Browser-indexed turn fields preserve exact attack/block values, the first
   committed player sees a server-rendered waiting state, and the second
   committed player receives the shared round result.
@@ -847,8 +1379,10 @@ verification; no development seed account was changed.
 
 ### Physical PvE acceptance-to-spec matrix
 
-This table owns the local implementation gate for the bounded physical PvE
-slice. It does not close the separate evidence rows for random timing,
+This table preserves the earlier local implementation gate for the bounded
+physical PvE slice. Its recorded results do not accept the subsequent stage2
+changes; the current Combat Completion Matrix and stage2 checkpoint own their
+separate completed gate. It does not close the separate evidence rows for random timing,
 eligible-group pools/weights, universal formulas, group XP,
 Observation/drop curves, magic/statuses, injuries, or repairs.
 
@@ -875,6 +1409,11 @@ global-fight-deadline path detailed in the matrix. Exact Neverlands
 timing/probability distribution and complete eligible-roster pool/selection
 weights remain separate `EVIDENCE_NEEDED` rows, not hidden PvE implementation
 gates.
+
+The historical “hit counts” interpretation above is superseded by the stronger
+cycle: superscripts count defeated opponents. A nonlethal hit increases damage
+without increasing that counter. The earlier one-hit kills could not separate
+those meanings, and their acceptance record is not stage2 acceptance.
 
 `spec/system/arena_room_presence_spec.rb` exercises the summary and Room Map
 Enter links with automatic presence refresh disabled. It checks persisted
@@ -931,6 +1470,10 @@ World, Inventory, Progression, the game shell, jobs, and Action Cable.
 
 ### Requirements and design evidence
 
+- `doc/design/reference/combat/observations/2026-09-11_low_level_two_cell_combat_cycle.md`
+- `doc/design/reference/combat/observations/2026-09-11_stronger_npc_loot_combat_cycle.md`
+- `doc/design/reference/character/observations/2026-09-11_level_grants_and_combat_inputs.md`
+- `doc/features/character_progression.md`
 - `doc/features/arena_combat.md`
 - `doc/design/areas/arena.md`
 - `doc/design/features/combat.md`
@@ -967,6 +1510,7 @@ World, Inventory, Progression, the game shell, jobs, and Action Cable.
 ### Services
 
 - `app/lib/game/combat/action_catalog.rb`
+- `app/lib/game/combat/premium_benefits.rb`
 - `app/services/arena/application_handler.rb`
 - `app/services/arena/combat_broadcaster.rb`
 - `app/services/arena/realtime_publisher.rb`
@@ -993,6 +1537,8 @@ World, Inventory, Progression, the game shell, jobs, and Action Cable.
 - `app/views/arena_applications/_list.html.erb`
 - `app/views/arena_matches/show.html.erb`
 - `app/views/arena_matches/_combat_log.html.erb`
+- `app/views/arena_matches/_result.html.erb`
+- `app/views/arena_matches/_damage_statistics.html.erb`
 - `app/views/arena_matches/_fighter_card.html.erb`
 - `app/views/arena_matches/_opponent_stats.html.erb`
 - `app/views/arena_matches/_participant.html.erb`
@@ -1012,6 +1558,7 @@ World, Inventory, Progression, the game shell, jobs, and Action Cable.
 - `config/gameplay/arena_npcs.yml`
 - `config/gameplay/outdoor_npcs.yml`
 - `config/gameplay/combat_actions.yml`
+- `config/gameplay/combat_benefits.yml`
 - `db/seeds.rb`
 - `db/structure.sql`
 - `db/migrate/20260823220000_add_money_found_to_game_event_types.rb`
@@ -1053,6 +1600,18 @@ supplies only authoritative completion/loot facts and stable source keys.
 
 ### Specs
 
+- `spec/services/arena/committed_exchange_spec.rb`
+- `spec/services/arena/combat_profile_spec.rb`
+- `spec/requests/arena_opponent_selection_spec.rb`
+- `spec/requests/arena_defeat_experience_spec.rb`
+- `spec/requests/combat_entitlement_trust_spec.rb`
+- `spec/models/character_combat_inputs_spec.rb`
+- `spec/models/character_combat_benefits_spec.rb`
+- `spec/services/arena/npc_defeat_experience_spec.rb`
+- `spec/services/arena/combat_benefits_spec.rb`
+- `spec/lib/game/combat/premium_benefits_spec.rb`
+- `spec/helpers/public_fight_logs_helper_spec.rb`
+- `spec/services/combat/fight_log_statistics_spec.rb`
 - `spec/models/arena_application_hp_gate_spec.rb`
 - `spec/models/arena_room_spec.rb`
 - `spec/models/arena_application_lifecycle_spec.rb`

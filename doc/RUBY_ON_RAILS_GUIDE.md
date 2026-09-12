@@ -1319,7 +1319,13 @@ Testing rules:
 
 ## 22. Feature documentation and verification
 
-Implementation documentation follows `AGENTS.md`:
+Implementation documentation follows `AGENTS.md`.
+
+Use [DOCUMENTATION's context/update map](DOCUMENTATION.md#21-required-context-and-update-map)
+for existing-feature changes and new implementations. Follow relevant book
+sections and direct handoff owners before editing; synchronize changed
+reference content and meaningful incoming/outgoing links in the same task.
+That document owns the dependency map and update rules.
 
 1. start at `doc/domains/README.md` and establish the domain's Neverlands
    evidence, normalized design, stable parity ID, and current implementation

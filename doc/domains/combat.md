@@ -1,5 +1,13 @@
 # Combat and Arena Domain
 
+Current September12 work: the user authorized pragmatic completion of the22-fight
+observations. [Combat calibration](../design/features/combat_calibration.md)
+owns fitted coefficients and placement; [Medical Care](../features/medical_care.md)
+owns injury/treatment. Earlier exact-formula evidence holds below no longer
+mean these features must remain disabled. The bounded scope passed
+[final local acceptance](../features/arena_combat.md#september-12-final-calibrated-acceptance).
+
+
 ## Scope
 
 Arena entry and matchmaking, active fights, action selection, authoritative
@@ -8,24 +16,31 @@ player-facing completion/loot fact handoff, and responsive fight presentation.
 
 ## Documentation chain
 
-- Neverlands source summary: `doc/design/reference/combat/README.md`
+- [Required working context and update rules](../DOCUMENTATION.md#21-required-context-and-update-map)
+- Game reference books: [NPC catalog and editing](../NPC.md),
+  [formulas and tuning](../FORMULAS.md)
+- Related inputs and outputs: [item properties](../ITEMS.md#3-fields-slots-and-effective-properties),
+  [world return context](../WORLD.md#5-travel-context-and-return-behavior),
+  [event/log catalog](../features/game_shell.md#gameplay-event-catalog)
+
+- Neverlands source summary: [doc/design/reference/combat/README.md](../design/reference/combat/README.md)
 - Current concrete flows:
-  `doc/design/reference/combat/observations/2026-08-26_wilderness_shield_npc_fight.md`,
-  `doc/design/reference/combat/observations/2026-08-26_wilderness_two_orc_group_fight.md`,
+  [doc/design/reference/combat/observations/2026-08-26_wilderness_shield_npc_fight.md](../design/reference/combat/observations/2026-08-26_wilderness_shield_npc_fight.md),
+  [doc/design/reference/combat/observations/2026-08-26_wilderness_two_orc_group_fight.md](../design/reference/combat/observations/2026-08-26_wilderness_two_orc_group_fight.md),
   and
-  `doc/design/reference/combat/observations/2026-08-26_wilderness_passive_goblin_fight.md`,
+  [doc/design/reference/combat/observations/2026-08-26_wilderness_passive_goblin_fight.md](../design/reference/combat/observations/2026-08-26_wilderness_passive_goblin_fight.md),
   plus the current variable-group/magic chain in
-  `doc/design/reference/combat/observations/2026-09-01_wilderness_bandit_group_variation_and_magic.md`
+  [doc/design/reference/combat/observations/2026-09-01_wilderness_bandit_group_variation_and_magic.md](../design/reference/combat/observations/2026-09-01_wilderness_bandit_group_variation_and_magic.md)
   and the current large-roster/search/timeout chain in
-  `doc/design/reference/combat/observations/2026-09-02_swamp_passive_rosters_search_and_timeout.md`
+  [doc/design/reference/combat/observations/2026-09-02_swamp_passive_rosters_search_and_timeout.md](../design/reference/combat/observations/2026-09-02_swamp_passive_rosters_search_and_timeout.md)
 - Composite observations indexed by the source summary
 - Cross-domain timeline observation:
-  `doc/design/reference/social/observations/2026-08-23_chat_game_event_timeline.md`
-- Normalized designs: `doc/design/areas/arena.md` and
-  `doc/design/features/combat.md`
+  [doc/design/reference/social/observations/2026-08-23_chat_game_event_timeline.md](../design/reference/social/observations/2026-08-23_chat_game_event_timeline.md)
+- Normalized designs: [doc/design/areas/arena.md](../design/areas/arena.md) and
+  [doc/design/features/combat.md](../design/features/combat.md)
 - Canonical delivery status: Combat Completion Matrix under Pillar 3 in
-  `doc/design/launch_mvp_plan.md`
-- Current implementation: `doc/features/arena_combat.md`
+  [doc/design/launch_mvp_plan.md](../design/launch_mvp_plan.md)
+- Current implementation: `doc/features/arena_combat.md` ([handbook](../features/arena_combat.md))
 
 ## Current RPG status
 
@@ -83,6 +98,15 @@ Section 16 of `doc/features/arena_combat.md` is exhaustive.
 
 ## Evidence and implementation gaps
 
+The final September11 Ogre cycle is
+`doc/design/reference/combat/observations/2026-09-11_ogre_combat_cycle.md`.
+It completes the 10+10+2 observed fights and supplied the damage-parity
+anchors used by the now-active [calibration](../design/features/combat_calibration.md).
+Exact source coefficients and uncaptured Arena behavior remain evidence gaps;
+they do not reopen the completed calibrated scope. Terminal defeat
+now excludes recovered participants as well as zero-HP participants from all
+later active exchanges; already committed returns remain separately eligible.
+
 The canonical matrix distinguishes the completed bounded physical runtime from
 the remaining `EVIDENCE_NEEDED` formula/selection gaps. Physical `1x1` PvP has
 completed its two-seeded-player browser gate. Physical PvE has completed its
@@ -100,5 +124,7 @@ four exact-coordinate roster samples and two captured windows and can schedule
 another sample after victory/Finish, but those samples cannot supply the
 source's complete pool, weights, or timing distribution. The current
 `150 mastery -> -10 AP` and
-`130 mastery -> -8 AP` observations remain insufficient to promote the fitting
-`floor(mastery / 15)` candidate into a rule.
+`130 mastery -> -8 AP` observations support the authorized local fit
+`floor(mastery / 15)`, now implemented and indexed in
+[FORMULAS.md](../FORMULAS.md). It remains a calibrated coefficient rather than
+a recovered source equation.

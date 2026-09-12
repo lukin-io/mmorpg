@@ -59,6 +59,26 @@ RSpec.describe Arena::NpcCombatAi do
   end
 
   describe "#decide_action" do
+    it "ignores a defeated player with recovered HP when choosing a living target" do
+      arena_match.arena_participations.players.first.update!(result: :defeat)
+      survivor = create(:character, current_hp: 150, max_hp: 150)
+      create(:arena_participation, arena_match:, character: survivor, user: survivor.user, team: "a")
+      expect(ai.decide_action.target).to eq(survivor)
+    end
+
+    it "replays captured response sizes and blocks from the fight snapshot without inventing NPC AP" do
+      side = arena_match.arena_participations.npcs.first
+      npc_template.update!(metadata: npc_template.metadata.merge("response_attack_counts" => [2], "response_block_keys" => ["torso_block"]))
+      side.snapshot_npc_combat_data!
+      npc_template.update!(metadata: npc_template.metadata.merge("response_attack_counts" => [1], "response_block_keys" => []))
+      decision = described_class.new(npc_template:, participation: side.reload, match: arena_match, rng: Random.new(8)).decide_action
+
+      expect(decision.params[:attacks].size).to eq(2)
+      expect(decision.params[:block_key]).to eq("torso_block")
+      expect(decision.target).to eq(character)
+      expect((decision.params[:attacks].pluck(:body_part) & %w[head legs]).size).to be <= 1
+    end
+
     context "with aggressive AI" do
       let(:npc_template) do
         create(:npc_template,

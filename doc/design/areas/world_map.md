@@ -1,5 +1,39 @@
 # World Map Area
 
+The [World domain](../../domains/world.md) connects source surveys and delivery.
+[WORLD](../../WORLD.md) catalogs zones, coordinates, routes, resources and art;
+[NPC placement](../../NPC.md#4-locations-cells-and-complete-groups) supplies
+complete encounter groups, and [FORMULAS](../../FORMULAS.md#8-world-movement-and-encounter-timing)
+records movement/encounter timing. The [World handbook](../../features/world.md)
+owns current cell state, actions and runtime acceptance.
+
+## September12 authorized calibration
+
+The user authorized the best evidence-grounded approximation after22 controlled
+fights. [Calibration v1](../features/combat_calibration.md) owns the fitted combat, mastery,
+fatigue, magic, XP/drop, injury/recovery and remote-placement rules. It
+supersedes earlier implementation holds for hidden coefficients; historical
+source observations and uncertainty remain unchanged. Medical Care supplies
+the bounded healer/patient transaction and Hospital bag purchase handoff.
+
+
+## Remote Ogre habitats
+
+The existing starter atlas places Ogres 16–18 at source [1014,998]/[1014,999],
+local [20,6]/[20,7]. The user's September 11 rule requires weaker enemies near
+Forpost and stronger groups in remote darker terrain. These two cells use
+the continuous `forpost_ogre_habitat` painting; their existing100px geometry,
+passability and empty action lists remain unchanged. No monster marker or
+new zone/entrance is introduced by the art. Existing managed art wins over
+the default seed upgrade. See [ARTWORK](../../ARTWORK.md) for raster density,
+prompts and consumer specifications.
+
+The [Ogre cycle](../reference/combat/observations/2026-09-11_ogre_combat_cycle.md)
+supplies whole groups of3/4 and separate16–18 profiles. These TileNpc placements
+are active under the September12 user-authorized calibration. Authored
+map locations and sampled fight origin are distinct evidence; source24-level
+Ogres reported by the user have not been profiled.
+
 Airship travel uses the same region-qualified cell-art pipeline with a captured
 seven-by-three viewport and a bounded eleven-by-five in-flight buffer. Its
 source evidence, phases, authoritative progress, and destination handoff are
@@ -13,6 +47,24 @@ Domain navigation: `doc/domains/world.md`.
 The world map is the outdoor exploration surface. It is where players travel
 between coordinates, discover local actions, meet nearby players, encounter
 hostile NPCs, and enter cities or buildings offered by the current tile.
+
+### Starter encounter progression
+
+The user reaffirmed the Neverlands world-design rule on September 11: the
+single launch zone must offer weaker, feasible NPC groups near Forpost and
+stronger groups farther away. New players leaving the city need starter
+encounters. Author explicit cell/group/level profiles; do not substitute a
+generic distance-to-level formula or spread a captured high-level group
+across arbitrary near-city cells. Local `[4,12]` and `[4,11]` retain their
+different captured Orc/Goblin and Cemetery Skeleton habitats. The next
+relocated source cycle now records stronger level13–15 profiles, complete
+mixed groups and NV loot in the
+[second combat cycle](../reference/combat/observations/2026-09-11_stronger_npc_loot_combat_cycle.md).
+Its exact coordinates remain unknown; source rosters and their eventual
+authored starter placement must retain separate provenance.
+Exact distance bands and habitat exceptions remain evidence inputs.
+
+Evidence: `doc/design/reference/combat/observations/2026-09-11_low_level_two_cell_combat_cycle.md`.
 
 ## Neverlands Reference
 

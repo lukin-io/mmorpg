@@ -8,14 +8,17 @@ to Character, Combat, Social, and Shop.
 
 ## Documentation chain
 
-- Neverlands source summary: `doc/design/reference/inventory/README.md`
-- Current observations: `doc/design/reference/inventory/observations/`
+- [Required working context and update rules](../DOCUMENTATION.md#21-required-context-and-update-map)
+- General item catalog, artwork and editing: [ITEMS](../ITEMS.md)
+- Calculations and image standards: [FORMULAS](../FORMULAS.md), [ARTWORK](../ARTWORK.md)
+- Neverlands source summary: [doc/design/reference/inventory/README.md](../design/reference/inventory/README.md)
+- Current observations: [doc/design/reference/inventory/observations/](../design/reference/inventory/observations)
 - Cross-domain successful-loot feedback observation:
-  `doc/design/reference/social/observations/2026-08-23_chat_game_event_timeline.md`
-- Normalized design: `doc/design/features/items_inventory_equipment.md`
+  [doc/design/reference/social/observations/2026-08-23_chat_game_event_timeline.md](../design/reference/social/observations/2026-08-23_chat_game_event_timeline.md)
+- Normalized design: [doc/design/features/items_inventory_equipment.md](../design/features/items_inventory_equipment.md)
 - Delivery IDs: `INVENTORY-UI-001` and `INVENTORY-ACTIONS-001` in
-  `doc/design/launch_mvp_plan.md`
-- Current implementation: `doc/features/player_inventory.md`
+  [doc/design/launch_mvp_plan.md](../design/launch_mvp_plan.md)
+- Current implementation: `doc/features/player_inventory.md` ([handbook](../features/player_inventory.md))
 
 ## Current RPG status
 

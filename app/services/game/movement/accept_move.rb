@@ -22,6 +22,7 @@ module Game
         Game::Movement::CompleteMove.new(character:).call
         character.with_lock do
           character.reload
+          raise violation("An injury prevents movement") if character.character_injuries.active_at(Time.current).where(severity: %w[heavy combat]).exists?
           raise violation("Disembark before moving on foot") if character.active_airship_journey
 
           position = respawn_service.ensure_position!.reload

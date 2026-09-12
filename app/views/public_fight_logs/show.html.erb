@@ -19,14 +19,18 @@
 
   <% if @view_mode == :statistics %>
     <% part_labels = {"head" => "Head", "torso" => "Torso", "stomach" => "Abdomen", "legs" => "Legs"} %>
-    <div class="combat-log-content">
+    <div class="combat-log-content nl-fight-statistics-scroll" role="region" aria-label="Fight statistics" tabindex="0">
       <table class="nl-detail-table nl-fight-stat-table">
         <thead>
           <tr>
             <th>Participant</th>
             <th>Side</th>
+            <th>Physical</th>
+            <th>Magic</th>
             <th>Damage</th>
+            <th>Defeated</th>
             <th>Hits</th>
+            <th>XP</th>
           </tr>
         </thead>
         <tbody>
@@ -34,8 +38,12 @@
             <tr>
               <td><%= row[:name] %></td>
               <td><%= row[:team] %></td>
+              <td><%= row[:physical_damage] %></td>
+              <td><%= row[:magical_damage] %></td>
               <td><%= row[:total_damage] %></td>
+              <td><%= row[:opponents_defeated].nil? ? "—" : row[:opponents_defeated] %></td>
               <td><%= row[:total_hits] %></td>
+              <td><%= row[:xp_earned] %></td>
             </tr>
           <% end %>
         </tbody>
@@ -95,18 +103,20 @@
     <span class="participants-label">Fight participants:</span>
     <span class="team team-alpha">
       <% @team_a.each_with_index do |participant, index| %>
-        <span class="participant nl-log-name--alpha <%= participant.current_hp.positive? ? 'alive' : 'dead' %>">
+        <% displayed_hp = participant.defeat? ? 0 : participant.current_hp %>
+        <span class="participant nl-log-name--alpha <%= displayed_hp.positive? ? 'alive' : 'dead' %>">
           <%= participant.participant_name %>[<%= participant.participant_level %>]
-          <span class="vitals">[<%= participant.current_hp %>/<%= participant.max_hp %>]</span>
+          <span class="vitals">[<%= displayed_hp %>/<%= participant.max_hp %>]</span>
         </span><%= index < @team_a.length - 1 ? ", " : "" %>
       <% end %>
     </span>
     <span class="vs">against</span>
     <span class="team team-beta">
       <% @team_b.each_with_index do |participant, index| %>
-        <span class="participant nl-log-name--beta <%= participant.current_hp.positive? ? 'alive' : 'dead' %>">
+        <% displayed_hp = participant.defeat? ? 0 : participant.current_hp %>
+        <span class="participant nl-log-name--beta <%= displayed_hp.positive? ? 'alive' : 'dead' %>">
           <%= participant.participant_name %>[<%= participant.participant_level %>]
-          <span class="vitals">[<%= participant.current_hp %>/<%= participant.max_hp %>]</span>
+          <span class="vitals">[<%= displayed_hp %>/<%= participant.max_hp %>]</span>
         </span><%= index < @team_b.length - 1 ? ", " : "" %>
       <% end %>
     </span>

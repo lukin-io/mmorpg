@@ -36,7 +36,7 @@ RSpec.describe "World encounter checks", type: :request do
       "interrupted" => true,
       "redirect_url" => arena_match_path(match)
     )
-    expect(response.parsed_body["message"]).to include(npc.display_name)
+    expect(response.parsed_body["message"]).to eq("A fight starts while you wait.")
     expect(match).to be_live
     expect(match.metadata).to include(
       "source" => "world_npc",

@@ -1,0 +1,17 @@
+<% metadata = participation.metadata.to_h %>
+<% if metadata["raw_damage_dealt"].to_i.positive? %>
+  <table class="nl-fight-result-table nl-fight-damage-statistics" aria-label="Current fight damage">
+    <thead>
+      <tr><th>Damage dealt</th><th>Credited physical damage</th><th>Magic damage</th><th>Total</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><%= metadata["raw_damage_dealt"].to_i %></td>
+        <% damage_buckets = metadata.fetch("damage_by_element", {}) %>
+        <td><%= damage_buckets.fetch("physical", metadata.key?("damage_by_element") ? 0 : metadata["damage_dealt"].to_i) %></td>
+        <td><%= damage_buckets.except("physical").values.sum %></td>
+        <td><%= metadata["damage_dealt"].to_i %><sup title="Defeated opponents">(<%= metadata["opponents_defeated"].to_i %>)</sup></td>
+      </tr>
+    </tbody>
+  </table>
+<% end %>

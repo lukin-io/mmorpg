@@ -1,6 +1,23 @@
 # Progression, Stats, And Skills
 
-Domain navigation: `doc/domains/character.md`.
+Domain navigation: [Character](../../domains/character.md).
+
+[FORMULAS](../../FORMULAS.md#2-experience-levels-and-grants) records level
+tables and links the current stat/skill calculations;
+[ITEMS](../../ITEMS.md#3-fields-slots-and-effective-properties) identifies
+equipment requirements and modifiers. The
+[Character Progression handbook](../../features/character_progression.md)
+owns allocation, persistence and consumer handoffs.
+
+## September12 authorized calibration
+
+The user authorized the best evidence-grounded approximation after22 controlled
+fights. [Calibration v1](combat_calibration.md) owns the fitted combat, mastery,
+fatigue, magic, XP/drop, injury/recovery and remote-placement rules. It
+supersedes earlier implementation holds for hidden coefficients; historical
+source observations and uncertainty remain unchanged. Medical Care supplies
+the bounded healer/patient transaction and Hospital bag purchase handoff.
+
 
 ## Purpose
 
@@ -88,7 +105,8 @@ The 2026-07-27 wiki audit confirms that a new character is level `0` and that
 progression is table-driven. `config/gameplay/character_progression.yml`
 contains only complete source rows `0..27`. Each row defines:
 
-- the cumulative combat-experience threshold to the next level;
+- the additional combat XP needed for that level; the cumulative threshold
+  to reach levelN is the sum of cost rows0 throughN−1;
 - stat, combat-skill, peace-skill, perk, and NV grants;
 - maximum experience awarded by one fight at that current level;
 - the source maximum NPC group size for that level.
@@ -99,18 +117,43 @@ grants `3` stats, `4` combat points, `3` peace points, `1` perk point, and
 `50` NV. Later grants must be read from the catalog rather than derived by a
 generic formula.
 
+The [September11 live profile and wiki recheck](../reference/character/observations/2026-09-11_level_grants_and_combat_inputs.md)
+corrects the earlier interpretation of those costs as cumulative thresholds.
+For example, level17 begins at25,000,000 accumulated XP and level18 at
+50,000,000. These sums do not change the stat/skill/NV grant rows.
+
 Rows beyond level `27` are not implemented because the audited wiki rows are
 incomplete. A character at the highest complete row can keep experience, but
 the server does not invent a threshold or rewards for level `28`.
 
 Configured solo NPC experience is awarded at shared fight completion and
-capped by the winner's current table row. Neverlands group experience uses a
+capped by the recipient's current table row and active entitlement. An explicit
+observed defeat award remains separate from the victory reward; a loss cannot
+reuse the victory amount. Larger/higher-level groups offer greater XP potential,
+but the source samples do not establish a universal sum or level multiplier. Neverlands group experience uses a
 more complex distribution that is not completely captured, so a winning side
 with multiple player participants currently receives no invented PvE XP split.
 The persistent chat timeline may display the exact awarded amount in a concise
 fight-completion row after finalization. Character progression remains the XP,
 threshold, and grant authority; that feedback row cannot award or recalculate
 experience.
+
+### Per-level grants and combat handoff
+
+The [September11 table recheck](../reference/character/observations/2026-09-11_level_grants_and_combat_inputs.md)
+records every supported level's stat grant and cumulative total. Reaching13
+adds10 free stat points,14 adds12, and15–19 each add15. These become effective
+only after allocation. Never multiply every stat by the level or use a fixed
+points-per-level constant. Keep the complete threshold/reward catalog in
+`config/gameplay/character_progression.yml` and its persistence contract in the
+[progression handbook](../../features/character_progression.md#level-grants-and-the-combat-handoff).
+
+Primary allocation, weapon mastery, item damage/armor, supported perks and
+source-backed temporary effects remain distinct inputs. [Combat](combat.md)
+owns their downstream calculations for both players and NPCs through the same
+resolution pipeline. A displayed NPC stat total is an authored observation,
+not evidence that NPCs receive the player's allocation grants. Unpublished
+chance/mitigation coefficients remain evidence gaps.
 
 ## Public Player Info
 

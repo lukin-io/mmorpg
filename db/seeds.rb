@@ -18,6 +18,7 @@ require_relative "seeds/world_content_support"
   world_locations
   city_hotspots
   shop_accounts
+  combat_care
   outdoor_npcs
 ].each do |phase|
   load Rails.root.join("db/seeds", "#{phase}.rb")

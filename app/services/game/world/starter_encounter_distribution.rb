@@ -67,7 +67,8 @@ module Game
       end
 
       def build_profile(profile)
-        source = Array(zone_config[:npcs]).find { |npc| npc[:key].to_s == profile[:source_npc_key].to_s }
+        sources = Array(zone_config[:npcs]) + Array(zone_config[:npc_templates])
+        source = sources.find { |npc| npc[:key].to_s == profile[:source_npc_key].to_s }
         invalid!("profile #{profile[:key]} references an unknown captured NPC") unless source
         samples = source.dig(:metadata, :encounter_rosters)
         samples = [fixed_roster(source)] unless samples.present?

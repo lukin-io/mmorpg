@@ -1,6 +1,12 @@
 # Economy, Trading, And Shops
 
-Domain navigation: `doc/domains/economy.md`.
+Domain navigation: [Economy](../../domains/economy.md).
+
+[ITEMS](../../ITEMS.md#2-current-item-catalog) catalogs goods and licenses,
+[FORMULAS](../../FORMULAS.md#9-inventory-and-economy) records pricing/capacity
+calculations, and [WORLD](../../WORLD.md#2-forpost-city-and-services) identifies
+service locations. The [Shop handbook](../../features/shop_economy.md) owns
+current stock, settlement and eligibility behavior.
 
 ## Purpose
 

@@ -26,6 +26,10 @@ class ArenaMatchPolicy < ApplicationPolicy
     action?
   end
 
+  def switch_opponent?
+    action?
+  end
+
   def finish?
     return false unless user.present?
 

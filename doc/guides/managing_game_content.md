@@ -2,7 +2,7 @@
 
 - Document type: operational and extension guide
 - Status: Current
-- Updated: 2026-09-10
+- Updated: 2026-09-12
 - Audience: administrators, content authors, Rails engineers, and AI agents
 - UI entry point: `/manage`
 - Controller namespace: `Manage`
@@ -40,6 +40,16 @@ feature handbook:
 Neverlands evidence is still required before adding gameplay content or a new
 mechanic. The management interface makes approved persisted content editable;
 it does not authorize generic RPG invention.
+
+For general content catalogs and edit impact, use [NPC](../NPC.md),
+[ITEMS](../ITEMS.md) and [WORLD](../WORLD.md); use [FORMULAS](../FORMULAS.md)
+for calculation owners. This guide retains the actual administrative
+procedures and supported CRUD boundary. Update the affected reference in the
+same task under [DOCUMENTATION](../DOCUMENTATION.md#410-game-reference-books).
+Before changing an existing content record or adding a management capability,
+follow the [context/update map](../DOCUMENTATION.md#21-required-context-and-update-map)
+to its runtime consumers. Keep this procedure, affected book entries and
+handbook handoffs mutually discoverable when their contracts change.
 
 ## 2. Quick start
 
@@ -684,6 +694,10 @@ exchange transactions.
 ## 8. NPC templates and exact-cell placements
 
 NPC management is intentionally split into definition and placement.
+The [NPC book](../NPC.md) inventories current types, cells, groups, equipment
+and loot; the [formula book](../FORMULAS.md) explains the calculations and
+editing consequences. Update those references when relevant managed baseline
+content or supported rules change, alongside the existing canonical owners.
 
 ### 8.1 Create the reusable NPC template first
 
@@ -822,18 +836,23 @@ templates before placements so runtime remains DB-only.
 stable `key` and `source_npc_key` referring to an existing captured anchor.
 `atlas_names` maps template keys to the atlas's source type labels. The pure
 `Game::World::StarterEncounterDistribution` filters complete captured rosters
-against every member's exact type and level on each surveyed cell. It returns
-40 additional placements through the zone's `starter_npcs` seed input;
-no extra NPC templates, runtime catalog lookup, HP interpolation or distance
-formula is introduced. A missing source/name, interpolated range, missing HP,
+against every member's exact type and level on each surveyed cell. It supplies
+40 Bandit and two Ogre placements through the zone's `starter_npcs` seed input;
+the calibrated habitat loader adds two remote stronger groups, for 44 bootstrap
+declarations in total. This reuses defined templates without runtime catalog
+lookup, HP interpolation or a universal distance formula. A missing
+source/name, interpolated range, missing HP,
 invalid delay or ambiguous profile match fails before bootstrap.
 
-Current profiles reuse the captured rat pair and Bandit/Robber groups. Only
-the existing rat anchor matches the surveyed rat annotation, so additional
-placements are Bandits. The profile's `300..360`-second delay is marked
+Current atlas profiles reuse the captured rat pair, Bandit/Robber groups and
+Ogre groups. Only the existing rat anchor matches the surveyed rat annotation,
+so no additional rat placement is bootstrapped. The profile's
+`300..360`-second delay is marked
 `passive_delay_source: user_reported_2026-09-09`; uniform sampling inside it
 is local policy. The original Bandit anchor keeps its measured windows.
 Complete roster samples retain their exact levels, HP, XP and injury values.
+The two stronger calibrated habitats use a separate `60..360`-second policy;
+their coordinates and source-preserving sample reuse are listed in the NPC book.
 
 The initial bootstrap requires a persisted passable cell without a placement
 or entrance and excludes the evidenced pond. It records

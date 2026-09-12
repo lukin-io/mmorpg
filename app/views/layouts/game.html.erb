@@ -31,6 +31,9 @@
         <a href="<%= player_path(name: current_character.name) %>" class="nl-player-link">
           <%= current_character.name %></a><span class="nl-player-level">[<%= current_character.level %>]</span>
         <%= render "shared/nl_vitals_bar", character: current_character %>
+        <% if current_character.character_injuries.active_at(Time.current).exists? %>
+          <%= link_to "Injury", medical_care_path, class: "nl-injury-link", title: "Injuries and treatment" %>
+        <% end %>
       <% end %>
     </div>
 

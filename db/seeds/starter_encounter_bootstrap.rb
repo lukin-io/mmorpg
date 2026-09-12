@@ -21,6 +21,13 @@ module Seeds
     def call
       return [] if @definitions.empty?
 
+      # Upgrade only the task's previous explicit Ogre evidence hold. Custom
+      # disabled/moved placements without that marker are left alone.
+      TileNpc.where(zone: @zone_name, npc_key: "wilderness_ogre")
+        .where("metadata ->> 'combat_readiness' = ?", "unverified_damage_coefficients")
+        .where("metadata ->> 'seed_scope' = ?", SCOPE).find_each do |npc|
+          npc.update!(metadata: npc.metadata.merge("active" => true, "combat_readiness" => "calibrated_v1"))
+        end
       load_existing_content
       @definitions.each do |definition|
         coordinates = definition.values_at(:x, :y)

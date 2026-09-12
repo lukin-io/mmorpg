@@ -821,6 +821,7 @@
 
 .fighter-card--npc { border-left: 1px solid #d8cdaf; }
 .fighter-card--defeated { opacity: 0.7; }
+.fighter-card[hidden], [data-arena-match-target="rosterParticipant"][hidden] { display: none; }
 .fighter-card--selected-target {
   box-shadow: inset 0 0 0 2px #1768ac;
 }
@@ -1266,7 +1267,7 @@ select.nl-fight-select,
   font: 12px/16px Verdana, Tahoma, Arial, sans-serif;
 }
 
-.combat-log-entry { min-height: 16px; padding: 0 3px; border: 0; background: #ffffff; line-height: 16px; }
+.combat-log-entry { min-height: 16px; padding: 0 3px; border: 0; background: #ffffff; color: #222222; font-weight: 400; font-style: normal; line-height: 16px; }
 .combat-time { color: #888888; font: 12px Tahoma, Verdana, Arial, sans-serif; }
 
 .arena-participant {
@@ -1617,4 +1618,34 @@ select.nl-fight-select,
     flex-basis: 42px;
     width: 42px;
   }
+}
+
+/* The completed result replaces the composer above the persisted log. */
+.nl-fight-result .arena-result-content {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  text-align: center;
+  font-size: 11px;
+}
+
+.nl-fight-result .arena-result-title {
+  margin: 4px 0;
+  padding: 0;
+  background: transparent;
+  font-size: 12px;
+}
+
+.nl-fight-result .arena-result-details p {
+  margin: 3px 0;
+}
+
+.nl-fight-result .nl-fight-result-table {
+  width: 100%;
+  table-layout: fixed;
+  overflow-wrap: anywhere;
+}
+
+.nl-fight-result form {
+  margin: 5px 0;
 }

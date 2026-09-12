@@ -19,7 +19,8 @@ RSpec.describe Arena::CombatProcessor do
       arena_room: arena_room,
       status: :live,
       match_type: :duel,
-      started_at: Time.current)
+      started_at: Time.current,
+      current_turn_number: 1)
   end
 
   let!(:participation1) do
@@ -54,12 +55,57 @@ RSpec.describe Arena::CombatProcessor do
         :turn,
         target: character2,
         attacks: [{action_key: "simple", body_part: "torso"}],
-        blocks: [{action_key: "torso_block", body_parts: ["torso"]}]
+        blocks: [{action_key: "torso_block", body_parts: ["torso"]}],
+        expected_turn_number: 1
       )
 
       expect(result).to be_success
       expect(result[:waiting]).to be true
       expect(participation1.reload.metadata["pending_turn"]).to be_present
+    end
+
+    it "accepts a canonical decimal string for the current round" do
+      arena_match.update!(current_turn_number: 12)
+      result = processor.process_player_intent(character1, :turn,
+        target: character2,
+        attacks: [{action_key: "simple", body_part: "torso"}],
+        blocks: [{action_key: "torso_block", body_parts: ["torso"]}],
+        expected_turn_number: "12")
+
+      expect(result).to be_success
+      expect(participation1.reload.metadata.dig("pending_turn", "turn_number")).to eq(12)
+    end
+
+    it "rejects missing or noncanonical versions before invoking action processing or persisting state" do
+      turn = {
+        target: character2,
+        attacks: [{action_key: "simple", body_part: "torso"}],
+        blocks: [{action_key: "torso_block", body_parts: ["torso"]}]
+      }
+      initial_metadata = participation1.metadata.deep_dup
+      expect(processor).not_to receive(:process_action)
+
+      result = processor.process_player_intent(character1, :turn, **turn)
+      expect(result.error).to eq("A positive turn number is required")
+      [nil, 0, -1, 1.0, 1.5, true, false, :one, [], {}, "", "0", "01", "+1", "-1", "1.0", "1e0", " 1", "1 ", "1\n", "١"].each do |version|
+        result = processor.process_player_intent(character1, :turn, **turn, expected_turn_number: version)
+
+        expect(result).not_to be_success
+        expect(result.error).to eq("A positive turn number is required")
+      end
+
+      expect(participation1.reload.metadata).to eq(initial_metadata)
+      expect(arena_match.combat_log_entries).to be_empty
+      expect([character1.reload.current_hp, character2.reload.current_hp]).to eq([100, 100])
+    end
+
+    it "accepts surrender without a round version" do
+      result = processor.process_player_intent(character1, :surrender)
+
+      expect(result).to be_success
+      expect(result[:surrendered]).to be true
+      expect(character1.reload.current_hp).to eq(0)
+      expect(arena_match.reload.winning_team).to eq("b")
     end
 
     it "rejects direct attack, defend, and unsupported flee intents without changing fight state" do
@@ -94,7 +140,8 @@ RSpec.describe Arena::CombatProcessor do
       foreign_npc = create(:arena_participation, :npc, arena_match: foreign_match, team: "b")
       turn = {
         attacks: [{action_key: "simple", body_part: "torso"}],
-        blocks: [{action_key: "torso_block", body_parts: ["torso"]}]
+        blocks: [{action_key: "torso_block", body_parts: ["torso"]}],
+        expected_turn_number: 1
       }
       processor.combat_profile_for(character1)
       initial_current_ap = participation1.reload.metadata["current_ap"]
@@ -341,6 +388,24 @@ RSpec.describe Arena::CombatProcessor do
       expect(events.map { |event| event.payload["experience"] }).to all(eq(0))
     end
 
+    it "records player wins and losses once for mixed opponents without changing NPC counters" do
+      create(:arena_participation, :npc, arena_match:, team: "b")
+      expect(processor.end_match("a")).to be true
+      expect(processor.end_match("a")).to be false
+
+      expect(character1.reload.metadata).to include("player_wins" => 1)
+      expect(character2.reload.metadata).to include("player_losses" => 1)
+      expect(character1.metadata["npc_wins"].to_i).to eq(0)
+      expect(character2.metadata["npc_losses"].to_i).to eq(0)
+    end
+
+    it "does not record a win or loss for an undecided draw" do
+      processor.end_match(nil, reason: :timeout)
+
+      expect(character1.reload.metadata.keys & %w[player_wins player_losses npc_wins npc_losses]).to be_empty
+      expect(character2.reload.metadata.keys & %w[player_wins player_losses npc_wins npc_losses]).to be_empty
+    end
+
     it "broadcasts match ended" do
       expect(processor.broadcaster).to receive(:broadcast_match_ended).with("a", reason: :normal)
       expect(processor.broadcaster).to receive(:broadcast_state_refresh).with(reason: :match_ended)
@@ -368,6 +433,9 @@ RSpec.describe Arena::CombatProcessor do
       expect(item.reload.current_durability).to eq(9)
       expect(arena_match.reload.metadata["rewards_processed_at"]).to be_present
       expect(arena_match.metadata.dig("rewards", "experience", "amount")).to eq(35)
+      expect(GameEvent.where(event_type: :fight_finished, recipient: user1)).to be_empty
+      participation1.reload.update!(metadata: participation1.metadata.to_h.merge("finished_at" => Time.current.iso8601))
+      2.times { pve_processor.publish_npc_finish_notice!(participation1) }
       expect(GameEvent.where(event_type: :fight_finished, recipient: user1).count).to eq(1)
       expect(GameEvent.find_by!(event_type: :fight_finished, recipient: user1).payload["experience"]).to eq(35)
     end
@@ -464,7 +532,7 @@ RSpec.describe Arena::CombatProcessor do
 
       expect(result).to be_success
       expect(result[:attacks].size).to eq(2)
-      damage_entries = npc_match.reload.combat_log_entries.select { |entry| entry.log_type == "damage" && entry.message.include?("Training Dummy attacks") }
+      damage_entries = npc_match.reload.combat_log_entries.select { |entry| entry.log_type == "damage" && entry.message.include?("Training Dummy hit") }
       expect(damage_entries.map(&:message).join(" ")).to include("stomach", "legs")
     end
 
@@ -504,6 +572,7 @@ RSpec.describe Arena::CombatProcessor do
     end
 
     it "logs the automatic loot check after an NPC defeat" do
+      character1.update!(level: 5)
       npc_participation.update!(metadata: {"current_hp" => 1, "max_hp" => 105})
       captured_processor = deterministic_arena_processor(npc_match, 0, 99, 99, 5)
       allow(captured_processor.broadcaster).to receive(:broadcast_ap_update)
@@ -566,10 +635,11 @@ RSpec.describe Arena::CombatProcessor do
       expect(npc_participation.reload.metadata["damage_dealt"]).to eq(1)
       expect(npc_participation.metadata["damage_hits"]).to eq(1)
       expect(npc_player_participation.reload.metadata["damage_taken"]).to eq(1)
-      expect(npc_match.combat_log_entries.where(log_type: "damage").last.message).to include("for 50 damage")
+      expect(npc_match.combat_log_entries.where(log_type: "damage").last.message).to include("for -50 [0/100]")
     end
 
     it "deposits and reports an NV loot result after an NPC defeat" do
+      character1.update!(level: 5)
       npc_template.update!(metadata: npc_template.metadata.merge(
         "loot_table" => [
           {"kind" => "currency", "currency" => "NV", "amount" => 24, "chance" => 1.0}
@@ -1191,24 +1261,6 @@ RSpec.describe Arena::CombatProcessor do
       it "defines aimed attack AP cost as 65" do
         expect(Game::Combat::ActionCatalog.attack_cost(:aimed)).to eq(65)
       end
-    end
-  end
-
-  describe "Body part damage multipliers" do
-    it "defines head multiplier as 1.3" do
-      expect(described_class::BODY_PART_MULTIPLIERS["head"]).to eq(1.3)
-    end
-
-    it "defines torso multiplier as 1.0" do
-      expect(described_class::BODY_PART_MULTIPLIERS["torso"]).to eq(1.0)
-    end
-
-    it "defines stomach multiplier as 1.1" do
-      expect(described_class::BODY_PART_MULTIPLIERS["stomach"]).to eq(1.1)
-    end
-
-    it "defines legs multiplier as 0.9" do
-      expect(described_class::BODY_PART_MULTIPLIERS["legs"]).to eq(0.9)
     end
   end
 

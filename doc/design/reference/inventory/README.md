@@ -1,5 +1,8 @@
 # Neverlands Inventory, Items, and Equipment Source Summary
 
+For the design, delivery status and current implementation using this evidence,
+follow the [Inventory domain](../../../domains/inventory.md).
+
 - Document type: neverlands-source-summary
 - Domain: inventory
 - Updated: 2026-09-09

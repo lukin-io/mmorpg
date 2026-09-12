@@ -3,7 +3,7 @@
 title: Player Inventory Feature
 description: Implementation handbook for the Neverlands-based carried inventory, equipment paper doll, capacity, filters, item rows, and item actions.
 status: Fully Implemented
-updated: 2026-09-11
+updated: 2026-09-12
 owners: Player Inventory
 template: feature-v1
 ---
@@ -17,7 +17,26 @@ Neverlands capture. Production-family mechanics and uncaptured auxiliary
 visual states remain outside this handbook's completed boundary and are tracked
 in the launch parity matrix.
 
+### September 12 medical inventory handoff
+
+Inventory links to [Medical Care](medical_care.md); Hospital purchases add the
+four healer-bag grades through the existing inventory/capacity transaction.
+Bags retain durability and a matching injury severity; expired/broken/foreign
+bags cannot treat. Combat injury blocks Inventory entry and its controller
+mutations. Treatment uses separate patient-approved server transactions.
+The calibrated NPC loot pool can award the existing starter equipment and a
+50HP small health elixir. All five new item identities have explicit original
+artwork mappings in `InventoriesHelper`; exact prompts are in ARTWORK.
+Final automated and UI evidence is owned by [Arena acceptance](arena_combat.md#september-12-final-calibrated-acceptance) and [Medical Care](medical_care.md#6-acceptance-and-tests).
+
 ## 1. Design authority and related documents
+
+Read [ITEMS](../ITEMS.md) for definitions, acquisition, slots and artwork,
+[FORMULAS](../FORMULAS.md#9-inventory-and-economy) for capacity/trade calculations,
+and [NPC loot](../NPC.md#6-loot-and-experience) when changing reward ingress.
+[Shop](shop_economy.md) and [Medical Care](medical_care.md) own their transactions;
+[ARTWORK](../ARTWORK.md) owns image production. Read and update the affected
+references under the [context/update map](../DOCUMENTATION.md#21-required-context-and-update-map).
 
 Domain navigation: `doc/domains/inventory.md`.
 
@@ -88,7 +107,7 @@ Existing Inventory access during an active fight is unchanged by this guard.
 ### 4.2 Primary surface
 
 At the parity viewport the page uses a 463/5/467 grid. The shared left sheet is
-258/5/200, with a 115 × 255 CSS character silhouette. The right side renders
+258/5/200, with a 115 × 255 original painted character portrait. The right side renders
 the measured 41 × 53 control order with project-owned text/glyph labels, a
 centered mass strip, and vertically stacked item rows.
 
@@ -184,7 +203,7 @@ reuse the same image in filled paper-doll slots.
 select images. Carried rows fit the complete image inside 60 × 60 pixels;
 equipped images fit the existing `EquipmentSlots` geometry. Names remain in
 row details, slot tooltips and accessible labels. Unmapped goods retain their
-existing type/name fallbacks. The character silhouette is unchanged by equipment.
+existing type/name fallbacks. The original painted character portrait is unchanged by equipment; its decorative props never imply equipped slots or stats.
 Exact generation prompts and selected outputs belong to [ARTWORK.md](../ARTWORK.md).
 
 Player-to-player selling remains unavailable even with an active Trading

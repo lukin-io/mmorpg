@@ -21,7 +21,7 @@ class ShopAccount < ApplicationRecord
 
     shop = case location
     when CityHotspot
-      location.action_type == "open_feature" && location.action_params.to_h["feature"] == "shop"
+      location.action_type == "open_feature" && location.action_params.to_h["feature"].in?(%w[shop hospital])
     when TileBuilding
       location.location? && location.location_feature_available?("shop")
     end

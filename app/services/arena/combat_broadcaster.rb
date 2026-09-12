@@ -55,17 +55,23 @@ module Arena
     # @param participation [ArenaParticipation] the participant
     # @param character [Character] the character with updated vitals
     def broadcast_hp_update(participation, character)
+      current_hp = participation.defeat? ? 0 : character.current_hp
+      current_mp = character.current_mp
+      # Read each effective maximum once so the payload and its percentage
+      # describe the same equipment state even if a later read would differ.
+      max_hp = character.effective_max_hp
+      max_mp = character.effective_max_mp
       broadcast({
         type: "hp_update",
         character_id: character.id,
         team: participation.team,
-        current_hp: character.current_hp,
-        max_hp: character.max_hp,
-        current_mp: character.current_mp,
-        max_mp: character.max_mp,
-        hp_percent: hp_percent(character),
-        mp_percent: mp_percent(character),
-        is_dead: character.current_hp <= 0
+        current_hp: current_hp,
+        max_hp: max_hp,
+        current_mp: current_mp,
+        max_mp: max_mp,
+        hp_percent: vital_percent(current_hp, max_hp),
+        mp_percent: vital_percent(current_mp, max_mp),
+        is_dead: current_hp <= 0
       })
     end
 
@@ -117,10 +123,10 @@ module Arena
           character_name: p.participant_name,
           team: p.team,
           level: p.participant_level,
-          current_hp: p.current_hp || npc.health,
+          current_hp: p.defeat? ? 0 : p.current_hp || npc.health,
           max_hp: p.max_hp || npc.health,
-          current_mp: 0,
-          max_mp: 0,
+          current_mp: p.current_mp,
+          max_mp: p.max_mp,
           is_npc: true
         }
       else
@@ -130,10 +136,10 @@ module Arena
           character_name: char.name,
           team: p.team,
           level: char.level,
-          current_hp: char.current_hp,
-          max_hp: char.max_hp,
+          current_hp: p.defeat? ? 0 : char.current_hp,
+          max_hp: char.effective_max_hp,
           current_mp: char.current_mp,
-          max_mp: char.max_mp,
+          max_mp: char.effective_max_mp,
           is_npc: false
         }
       end
@@ -342,14 +348,10 @@ module Arena
       parts.join(" ")
     end
 
-    def hp_percent(character)
-      return 0 if character.max_hp.zero?
-      ((character.current_hp.to_f / character.max_hp) * 100).round(1)
-    end
+    def vital_percent(current, maximum)
+      return 0 unless maximum.positive?
 
-    def mp_percent(character)
-      return 0 if character.max_mp.zero?
-      ((character.current_mp.to_f / character.max_mp) * 100).round(1)
+      ((current.to_f / maximum) * 100).round(1)
     end
 
     def format_combat_description(actor, action_type, target, damage, body_part: nil, critical: false, miss: false, dodge: false)

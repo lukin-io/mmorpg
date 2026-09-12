@@ -1,6 +1,12 @@
 # Items, Inventory, And Equipment
 
-Domain navigation: `doc/domains/inventory.md`.
+Domain navigation: [Inventory](../../domains/inventory.md).
+
+[ITEMS](../../ITEMS.md) catalogs definitions, acquisition and artwork;
+[FORMULAS](../../FORMULAS.md#3-character-stats-and-equipment) explains effective
+equipment inputs. The [Inventory handbook](../../features/player_inventory.md)
+owns carried/equipped state, with [Shop](../../features/shop_economy.md) and
+[NPC loot](../../NPC.md#6-loot-and-experience) supplying acquisition context.
 
 ## Purpose
 

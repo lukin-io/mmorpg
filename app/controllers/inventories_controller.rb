@@ -10,9 +10,17 @@ class InventoriesController < ApplicationController
   include OutdoorActionAvailability
 
   before_action :ensure_active_character!
+  before_action :check_combat_injury
   around_action :with_available_outdoor_actions
 
   # GET /inventory
+  def check_combat_injury
+    if current_character.character_injuries.active_at(Time.current).where(severity: "combat").exists?
+      redirect_to medical_care_path, alert: "A combat injury prevents using Inventory."
+    end
+  end
+  private :check_combat_injury
+
   def show
     @inventory = current_character.inventory || current_character.create_inventory!
     @category = current_category

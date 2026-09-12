@@ -7,18 +7,19 @@
 
 <% character ||= current_character %>
 <%
-  hp_percent = character.max_hp.to_i.zero? ? 0 : ((character.current_hp.to_f / character.max_hp) * 100).round
-  mp_percent = character.max_mp.to_i.zero? ? 0 : ((character.current_mp.to_f / character.max_mp) * 100).round
+  max_hp = character.effective_max_hp
+  max_mp = character.effective_max_mp
+  hp_percent = max_hp.zero? ? 0 : ((character.current_hp.to_f / max_hp) * 100).round
+  mp_percent = max_mp.zero? ? 0 : ((character.current_mp.to_f / max_mp) * 100).round
 %>
 
 <div class="nl-vitals-inline"
      data-controller="nl-vitals"
      data-nl-vitals-current-hp-value="<%= character.current_hp %>"
-     data-nl-vitals-max-hp-value="<%= character.max_hp %>"
+     data-nl-vitals-max-hp-value="<%= max_hp %>"
      data-nl-vitals-current-mp-value="<%= character.current_mp %>"
-     data-nl-vitals-max-mp-value="<%= character.max_mp %>"
-     data-nl-vitals-hp-regen-rate-value="<%= character.hp_regen_interval || 300 %>"
-     data-nl-vitals-mp-regen-rate-value="<%= character.mp_regen_interval || 600 %>">
+     data-nl-vitals-max-mp-value="<%= max_mp %>"
+     data-nl-vitals-sync-url-value="<%= character_vitals_path if character.id == current_character&.id %>">
 
   <%# Source bar stack: HP above MP in the same 160px strip. %>
   <div class="nl-vitals-bars">
@@ -35,6 +36,6 @@
     in the combat color and the MP pair in the link color.
   %>
   <span class="nl-vitals-text">[<span
-    class="nl-vitals-hp" data-nl-vitals-target="hpText"><%= character.current_hp.round %>/<%= character.max_hp %></span> | <span
-    class="nl-vitals-mp" data-nl-vitals-target="mpText"><%= character.current_mp.round %>/<%= character.max_mp %></span>]</span>
+    class="nl-vitals-hp" data-nl-vitals-target="hpText"><%= character.current_hp.round %>/<%= max_hp %></span> | <span
+    class="nl-vitals-mp" data-nl-vitals-target="mpText"><%= character.current_mp.round %>/<%= max_mp %></span>]</span>
 </div>

@@ -1,6 +1,22 @@
 # Character Vitals
 
-Domain navigation: `doc/domains/character.md` and `doc/domains/shell.md`.
+Domain navigation: [Character](../../domains/character.md) and
+[Shell](../../domains/shell.md).
+
+[FORMULAS](../../FORMULAS.md#7-recovery-wear-and-injuries) records current
+recovery and injury calculations. [Character Progression](../../features/character_progression.md)
+owns persisted vitals; [Medical Care](../../features/medical_care.md) owns
+treatment and its validation gaps.
+
+## September12 authorized calibration
+
+The user authorized the best evidence-grounded approximation after22 controlled
+fights. [Calibration v1](combat_calibration.md) owns the fitted combat, mastery,
+fatigue, magic, XP/drop, injury/recovery and remote-placement rules. It
+supersedes earlier implementation holds for hidden coefficients; historical
+source observations and uncertainty remain unchanged. Medical Care supplies
+the bounded healer/patient transaction and Hospital bag purchase handoff.
+
 
 ## Purpose
 

@@ -1,5 +1,36 @@
 # Combat
 
+The [Combat domain](../../domains/combat.md) connects evidence and delivery.
+[FORMULAS](../../FORMULAS.md#5-combat) records current calculations,
+[NPC lifecycle](../../NPC.md#7-encounter-and-fight-lifecycle) describes mixed
+rosters, and [item properties](../../ITEMS.md#3-fields-slots-and-effective-properties)
+supply equipment inputs. The [Arena Combat handbook](../../features/arena_combat.md)
+owns the shared runtime and acceptance; the
+[event catalog](../../features/game_shell.md#gameplay-event-catalog) owns
+chat versus detailed fight-history output.
+
+## September12 authorized calibration
+
+The user authorized the best evidence-grounded approximation after22 controlled
+fights. [Calibration v1](combat_calibration.md) owns the fitted combat, mastery,
+fatigue, magic, XP/drop, injury/recovery and remote-placement rules. It
+supersedes earlier implementation holds for hidden coefficients; historical
+source observations and uncertainty remain unchanged. Medical Care supplies
+the bounded healer/patient transaction and Hospital bag purchase handoff.
+
+
+## September 11 final observation cycle
+
+The [two Ogre fights](../reference/combat/observations/2026-09-11_ogre_combat_cycle.md)
+complete the requested10+10+2 observations. A recorded defeat is terminal for
+that participation even if the underlying Character later recovers HP. The
+same rule owns active cards, roster/selection, player and NPC turn eligibility,
+and side survival. Already committed return strikes keep their distinct
+exchange-start eligibility; historical participants remain in results/logs/XP.
+
+Ogre16–18 profiles, three/four-member samples and original equipment art are
+authored. The former inherited equation did not reproduce source player hits0 versus Ogre critical replies502–801. September12 calibration replaces it with the explicitly authorized fitted model and enables those remote habitats. The300-second global deadline remains the user's deliberate rule, independently of source timing.
+
 Domain navigation: `doc/domains/combat.md`.
 
 ## Purpose
@@ -28,6 +59,36 @@ Borrowed feel:
 - rich combat log;
 - player, team, and NPC fights share the same core resolution style.
 
+The September 11 ten-fight cycle is recorded in
+`doc/design/reference/combat/observations/2026-09-11_low_level_two_cell_combat_cycle.md`.
+In a solo fight against several NPCs, only the selected opponent returns its
+committed package. Both sides complete all selected strikes, including after
+a lethal hit, before defeat and match completion are presented. One block
+covers every applicable strike in that exchange. Raw overkill stays in the
+log; credited damage includes only HP actually removed. The
+[stronger-NPC cycle](../reference/combat/observations/2026-09-11_stronger_npc_loot_combat_cycle.md)
+supersedes the first-cycle counter interpretation: superscripts count defeated
+opponents, not successful hits. A nonlethal hit increases credited damage
+without increasing that count. Raw totals include lethal overkill against a
+living target, but exclude later committed strikes against an already-dead
+target; those strikes remain in the log only.
+The combat log is newest first; the player stays at left, the selected enemy
+at right, and all living participants remain in the compact center roster.
+Manual switching has a finite fight allowance (one with two opponents, two
+with three); spending it does not stop automatic handoff after a defeat.
+After that exchange, defeated NPCs and players leave the live cards, roster,
+target selection and future turns. Only surviving participants continue the
+group fight. Defeated participations are retained for end statistics,
+experience accounting and the fight log; an already committed return strike
+belongs to the just-resolved exchange, not a later turn.
+
+NPC level, visible totals, mana and filled equipment slots are independent
+captured fields. A clothed portrait does not grant armor or a shield. The
+same participant/commitment contract applies to Arena, wilderness and mixed
+rosters; exact large mixed-player target arbitration still needs live evidence.
+Independent NPC-versus-NPC AI, target selection and fight progression are not
+verified by the shared player/NPC contract.
+
 ## Player Experience
 
 The player enters combat, sees both sides' vitals, chooses attacks and blocks,
@@ -48,6 +109,10 @@ The combat frame should use a three-zone layout:
 - left participant panel for the current character;
 - center action/log panel;
 - right participant panel for the opponent or selected enemy.
+
+On completion, the player/result surface remains while opponent paperdolls
+and the active roster disappear, including surviving enemies after a player
+defeat. Historical participants remain available to logs and result wording.
 
 Participant panels show:
 
@@ -125,6 +190,8 @@ critical, dodge, block, timeout, defeat, victory, and current HP after damage.
 - A wilderness fight honors its explicit displayed five-minute (`300`-second)
   fight deadline. Legal turns do not reset that global deadline; later source
   terminations captured on 2026-09-02 are treated as an excluded anomaly.
+  The user reaffirmed this MVP exception on September 11 after reviewing the
+  official wiki's longer `11–15`-minute NPC limit.
 
 ## Observed Fight Payload And Turn Flow
 
@@ -553,11 +620,12 @@ later dungeon fights:
 
 ### Implemented shared-side and wilderness-NPC slice
 
-As of 2026-07-21, the Rails combat path implements the source-backed participant and result boundary used by outdoor encounters and the same PvP/PvE team model:
+The shared participant/result boundary introduced on 2026-07-21 and refined
+by the September 11 observations serves outdoor encounters and PvP/PvE teams:
 
-- both side columns render every participation, so 1x1, 1xMany, and ManyxMany fights do not hide teammates or opponents;
+- the actor and selected opponent are expanded; the compact roster contains all living members of either side;
 - repeated NPC templates use unique participation identities for selection, HP broadcasts, defeat state, and target switching;
-- every living NPC on the opposing side receives one AI action package in the NPC response, while an NPC's package may itself contain multiple physical attacks within its AP budget;
+- solo PvE resolves only the selected NPC's committed response package; a package may contain multiple captured physical strikes;
 - participant defeat and NPC loot checks happen independently, and fight victory waits until the whole opposing side is defeated;
 - surrender sets only the conceding participant to defeat/zero HP and ends the fight only when that participant's side has no survivor;
 - World-created fights store a logical allowlisted return context and retain the explicit result-finish step before returning to World, Character, or Inventory;
@@ -608,7 +676,8 @@ This closes the captured outdoor participant/interruption/result gap. It does no
 
 ## Combat Rewards And Loot Checks
 
-Combat victory can produce two different reward classes:
+Combat can produce two different reward classes, including an explicitly
+captured positive XP award despite a solo player's defeat:
 
 - fight rewards, such as experience, money, rating, trauma/injury outcome, or
   arena/dungeon progression;
@@ -617,8 +686,9 @@ Combat victory can produce two different reward classes:
 
 NPC drops are owned by the NPC loot design, but combat owns the timing:
 
-1. resolve the final turn and write defeat/victory log entries;
-2. run the NPC loot check for each defeated loot-bearing NPC;
+1. resolve the committed exchange and record newly defeated participants;
+2. check each newly defeated NPC's search eligibility and authored loot,
+   including during an ongoing encounter or one the player ultimately loses;
 3. dispatch each rolled, allowlisted loot kind to its authoritative owner:
    Inventory for items—including consumables, weapons, and armor—and the
    Economy wallet ledger for NV;
@@ -627,8 +697,9 @@ NPC drops are owned by the NPC loot design, but combat owns the timing:
 5. show the search/drop result in the canonical combat log or result payload;
 6. publish a recipient-only item-found or money-found timeline fact only when
    the corresponding authoritative award succeeded;
-7. publish each player participant's concise completion/awarded-XP fact once
-   fight finalization is persisted;
+7. persist fight rewards at finalization; for solo NPC fights publish one
+   positive-XP completion fact on Finish, while other player/team completion
+   facts remain tied to finalization;
 8. require the finish-result action before returning the player to arena, city,
    world, or dungeon context.
 
@@ -637,8 +708,8 @@ The wiki/source audit closes these bounded reward/result constants:
 - a critical hit multiplies the resolved damage by `2.0`;
 - one defeated NPC uses its configured reward; the captured two-rat encounter
   uses one explicit fight-level `35` XP reward rather than summing `35` per rat;
-  either result is capped by the winner's current level-table
-  `fight_experience_cap`;
+  either result is capped by the recipient's current level-table
+  `fight_experience_cap`, adjusted only by a supported active entitlement;
 - equipment wear is evaluated once at fight finalization using arena
   `victory/draw/defeat = 0/0/1%` and other-fight `2/30/50%`, with at most one
   durability point removed per equipped item; source perk ID `15`, Careful
@@ -647,12 +718,39 @@ The wiki/source audit closes these bounded reward/result constants:
 Fight finalization locks the match and records a processed marker, so a retry
 cannot grant experience/NV or roll equipment wear twice. A level-up reached by
 the award uses the source-backed grant catalog. Group PvE experience remains
-`[EVIDENCE]`: when more than one player is on the winning side, the current
-service deliberately awards no invented distribution. A multi-NPC encounter
-without an explicit captured total likewise awards no guessed sum.
+The exact multi-player distribution and unauthored multi-NPC totals remain unexposed source equations. The September12 authorized [calibration](combat_calibration.md#experience-and-loot) supplies active general/group calculations while explicit captured totals retain precedence.
 
-General solo encounter XP also remains `[EVIDENCE]` outside explicit captured
-totals. In the 2026-09-01 chain, two visibly equivalent level-7 Bandits with
+The stronger cycle directly captured `605` credited damage, one defeated
+opponent and `57` XP for the losing player. The bounded local loss path uses
+the separately authored integer `encounter_defeat_experience_reward`, requires
+one player, an actually defeated enemy NPC and an NPC winning side, and applies
+the same recipient cap. It never reuses the victory total or template reward
+and adds no XP-deduction mechanic. Outcomes without an explicit total use the separately documented calibrated loss calculation.
+
+The official Bot rule gives the standard total search window ±2. The captured
+Paid Services panels give Premium a ×1.5 maximum fight-XP benefit, Gold ±4
+and ×2.0, and VIP ±6 and ×2.5; Worker has no combat benefit. These windows are
+totals, and the multipliers adjust the maximum, not earned XP. Eligibility
+does not imply a drop or supply missing probabilities. Disabled NPC searches
+remain disabled; narrower authored NPC limits still apply. Trusted entitlement
+metadata, server-clock expiry and failure behavior are owned by the
+[Arena runtime handbook](../../features/arena_combat.md#63-turn-combat-and-completion).
+
+The normalized direction is that higher-level NPCs and larger NPC groups
+should give more XP per fight. Observed rewards are strongly dependent on
+composition and level; combat contribution and the recipient's cap also
+matter. Capture actual XP with each roster, source player level and result.
+Do not infer a sum, coefficient or guaranteed increase in capped XP from this
+direction.
+The ten stronger encounters are reusable captured presets, with source player
+level 17 and explicit victory/defeat XP retained separately. Complete profiles
+do not establish new Forpost cells or far-area placement; [NPC content design](npcs_quests.md#per-level-combat-and-equipment-sets)
+owns that reuse boundary.
+
+General solo encounter XP remains `[EVIDENCE]` outside explicit captured
+totals. The stronger cycle's Robber 14 solo fights awarded 494 and 493 XP with
+the same 815 credited HP and one defeated opponent. In the 2026-09-01 chain,
+two visibly equivalent level-7 Bandits with
 the same displayed HP and combat profile awarded `9` and `14` XP; their fight
 injury fields differed (`30` medium and `80` very high), but the capture does
 not establish causation. Visible NPC name/level/HP alone must not be promoted
@@ -663,8 +761,27 @@ reset. The wiki establishes item-level × `30` skill gating, up to three repair
 listings, kit/material use, and ordinary-item maximum-durability loss, but one
 authenticated request/payment/failure/retrieval flow is still required before
 shipping it. Injury taxonomy and several guaranteed cases are known, while the
-ordinary probability/duration mapping and the current Arena percentage field
-are not; no injury is inferred from that field.
+ordinary probability/duration mapping is not. The September12 authorized
+calibration uses the match trauma percentage as the local chance and maps it
+to documented provisional severity/duration bands.
+The stronger cycle adds one named light injury and a remaining-duration
+display, but does not establish its initial duration, probability or isolated
+stat penalty. The separately captured [published Injury/Doctor rules](../reference/combat/observations/2026-09-11_stronger_npc_loot_combat_cycle.md#published-injury-and-doctor-rules)
+establish that heavy injury blocks movement and combat injury blocks movement
+and Inventory. The guaranteed combat-injury case lasts 24 hours, with 6 hours
+added for a subsequent one; this is not the ordinary light-injury duration.
+
+Published Doctor treatment requires Healer, the required Doctor/Knowledge
+values, the matching license and bag, same-cell presence and a patient outside
+combat. Paid requests require patient confirmation; zero-price requests do not.
+The first bag requires Knowledge 5 and Doctor 5. Self-treatment excludes combat
+injuries and evaluates Knowledge after injury penalties. These are published
+workflow inputs, not a live treatment capture: the source player's Knowledge 1
+does not meet the first-bag requirement, and no treatment was performed.
+September12 implements medical injury persistence, restrictions, recovery and
+treatment, using published prerequisites plus explicitly fitted ordinary injury
+probability/duration/penalties. [Medical care](../../features/medical_care.md) owns
+local runtime; the source treatment transaction remains unobserved.
 
 Training mannequins should follow the same rule. If the source shows a
 mannequin dropping wood chips, the fight result should treat wood chips as a
@@ -756,6 +873,7 @@ Observed event phrases include:
 
 - fight start with full side rosters;
 - attempted hit where defender dodged;
+- critical attempt stopped by a dodge, with no damage or defeat credit;
 - successful physical hit;
 - successful critical hit with red damage;
 - defender blocked a body-part hit;
@@ -766,6 +884,13 @@ Observed event phrases include:
 - heavy injury text after a participant reaches zero HP;
 - participant lost the fight;
 - final winner side.
+
+Preserve selective emphasis: bold side-colored participant names, bold damage
+and result phrases, red critical damage/named injuries, and gray timestamps
+and body-part parentheses. Ordinary connective wording remains plain. Local
+formatting must escape names, quoted injury names and every other fragment;
+source screenshots establish the hierarchy, not unmeasured exact CSS values.
+Critical-dodge output does not establish hidden roll ordering or coefficients.
 
 All damage entries include exact damage and target HP after the hit:
 
@@ -803,7 +928,7 @@ Design implication: local combat should store enough structured resolution data
 to derive per-participant totals after the fight:
 
 - damage dealt by participant;
-- count of successful damage events;
+- count of defeated opponents, kept separate from diagnostic hit-event counts;
 - target or damage bucket dimensions used by the ruleset;
 - experience awarded;
 - team/side identity;
@@ -824,8 +949,11 @@ Captured magic/action selector behavior:
 - A current level-17 wilderness turn combined Spirit Arrow with a `90`-AP
   shield selector for `140` AP, consumed exactly `5` MP (`7 -> 2`), and logged
   a critical magic torso hit for `10` damage. The intermediate result statistic
-  was `10(0)` and the completed mixed magic/physical fight was `155(1)`, so
-  ordinary hit-count semantics for magic remain an evidence item.
+  was `10(0)` and the completed mixed magic/physical fight was `155(1)`.
+  The stronger September11 cycle resolves the superscript as defeated
+  opponents; the earlier hit-count interpretation is superseded. Complete
+  elemental attribution and magic/status coefficients remain unknown in the
+  source; September12 implements separate damage buckets and calibrated magic/barriers.
 - The source can inject magic attacks and magic blocks into body-part
   dropdowns even when no magic icon slots are present.
 - Captured injected block options include Magical Shield `45` AP / `20` MP,
@@ -1006,8 +1134,9 @@ Core fight shapes:
   Combat supplies persisted completion and successful-loot facts.
 - `features/economy_trading_shops.md` owns the NV wallet and immutable
   transaction credited by a successful currency loot outcome.
-- `features/professions.md` remains outside combat until a source-backed
-  profession activity explicitly hands off to a fight.
+- [Medical care](../../features/medical_care.md) owns implemented Doctor treatment
+  after injury; the published prerequisites are linked above.
+  Other profession/combat handoffs require their own source evidence.
 
 ## Out Of Scope
 
@@ -1030,3 +1159,36 @@ Not canonical for the first combat loop:
   and combat logs;
 - UI that hides the action choices behind broad action buttons without the
   body-part/AP/log surface.
+
+### Progression input ownership (September11 recheck)
+
+[Progression design](progression_stats_skills.md#per-level-grants-and-combat-handoff)
+owns the exact level grants and saved allocations. Its
+[source recheck](../reference/character/observations/2026-09-11_level_grants_and_combat_inputs.md)
+records all supported per-level stat grants and published combat input roles.
+The [runtime handoff](../../features/character_progression.md#level-grants-and-the-combat-handoff)
+traces XP → grants → allocation → effective stats → shared combat. Player
+level-up points must not be used to infer NPC equipment or hidden formulas.
+
+Wiki XP rows are per-level costs. Cumulative thresholds are obtained by
+summing those costs, as the level 17 source checkpoint confirms:
+`29,946,496 + 20,053,504 = 50,000,000`, equal to rows 0–17 summed for the
+next level. The earlier stat-grant comparison remains valid; it did not
+independently validate XP thresholds. Progression owns the Catalog correction.
+
+Current player inputs distinguish equipment-aware HP/MP maxima from saved base
+maxima and the independent fight magic-hit ceiling. Effective skills add
+equipment once and may exceed the saved allocation cap 100. Armor, Accuracy,
+Evasion, Crushing and Fortitude are distinct inputs; Fortitude must not become
+Health or physical resistance. September12 calibration subsequently implements mastery AP/damage and replaces inherited resolution coefficients; the earlier input observations themselves do not prove those fitted equations.
+
+Stage2 now has ten completed source fights. The final Robber 14 fight ended
+at 22:08 with `815(1)`, 493 XP and an empty search; Finish chat followed at 22:09:02.
+The final local full gate passed 2,929 non-system and 298 system examples with
+zero failures, plus lint/security/docs audits. The
+[Arena handbook](../../features/arena_combat.md#manual-stronger-cycle-acceptance)
+records actual local mixed-six victory, 25-NV search timing, positive 57-XP loss,
+expired-entitlement denial, original art, effective skill allocation and
+responsive/zoom acceptance. Those checks validate the bounded implementation,
+not uncaptured coefficients or source probabilities. Current delivery status
+belongs to the [Combat Completion Matrix](../launch_mvp_plan.md#combat-completion-matrix).

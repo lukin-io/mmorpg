@@ -86,6 +86,8 @@ class Character < ApplicationRecord
   has_one :position, class_name: "CharacterPosition", dependent: :destroy
   has_one :inventory, dependent: :destroy
   has_many :character_licenses, dependent: :destroy
+  has_many :character_injuries, dependent: :restrict_with_error
+  has_many :active_injuries, -> { active_at(Time.current) }, class_name: "CharacterInjury"
   has_many :arena_applications, foreign_key: :applicant_id, dependent: :destroy
   has_many :arena_participations, dependent: :destroy
 
@@ -157,6 +159,8 @@ class Character < ApplicationRecord
     equipment_stat_modifiers.each do |stat, value|
       base[stat] = base.fetch(stat, 0) + value.to_i
     end
+    penalty = active_injuries.select(&:active?).sum(&:stat_penalty_percent).clamp(0, 90)
+    base.transform_values! { |value| [(value * (100 - penalty) / 100.0).floor, 1].max } if penalty.positive?
     Game::Systems::StatBlock.new(base:)
   end
 
@@ -177,6 +181,26 @@ class Character < ApplicationRecord
     return 0 unless threshold
 
     [threshold - experience.to_i, 0].max
+  end
+
+  # Returns read-only combat limits evaluated at the supplied server Time.
+  # Only trusted server metadata may populate combat_entitlement with a tier
+  # and ISO8601 expires_at timestamp (including an explicit timezone). Missing,
+  # malformed, unknown, or expired entitlements receive standard limits. This
+  # method neither persists entitlement state nor accepts client capabilities.
+  def combat_benefits(now: Time.current)
+    entitlement = metadata.is_a?(Hash) ? metadata["combat_entitlement"] : nil
+    entitlement = {} unless entitlement.is_a?(Hash)
+    timestamp = entitlement["expires_at"]
+    expires_at = begin
+      if timestamp.is_a?(String) && timestamp.match?(/\A\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})\z/)
+        DateTime.iso8601(timestamp).to_time
+      end
+    rescue ArgumentError
+      nil
+    end
+
+    Game::Combat::PremiumBenefits.new(tier: entitlement["tier"], expires_at: expires_at, now: now)
   end
 
   # Neverlands derives base hit points, mana, and carried mass directly from
@@ -274,14 +298,13 @@ class Character < ApplicationRecord
     available_skill_points_for_pool(pool)
   end
 
-  # Get the level of a passive skill (base level only, no equipment)
+  # Read the saved skill plus usable equipment bonuses exactly once. The
+  # allocation cap is 100; captured effective weapon mastery reaches 130/150.
   #
   # @param skill_key [Symbol, String] the skill identifier (e.g., :wanderer)
-  # @return [Integer] skill level (0-100, defaults to 0)
+  # @return [Integer] effective skill level, which may exceed 100
   def passive_skill_level(skill_key)
-    base = (passive_skills[skill_key.to_s] || 0).to_i
-    equipment_bonus = equipment_skill_bonus(skill_key)
-    [base + equipment_bonus, 100].min
+    base_passive_skill_level(skill_key) + equipment_skill_bonus(skill_key)
   end
 
   # Get the base level of a passive skill (without equipment bonuses)
@@ -305,17 +328,18 @@ class Character < ApplicationRecord
     update!(passive_skills: new_skills)
   end
 
-  # Increase a passive skill by a given amount
+  # Increase the saved skill, retaining the allocation cap and never persisting
+  # temporary equipment bonuses as learned levels.
   #
   # @param skill_key [Symbol, String] the skill identifier
   # @param amount [Integer] amount to increase (default 1)
   def increase_passive_skill!(skill_key, amount = 1)
-    current = passive_skill_level(skill_key)
+    current = base_passive_skill_level(skill_key)
     set_passive_skill!(skill_key, current + amount)
   end
 
   # Spend a skill point on a skill using tiered progression
-  # Returns the new level achieved
+  # Returns the new saved level; equipment affects neither tiers nor eligibility.
   #
   # @param skill_key [Symbol, String] the skill identifier
   # @return [Integer, nil] new skill level, or nil if cannot spend
@@ -381,14 +405,15 @@ class Character < ApplicationRecord
   # Only works for points added this session (tracked separately)
   #
   # @param skill_key [Symbol, String] the skill identifier
-  # @param base_level [Integer] the level before this session's allocations
+  # @param base_level [Integer] the saved level before this session's allocations,
+  #   excluding equipment bonuses
   # @return [Integer, nil] new skill level, or nil if cannot refund
   def refund_skill_point!(skill_key, base_level:)
     key = skill_key.to_sym
     definition = Game::Skills::PassiveSkillRegistry.find(key)
     return nil unless definition
 
-    current_level = passive_skill_level(key)
+    current_level = base_passive_skill_level(key)
     return nil if current_level <= base_level
 
     # Calculate previous level using tiered progression
@@ -423,7 +448,7 @@ class Character < ApplicationRecord
     new_level
   end
 
-  # Get points gained per spend for a skill at its current level
+  # Preview the captured tier gain from the saved level, excluding equipment.
   #
   # @param skill_key [Symbol, String] the skill identifier
   # @return [Integer] points that would be gained on next spend
@@ -431,7 +456,7 @@ class Character < ApplicationRecord
     definition = Game::Skills::PassiveSkillRegistry.find(skill_key.to_sym)
     return 0 unless definition
 
-    current_level = passive_skill_level(skill_key)
+    current_level = base_passive_skill_level(skill_key)
     formula = Game::Formulas::SkillProgressionFormula.new
     formula.points_per_spend(
       current_level: current_level,
@@ -481,55 +506,93 @@ class Character < ApplicationRecord
   # Combat Stats
   # ===================
 
-  # Calculate attack power for combat
-  # Formula: (Strength × 2) + (Dexterity / 2) + (Level / 2) + equipment bonus
-  #
-  # @return [Integer] attack power value
+  WEAPON_MASTERY_KEYS = {
+    "knife" => :knife_mastery, "sword" => :sword_mastery,
+    "axe" => :axe_mastery, "blunt" => :bludgeoning_mastery,
+    "polearm" => :polearm_mastery, "staff" => :staff_mastery,
+    "throwing" => :throwing_mastery, "exotic" => :exotic_weapon_mastery
+  }.freeze
+
+  # Usable weapon effects select mastery; shield and broken items never do.
+  def combat_weapon
+    combat_weapons.first
+  end
+
+  def combat_weapons
+    return [] unless inventory
+
+    inventory.inventory_items.equipped.includes(:item_template).select do |item|
+      !item.broken? && WEAPON_MASTERY_KEYS.key?(item.effect_modifiers["weapon_family"])
+    end
+  end
+
+  def weapon_mastery
+    weapons = combat_weapons
+    return passive_skill_level(:unarmed_combat) if weapons.empty?
+
+    weapons.sum { |item| weapon_mastery_for(item) }.to_f / weapons.size
+  end
+
+  def weapon_mastery_for(item)
+    passive_skill_level(WEAPON_MASTERY_KEYS.fetch(item.effect_modifiers["weapon_family"], :unarmed_combat))
+  end
+
+  def equipped_weapon_damage
+    return 0 unless inventory
+
+    inventory.inventory_items.equipped.includes(:item_template).sum do |item|
+      item.broken? ? 0 : weapon_damage_average(item.effect_modifiers)
+    end
+  end
+
+  # Unmitigated physical damage input; the opponent and selected action govern
+  # final damage/chances in the shared resolver.
   def attack_power
-    base = stats.get(:strength).to_i * 2
-    dex_bonus = stats.get(:dexterity).to_i / 2
-    level_bonus = level.to_i / 2
-    base + dex_bonus + level_bonus + equipment_attack_bonus
+    Game::Combat::Calibration.attack(Arena::CombatAttributes.for_character(self)).round
   end
 
-  # Calculate defense for combat
-  # Formula: Vitality + (Strength / 3) + (Level / 2) + equipment bonus
-  #
-  # @return [Integer] defense value
   def defense
-    base = stats.get(:vitality).to_i
-    str_bonus = stats.get(:strength).to_i / 3
-    level_bonus = level.to_i / 2
-    base + str_bonus + level_bonus + equipment_defense_bonus
+    armor_class
   end
 
-  # Calculate critical hit chance
-  # Formula: Base 5% + (Dexterity / 5) + (Luck / 10), max 50%
-  #
-  # @return [Integer] crit chance percentage (0-50)
   def critical_chance
-    base = 5
-    dex_bonus = stats.get(:dexterity).to_i / 5
-    luck_bonus = stats.get(:luck).to_i / 10
-    [base + dex_bonus + luck_bonus, 50].min
+    Arena::CombatResolver::BASE_CRIT_CHANCE
   end
 
   def effective_max_hp
     read_attribute(:max_hp).to_i + equipment_effect_value("hp", "max_hp").to_i
   end
 
+  # Total usable item armor across the supported defense/armor/armor_class
+  # aliases. Primary stats and the inherited defense formula are separate.
+  # @return [Numeric] equipped armor class
+  def armor_class
+    equipment_defense_bonus
+  end
+
   def armor_pierce_percent
     equipment_effect_value("armor_pierce", "armor_piercing")
   end
 
-  def fortitude_percent
-    equipment_effect_value("fortitude", "physical_resistance")
+  # Source Crushing modifier; displayed percent units are not a crit probability.
+  # @return [Numeric] equipped Crushing, independent of weapon mastery
+  def crushing_percent
+    equipment_effect_value("crushing")
   end
 
+  # Source anti-critical modifier, independent of physical damage resistance.
+  # This accessor supplies an input, not an inferred chance or damage reduction.
+  # @return [Numeric] equipped Fortitude in displayed percent units
+  def fortitude_percent
+    equipment_effect_value("fortitude")
+  end
+
+  # @return [Numeric] equipped Accuracy modifier, separate from Dexterity/Luck
   def accuracy_bonus
     equipment_effect_value("accuracy")
   end
 
+  # @return [Numeric] equipped Evasion modifier, including the legacy dodge alias
   def dodge_bonus
     equipment_effect_value("dodge", "evasion")
   end
@@ -568,42 +631,12 @@ class Character < ApplicationRecord
   #
   # @return [Hash] attack, defense, and critical components
   def combat_power_breakdown
-    current_stats = stats
-    attack_strength = current_stats.get(:strength).to_i * 2
-    attack_dexterity = current_stats.get(:dexterity).to_i / 2
-    attack_level = level.to_i / 2
-    attack_equipment = equipment_attack_bonus
-
-    defense_vitality = current_stats.get(:vitality).to_i
-    defense_strength = current_stats.get(:strength).to_i / 3
-    defense_level = level.to_i / 2
-    defense_equipment = equipment_defense_bonus
-
-    critical_base = 5
-    critical_dexterity = current_stats.get(:dexterity).to_i / 5
-    critical_luck = current_stats.get(:luck).to_i / 10
-
+    attributes = Arena::CombatAttributes.for_character(self)
     {
-      attack_power: {
-        strength: attack_strength,
-        dexterity: attack_dexterity,
-        level: attack_level,
-        equipment: attack_equipment,
-        total: attack_strength + attack_dexterity + attack_level + attack_equipment
-      },
-      defense: {
-        health: defense_vitality,
-        strength: defense_strength,
-        level: defense_level,
-        equipment: defense_equipment,
-        total: defense_vitality + defense_strength + defense_level + defense_equipment
-      },
-      critical_chance: {
-        base: critical_base,
-        dexterity: critical_dexterity,
-        luck: critical_luck,
-        total: [critical_base + critical_dexterity + critical_luck, 50].min
-      },
+      attack_power: {strength: attributes[:strength] * Game::Combat::Calibration.config.fetch("strength_damage"),
+                     equipment: attributes[:weapon_damage], mastery: attributes[:mastery], total: attack_power},
+      defense: {equipment: armor_class, total: defense},
+      critical_chance: {base: critical_chance, total: critical_chance},
       equipment_items: equipment_family_breakdown
     }
   end
@@ -676,19 +709,6 @@ class Character < ApplicationRecord
     actual_cost
   end
 
-  # Regenerate mana (called at end of turn or on rest)
-  # Base: 5% of effective_max_mp per tick
-  #
-  # @param ticks [Integer] number of regeneration ticks (default 1)
-  # @return [Integer] amount regenerated
-  def regenerate_mana!(ticks = 1)
-    regen_per_tick = (effective_max_mp * 0.05).round
-    total_regen = regen_per_tick * ticks
-    new_mp = [current_mp + total_regen, effective_max_mp].min
-    update!(current_mp: new_mp)
-    total_regen
-  end
-
   # ===================
   # Combat Status
   # ===================
@@ -759,8 +779,9 @@ class Character < ApplicationRecord
     explicit.to_s.presence
   end
 
-  # Get skill bonus from equipped items for a specific skill
-  # Equipment can grant +X to passive skills (e.g., +5 sword_mastery from a sword)
+  # Sum flat and nested skill bonuses from usable equipment. Canonical registry
+  # keys and captured weapon-skill aliases share the same interpretation;
+  # primary stats, combat modifiers and unknown keys never become skill levels.
   #
   # @param skill_key [Symbol, String] the skill identifier
   # @return [Integer] total skill bonus from equipment
@@ -769,6 +790,8 @@ class Character < ApplicationRecord
 
     key = skill_key.to_s
     normalized_key = normalize_equipment_effect_key(key)
+    return 0 unless Game::Skills::PassiveSkillRegistry.find(normalized_key)
+
     inventory.inventory_items.equipped.includes(:item_template).sum do |item|
       next 0 if item.broken?
 
@@ -784,7 +807,7 @@ class Character < ApplicationRecord
       end
 
       direct_bonus = effects.sum do |effect_key, value|
-        mapped = EQUIPMENT_SKILL_ALIASES[normalize_equipment_effect_key(effect_key)]
+        mapped = EQUIPMENT_SKILL_ALIASES.fetch(normalize_equipment_effect_key(effect_key), normalize_equipment_effect_key(effect_key).to_sym)
         mapped.to_s == normalized_key ? numeric_equipment_effect(value).to_i : 0
       end
 
@@ -813,15 +836,13 @@ class Character < ApplicationRecord
     total.clamp(0.0, 0.15)
   end
 
-  # Get effective passive skill level (base + equipment bonus)
-  # This is the combined level used in combat formulas
+  # Compatibility reader for the same effective total as passive_skill_level.
+  # Equipment is already included there and must not be added a second time.
   #
   # @param skill_key [Symbol, String] the skill identifier
-  # @return [Integer] effective skill level (capped at 100)
+  # @return [Integer] effective skill level, which may exceed 100
   def effective_passive_skill_level(skill_key)
-    base = passive_skill_level(skill_key)
-    equipment_bonus = equipment_skill_bonus(skill_key)
-    [base + equipment_bonus, 100].min
+    passive_skill_level(skill_key)
   end
 
   def equipment_stat_modifiers

@@ -1,5 +1,8 @@
 # Neverlands City and Buildings Source Summary
 
+For the design, delivery status and current implementation using this evidence,
+follow the [City domain](../../../domains/city.md).
+
 - Document type: neverlands-source-summary
 - Domain: city
 - Updated: 2026-09-10

@@ -1,6 +1,13 @@
 # Game Client Layout
 
-Domain navigation: `doc/domains/shell.md` and `doc/domains/social.md`.
+Domain navigation: [Shell](../../domains/shell.md) and
+[Social](../../domains/social.md).
+
+The [Game Shell handbook](../../features/game_shell.md) owns current frame,
+vitals and navigation behavior; its
+[event catalog](../../features/game_shell.md#gameplay-event-catalog) owns
+chat/fight-history destinations and emphasis. Area-specific content and artwork
+remain with each consuming feature linked through those domains.
 
 ## Purpose
 

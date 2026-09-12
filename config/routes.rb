@@ -1,4 +1,11 @@
 Rails.application.routes.draw do
+  post "city/buildings/:building_key/purchase", to: "city_buildings#purchase", as: :hospital_purchase
+  get "character_vitals", to: "character_vitals#show"
+  get "medical_care", to: "medical_care#show"
+  post "medical_care/treat", to: "medical_care#create", as: :treat_injury
+  post "medical_care/:id/accept", to: "medical_care#accept", as: :accept_injury_treatment
+  post "medical_care/:id/decline", to: "medical_care#decline", as: :decline_injury_treatment
+
   namespace :manage do
     root "dashboard#index"
     resources :world_cells
@@ -96,6 +103,7 @@ Rails.application.routes.draw do
   resources :arena_matches, only: [:show] do
     member do
       post :action
+      post :switch_opponent
       post :claim_timeout
       post :finish
       get :log

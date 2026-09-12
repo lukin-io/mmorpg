@@ -46,7 +46,7 @@ RSpec.describe Arena::CombatResolver do
     expect(result).to include(outcome: :miss, miss: true, damage: 0)
   end
 
-  it "resolves a dodge after a successful hit roll" do
+  it "preserves a critical attempt that is dodged without rolling damage" do
     allow(rng).to receive(:rand).with(100).and_return(0, 0)
 
     result = resolver.resolve_physical_attack(
@@ -56,7 +56,9 @@ RSpec.describe Arena::CombatResolver do
       body_part: "torso"
     )
 
-    expect(result).to include(outcome: :dodge, dodge: true, damage: 0)
+    expect(result).to include(outcome: :dodge, dodge: true, critical: true, damage: 0)
+    expect(result[:crit_chance]).to be_positive
+    expect(rng).not_to have_received(:rand).with(1..5)
   end
 
   it "resolves a successful selected block before critical and damage" do
@@ -129,6 +131,42 @@ RSpec.describe Arena::CombatResolver do
     )
 
     expect(shield[:block_chance]).to eq(normal[:block_chance])
+  end
+
+  it "uses equipped player Accuracy and Evasion in the shared outcome probabilities" do
+    allow(rng).to receive(:rand).with(100).and_return(0, 99, 99, 0, 99, 99)
+    allow(rng).to receive(:rand).with(1..5).and_return(3)
+    baseline = resolver.resolve_physical_attack(
+      attacker_participation:, defender_participation:, action_key: "simple", body_part: "torso"
+    )
+    item = create(:item_template, slot: "amulet", stat_modifiers: {"accuracy" => -30, "evasion" => 30})
+    create(:inventory_item, :equipped, inventory: attacker.inventory, item_template: item)
+    create(:inventory_item, :equipped, inventory: defender.inventory, item_template: item)
+    attacker.reload
+    defender.reload
+    changed = resolver.resolve_physical_attack(
+      attacker_participation:, defender_participation:, action_key: "simple", body_part: "torso"
+    )
+
+    expect(changed[:hit_chance]).to be < baseline[:hit_chance]
+    expect(changed[:dodge_chance]).to be > baseline[:dodge_chance]
+  end
+
+  it "gives captured NPC Dexterity the same defensive meaning as legacy agility" do
+    allow(rng).to receive(:rand).with(100).and_return(0, 99, 99, 0, 99, 99)
+    allow(rng).to receive(:rand).with(1..5).and_return(3)
+    npc = create(:npc_template, metadata: {"stats" => {"dexterity" => 40}})
+    npc_side = create(:arena_participation, :npc, arena_match:, npc_template: npc, team: "b")
+    dexterity_result = resolver.resolve_physical_attack(
+      attacker_participation:, defender_participation: npc_side, action_key: "simple", body_part: "torso"
+    )
+    npc_side.update!(metadata: {"stats" => {"dexterity" => 0, "agility" => 40}})
+    agility_result = resolver.resolve_physical_attack(
+      attacker_participation:, defender_participation: npc_side, action_key: "simple", body_part: "torso"
+    )
+
+    expect(dexterity_result[:hit_chance]).to eq(agility_result[:hit_chance])
+    expect(dexterity_result[:dodge_chance]).to eq(agility_result[:dodge_chance])
   end
 
   it "marks critical hits and applies critical damage multiplier" do

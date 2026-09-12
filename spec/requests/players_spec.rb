@@ -28,7 +28,7 @@ RSpec.describe "Players", type: :request do
       location = Nokogiri::HTML(response.body).at_css(".nl-character-page-aside .nl-profile-location")
       expect(location.text).to eq("Outpost Surroundings")
       expect(location.text).not_to include("[7, 9]")
-      expect(response.body).to include("nl-doll-figure")
+      expect(response.body).to include("nl-doll-character-portrait", "adventurer")
       expect(response.body).not_to include("assets/neverlands")
       expect(response.body).not_to include("Neverlands administration")
       expect(response.body).to include("Knife")
@@ -50,6 +50,24 @@ RSpec.describe "Players", type: :request do
       expect(response.body).to include('class="nl-profile-tabs"')
       expect(response.body).to include("Character sections")
       expect(Nokogiri::HTML(response.body).css(".nl-profile-location").size).to eq(1)
+    end
+
+    it "shows cumulative XP remaining consistently in the owner's profile and JSON" do
+      character = create(:character, user:, level: 17, experience: 29_946_496)
+      sign_in user, scope: :user
+
+      get player_path(name: character.name)
+
+      expect(response).to have_http_status(:ok)
+      remaining_row = Nokogiri::HTML(response.body).css("tr").find { |row| row.at_css("th")&.text == "To level:" }
+      expect(remaining_row.at_css("td").text).to eq("20,053,504")
+
+      get player_path(name: character.name, format: :json)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body.fetch("character")).to include(
+        "level" => 17, "experience" => 29_946_496, "experience_to_next_level" => 20_053_504
+      )
     end
 
     it "returns location, equipment, and public player path in JSON" do

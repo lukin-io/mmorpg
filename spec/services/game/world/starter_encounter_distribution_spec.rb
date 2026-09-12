@@ -10,13 +10,12 @@ RSpec.describe Game::World::StarterEncounterDistribution do
   subject(:placements) { described_class.new(zone_config:, cells:).call }
 
   it "deterministically reuses only whole captured rosters whose types and exact levels fit each atlas cell" do
-    source = zone_config.fetch(:npcs).find { |npc| npc[:key] == "wilderness_bandit" }
-    captured = source.dig(:metadata, :encounter_rosters)
-
-    expect(placements.size).to eq(40)
+    expect(placements.size).to eq(42)
     expect(placements).to eq(described_class.new(zone_config:, cells:).call)
-    expect(placements.map { |npc| npc.values_at(:x, :y) }.uniq.size).to eq(40)
+    expect(placements.map { |npc| npc.values_at(:x, :y) }.uniq.size).to eq(42)
     placements.each do |npc|
+      source = (zone_config.fetch(:npcs) + zone_config.fetch(:npc_templates)).find { |entry| entry[:key] == npc[:key] }
+      captured = source.dig(:metadata, :encounter_rosters)
       cell = catalog.at(npc[:x], npc[:y])
       expect(cell.passable).to be true
       expect(npc.dig(:metadata, :encounter_rosters)).to all(be_in(captured))
@@ -33,7 +32,7 @@ RSpec.describe Game::World::StarterEncounterDistribution do
     coordinates = placements.map { |npc| npc.values_at(:x, :y) }
 
     expect(coordinates).not_to include([13, 10], [6, 8], [11, 9], [4, 6], [7, 7], [14, 15], [8, 7])
-    expect(placements.map { |npc| npc[:key] }.uniq).to eq(["wilderness_bandit"])
+    expect(placements.map { |npc| npc[:key] }.uniq).to contain_exactly("wilderness_bandit", "wilderness_ogre")
     expect(placements).to all(satisfy { |npc| npc.dig(:metadata, :seed_scope) == "starter_encounter_bootstrap" })
   end
 
@@ -62,7 +61,7 @@ RSpec.describe Game::World::StarterEncounterDistribution do
   end
 
   it "refuses uncaptured interpolated levels or missing HP in a reusable source profile" do
-    member = zone_config.fetch(:npcs).last.dig(:metadata, :encounter_rosters, 0, :members, 0)
+    member = zone_config.fetch(:npcs).find { |npc| npc[:key] == "wilderness_bandit" }.dig(:metadata, :encounter_rosters, 0, :members, 0)
     member.delete(:level)
     member.merge!(level_min: 7, level_max: 9)
     expect { placements }.to raise_error(described_class::InvalidConfigurationError, /captured exact member levels/)
@@ -75,7 +74,7 @@ RSpec.describe Game::World::StarterEncounterDistribution do
 
   it "refuses unknown source profiles, unmapped species, ambiguous profiles and invalid timing" do
     policy = zone_config.fetch(:starter_encounters)
-    profile = policy.fetch(:profiles).last
+    profile = policy.fetch(:profiles).find { |entry| entry[:source_npc_key] == "wilderness_bandit" }
     profile[:source_npc_key] = "unknown"
     expect { placements }.to raise_error(described_class::InvalidConfigurationError, /unknown captured NPC/)
     profile[:source_npc_key] = "wilderness_bandit"
@@ -95,8 +94,23 @@ RSpec.describe Game::World::StarterEncounterDistribution do
   end
 
   it "keeps the explicit captured definitions and their measured windows unchanged" do
-    expect(zone_config.fetch(:npcs).map { |npc| npc.values_at(:x, :y) }).to eq([[7, 7], [14, 15]])
-    expect(zone_config.fetch(:npcs).last.dig(:metadata, :passive_delay_windows).pluck(:min_seconds, :max_seconds)).to eq([[230, 278], [127, 187]])
-    expect(Game::World::OutdoorNpcConfig.config.dig(:outpost_surroundings, :starter_npcs)).to eq(placements)
+    expect(zone_config.fetch(:npcs).map { |npc| npc.values_at(:x, :y) }).to eq([[7, 7], [14, 15], [4, 12], [4, 11]])
+    expect(zone_config.fetch(:npcs).find { |npc| npc[:key] == "wilderness_bandit" }.dig(:metadata, :passive_delay_windows).pluck(:min_seconds, :max_seconds)).to eq([[230, 278], [127, 187]])
+    expect(Game::World::OutdoorNpcConfig.config.dig(:outpost_surroundings, :starter_npcs)).to include(*placements)
+  end
+
+  it "authors exactly two remote Ogre cells with the calibrated combat model enabled" do
+    ogres = placements.select { |npc| npc[:key] == "wilderness_ogre" }
+    expect(ogres.map { |npc| npc.values_at(:x, :y) }).to eq([[20, 6], [20, 7]])
+    expect(placements.count { |npc| npc[:key] == "wilderness_bandit" }).to eq(40)
+    ogres.each do |npc|
+      expect(npc[:metadata]).to include(active: true, combat_readiness: "calibrated_v1",
+        roster_source_observation: "2026-09-11_ogre_combat_cycle")
+      expect(npc.dig(:metadata, :encounter_rosters).map { |sample| sample[:members].pluck(:level, :hp) }).to eq([
+        [[16, 1455], [16, 1455], [17, 1570]],
+        [[16, 1455], [16, 1455], [16, 1455], [18, 1685]]
+      ])
+      expect(npc.dig(:metadata, :encounter_rosters)).to all(satisfy { |sample| !sample.key?(:encounter_experience_reward) })
+    end
   end
 end

@@ -8,6 +8,34 @@ RSpec.describe "Open-world seed data", type: :model do
     Rails.application.load_seed
   end
 
+  it "bootstraps two remote Ogre habitats, preserving managed art and disabled encounters on retry" do
+    load_seed
+    region = Zone.find_by!(name: "Outpost Surroundings")
+    cells = MapTileTemplate.where(zone: region.name, x: 20, y: 6..7).order(:y)
+    ogres = TileNpc.where(zone: region.name, npc_key: "wilderness_ogre").order(:y)
+    expect(ogres.pluck(:x, :y)).to eq([[20, 6], [20, 7]])
+    expect(ogres).to all(satisfy { |npc| npc.active? && npc.alive? })
+    expect(cells.map(&:cell_art)).to eq([
+      {"key" => "forpost_ogre_habitat", "column" => 0, "row" => 0},
+      {"key" => "forpost_ogre_habitat", "column" => 0, "row" => 1}
+    ])
+    expect(cells.map(&:active_local_actions)).to eq([[], []])
+    expect(cells).to all(be_passable)
+    character = create(:character)
+    create(:character_position, character:, zone: region, x: 20, y: 6)
+    expect { Game::World::StartNpcFight.new(character:, tile_npc: ogres.first).call }.to change(ArenaMatch, :count).by(1)
+    ogres.first.update!(metadata: ogres.first.metadata.merge("active" => false))
+
+    managed = cells.first
+    managed.update!(metadata: managed.metadata.merge("cell_art" => {"key" => "forpost_starter", "column" => 1, "row" => 1}))
+    original_cell = managed.attributes
+    original_npc = ogres.first.attributes
+    load_seed
+    expect(managed.reload.attributes).to eq(original_cell)
+    expect(ogres.first.reload.attributes).to eq(original_npc)
+    expect(TileNpc.where(zone: region.name, npc_key: "wilderness_ogre").count).to eq(2)
+  end
+
   it "imports the bounded survey, keeps NPC pools distinct, and preserves managed cells on retry" do
     region = create(:zone, :mvp_outdoor_region, name: "Outpost Surroundings")
     legacy = create(:map_tile_template, zone: region.name, x: 14, y: 10, passable: true,
@@ -38,8 +66,8 @@ RSpec.describe "Open-world seed data", type: :model do
     )
     placements = TileNpc.where(zone: region.name)
     expect(placements.where("metadata ->> 'seed_scope' IS NULL").pluck(:x, :y))
-      .to contain_exactly([7, 7], [14, 15])
-    expect(placements.where("metadata ->> 'seed_scope' = ?", "starter_encounter_bootstrap").count).to eq(40)
+      .to contain_exactly([7, 7], [14, 15], [4, 12], [4, 11])
+    expect(placements.where("metadata ->> 'seed_scope' = ?", "starter_encounter_bootstrap").count).to eq(44)
 
     managed = MapTileTemplate.find_by!(zone: region.name, x: 12, y: 10)
     managed.update!(passable: false, metadata: managed.metadata.merge("resource_groups" => []))

@@ -27,10 +27,8 @@ module PlayerProfileHelper
     character.passive_skill_level(key).to_s.rjust(3, "0")
   end
 
-  def profile_attack_cost
-    Game::Combat::ActionCatalog.attack_cost("simple")
-  rescue NameError, KeyError, NoMethodError
-    45
+  def profile_attack_cost(character)
+    Arena::CombatProfile.for_character(character).fetch("physical_attack_cost_seed")
   end
 
   # Primary stats with the character's own value (base + allocated) and the
@@ -55,8 +53,8 @@ module PlayerProfileHelper
   # captured, so it is not invented here.
   def profile_combat_stats(character)
     {
-      "AP per strike" => profile_attack_cost,
-      "Armor class" => character.equipment_effect_value("armor_class"),
+      "AP per strike" => profile_attack_cost(character),
+      "Armor class" => character.armor_class,
       "Dodge" => "#{character.dodge_bonus}%",
       "Accuracy" => "#{character.accuracy_bonus}%",
       "Crushing" => "#{character.equipment_effect_value("crushing")}%",

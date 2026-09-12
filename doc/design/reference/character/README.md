@@ -1,14 +1,18 @@
 # Neverlands Character, Profile, and Progression Source Summary
 
+For the design, delivery status and current implementation using this evidence,
+follow the [Character domain](../../../domains/character.md).
+
 - Document type: neverlands-source-summary
 - Domain: character
-- Updated: 2026-09-09
+- Updated: 2026-09-11
 - Evidence status: current with preserved legacy analysis
 
 ## Current observations
 
 | Flow/state | Observation | Status |
 |---|---|---|
+| Level grants and combat inputs recheck | [September 11 published table and input audit](observations/2026-09-11_level_grants_and_combat_inputs.md) | 28 complete rows; source formulas still bounded |
 | Profile, stats, skills, perks, Inventory adjacency | `doc/design/reference/character/observations/2026-05-11_player_profile_and_development.md` | current within captured states |
 | Skills, effects, and Arena source analysis | `doc/design/reference/character/observations/legacy_skills_and_arena_analysis.md` | mixed current/historical; verify per flow |
 | Profile/Inventory geometry | `doc/design/reference/shell/observations/2026-07-29_style_system.md` | current presentation evidence |

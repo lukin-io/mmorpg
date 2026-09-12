@@ -140,6 +140,10 @@ body.nl-public-layout--fight-log {
 
 .nl-log-name--alpha { color: #1768ac; }
 .nl-log-name--beta { color: #18852e; }
+.nl-log-damage { font-weight: 700; }
+.nl-log-damage--critical,
+.nl-log-injury { color: #b30000; }
+.nl-log-body-part { color: #888888; }
 
 .fight-participants {
   display: flex;
@@ -269,4 +273,16 @@ body.nl-public-layout--fight-log {
 
   .fight-participants { margin-top: 12px; }
   .log-pagination { margin-top: 16px; }
+}
+
+/* Preserve readable data columns in the minimum-width public view. */
+.nl-fight-statistics-scroll {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.nl-fight-statistics-scroll:focus-visible {
+  outline: 2px solid #1768ac;
+  outline-offset: 2px;
 }

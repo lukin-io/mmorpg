@@ -23,7 +23,7 @@ RSpec.describe Arena::NpcExperienceAwarder do
     expect(winner.reload.experience).to eq(35)
   end
 
-  it "does not sum an uncaptured multi-NPC encounter" do
+  it "calculates and caps a non-authored multi-NPC encounter" do
     2.times do |index|
       npc = create(:npc_template, npc_key: "uncaptured_#{index}", metadata: {"xp_reward" => 35})
       create(:arena_participation, :npc, arena_match: match, npc_template: npc, team: "b", result: :defeat)
@@ -31,11 +31,11 @@ RSpec.describe Arena::NpcExperienceAwarder do
 
     result = described_class.new(match:, winning_team: "a").call
 
-    expect(result).to have_attributes(experience_awarded: 0, skipped_reason: "group_formula_not_captured")
-    expect(winner.reload.experience).to eq(0)
+    expect(result.experience_awarded).to be_positive
+    expect(winner.reload.experience).to eq(result.experience_awarded)
   end
 
-  it "does not invent group distribution" do
+  it "shares configured single-NPC XP between player participants" do
     teammate = create(:character)
     create(:arena_participation, arena_match: match, character: teammate, user: teammate.user, team: "a", result: :victory)
     npc = create(:npc_template, metadata: {"xp_reward" => 35})
@@ -43,16 +43,16 @@ RSpec.describe Arena::NpcExperienceAwarder do
 
     result = described_class.new(match:, winning_team: "a").call
 
-    expect(result).to have_attributes(experience_awarded: 0, skipped_reason: "group_formula_not_captured")
-    expect(winner.reload.experience).to eq(0)
-    expect(teammate.reload.experience).to eq(0)
+    expect(result.experience_awarded).to be_positive
+    expect(winner.reload.experience).to eq(result.experience_awarded)
+    expect(teammate.reload.experience).to eq(17)
   end
 
-  it "awards nothing for a draw or an NPC without configured XP" do
+  it "awards nothing on a draw and derives XP when no explicit reward exists" do
     no_xp_npc = create(:npc_template, metadata: {})
     create(:arena_participation, :npc, arena_match: match, npc_template: no_xp_npc, team: "b", result: :defeat)
 
     expect(described_class.new(match:, winning_team: nil).call.skipped_reason).to eq("draw")
-    expect(described_class.new(match:, winning_team: "a").call.skipped_reason).to eq("no_configured_experience")
+    expect(described_class.new(match:, winning_team: "a").call.experience_awarded).to be_positive
   end
 end

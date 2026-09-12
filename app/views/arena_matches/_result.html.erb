@@ -1,0 +1,64 @@
+<% result_state = current_user_arena_result %>
+<div class="nl-fight-result arena-result--<%= result_state %>">
+  <div class="arena-result-content">
+    <h1 class="arena-result-title">
+      <%= result_state == "ended" ? "Fight finished" : result_state.titleize %>
+    </h1>
+    <div class="arena-result-details">
+      <% if @arena_match.winning_team %>
+        <p>Winner: <strong><%= winner_name(@arena_match) %></strong></p>
+      <% else %>
+        <p>Fight ended in a draw</p>
+      <% end %>
+      <p class="text-muted">Duration: <%= format_duration(@arena_match.duration || 0) %></p>
+    </div>
+    <% solo_npc_without_xp = @participations.any?(&:npc?) && @participations.count(&:player?) == 1 && @arena_match.metadata.to_h.dig("rewards", "experience", "amount").to_i.zero? %>
+    <% unless solo_npc_without_xp %>
+    <table class="nl-fight-result-table">
+      <thead>
+        <tr>
+          <th>Character</th>
+          <th>Physical</th>
+          <th>Magic</th>
+          <th>Total</th>
+          <th>XP</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @participations.select(&:player?).each do |participation| %>
+          <% damage = participation.metadata.to_h["damage_dealt"].to_i %>
+          <% damage_buckets = participation.metadata.to_h.fetch("damage_by_element", {}) %>
+          <% physical = damage_buckets.fetch("physical", participation.metadata.to_h.key?("damage_by_element") ? 0 : damage) %>
+          <% magic = damage_buckets.except("physical").values.sum %>
+          <% defeated = participation.metadata.to_h["opponents_defeated"].to_i %>
+          <% experience = @arena_match.metadata.to_h.dig("rewards", "experience") || {} %>
+          <% awarded_xp = participation.metadata.to_h.fetch("experience_awarded") { experience["character_id"].to_i == participation.character_id ? experience["amount"].to_i : 0 } %>
+          <tr>
+            <td><%= participation.participant_name %>[<%= participation.participant_level %>]</td>
+            <td><%= physical %><sup title="Defeated opponents">(<%= defeated %>)</sup></td>
+            <td><%= magic %></td>
+            <td><%= damage %><sup title="Defeated opponents">(<%= defeated %>)</sup></td>
+            <td><%= awarded_xp %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+    <% end %>
+    <% if current_user_participating? && !current_user_finished_arena_match? %>
+      <%= button_to "Finish Fight",
+          finish_arena_match_path(@arena_match),
+          method: :post,
+          class: "nl-arena-small-button",
+          form: {data: {turbo: false}} %>
+    <% else %>
+      <% if @arena_match.metadata.to_h["source"] == "world_npc" %>
+        <%= link_to "Return",
+            Game::World::CombatReturnContext.new(character: current_character).path_for(@arena_match.metadata.to_h["return_context"]),
+            class: "nl-arena-small-button",
+            data: {turbo_frame: "_top"} %>
+      <% else %>
+        <%= link_to "To Arena", arena_index_path, class: "nl-arena-small-button", data: {turbo_frame: "_top"} %>
+      <% end %>
+    <% end %>
+  </div>
+</div>

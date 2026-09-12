@@ -3,7 +3,7 @@
 title: Professions Feature
 description: NOT_IMPLEMENTED placeholder for source-backed gathering and production profession behavior.
 status: NOT_IMPLEMENTED
-updated: 2026-09-09
+updated: 2026-09-12
 owners: Professions domain
 template: feature-gap-v2
 ---
@@ -11,6 +11,13 @@ template: feature-gap-v2
 # Professions
 
 ## 1. Evidence and design
+
+For future implementation, read [ITEMS](../ITEMS.md) for existing tools/licenses,
+[WORLD](../WORLD.md#4-npc-habitats-and-resources) for cell-action boundaries and
+[FORMULAS](../FORMULAS.md#11-compatibility-and-absent-formulas) for active versus
+absent calculations. These are adjacent context, not a profession runtime.
+Connect new verified behavior and update its references under the
+[context/update map](../DOCUMENTATION.md#21-required-context-and-update-map).
 
 Neverlands is the sole game-design authority.
 
@@ -25,8 +32,11 @@ Neverlands is the sole game-design authority.
 `NOT_IMPLEMENTED`: no complete profession eligibility, tool, timer, yield,
 counter, failure, interruption, or production loop is shipped.
 
-No profession route, authoritative profession state, mutation, persistence,
-feature-specific Turbo/Stimulus/CSS, or runtime spec is claimed.
+No gathering/production route, state, mutation or runtime spec is claimed here.
+The bounded Doctor injury-treatment workflow is documented under
+[Medical Care](medical_care.md), separate from crafting and profession
+progression. Its authored Doctor proficiency thresholds are currently
+unenforced; the Medical Care handbook owns that implementation gap.
 
 The remaining categories belong to this domain, even though World links them
 from its map/cell gap matrix:

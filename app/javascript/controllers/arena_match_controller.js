@@ -9,11 +9,11 @@ import consumer from "channels/consumer"
 export default class extends Controller {
   static targets = [
     "combatLog", "participantList", "actionButtons", "timer",
-    "teamA", "teamB", "resultOverlay",
+    "teamA", "teamB",
     "blockSelect", "turnCostValue", "turnPenalty", "turnOverBudget",
     "apBar", "apValue", "fighterA", "fighterB",
     "attackSelect", "magicSlot", "turnForm", "turnFields",
-    "targetName", "targetVitals"
+    "targetName", "targetVitals", "rosterParticipant"
   ]
 
   static values = {
@@ -148,9 +148,9 @@ export default class extends Controller {
 
     const entry = document.createElement("div")
     entry.className = `combat-log-entry combat-log--${this.getActionClass(action)}`
-    entry.innerHTML = this.formatAction(action)
+    this.appendLogText(entry, action.timestamp, action.description || `${action.actor_name || "Someone"} attacks`)
 
-    this.combatLogTarget.appendChild(entry)
+    this.combatLogTarget.prepend(entry)
     this.scrollCombatLog()
   }
 
@@ -171,9 +171,9 @@ export default class extends Controller {
 
     const entry = document.createElement("div")
     entry.className = `combat-log-entry combat-log--system combat-log--${data.severity}`
-    entry.innerHTML = `<span class="combat-time">${data.timestamp}</span> ${data.message}`
+    this.appendLogText(entry, data.timestamp, data.message)
 
-    this.combatLogTarget.appendChild(entry)
+    this.combatLogTarget.prepend(entry)
     this.scrollCombatLog()
   }
 
@@ -211,17 +211,13 @@ export default class extends Controller {
     })
   }
 
-  formatAction(action) {
-    let html = `<span class="combat-time">${action.timestamp}</span> `
-
-    // Description already contains actor and target names, don't duplicate
-    html += action.description || `${action.actor_name || "Someone"} attacks`
-
-    if (action.result) {
-      html += ` <span class="combat-result">(${action.result})</span>`
-    }
-
-    return html
+  // Transient notices are text. The committed log's shared Rails renderer
+  // supplies its rich formatting when the authoritative page refreshes.
+  appendLogText(entry, timestamp, message) {
+    const time = document.createElement("span")
+    time.className = "combat-time"
+    time.textContent = timestamp || ""
+    entry.append(time, document.createTextNode(` ${message || ""}`))
   }
 
   formatNpcAction(action) {
@@ -253,7 +249,7 @@ export default class extends Controller {
 
   scrollCombatLog() {
     if (this.hasCombatLogTarget) {
-      this.combatLogTarget.scrollTop = this.combatLogTarget.scrollHeight
+      this.combatLogTarget.scrollTop = 0
     }
   }
 
@@ -273,8 +269,12 @@ export default class extends Controller {
 
     // Update MP bar
     const mpFill = participant.querySelector(".arena-mp-fill, .fighter-mp-fill")
-    if (mpFill) {
+    if (mpFill && data.mp_percent !== undefined) {
       mpFill.style.width = `${data.mp_percent}%`
+    }
+    const mpText = participant.querySelector(".fighter-mp-text")
+    if (mpText && data.current_mp !== undefined && data.max_mp !== undefined) {
+      mpText.textContent = `${data.current_mp}/${data.max_mp}`
     }
 
     // Update HP text
@@ -284,6 +284,10 @@ export default class extends Controller {
     }
     participant.dataset.currentHp = data.current_hp
     participant.dataset.maxHp = data.max_hp
+    this.rosterParticipantTargets.filter(row => row.dataset.rosterId === String(data.character_id)).forEach(row => {
+      row.querySelector(".nl-fight-roster-hp").textContent = `[${data.current_hp}/${data.max_hp}]`
+      row.hidden = this.statusValue === "live" && data.current_hp <= 0
+    })
 
     const hpPercent = participant.querySelector(".fighter-hp-percent")
     if (hpPercent) {
@@ -307,10 +311,7 @@ export default class extends Controller {
       character_id: `npc-participation-${data.participation_id}`,
       current_hp: data.current_hp,
       max_hp: data.max_hp,
-      current_mp: 0,
-      max_mp: 0,
       hp_percent: data.hp_percent,
-      mp_percent: 0,
       is_dead: data.current_hp <= 0
     })
   }
@@ -614,75 +615,6 @@ export default class extends Controller {
     `
   }
 
-  // === MATCH RESULT ===
-
-  showResult(data) {
-    if (!this.hasResultOverlayTarget) return
-
-    const overlay = this.resultOverlayTarget
-    overlay.classList.add("visible")
-
-    // Determine if current user won
-    const resultClass = this.determineResultClass(data)
-    overlay.classList.add(`arena-result--${resultClass}`)
-
-    overlay.innerHTML = `
-      <h1 class="arena-result-title">${this.resultTitle(resultClass)}</h1>
-
-      <div class="arena-result-stats">
-        <div class="arena-result-stat">
-          <div class="arena-result-stat-value">${data.duration}s</div>
-          <div class="arena-result-stat-label">Duration</div>
-        </div>
-        <div class="arena-result-stat">
-          <div class="arena-result-stat-value">${this.totalDamage(data.participants)}</div>
-          <div class="arena-result-stat-label">Damage</div>
-        </div>
-        <div class="arena-result-stat">
-          <div class="arena-result-stat-value">${data.winning_team}</div>
-          <div class="arena-result-stat-label">Winner</div>
-        </div>
-      </div>
-
-      ${data.rewards ? this.renderRewards(data.rewards) : ""}
-
-      <button class="btn-primary" onclick="window.location.href='/arena'">
-        To Arena
-      </button>
-    `
-  }
-
-  determineResultClass(data) {
-    // This would check if current user is on winning team
-    // For now, return based on winning_team
-    return data.winning_team ? "victory" : "draw"
-  }
-
-  resultTitle(resultClass) {
-    switch (resultClass) {
-      case "victory": return "Victory"
-      case "defeat": return "Defeat"
-      case "draw": return "Draw"
-      default: return "Fight finished"
-    }
-  }
-
-  totalDamage(participants) {
-    return participants.reduce((sum, p) => sum + (p.damage_dealt || 0), 0)
-  }
-
-  renderRewards(rewards) {
-    return `
-      <div class="arena-result-rewards">
-        <h3>Rewards</h3>
-        <div class="rewards-list">
-          ${rewards.xp ? `<span class="reward-item">+${rewards.xp} XP</span>` : ""}
-          ${rewards.nv ? `<span class="reward-item reward-nv">+${rewards.nv} NV</span>` : ""}
-        </div>
-      </div>
-    `
-  }
-
   // === COMBAT ACTIONS ===
 
   submitTurn(event) {
@@ -818,18 +750,6 @@ export default class extends Controller {
     this.updateTurnCost()
   }
 
-  switchOpponent(event) {
-    event?.preventDefault()
-    const enemies = this.livingEnemyCards()
-    if (enemies.length < 2) return
-
-    const currentIndex = enemies.findIndex(card =>
-      card.dataset.characterId === this.selectedTargetIdValue
-    )
-    const nextIndex = currentIndex >= 0 ? (currentIndex + 1) % enemies.length : 0
-    this.selectTargetCard(enemies[nextIndex])
-  }
-
   getSelectedEnemyId() {
     const selected = this.syncSelectedTarget()
     return selected?.dataset.characterId || null
@@ -854,6 +774,9 @@ export default class extends Controller {
 
     this.element.querySelectorAll(".fighter-card").forEach(candidate => {
       candidate.classList.toggle("fighter-card--selected-target", candidate === card)
+      if (!this.readOnlyValue && candidate.dataset.team !== this.userTeamValue) {
+        candidate.hidden = candidate !== card
+      }
     })
     this.selectedTargetIdValue = card.dataset.characterId
 
@@ -866,7 +789,7 @@ export default class extends Controller {
   }
 
   livingEnemyCards() {
-    if (!this.hasUserTeamValue) return []
+    if (!this.hasUserTeamValue || this.readOnlyValue) return []
 
     return Array.from(this.element.querySelectorAll(".fighter-card")).filter(card =>
       card.dataset.characterId &&

@@ -188,6 +188,7 @@ RSpec.describe "ArenaMatches", type: :request do
         status: :live,
         started_at: Time.current,
         current_turn_started_at: Time.current,
+        current_turn_number: 1,
         current_turn_team: "a")
       create(:arena_participation, arena_match: match, character: character, user: user, team: "a")
       create(:arena_participation, arena_match: match, character: other_character, user: other_user, team: "b")
@@ -199,6 +200,7 @@ RSpec.describe "ArenaMatches", type: :request do
         post "/arena_matches/#{live_match.id}/action",
           params: {
             action_type: "turn",
+            turn_number: 1,
             target_id: other_character.id,
             attacks: [{action_key: "simple", body_part: "torso"}],
             blocks: [{action_key: "torso_block", body_parts: ["torso"]}]
@@ -213,6 +215,7 @@ RSpec.describe "ArenaMatches", type: :request do
         post action_arena_match_path(live_match),
           params: {
             action_type: "turn",
+            turn_number: 1,
             target_id: other_character.id,
             attacks: {"0" => {action_key: "simple", body_part: "torso"}},
             blocks: {"0" => {action_key: "torso_block", body_parts: {"0" => "torso"}}}
@@ -228,6 +231,7 @@ RSpec.describe "ArenaMatches", type: :request do
         post action_arena_match_path(live_match),
           params: {
             action_type: "turn",
+            turn_number: 1,
             target_id: other_character.id,
             attacks: [{action_key: "simple", body_part: "torso"}],
             blocks: [{action_key: "torso_block", body_parts: ["torso"]}]
@@ -236,6 +240,25 @@ RSpec.describe "ArenaMatches", type: :request do
 
         expect(response).to have_http_status(:see_other)
         expect(response).to redirect_to(arena_match_path(live_match))
+      end
+
+      it "rejects absent, malformed and stale round versions without storing or resolving a turn" do
+        initial_log_count = live_match.combat_log_entries.count
+        initial_hp = [character.current_hp, other_character.current_hp]
+        [nil, "", "garbage", "1.5", 1.5, 0, -1, 2].each do |version|
+          post action_arena_match_path(live_match), params: {
+            action_type: "turn", turn_number: version, target_id: other_character.id,
+            attacks: [{action_key: "simple", body_part: "torso"}],
+            blocks: [{action_key: "torso_block", body_parts: ["torso"]}]
+          }, as: :json
+
+          expect(response).to have_http_status(:unprocessable_entity)
+          expect(response.parsed_body["success"]).to be(false)
+          expect(live_match.reload.current_turn_number).to eq(1)
+          expect(live_match.arena_participations.pluck(:metadata)).to all(satisfy { |metadata| metadata["pending_turn"].blank? })
+          expect([character.reload.current_hp, other_character.reload.current_hp]).to eq(initial_hp)
+          expect(live_match.combat_log_entries.count).to eq(initial_log_count)
+        end
       end
 
       it "rejects forged direct attack, defend, and unsupported flee intents without mutating combat" do
@@ -261,6 +284,7 @@ RSpec.describe "ArenaMatches", type: :request do
         post action_arena_match_path(live_match),
           params: {
             action_type: "turn",
+            turn_number: 1,
             target_id: character.id,
             attacks: [{action_key: "simple", body_part: "torso"}],
             blocks: [{action_key: "torso_block", body_parts: ["torso"]}]
@@ -313,6 +337,7 @@ RSpec.describe "ArenaMatches", type: :request do
             character,
             "turn",
             target: target,
+            expected_turn_number: 1,
             attacks: [hash_including("action_key" => "simple", "body_part" => "torso")],
             blocks: [hash_including("action_key" => "torso_block", "body_parts" => ["torso"])]
           )
@@ -321,6 +346,7 @@ RSpec.describe "ArenaMatches", type: :request do
         post action_arena_match_path(live_match),
           params: {
             action_type: "turn",
+            turn_number: 1,
             target_id: "npc-participation-#{target.id}",
             attacks: [{action_key: "simple", body_part: "torso"}],
             blocks: [{action_key: "torso_block", body_parts: ["torso"]}]
@@ -348,6 +374,7 @@ RSpec.describe "ArenaMatches", type: :request do
         post "/arena_matches/#{live_match.id}/action",
           params: {
             action_type: "turn",
+            turn_number: 1,
             target_id: other_character.id,
             attacks: [{action_key: "simple", body_part: "torso"}],
             blocks: [{action_key: "torso_block", body_parts: ["torso"]}]

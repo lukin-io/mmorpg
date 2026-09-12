@@ -56,6 +56,16 @@ forpost_starter_west:
   slices_directory: world/cells/forpost-starter-west
   source_reference: neverlands_live_starter_atlas_2026_09_09
 
+forpost_ogre_habitat:
+  asset: world/forpost-ogre-habitat.png
+  cell_width: 100
+  cell_height: 100
+  columns: 1
+  rows: 2
+  slices_directory: world/cells/forpost-ogre-habitat
+  high_density_slices_directory: world/cells/forpost-ogre-habitat-2x
+  source_reference: neverlands_ogre_cycle_and_starter_atlas_2026_09_11
+
 # Dedicated-cell shape (documentation only): keep this commented until the
 # exact Neverlands appearance, project-owned 100x100 asset, and tests exist.
 # forpost_west_gate:

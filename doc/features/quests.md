@@ -3,7 +3,7 @@
 title: Quests Feature
 description: NOT_IMPLEMENTED placeholder for source-backed Quest dialogue, journal, task, and resolution behavior.
 status: NOT_IMPLEMENTED
-updated: 2026-08-26
+updated: 2026-09-12
 owners: NPCs and Quests domain
 template: feature-gap-v2
 ---
@@ -11,6 +11,12 @@ template: feature-gap-v2
 # Quests
 
 ## 1. Evidence and design
+
+For future implementation, read [NPC](../NPC.md) for existing NPC identities,
+[ITEMS](../ITEMS.md) for possible authored item references and
+[WORLD](../WORLD.md) for locations. Current catalog entries do not establish
+Quest dialogue, tasks or rewards. Connect new verified behavior and update its
+references under the [context/update map](../DOCUMENTATION.md#21-required-context-and-update-map).
 
 Neverlands is the sole game-design authority.
 

@@ -190,7 +190,7 @@ module ArenaHelper
     :name, :level, :id, :is_npc,
     :current_hp, :max_hp, :current_mp, :max_mp,
     :hp_percent, :mp_percent,
-    :strength, :dexterity, :luck, :knowledge,
+    :strength, :dexterity, :luck, :knowledge, :wisdom,
     :attack_power, :defense, :armor_class, :evasion,
     :accuracy, :crushing, :endurance, :armor_penetration,
     keyword_init: true
@@ -245,7 +245,8 @@ module ArenaHelper
     end
   end
 
-  # Extract participant display data from arena participation
+  # Extract participant display data, including equipment-aware player maxima.
+  # Resource maxima remain separate from the fight profile's magic-hit ceiling.
   # @param participation [ArenaParticipation] the participation record
   # @return [ParticipantData] structured participant data
   def participant_data(participation)
@@ -256,27 +257,28 @@ module ArenaHelper
     if is_npc
       current_hp = participation.metadata&.dig("current_hp") || npc_template.health
       max_hp = participation.metadata&.dig("max_hp") || npc_template.health
-      current_mp = 0
-      max_mp = 0
+      max_mp = participation.max_mp
+      current_mp = participation.current_mp
       name = participation.participant_name
       level = participation.participant_level
       participant_id = "npc-participation-#{participation.id}"
     else
       current_hp = character.current_hp
-      max_hp = character.max_hp
+      max_hp = participation.max_hp
       current_mp = character.current_mp
-      max_mp = character.max_mp
+      max_mp = participation.max_mp
       name = character.name
       level = character.level
       participant_id = character.id
     end
 
+    current_hp = 0 if participation.defeat?
     hp_percent = max_hp.zero? ? 0 : ((current_hp.to_f / max_hp) * 100).round(1)
     mp_percent = max_mp.zero? ? 0 : ((current_mp.to_f / max_mp) * 100).round(1)
 
     # Get stats (for opponent display)
     stats = if is_npc
-      npc_combat_stats(npc_template)
+      npc_combat_stats(participation)
     else
       character_combat_stats(character)
     end
@@ -292,18 +294,19 @@ module ArenaHelper
       max_mp: max_mp,
       hp_percent: hp_percent,
       mp_percent: mp_percent,
-      strength: stats[:strength] || 0,
-      dexterity: stats[:dexterity] || 0,
-      luck: stats[:luck] || 0,
-      knowledge: stats[:knowledge] || 0,
+      strength: stats[:strength],
+      dexterity: stats[:dexterity],
+      luck: stats[:luck],
+      knowledge: stats[:knowledge],
+      wisdom: stats[:wisdom],
       attack_power: stats[:attack_power] || stats[:attack] || 0,
       defense: stats[:defense] || 0,
-      armor_class: stats[:armor_class] || stats[:defense] || 0,
-      evasion: stats[:evasion] || stats[:dexterity].to_i / 2,
-      accuracy: stats[:accuracy] || stats[:dexterity].to_i,
-      crushing: stats[:crushing] || stats[:luck].to_i,
-      endurance: stats[:endurance] || stats[:vitality].to_i,
-      armor_penetration: stats[:armor_penetration] || 0
+      armor_class: stats[:armor_class],
+      evasion: stats[:evasion],
+      accuracy: stats[:accuracy],
+      crushing: stats[:crushing],
+      endurance: stats[:endurance],
+      armor_penetration: stats[:armor_penetration]
     )
   end
 
@@ -311,8 +314,7 @@ module ArenaHelper
   # @param participation [ArenaParticipation] the participation record
   # @return [Boolean]
   def participant_dead?(participation)
-    data = participant_data(participation)
-    data.current_hp <= 0
+    !participation.combat_alive?
   end
 
   # Generate avatar tag for arena participant.
@@ -323,14 +325,14 @@ module ArenaHelper
   # @param size [Symbol] :small, :medium, or :large
   # @return [ActiveSupport::SafeBuffer] HTML span element with avatar
   def participation_avatar_tag(participation, size: :medium, **options)
-    return npc_avatar_tag(participation.npc_template, size:, **options) if participation.npc?
+    return npc_participation_avatar_tag(participation, size:, **options) if participation.npc?
 
     character_avatar_tag(participation.character, size:, **options)
   end
 
   # Equipment shown around a combatant uses the same authoritative equipped
-  # inventory records as Profile and Inventory. NPCs deliberately return an
-  # empty slot set because their visible equipment is part of captured art.
+  # inventory records as Profile and Inventory. NPC equipment uses separate
+  # captured content and never creates player-owned inventory records.
   def arena_fighter_equipment(participation)
     inventory = participation.character&.inventory
     return {} unless inventory
@@ -338,6 +340,10 @@ module ArenaHelper
     inventory.inventory_items.select(&:equipped?).index_by do |item|
       item.equipment_slot.to_s.presence || item.item_template&.slot.to_s
     end
+  end
+
+  def arena_npc_equipment(participation)
+    participation.npc? ? participation.npc_combat_data.fetch("equipment", {}) : {}
   end
 
   # ===========================================================================
@@ -372,7 +378,7 @@ module ArenaHelper
 
   def current_user_pending_arena_turn?(match = @arena_match)
     participation = current_user_arena_participation(match)
-    return false unless participation
+    return false unless participation&.combat_alive?
 
     pending_turn = participation.metadata&.dig("pending_turn")
     return false unless pending_turn.present?
@@ -426,13 +432,15 @@ module ArenaHelper
   # @return [Hash] stats hash with :strength, :dexterity, :luck, and :knowledge
   def opponent_combat_stats(participation)
     if participation.npc?
-      npc_combat_stats(participation.npc_template)
+      npc_combat_stats(participation)
     else
       character_combat_stats(participation.character)
     end
   end
 
-  # Extract combat stats from a character
+  # Project effective primary stats and distinct equipment combat modifiers.
+  # The legacy endurance field displays Fortitude, never Health or resistance;
+  # displayed modifiers do not imply unverified probability formulas.
   # @param character [Character] the character
   # @return [Hash] stats hash
   def character_combat_stats(character)
@@ -449,57 +457,23 @@ module ArenaHelper
       attack: character.attack_power,
       attack_power: character.attack_power,
       defense: character.defense,
-      armor_class: character.defense,
-      evasion: character.agility / 2,
-      accuracy: stats.get(:dexterity).to_i,
-      crushing: character.critical_chance,
-      endurance: stats.get(:vitality).to_i,
-      armor_penetration: character.equipment_family_breakdown.sum { |item| item[:family] == "axe" ? item[:attack] / 5 : 0 }
+      armor_class: character.armor_class,
+      evasion: character.dodge_bonus,
+      accuracy: character.accuracy_bonus,
+      crushing: character.crushing_percent,
+      endurance: character.fortitude_percent,
+      armor_penetration: character.armor_pierce_percent
     }.compact
   end
 
   # Extract combat stats from an NPC template
   # @param npc [NpcTemplate] the NPC template
   # @return [Hash] stats hash
-  def npc_combat_stats(npc)
-    return {} unless npc
+  def npc_combat_stats(participation)
+    return {} unless participation
 
-    # Try to get stats from NPC config
-    npc_config = Game::World::ArenaNpcConfig.find_npc(npc.npc_key) if npc.npc_key.present?
-    if npc_config
-      config_stats = Game::World::ArenaNpcConfig.extract_stats(npc_config)
-      return {
-        strength: config_stats[:attack],
-        dexterity: config_stats[:agility],
-        luck: config_stats[:luck] || 5,
-        knowledge: config_stats[:intelligence] || 1,
-        attack: config_stats[:attack],
-        attack_power: config_stats[:attack],
-        defense: config_stats[:defense],
-        armor_class: config_stats[:defense],
-        evasion: config_stats[:agility].to_i / 2,
-        accuracy: config_stats[:agility],
-        crushing: config_stats[:crit_chance] || 5,
-        endurance: config_stats[:hp],
-        armor_penetration: config_stats[:armor_penetration] || 0
-      }.compact
-    end
-
-    {
-      strength: npc.combat_stat(:attack),
-      dexterity: npc.combat_stat(:agility),
-      luck: npc.combat_stat(:luck),
-      knowledge: 0,
-      attack: npc.combat_stat(:attack),
-      attack_power: npc.combat_stat(:attack),
-      defense: npc.combat_stat(:defense),
-      armor_class: npc.combat_stat(:defense),
-      evasion: npc.combat_stat(:evasion),
-      accuracy: npc.combat_stat(:accuracy),
-      crushing: npc.combat_stat(:crit_chance),
-      endurance: npc.health,
-      armor_penetration: 0
-    }
+    data = participation.is_a?(ArenaParticipation) ? participation.npc_combat_data : participation.metadata.to_h
+    data.fetch("display_stats", {}).symbolize_keys
   end
 
   # ===========================================================================

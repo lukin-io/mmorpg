@@ -1,0 +1,19 @@
+# Verified official Bot wiki: standard bot-drop eligibility is +/-2 levels.
+# Authenticated Paid Services: Premium changes only maximum fight XP; Gold/VIP
+# windows are totals, not additions to the standard window. Worker has no
+# combat benefit. Multipliers apply to the per-fight cap, never earned XP.
+standard:
+  drop_level_window: 2
+  experience_cap_multiplier: 1.0
+premium:
+  drop_level_window: 2
+  experience_cap_multiplier: 1.5
+gold:
+  drop_level_window: 4
+  experience_cap_multiplier: 2.0
+vip:
+  drop_level_window: 6
+  experience_cap_multiplier: 2.5
+worker:
+  drop_level_window: 2
+  experience_cap_multiplier: 1.0

@@ -1,0 +1,42 @@
+# Local fitted model v1, authorized 2026-09-12. These are not recovered source
+# coefficients. Evidence, equations and tolerances: doc/design/features/combat_calibration.md.
+version: 1
+strength_damage: 1.5
+mastery_damage_divisor: 100.0
+mastery_ap_divisor: 15.0
+dual_weapon_ap_surcharge: 5
+penetration_divisor: 200.0
+penetration_cap: 0.75
+resistance_divisor: 200.0
+resistance_cap: 0.75
+damage_variance: 0.18
+critical_multiplier: 2.0
+fatigue_threshold: 50
+fatigue_max_penalty: 0.5
+artifact_multipliers:
+  none: 1.0
+  small: 1.1
+  medium: 1.2
+  large: 1.3
+npc_families:
+  wilderness_ogre: {weapon_damage: 40, damage_multiplier: 2.55, armor_multiplier: 3.0}
+  wilderness_bandit: {weapon_damage: 19, damage_multiplier: 1.0, armor_multiplier: 1.0}
+  wilderness_robber: {weapon_damage: 23, damage_multiplier: 1.0, armor_multiplier: 1.0}
+  wilderness_orc: {weapon_damage: 3, damage_multiplier: 1.0, armor_multiplier: 1.0}
+  wilderness_goblin: {weapon_damage: 2, damage_multiplier: 1.0, armor_multiplier: 1.0}
+  wilderness_skeleton: {weapon_damage: 5, damage_multiplier: 1.0, armor_multiplier: 1.0}
+experience:
+  hp_rate: 0.85
+  group_bonus_per_extra_npc: 0.45
+  loss_multiplier: 0.1
+  participation_share: 0.2
+loot:
+  observation_scale: 100.0
+  observation_max_bonus: 1.0
+  currency_chance_percent: 12
+  potion_chance_percent: 3
+  equipment_chance_percent: 1
+recovery:
+  hp_full_seconds: 600
+  mp_full_seconds: 900
+  skill_divisor: 100.0

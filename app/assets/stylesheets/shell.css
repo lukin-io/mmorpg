@@ -475,6 +475,18 @@ input.nl-chat-input-field,
     overflow: hidden;
   }
 
+  .nl-top-left .nl-player-link {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .nl-top-left .nl-player-level,
+  .nl-top-left .nl-vitals-inline { flex-shrink: 0; }
+
+  .nl-vitals-bars,
+  .nl-hp-bar-inline,
+  .nl-mp-bar-inline { width: clamp(40px, 12vw, 120px); }
+
   .nl-top-right {
     grid-row: 1;
     grid-column: 2;
@@ -574,10 +586,6 @@ input.nl-chat-input-field,
 }
 
 @media (max-width: 420px) {
-  .nl-vitals-bars,
-  .nl-hp-bar-inline,
-  .nl-mp-bar-inline { width: 128px; }
-
   .nl-vitals-text { font-size: 10px; }
   .nl-refresh-image { min-width: 52px; }
 }

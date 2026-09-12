@@ -10,21 +10,30 @@ runtime gaps. It does not own Neverlands evidence or product design:
 
 Neverlands remains the sole game-design authority.
 
+Before changing an existing feature or implementing a missing one, use the
+[context/update map](../DOCUMENTATION.md#21-required-context-and-update-map)
+to read its evidence/design/MVP chain and the applicable
+[NPC](../NPC.md), [FORMULAS](../FORMULAS.md), [ITEMS](../ITEMS.md),
+[WORLD](../WORLD.md), [ARTWORK](../ARTWORK.md) and
+[event catalog](game_shell.md#gameplay-event-catalog) sections. Each handbook's
+opening authority section links the references and handoffs it consumes.
+
 ## Current handbooks
 
 | Handbook | Current status | Primary boundary |
 |---|---|---|
-| `airship_travel.md` | Partially Implemented | Configured paid journeys, bounded flight maps, persisted region handoffs, and flight audiences; normal routes await destination/path/schedule content |
-| `arena_combat.md` | Fully Implemented | Arena creation, combat turns, NPC fights, results, and event feedback |
-| `character_progression.md` | Fully Implemented | Bounded vitals, attributes, skills, XP, perks and professional-license prerequisites |
-| `city.md` | Fully Implemented | Five-quarter navigation, original scenes and hotspots, both gate handoffs and persisted context; other service interiors remain separate |
-| `game_shell.md` | Partially Implemented | Shell, saved-context navigation, cell/room chat and presence, and durable gameplay-event composition |
-| `player_inventory.md` | Fully Implemented | Inventory, equipment, capacity, grants, and item ownership |
-| `shop_economy.md` | Partially Implemented | Wallet/ledger, per-building stock and funds, atomic buy/sell, typed licenses and Merchant qualification; broader parity remains open |
-| `world.md` | Partially Implemented | Bounded region/cell reads, eight-neighbor movement, gate/village entry, empty Look, and NPC handoff; full region content and successful gathering remain gaps |
-| `quests.md` | NOT_IMPLEMENTED | Explicit Quest runtime gap |
-| `professions.md` | NOT_IMPLEMENTED | Explicit profession runtime gap |
-| `dungeons.md` | NOT_IMPLEMENTED | Explicit dungeon runtime gap |
+| [airship_travel.md](airship_travel.md) | Partially Implemented | Configured paid journeys, bounded flight maps, persisted region handoffs, and flight audiences; normal routes await destination/path/schedule content |
+| [arena_combat.md](arena_combat.md) | Partially Implemented | Shared Arena/combat runtime and bounded accepted flows; remaining evidence/runtime boundaries stay in the Combat handbook and MVP plan |
+| [character_progression.md](character_progression.md) | Fully Implemented | Bounded vitals, attributes, skills, XP, perks and professional-license prerequisites |
+| [city.md](city.md) | Fully Implemented | Five-quarter navigation, original scenes and hotspots, both gate handoffs and persisted context; other service interiors remain separate |
+| [game_shell.md](game_shell.md) | Partially Implemented | Shell, saved-context navigation, cell/room chat and presence, and durable gameplay-event composition |
+| [medical_care.md](medical_care.md) | Partially Implemented | Persistent injuries, healer requests/acceptance and Hospital bags; authored Doctor proficiency thresholds remain unenforced; broader crafting remains separate |
+| [player_inventory.md](player_inventory.md) | Fully Implemented | Inventory, equipment, capacity, grants, and item ownership |
+| [shop_economy.md](shop_economy.md) | Partially Implemented | Wallet/ledger, per-building stock and funds, atomic buy/sell, typed licenses and Merchant qualification; broader parity remains open |
+| [world.md](world.md) | Partially Implemented | Bounded region/cell reads, eight-neighbor movement, gate/village entry, empty Look, and NPC handoff; full region content and successful gathering remain gaps |
+| [quests.md](quests.md) | NOT_IMPLEMENTED | Explicit Quest runtime gap |
+| [professions.md](professions.md) | NOT_IMPLEMENTED | Explicit profession runtime gap |
+| [dungeons.md](dungeons.md) | NOT_IMPLEMENTED | Explicit dungeon runtime gap |
 
 A non-green status is intentionally visible. Do not upgrade it because nearby
 code resembles the feature.
@@ -66,6 +75,11 @@ coverage and is verified. Typical triggers are:
 
 Do not update unrelated handbooks merely because they mention the same model.
 Update a related handbook only when its own contract or handoff changed.
+Update affected reference-book entries in the same task and keep links in both
+directions: a handbook must lead to its relevant catalogs, and those catalogs
+must lead to the implementation owner. Register new handbooks here and in the
+domain index; expose their content/formulas in the existing books where
+applicable. Follow the central context/update map rather than copying its rules.
 
 ## Writing rules
 
@@ -80,10 +94,11 @@ Update a related handbook only when its own contract or handoff changed.
   where it is clearer than a short list.
 - Keep history short; Git owns line-by-line history.
 
-Cross-feature links are useful only for real runtime, persistence,
-authorization, presentation, or content handoffs. Reciprocal wording is
-recommended when it prevents ambiguous ownership, but the audit does not force
-an all-to-all link graph.
+Cross-feature links describe real runtime, persistence, authorization,
+presentation or content handoffs. Relevant reciprocal navigation is required by
+[DOCUMENTATION](../DOCUMENTATION.md#21-required-context-and-update-map);
+the audit does not enforce an all-to-all link graph. Review checks that a
+maintainer can find both the consumed contract and its responsible owner.
 
 ## Objective audit
 

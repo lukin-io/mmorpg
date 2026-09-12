@@ -73,6 +73,7 @@ class ApplicationController < ActionController::Base
     character = current_character
     return unless character
 
+    Characters::VitalsService.new(character).tick_regeneration
     @position ||= character.position
     prepare_presence_context unless controller_name.in?(%w[world world_locations shop city_buildings airships])
   end

@@ -181,9 +181,9 @@ RSpec.describe Character, type: :model do
       })
     end
 
-    it "includes level in attack power and defense" do
-      expect(character.attack_power).to eq(25) # 20 strength + 4 dexterity + 1 level
-      expect(character.defense).to eq(16) # 12 vitality + 3 strength + 1 level
+    it "uses effective Strength and actual item armor" do
+      expect(character.attack_power).to eq(15) # Strength 10 at calibrated 1.5
+      expect(character.defense).to eq(0) # No equipped armor
     end
 
     it "includes equipped item bonuses in the combat breakdown" do
@@ -195,9 +195,9 @@ RSpec.describe Character, type: :model do
       breakdown = character.combat_power_breakdown
 
       expect(breakdown[:attack_power][:equipment]).to eq(7)
-      expect(breakdown[:attack_power][:total]).to eq(32)
+      expect(breakdown[:attack_power][:total]).to eq(22)
       expect(breakdown[:defense][:equipment]).to eq(5)
-      expect(breakdown[:defense][:total]).to eq(21)
+      expect(breakdown[:defense][:total]).to eq(5)
     end
 
     it "applies equipped primary stat and vitality effects" do
@@ -206,7 +206,7 @@ RSpec.describe Character, type: :model do
       create(:inventory_item, inventory: character.inventory, item_template: ring, equipped: true)
 
       expect(character.stats.get(:strength)).to eq(13)
-      expect(character.attack_power).to eq(31)
+      expect(character.attack_power).to eq(20)
       expect(character.effective_max_hp).to eq(character.read_attribute(:max_hp) + 20)
     end
 

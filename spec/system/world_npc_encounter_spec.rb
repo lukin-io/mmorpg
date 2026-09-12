@@ -28,7 +28,8 @@ RSpec.describe "Wilderness NPC encounter delivery", type: :system, js: true do
     match = ArenaMatch.order(:id).last
     expect(page).to have_current_path(arena_match_path(match))
     expect(page).to have_css(".arena-match-page")
-    expect(page).to have_css(".fighter-card--npc", count: 2)
+    expect(page).to have_css(".fighter-card--npc", count: 1)
+    expect(page).to have_css(".fighter-card--npc", count: 2, visible: :all)
     expect(page).to have_css(".nl-fight-target-line", text: tile_npc.display_name)
     expect(match.metadata).to include("source" => "world_npc", "encounter_count" => 2)
   end

@@ -161,11 +161,7 @@ class ArenaMatch < ApplicationRecord
   # @param participation [ArenaParticipation]
   # @return [Boolean]
   def participant_defeated?(participation)
-    if participation.npc?
-      (participation.current_hp || 0) <= 0
-    else
-      (participation.character&.current_hp || 0) <= 0
-    end
+    !participation.combat_alive?
   end
 
   # Determine winner based on remaining HP

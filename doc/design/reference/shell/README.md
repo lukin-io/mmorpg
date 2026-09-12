@@ -1,5 +1,8 @@
 # Neverlands Shell and Shared Style Source Summary
 
+For the design, delivery status and current implementation using this evidence,
+follow the [Shell domain](../../../domains/shell.md).
+
 - Document type: neverlands-source-summary
 - Domain: shell
 - Updated: 2026-09-07

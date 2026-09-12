@@ -8,8 +8,9 @@
   - Skills grouped by category
 %>
 <%
-  # Build data structures for the Stimulus controller
-  skills_json = @skills_data.transform_values { |v| v[:level] }.to_json
+  # Only saved levels enter allocation; equipment bonuses affect display only.
+  skills_json = @skills_data.transform_values { |v| v[:base_level] }.to_json
+  equipment_bonuses_json = @skills_data.transform_values { |v| v[:equipment_bonus] }.to_json
   rates_json = @skills_data.transform_values { |v| v[:progression_rate] }.to_json
   pools_json = @skills_data.transform_values { |v| v[:pool].to_s }.to_json
 %>
@@ -18,6 +19,7 @@
      data-skill-allocation-combat-free-value="<%= @combat_skill_points %>"
      data-skill-allocation-peace-free-value="<%= @peace_skill_points %>"
      data-skill-allocation-skills-value="<%= skills_json %>"
+     data-skill-allocation-equipment-bonuses-value="<%= equipment_bonuses_json %>"
      data-skill-allocation-rates-value="<%= rates_json %>"
      data-skill-allocation-pools-value="<%= pools_json %>"
      data-skill-allocation-spends-value="{}">

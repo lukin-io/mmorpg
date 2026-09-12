@@ -1,6 +1,12 @@
 # Arena Area
 
-Domain navigation: `doc/domains/combat.md`.
+Domain navigation: [Combat](../../domains/combat.md).
+
+[Combat design](../features/combat.md) owns the shared fight rules;
+[FORMULAS](../../FORMULAS.md#5-combat) and [NPC lifecycle](../../NPC.md#7-encounter-and-fight-lifecycle)
+describe their current calculations and roster inputs. The
+[Arena Combat handbook](../../features/arena_combat.md) owns rooms,
+applications, runtime transitions and acceptance.
 
 ## Purpose
 

@@ -32,7 +32,7 @@ need an isolated capture:
 | Wiki area | Source-backed observation | Local use |
 | --- | --- | --- |
 | [`Персонаж`](http://wiki.neverlands.ru/wiki/Персонаж) | Character growth combines level, stats, numeric skills, binary perks, equipment, and professions. Warrior, Mage, and Dodger are build archetypes rather than a required class-selection record. | Preserve separate progression concepts; do not add a generic class selector. |
-| [`Уровень`](http://wiki.neverlands.ru/wiki/Уровень), [`Опыт`](http://wiki.neverlands.ru/wiki/Опыт), [`Таблица опыта`](http://wiki.neverlands.ru/wiki/Таблица_опыта) | A new character is level `0`; the table provides cumulative XP thresholds, level grants, per-fight XP caps, and maximum NPC group sizes. Rows `0..27` are complete; the later visible rows are incomplete. | `config/gameplay/character_progression.yml` is limited to complete rows `0..27`; no extrapolation. Solo configured NPC XP is capped by the winner's current row. Group distribution remains an evidence gap. |
+| [`Уровень`](http://wiki.neverlands.ru/wiki/Уровень), [`Опыт`](http://wiki.neverlands.ru/wiki/Опыт), [`Таблица опыта`](http://wiki.neverlands.ru/wiki/Таблица_опыта) | A new character is level `0`; the table provides per-level XP costs (the original cumulative-column interpretation is superseded by the [September11 live recheck](2026-09-11_level_grants_and_combat_inputs.md)), level grants, per-fight XP caps, and maximum NPC group sizes. Rows `0..27` are complete; the later visible rows are incomplete. | `config/gameplay/character_progression.yml` is limited to complete rows `0..27`; no extrapolation. The current recipient cap also covers separately configured defeat XP; see the September11 recheck and current combat handbook. Group distribution remains an evidence gap. |
 | [`Стат`](http://wiki.neverlands.ru/wiki/Стат) | Five primary stats remain the core allocation surface. | Keep Strength, Dexterity, Luck, Health, and Knowledge at base `1`, with starter pool `15`. |
 | [`Здоровье`](http://wiki.neverlands.ru/wiki/Здоровье), [`Мана`](http://wiki.neverlands.ru/wiki/Мана) | Each Health point contributes `5` maximum HP; each Knowledge point contributes `7` maximum MP. | Recalculate base maxima after a saved stat allocation without refilling current HP/MP. |
 | [`Масса`](http://wiki.neverlands.ru/wiki/Масса) | The published carried-mass formula is `Strength × 5 + Health × 10 + level × 10`. | Use the effective stat result for inventory, loot, transfer, and shop capacity checks. |
@@ -62,7 +62,7 @@ general group-XP formulas.
 3. [Perks System](#perks-system)
 4. [Effects System](#effects-system)
 5. [Arena System](#arena-system)
-6. [Implementation Notes](#implementation-notes)
+6. [Rails Implementation Alignment](#rails-implementation-alignment)
 
 ---
 

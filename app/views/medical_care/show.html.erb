@@ -1,0 +1,40 @@
+<section class="nl-medical-care">
+  <h1>Medical care</h1>
+  <%= link_to "Inventory", inventory_path, class: "lbut", data: {turbo_frame: "_top"} %>
+  <%= link_to "Return", world_path, class: "lbut", data: {turbo_frame: "_top"} %>
+  <h2>Injuries</h2>
+  <% if @injuries.empty? %><p>You have no active injuries.</p><% end %>
+  <% @injuries.each do |injury| %>
+    <p><strong class="nl-injury-link"><%= injury.severity.titleize %> injury «<%= injury.name %>»</strong>
+      — <%= injury_remaining_time(injury) %> remaining;
+      stats −<%= injury.stat_penalty_percent %>%.
+      <% if injury.blocks_movement? %>Movement unavailable.<% end %>
+      <% if injury.severity == "combat" %>Inventory unavailable.<% end %>
+    </p>
+  <% end %>
+  <% @requests.each do |request| %>
+    <div class="nl-treatment-request">
+      <p><strong><%= request.healer.name %></strong> offers to treat
+        «<%= request.character_injury.name %>» for <strong><%= request.price %> NV</strong>.</p>
+      <%= button_to "Accept treatment", accept_injury_treatment_path(request), class: "lbut", form: {data: {turbo_frame: "_top"}} %>
+      <%= button_to "Decline", decline_injury_treatment_path(request), class: "lbut", form: {data: {turbo_frame: "_top"}} %>
+    </div>
+  <% end %>
+  <h2>Healer bags</h2>
+  <% if @bags.empty? %><p>You carry no healer bags. Bags are sold at the Hospital; Doctor licenses are sold in the Shop.</p><% end %>
+  <% @bags.each do |bag| %>
+    <div class="nl-healer-bag">
+      <%= image_tag "items/healer_bag.png", width: 60, height: 60, alt: bag.item_template.name %>
+      <div><strong><%= bag.item_template.name %></strong> — <%= pluralize(bag.current_durability, "use") %> left.
+        <%= form_with url: treat_injury_path, data: {turbo_frame: "_top"} do |form| %>
+          <%= form.hidden_field :bag_id, value: bag.id %>
+          <%= form.label :patient_name, "Patient name", for: "patient_#{bag.id}" %>
+          <%= form.text_field :patient_name, id: "patient_#{bag.id}", required: true, maxlength: 30 %>
+          <%= form.label :price, "Price (NV)", for: "price_#{bag.id}" %>
+          <%= form.number_field :price, id: "price_#{bag.id}", value: 0, min: 0, max: Characters::TreatInjury::MAX_PRICE.fetch(bag.effect_modifiers["heals_injury"]) %>
+          <%= form.submit "Treat", class: "lbut" %>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+</section>

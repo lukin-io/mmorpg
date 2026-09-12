@@ -3,7 +3,7 @@
 title: Dungeons Feature
 description: NOT_IMPLEMENTED placeholder for dungeon lifecycles and the separate future mine underground travel contract.
 status: NOT_IMPLEMENTED
-updated: 2026-09-09
+updated: 2026-09-12
 owners: Dungeons domain
 template: feature-gap-v2
 ---
@@ -11,6 +11,13 @@ template: feature-gap-v2
 # Dungeons
 
 ## 1. Evidence and design
+
+For future implementation, read [WORLD](../WORLD.md#3-outdoor-cells-and-locations)
+for the existing Mine lobby and location boundaries, [NPC](../NPC.md) for
+authored encounter identities and [FORMULAS](../FORMULAS.md) for shared
+calculations. These do not establish underground topology or a dungeon loop.
+Connect new verified behavior and update its references under the
+[context/update map](../DOCUMENTATION.md#21-required-context-and-update-map).
 
 Neverlands is the sole game-design authority.
 

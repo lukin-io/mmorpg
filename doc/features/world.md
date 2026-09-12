@@ -3,7 +3,7 @@
 title: World Feature
 description: Implementation handbook for the Neverlands-based open world, cells, movement, cell content, actions, and persisted player location.
 status: Partially Implemented
-updated: 2026-09-11
+updated: 2026-09-12
 owners: Game world, movement, and world UI
 template: feature-v1
 ---
@@ -14,7 +14,93 @@ This document is the implementation contract for the current World feature. It e
 
 It describes what exists now. It does not turn deferred Neverlands mechanics into requirements by implication.
 
+### September 12 calibrated encounter and recovery work
+
+[Combat calibration v1](../design/features/combat_calibration.md) supersedes the
+old Ogre evidence hold. Two remote [19,9]/[19,10] habitats reuse all ten stronger
+captured rosters, using explicitly local coordinates and60–360-second delays.
+They join the40 old Bandit and2 Ogre bootstrap placements (44 total). Source
+atlas facts remain unchanged. Existing low/medium source windows remain;
+weaker enemies stay near Forpost, high-level groups are remote. Managed cell
+state is preserved, except the explicit superseded Ogre hold is upgraded.
+Heavy/combat injuries block accepted movement/city-entry/boarding actions;
+[Medical Care](medical_care.md) owns treatment. HP/MP recover from elapsed
+server time, with persisted fractions, recovery skills and fatigue. The header
+polls authoritative vitals instead of simulating regeneration in JavaScript.
+Both action-triggered and passive combat consume the old encounter timer; Finish starts a fresh eligible wait. Final validation is in [Arena acceptance](arena_combat.md#september-12-final-calibrated-acceptance).
+
 ## 1. Design authority and related documents
+
+Read [WORLD](../WORLD.md) for geography, coordinates, routes/actions and editing,
+[NPC](../NPC.md#4-locations-cells-and-complete-groups) for habitats/rosters,
+[FORMULAS](../FORMULAS.md#8-world-movement-and-encounter-timing) for timing and
+[ARTWORK](../ARTWORK.md) for map assets. [City](city.md),
+[Airship](airship_travel.md), [Combat](arena_combat.md) and
+[Shell](game_shell.md) own their entry/return/audience handoffs. Read and update
+affected references under the [context/update map](../DOCUMENTATION.md#21-required-context-and-update-map).
+
+### Historical September 11 Ogre habitat follow-up
+
+Two atlas-compatible Ogre placements at local [20,6]/[20,7] supplement the 40
+existing Bandit bootstrap placements. These are remote from both Forpost
+gates. `StarterEncounterDistribution` now accepts a complete captured roster
+from either a placed NPC definition or a standalone template definition;
+it still requires every member's exact level/HP to fit the target annotation.
+The loader validates template-owned roster references before seeding.
+
+Before the September12 authorization, both Ogre declarations started with `active: false` and
+`combat_readiness: unverified_damage_coefficients`. This preserves the user's
+exact-evidence rule: no guessed base damage or victory reward is authored.
+The existing `TileNpc#alive?`/Start boundary rejects these disabled encounters.
+Once source coefficients are established, the same managed records and shared
+combat pipeline can be enabled without a separate Ogre engine.
+
+The new `forpost_ogre_habitat` catalog key selects two physical 100px cells,
+with matching 200px variants, from one continuous original darker woodland
+painting. `Seeds::WorldContentSupport.starter_cell_art` chooses them only at
+the two atlas positions. Seeds upgrade only unchanged default references;
+managed art, passability, local actions and NPC state survive retries. There
+is still one launch zone, no visible Ogre marker and no new water action.
+The sparse presentation fallback outside persisted imported tiles is unchanged.
+
+Evidence: [Ogre cycle](../design/reference/combat/observations/2026-09-11_ogre_combat_cycle.md).
+Prompts/dimensions: [ARTWORK](../ARTWORK.md#september-11-ogre-habitat-and-equipment-production).
+Focused checks: `spec/models/open_world_seed_spec.rb`,
+`spec/services/game/world/starter_encounter_distribution_spec.rb`,
+`spec/services/game/world/outdoor_npc_config_spec.rb` and
+`spec/assets/ogre_artwork_spec.rb`. Final browser acceptance is recorded
+separately from the historical stage2 checks below.
+
+#### Final habitat acceptance — September 12 local date
+
+After the final `bin/verify full` passed (2,942 non-system / 298 system
+examples, lint/security/docs green), the agent used Chrome with the dedicated
+development player at 1728×833, 390×844 and 320×844, DPR 1, normal zoom.
+Exact-target fixture preparation imported only the two authored habitat cells,
+the Ogre template and two inactive placements; it preserved other development
+content. Keyboard Enter on Move north completed `[20,7] → [20,6]`; reloading
+retained `[20,6]`. Pointer Move south completed the return to `[20,7]`.
+The server's travel countdown and temporarily disabled character/inventory
+controls remained visible. An initial offer invalidated by the viewport
+resize was safely rejected with “Movement offer is no longer available”;
+reload and a fresh offer recovered normally without changing source code.
+
+Both original darker cell images remained **100×100 CSS px** at 320px and
+390px, using the expected separate `image-set` 1×/2× assets. Body width equaled
+viewport width, the paired woodland remained continuous, and movement
+controls stayed reachable. No new visible NPC marker, entrance or water
+action appeared. The sparse scenery beyond the bounded import remains its
+existing fallback; this check does not certify full-zone artwork or every
+narrow presence-panel label.
+
+The [Arena follow-up](arena_combat.md#final-ogre-acceptance--september-12-local-date)
+records real passive-entry matches 34/35, combat, Statistics, Finish and
+same-cell reload acceptance. Temporary fixture activation was restored to
+inactive and the test player returned to its original `[4,11]` location and
+stats. No combat balance is inferred from boosted test-player results.
+Final screenshots are attached to the task; local gate output is
+`/tmp/mmorpg-ogre-full-accepted.log`. Runtime tests and manual acceptance are
+distinct from the 22 Neverlands observations.
 
 Domain navigation: `doc/domains/world.md`.
 
@@ -1149,6 +1235,19 @@ to seeds must never make an unimplemented action interactive or invent a reward.
 
 #### Add, move, adjust, or remove an outdoor NPC
 
+Encounter-start notices describe the transition without naming the spawn
+anchor: a selected mixed roster can contain different species from that
+anchor.
+
+The September 11 combat cycle adds exact seed anchors at local `[4,12]`
+(source `[998,1004]`, Orc/Goblin levels 3–4) and `[4,11]` (source `[998,1003]`,
+Cemetery Skeleton levels 7–9). These use the existing DB-backed placement and
+roster selector. Per-member combat/equipment snapshots remain Combat-owned;
+see `doc/features/arena_combat.md`. No NPC marker or manual Attack control is
+added to World. The authored launch progression is weaker groups near
+Forpost and stronger groups farther away; exact habitats/levels are recorded
+in `doc/design/areas/world_map.md`, not derived from a generic distance curve.
+
 Baseline NPC placement is declared in `config/gameplay/outdoor_npcs.yml`, not
 in a new Ruby catalog. `db/seeds.rb` materializes it into the same `NpcTemplate`
 and `TileNpc` records that `/manage` edits and runtime resolves. This minimal
@@ -1433,8 +1532,11 @@ else:
 
 The fallback whole-second bands are `0..16 => 30`, `17..33 => 29`,
 `34..49 => 28`, `50..66 => 27`, `67..83 => 26`, `84..99 => 25`, and
-`100 => 24`. `passive_skill_level` is the effective value, including supported
-equipment bonuses and capped at `100`.
+`100 => 24`. `passive_skill_level` supplies the effective value, adding usable
+equipment once; it can exceed 100. This movement calculation clamps its input
+to `0..100`; it does not cap the shared skill reader. Progression owns the
+[effective-value contract](character_progression.md#level-grants-and-the-combat-handoff)
+and [current source recheck](../design/reference/character/observations/2026-09-11_level_grants_and_combat_inputs.md).
 
 The command keeps its offered duration even if the character's skill,
 equipment, or target metadata changes afterward. Acceptance uses that
@@ -1598,11 +1700,49 @@ whether the source is repeatable, the five-minute World-fight deadline, and
 normalized `world`, `profile`, or `inventory` return context. The outdoor map
 does not implement a separate combat engine.
 
-Arena's shared processor lets each living NPC on the opposing side act,
-performs defeat and typed loot resolution once per NPC, and ends the fight only
+Arena's shared processor resolves the player's package and the selected NPC's
+committed response, including its already committed return after a lethal
+strike. It performs defeat and eligible typed loot resolution once per NPC, and ends the fight only
 after an entire side is defeated. Item awards enter Inventory; any future
 evidence-authored NV award enters the Economy wallet ledger. Surrender follows
 the same participant rule for PvE and PvP side sizes.
+Surviving opponents continue through automatic handoff; defeated members leave
+live cards, selection and future turns. Completed fights omit opponent cards
+and the active roster while retaining history in logs/results. Independent
+NPC-versus-NPC AI is not verified by the World/player encounter contract.
+
+Combat owns the stronger-cycle rich logs, critical dodges, raw versus credited
+damage, defeated-opponent superscripts and equipment-aware player projections.
+Its trusted entitlement windows only gate search eligibility; they do not
+author a loot pool or probability. The separately authored solo loss-XP path
+does not reuse an encounter's victory reward. Finalization persists rewards;
+positive solo-NPC completion chat is emitted once on Finish. See the
+[Arena handbook](arena_combat.md#63-turn-combat-and-completion) for those current
+contracts and completed bounded stage2 acceptance. All ten stronger source fights are
+complete, but they do not establish coordinates for a new World anchor.
+Higher-level NPCs and larger groups should yield more encounter XP; authored
+rewards retain actual source awards because composition, contribution and the
+recipient's cap matter and the general formula is unknown.
+
+For NPC content management, preserve complete exact-level equipment maps and
+snapshot precedence from [NPC design](../design/features/npcs_quests.md#per-level-combat-and-equipment-sets).
+New level 13–15 Bandit/Robber sets must not become template-root defaults for
+unknown lower levels. Existing started fights retain their snapshots; original
+art never supplies stats, owned items or loot.
+
+The reusable `encounter_presets` in `outdoor_npcs.yml` retain
+all ten stronger samples' complete rosters, captured rewards and source player
+level 17 independently of `placements`. Available stronger profiles do not
+justify inventing target Forpost cells or replacing known atlas content.
+Stronger/far-area placement remains an evidence gap until exact eligibility
+is captured.
+`OutdoorNpcConfig#find_encounter_preset(key)` returns an independent preset
+copy containing its metadata, or nil when absent. It does not create a
+placement, select a roster or start combat. Reuse follows the existing
+`TileNpc` → `EncounterRosterSelector` → `StartNpcFight` path. The region label
+is provenance, not a new playable zone; uncaptured risk/drop values remain
+unknown, and any existing runtime fallback is not a measured source value.
+
 `ArenaMatchesController#finish` clears the player's combat flag and resolves
 World-fight return metadata through `CombatReturnContext`; invalid persisted
 context falls back to the unchanged world cell.
@@ -1892,7 +2032,7 @@ A wilderness fight does not move `CharacterPosition`. Its match metadata stores 
   the due time across early checks/reload, invalidates it when authoritative
   cell/NPC state changes, and overlapping/retried due checks reuse one active
   match.
-- The captured Plague Rat encounter remains invisible on the map, then the fight renders and resolves two independently targetable NPCs; both living NPCs can act, the first defeat does not end the fight, and each defeated NPC receives one retry-safe typed-loot resolution. Only a successful explicit roll can add Inventory value; the unknown production Rat Tail probability remains disabled.
+- The captured Plague Rat encounter remains invisible on the map, then the fight renders and resolves two independently targetable NPCs; both living NPCs can act, the first defeat does not end the fight, and each defeated NPC receives one retry-safe typed-loot resolution. Only a successful explicit roll adds Inventory value; September12 authorizes the provisional 3% Rat Tail probability.
 - The mapped `[14,15]` encounter selects exactly one complete captured roster,
   preserves its mixed/repeated member order, level, HP, XP, and risk metadata,
   and chooses a due time only inside one captured window; forged browser
