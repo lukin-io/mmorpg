@@ -117,7 +117,7 @@ class Character < ApplicationRecord
     ).first
   end
 
-  # Each player acknowledges the physical Arena result independently. Reloads
+  # Each player acknowledges a physical Arena/scroll result independently. Reloads
   # and a fresh login must retain this screen after another player ends a fight.
   def unfinished_arena_result
     arena_participations.joins(:arena_match).merge(ArenaMatch.completed)
@@ -323,6 +323,16 @@ class Character < ApplicationRecord
   # @return [Integer] effective skill level, which may exceed 100
   def passive_skill_level(skill_key)
     base_passive_skill_level(skill_key) + equipment_skill_bonus(skill_key)
+  end
+
+  # Profession counters are separate from spendable Skills and boolean Perks.
+  # Missing/malformed counters contribute zero; Doctor equipment adds flat points
+  # as published by Neverlands. No passive-skill allocation cap applies.
+  def doctor_proficiency
+    counters = metadata.to_h["profession_skills"]
+    value = counters["doctor"] if counters.is_a?(Hash)
+    base = value.is_a?(Integer) && value >= 0 ? value : 0
+    [base + equipment_skill_bonus(:doctor), 0].max
   end
 
   # Get the base level of a passive skill (without equipment bonuses)
@@ -808,10 +818,10 @@ class Character < ApplicationRecord
 
     key = skill_key.to_s
     normalized_key = normalize_equipment_effect_key(key)
-    return 0 unless Game::Skills::PassiveSkillRegistry.find(normalized_key)
+    return 0 unless normalized_key == "doctor" || Game::Skills::PassiveSkillRegistry.find(normalized_key)
 
     inventory.inventory_items.equipped.includes(:item_template).sum do |item|
-      next 0 if item.broken?
+      next 0 if item.broken? || (normalized_key == "doctor" && item.expired?)
 
       effects = item.effect_modifiers.to_h
       skill_mods = effects["skill_bonuses"] || effects[:skill_bonuses] || {}

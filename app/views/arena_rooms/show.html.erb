@@ -55,6 +55,8 @@
   <div class="nl-arena-application-form" data-arena-target="formContainer">
     <% if @my_application %>
       <div class="nl-arena-current-row"><b>Waiting for the fight to begin!</b></div>
+    <% elsif !ArenaApplication.new.character_hp_sufficient?(current_character) %>
+      <div class="nl-arena-current-row"><b>Recover before fighting, you are too weakened!</b></div>
     <% else %>
       <%= form_with url: arena_room_arena_applications_path(@room),
                     method: :post,

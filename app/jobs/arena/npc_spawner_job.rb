@@ -18,11 +18,10 @@ module Arena
 
     # Configuration
     MIN_NPCS_PER_ROOM = 1
-    MAX_NPCS_PER_ROOM = 5
     RESPAWN_INTERVAL = 60.seconds # Re-check every minute
 
     # Rooms that support NPC spawning
-    NPC_ENABLED_ROOMS = %w[training].freeze
+    NPC_ENABLED_ROOMS = NpcApplicationService::REPLENISHED_ROOMS
 
     def perform(room_slug: nil)
       if room_slug
@@ -50,7 +49,8 @@ module Arena
       # Check if room has NPC config
       return unless Game::World::ArenaNpcConfig.has_npcs?(room_slug)
 
-      current_npc_count = ArenaApplication.open.from_npcs.where(arena_room: room).count
+      current_npc_count = ArenaApplication.open.from_npcs.where(arena_room: room)
+        .where("expires_at > ?", Time.current).count
 
       # Spawn more NPCs if below minimum
       if current_npc_count < MIN_NPCS_PER_ROOM

@@ -68,6 +68,8 @@ Rails.application.routes.draw do
     post :transfer_money
   end
   resources :inventory_items, only: [:destroy], path: "inventory/items"
+  resource :scroll_use, only: [:create], path: "inventory/scroll_use"
+  resource :combat_status, only: [:create]
 
   resource :shop, only: [:show], controller: "shop" do
     post :buy
@@ -102,6 +104,8 @@ Rails.application.routes.draw do
 
   resources :arena_matches, only: [:show] do
     member do
+      post :confirm_duel
+      delete :refuse_duel
       post :action
       post :switch_opponent
       post :claim_timeout

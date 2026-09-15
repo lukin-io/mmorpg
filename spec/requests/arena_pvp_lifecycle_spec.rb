@@ -73,6 +73,13 @@ RSpec.describe "Physical 1x1 PvP lifecycle", type: :request do
     expect(match.arena_applications).to all(be_matched)
 
     Arena::MatchStarterJob.perform_now(match.id)
+    expect(match.reload).to be_pending
+    sign_out second_user
+    sign_in first_user
+    post confirm_duel_arena_match_path(match), as: :json
+    expect(response).to have_http_status(:ok)
+    sign_out first_user
+    sign_in second_user
 
     expect(match.reload).to be_live
     expect(match.current_turn_number).to eq(1)

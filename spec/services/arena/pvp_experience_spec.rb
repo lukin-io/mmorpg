@@ -18,6 +18,18 @@ RSpec.describe Arena::ExperienceAwarder, "player opponents" do
     expect(loser.reload.experience).to eq(0)
   end
 
+  it "awards a defeated PvP contributor even when the enemy survives" do
+    winner.update!(level: 24)
+    loser.update!(level: 17)
+    a.update!(metadata: {damage_dealt: 1_000, damage_taken: 194})
+    b.update!(metadata: {damage_dealt: 194, damage_taken: 1_000})
+    awards = described_class.new(match:, winning_team: "a").call_all
+    loss = awards.find { |entry| entry.character_id == loser.id }
+    # Source sample is177; v1's retained HP/risk coefficients approximate181.
+    expect(loss.experience_awarded).to eq(181)
+    expect(loser.reload.experience).to eq(181)
+  end
+
   it "gives no XP for an untouched surrender or a draw" do
     b.update!(metadata: {damage_taken: 0})
     described_class.new(match:, winning_team: "a").call_all

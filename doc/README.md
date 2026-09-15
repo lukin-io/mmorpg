@@ -37,6 +37,13 @@ assets or platform copy.
 
 ## Start here
 
+For a complete gameplay-area guide, use [NPC](NPC.md), [ITEMS](ITEMS.md),
+[WORLD](WORLD.md), [FORMULAS](FORMULAS.md), [SCROLLS](SCROLLS.md),
+[COMBAT](COMBAT.md), [ARENA](ARENA.md), [SKILLS](SKILLS.md), [PERKS](PERKS.md),
+[CHARACTER](CHARACTER.md), [MEDICAL](MEDICAL.md) or [ECONOMY](ECONOMY.md).
+They explain content, behavior, formulas, use cases, cross-feature effects, code ownership,
+editing and evidence limits, with links to the detailed implementation handbooks.
+
 1. `doc/DOCUMENTATION.md`
 2. `doc/domains/README.md`
 3. the selected domain page
@@ -53,6 +60,9 @@ exists; it does not authorize a parallel runtime catalog.
 
 ## Templates and audits
 
+- [GAME_GUIDE_TEMPLATE.md](GAME_GUIDE_TEMPLATE.md) supplies the purpose, usage
+  steps and adaptable outline for new global game guides such as ARENA or
+  SCROLLS. Copy its outline into `doc/<AREA>.md` and register the related links.
 - `doc/templates/README.md` chooses observation, source-summary, domain, and
   design-gap templates.
 - `doc/features/FEATURE_TEMPLATE.md` is the lean eight-section `feature-v3`

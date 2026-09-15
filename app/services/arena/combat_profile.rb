@@ -73,6 +73,13 @@ module Arena
       block_table = Game::Combat::ActionCatalog.normalize_block_table(
         explicit_profile_value("block_table") || derived_block_table
       )
+      # An unarmed admission has removed/rejected every equipped item. Old
+      # character preview overrides cannot retain a shield or weapon's costs.
+      if participation&.arena_match&.metadata.to_h["fight_kind"] == "no_weapons"
+        seed = derived_physical_attack_seed
+        ap_limit = derived_ap_limit
+        block_table = "normal"
+      end
 
       {
         "ap_limit" => ap_limit,

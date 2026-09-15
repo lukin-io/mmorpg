@@ -345,9 +345,10 @@ Remaining design detail before launch:
   zero durability beyond the current safe broken-item handling;
 - server-issued inventory action keys when normal Rails form protection is not
   enough for the final gameplay action model;
-- direct trade settlement edge cases, dealer transfers, targeted scroll/doctor
-  effects, and combat item-use slots need dedicated source capture before they
-  go beyond the basic inventory forms.
+- direct trade settlement edge cases, dealer transfers, remaining targeted
+  scroll/doctor effects, and combat item-use slots need dedicated source capture.
+  The first two [attack scrolls](scrolls.md) have captured requirements/forms
+  and a shared combat-entry adapter; live execution remains a separate check.
 
 ## State Concepts
 

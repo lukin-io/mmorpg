@@ -1,18 +1,24 @@
 # Item Book
 
-Reviewed against repository content and runtime owners on **2026-09-12**.
+Reviewed against repository content and runtime owners on **2026-09-14**.
 This is the general catalog and editing guide for item definitions, owned
 equipment, consumables, materials and licenses. It identifies what exists,
 where it can come from, which properties do something, and how changes affect
 players. Baseline definitions are not a live database/stock report.
 
 Related books: [NPC](NPC.md), [WORLD](WORLD.md), [FORMULAS](FORMULAS.md) and
-[ARTWORK](ARTWORK.md). Detailed behavior remains in
+[ARTWORK](ARTWORK.md). [SCROLLS](SCROLLS.md) is the full guide to carried scrolls,
+targeted activation and typed licenses; [COMBAT](COMBAT.md) explains how equipped
+items affect fights and aftermath. Detailed behavior remains in
 [Inventory](features/player_inventory.md), [Shop](features/shop_economy.md),
 [Medical Care](features/medical_care.md) and [Combat](features/arena_combat.md).
 Source provenance starts with the [Inventory evidence index](design/reference/inventory/README.md)
 and [item design](design/features/items_inventory_equipment.md). The
 [MVP plan](design/launch_mvp_plan.md) owns delivery status.
+
+[CHARACTER](CHARACTER.md) explains equipment composition and capacity;
+[MEDICAL](MEDICAL.md) explains bag requirements and cure/use behavior;
+[ECONOMY](ECONOMY.md) explains prices, stock, licenses and payment/receipt flows.
 
 Before editing existing items or adding new definitions/effects, follow the
 [context/update map](DOCUMENTATION.md#21-required-context-and-update-map).
@@ -31,6 +37,7 @@ when a reward notice changes.
 - [6. Editing recipes](#6-editing-recipes)
 - [7. Current limitations](#7-current-limitations)
 - [8. Verification and maintenance](#8-verification-and-maintenance)
+- [Use cases and cross-feature effects](#use-cases-and-cross-feature-effects)
 
 ## 1. Definition, ownership and availability
 
@@ -49,16 +56,16 @@ image, price or source name never grants an item to a player.
 
 The baseline definitions come from three sources:
 
-- [starter_shop.json](../db/seeds/data/starter_shop.json): 79 Shop definitions.
+- [starter_shop.json](../db/seeds/data/starter_shop.json): 80 Shop definitions.
 - [shop_inventory.rb](../db/seeds/shop_inventory.rb): ten supplemental inventory
   definitions, six licenses and two loot materials; it also supports bounded
   development fixture grants.
 - [combat_care.rb](../db/seeds/combat_care.rb): four healer bags/kits and the
   small health elixir.
 
-That is **102 distinct baseline keys**. This inventory excludes arbitrary
+That is **103 distinct baseline keys**. This inventory excludes arbitrary
 development fixtures, NPC decorative gear and read-only Mine merchandise text.
-The main Forpost Shop stock baseline references the 79 JSON keys, three
+The main Forpost Shop stock baseline references the 80 JSON keys, three
 supplemental jewelry keys and six licenses. Some historical jewelry definitions
 lack the `shop.sold` eligibility flag: a stock row alone does not make them
 buyable. Hospital stock is its own four-item assortment. See
@@ -68,7 +75,7 @@ buyable. Hospital stock is its own four-item assortment. See
 
 ### Shop assortment definitions
 
-The following tables mirror the 79 JSON definitions. Prices are **base NV**,
+The following tables mirror the 80 JSON definitions. Prices are **base NV**,
 not resale payouts; durability is the template maximum. Requirements/effects
 use actual stored keys so an editor can find them directly. All entries link
 to their original runtime artwork. The JSON also contains exact source names,
@@ -225,18 +232,49 @@ and is deliberately not maintained as a live count in this book.
 | `small_knowledge_ring` — Small Knowledge Ring (`equipment`, `ring`) | level: 2 | knowledge: 1 | 6 | 1 / 10 / 1 | [image](../app/assets/images/items/small_knowledge_ring.png) |
 | `subtlety_ring` — Subtlety Ring (`equipment`, `ring`) | level: 3; dexterity: 9 | crushing: -5; evasion: 5; accuracy: 5 | 10 | 1 / 20 / 1 | [image](../app/assets/images/items/subtlety_ring.png) |
 
-#### Duel permits
+#### Attack scrolls and remaining Duel permits
 
 | Key / name (type, slot) | Requirements | Effects | Base NV | Weight / max durability / stack | Art |
 |---|---|---|---:|---|---|
-| `duel_permit_i` — Duel Permit I (`consumable`, `none`) | level: 5; stealth: 20 | — | 16 | 1 / 1 / 10 | [image](../app/assets/images/items/duel_permit_i.png) |
+| `duel_permit_i` — Duel Permit I (`consumable`, `none`) | level: 5; stealth: 20 | Targeted low-trauma fight | 16 | 1 / 1 / 10 | [image](../app/assets/images/items/duel_permit_i.png) |
 | `duel_permit_ii` — Duel Permit II (`consumable`, `none`) | level: 5; stealth: 30 | — | 30 | 1 / 2 / 10 | [image](../app/assets/images/items/duel_permit_ii.png) |
 | `duel_permit_iii` — Duel Permit III (`consumable`, `none`) | level: 5; stealth: 40 | — | 54 | 1 / 4 / 10 | [image](../app/assets/images/items/duel_permit_iii.png) |
 | `duel_permit_iv` — Duel Permit IV (`consumable`, `none`) | level: 5; stealth: 60 | — | 84 | 1 / 7 / 10 | [image](../app/assets/images/items/duel_permit_iv.png) |
+| `fist_attack` — Fist Attack (`consumable`, `none`) | level: 10; no skill gate | Both players unequipped; physical unarmed fight; personal use/delete only | 250 | 1 / 1 / 1 | [image](../app/assets/images/items/fist_attack.png) |
+
+### Attack scroll use
+
+[SCROLLS](SCROLLS.md) collects the catalog, forms, eligibility, formulas,
+transactions, peace/license paths and editing procedure in one general guide.
+[Scroll design](design/features/scrolls.md) owns the two enabled variants;
+[live inventory/wiki evidence](design/reference/inventory/observations/2026-09-14_attack_scrolls.md)
+distinguishes the observed 250 NV single-use Fist Attack from premium bundles.
+[Inventory](features/player_inventory.md#september-14-attack-scrolls) owns the
+Use form and [shared combat](features/arena_combat.md#september-14-scroll-entry)
+owns resolution. Same-location includes outdoor cells and valid city/village
+rooms; Inventory preserves that room. See [WORLD](WORLD.md) for context ownership.
+
+Edit level/skill requirements, price, mass, durability and `personal_only` in
+`starter_shop.json`; use the existing catalog updater and preserve owned
+instances/stock. `AttackScroll::RULES` explicitly enables stable item keys and
+selects entry trauma/equipment rules; an arbitrary description or effect cannot
+start PvP. `LEVEL_DIFFERENCE` controls the inclusive target window. The
+[formula entry](FORMULAS.md#scroll-01--attack-entry) explains effects and boundaries.
+`InventoryItem#tradable?` enforces personal use in both UI and transfer/Shop
+settlement, while Delete remains allowed. Opening/cancelling Use spends nothing;
+one successful action key spends one charge and repeated submission returns
+its original match. Rejections leave the item unchanged.
+
+The existing Duel Permit I art is reused. Fist Attack has a new original
+384 × 384 PNG under the [artwork production record](ARTWORK.md#september-14-attack-scroll-artwork).
+Other permit tiers remain catalog-only. Both live 17-to-5 attempts returned
+the same generic failure without consumption; the local level-window error
+now uses its translated wording. Successful source entry, precise rejection
+causes and post-fight equipment persistence still await a suitable target.
 
 ### Supplemental inventory definitions
 
-These ten definitions come from `shop_inventory.rb`, not the 79-row Shop
+These ten definitions come from `shop_inventory.rb`, not the 80-row Shop
 assortment. Some exist for preserved inventory/fixture behavior without an
 ordinary current acquisition route. “No mapped image” means the runtime
 inventory helper supplies its existing text/type fallback; it does not license
@@ -292,9 +330,10 @@ Traumatologist quest completion remains outside the current implementation.
 The four medical tools are `misc`, slot `none`, with weight 1, stack 1 and
 `heals_injury` matching their
 severity. They are used through Medical care rather than ordinary potion use.
-Doctor proficiency values are authored/displayed data but **are not currently
-enforced by RequirementChecker**; Knowledge, license and perk gates are active.
-This implementation gap is tracked in [Medical Care](features/medical_care.md).
+`RequirementChecker` enforces effective Doctor proficiency as well as Knowledge;
+Medical Care also checks the license and perk. Doctor is the saved profession
+counter plus usable equipment bonuses, separate from allocatable Skills.
+See [Medical Care](features/medical_care.md) for atomic request/acceptance checks.
 Treatment fee limits and recovery calculations remain in
 [FORMULAS](FORMULAS.md#7-recovery-wear-and-injuries).
 
@@ -436,24 +475,38 @@ already-owned items/history; deleting its template is not a safe substitute.
 
 ## 7. Current limitations
 
-- **Doctor proficiency enforcement:** medical bag thresholds are authored and
-  displayed but the generic requirement checker ignores `doctor`; active
-  license/Healer/Knowledge checks do not prove that threshold is enforced.
+- **Doctor progression:** bag proficiency is enforced; automatic use-growth,
+  crafting and complete Doctor qualification quests remain separate work.
 - **Reset Scroll:** current reset refunds stat allocations but only one point
   per positive skill, and does not clear/refund perks despite its text. See
   the compatibility section in FORMULAS; do not describe it as a complete reset.
 - **Imp Helper Summon:** `production_speed_percent` is retained content without
   a production/summon consumer. General use returns no usable effect.
-- **Duel permits:** their effects are empty and there is no permit activation
-  handler; ordinary use returns no usable effect. The purchased item and its
-  descriptive text do not start a duel. Display-only properties likewise need
-  a verified consuming owner before they can be described as gameplay.
+- **Duel Permit II–IV:** catalogued but no activation handler. Duel Permit I
+  and Fist Attack use the explicit targeted adapter above; they do not rely
+  on generic consumable effects. Fist intervention into an existing fight is
+  rejected without consumption pending source evidence.
 - Empty resource/crafting families, workshop repair, Mine merchandise and
   market stall rows remain bounded/absent features under their own handbooks.
 
 These are current implementation/evidence boundaries, not permission to replace
 them with generic RPG behavior. This book is a documentation delivery; it does
 not silently repair gameplay while cataloging it.
+
+## Use cases and cross-feature effects
+
+These examples apply current rules; [the catalog](#2-current-item-catalog)
+and [FORMULAS](FORMULAS.md) own exact properties and equations.
+
+| Preconditions / use case | Action and authoritative result | Related effects and boundaries |
+|---|---|---|
+| Owned usable item grants Knife Mastery+10; learned skill 100 | Equip →effective 110 | [SKILLS](SKILLS.md) uses learned 100 for allocation, effective 110 for the matching physical consumer. The bonus does not create 10 spendable points |
+| Replace shield with a second usable weapon | Equipment service validates ownership, slots and requirements | Shared [COMBAT](COMBAT.md#4-levels-skills-equipment-and-combat-inputs) derives weapon-family mastery/AP and block options; an image or item name cannot confer shield blocking |
+| Level 17 owns More Strength, no injury | Perk contributes 8 Strength before equipment/injury composition | [PERKS](PERKS.md) can change recognized requirements and capacity. Inventory still revalidates item ownership, weight and availability |
+| One-point Permit I item in Inventory | Valid targeted use consumes a charge and starts/joins combat | [SCROLLS](SCROLLS.md) owns target/range/skill/replay validation. Failed admission leaves the charge intact |
+| Healer has an active license and matching bag | Treatment enters the medical transaction | Bag uses and injury changes belong to [Medical Care](features/medical_care.md); effective Doctor thresholds recheck at request and paid acceptance |
+| Careful Fighter owned at fight finalization | Applicable wear probability is halved per item | Changes future durability risk, not the item's damage or required repair amount; broken gear stops contributing through Character |
+| Edit only weapon artwork | Presentation changes after integration | Stats, loot, walking duration and availability do not change; [ARTWORK](ARTWORK.md) owns dimensions/prompts, item data owns gameplay |
 
 ## 8. Verification and maintenance
 
@@ -473,5 +526,8 @@ in WORLD/Shop, and exact art prompts in ARTWORK. The shared maintenance rule is
 in [DOCUMENTATION](DOCUMENTATION.md#410-game-reference-books).
 
 ## Arena equipment admission
+
+The [ARENA guide](ARENA.md#3-applications-and-admission-rules) explains how
+these item restrictions combine with hall/side gates and application reservation.
 
 [EquipmentRule](../app/services/arena/equipment_rule.rb) reads all equipped items and authoritative character/item `artifact_grade`. Unarmed means no equipment, including clothing; no-artifacts requires `none`; limited-artifacts permits calibrated multiplier≤1.1. Unknown grades reject restricted entry. Item effective modifiers override template data through the existing merge; no price/name/rarity heuristic determines grade. The [formula book](FORMULAS.md#arena-01--admission-and-deadlines) owns the editable threshold; [Arena](design/areas/arena.md) rechecks it on creation, joining and group start. Waiting membership locks equipment navigation/mutations until withdrawal or completion.

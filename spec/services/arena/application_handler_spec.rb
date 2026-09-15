@@ -238,16 +238,12 @@ RSpec.describe Arena::ApplicationHandler do
         expect(teams).to contain_exactly("a", "b")
       end
 
-      it "schedules match starter job with fixed countdown" do
-        # Match countdown is fixed at 10 seconds (not the turn timeout)
-        expect(Arena::MatchStarterJob).to receive(:set)
-          .with(wait: 10.seconds)
-          .and_return(double(perform_later: true))
-
-        handler.accept(
-          application: application,
-          acceptor: character
-        )
+      it "reserves the Duel without scheduling an automatic start" do
+        expect {
+          result = handler.accept(application:, acceptor: character)
+          expect(result.match).to be_awaiting_duel_confirmation
+          expect(result.match.scheduled_start_at).to be_nil
+        }.not_to have_enqueued_job(Arena::MatchStarterJob)
       end
     end
 
@@ -354,39 +350,6 @@ RSpec.describe Arena::ApplicationHandler do
     end
 
     # ============================================
-    # Match Scheduling Tests (Bug Fix Coverage)
-    # ============================================
-    # Ensures MatchStarterJob is properly scheduled
-
-    context "job scheduling" do
-      it "schedules MatchStarterJob on arena queue" do
-        expect {
-          handler.accept(application: application, acceptor: character)
-        }.to have_enqueued_job(Arena::MatchStarterJob).on_queue("arena")
-      end
-
-      it "schedules job with fixed countdown regardless of turn timeout" do
-        # Turn timeout (240s) is separate from match start countdown (10s)
-        application.update!(timeout_seconds: 240)
-
-        expect(Arena::MatchStarterJob).to receive(:set)
-          .with(wait: 10.seconds) # Fixed countdown, not turn timeout
-          .and_return(double(perform_later: true))
-
-        handler.accept(application: application, acceptor: character)
-      end
-
-      it "stores starts_at in match metadata with 10 second countdown" do
-        result = handler.accept(application: application, acceptor: character)
-
-        expect(result.match.metadata["starts_at"]).to be_present
-        starts_at = Time.parse(result.match.metadata["starts_at"])
-        # Match starts in 10 seconds (fixed countdown)
-        expect(starts_at).to be_within(5.seconds).of(10.seconds.from_now)
-      end
-    end
-
-    # ============================================
     # Broadcast Tests (Bug Fix Coverage)
     # ============================================
     # The room update identifies both participants; there is no parallel toast stream.
@@ -398,7 +361,7 @@ RSpec.describe Arena::ApplicationHandler do
           hash_including(
             type: "match_created",
             participant_ids: array_including(character.id, other_character.id),
-            countdown: 10,
+            countdown: 0,
             redirect_url: an_instance_of(String)
           )
         )
@@ -477,6 +440,38 @@ RSpec.describe Arena::ApplicationHandler do
         expect(result.success?).to be true
         expect(result.match).to be_live
         expect(character.reload.in_combat?).to be true
+      end
+
+      it "rechecks room capacity at NPC acceptance without consuming the offer" do
+        arena_room.update!(max_concurrent_matches: 1)
+        create(:arena_match, arena_room:, status: :pending)
+        expect do
+          result = handler.accept_npc_application(application: npc_application, acceptor: character)
+          expect(result.success?).to be(false)
+          expect(result.errors).to include("Arena room is full")
+        end.not_to change(ArenaMatch, :count)
+        expect(npc_application.reload).to be_open
+        expect(npc_application.arena_match_id).to be_nil
+      end
+
+      it "admits only one concurrent acceptor for the same NPC offer", js: true do
+        arena_room.update!(max_concurrent_matches: 1)
+        app_id = npc_application.id
+        gate = Queue.new
+        results = [character.id, other_character.id].map do |id|
+          Thread.new do
+            ActiveRecord::Base.connection_pool.with_connection do
+              gate.pop
+              described_class.new.accept_npc_application(
+                application: ArenaApplication.find(app_id), acceptor: Character.find(id)
+              )
+            end
+          end
+        end
+        2.times { gate << true }
+        expect(results.map(&:value).count(&:success?)).to eq(1)
+        expect(arena_room.current_match_count).to eq(1)
+        expect(npc_application.reload.arena_match.arena_participations.count).to eq(2)
       end
 
       it "creates NPC participation" do

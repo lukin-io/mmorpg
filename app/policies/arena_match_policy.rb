@@ -36,6 +36,14 @@ class ArenaMatchPolicy < ApplicationPolicy
     record.arena_participations.exists?(user: user)
   end
 
+  def confirm_duel?
+    finish? && record.metadata.to_h["duel_applicant_id"] == user.character&.id
+  end
+
+  def refuse_duel?
+    finish? && record.metadata.to_h["duel_applicant_id"].present?
+  end
+
   class Scope < Scope
     def resolve
       scope.all

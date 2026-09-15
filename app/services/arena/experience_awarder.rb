@@ -32,7 +32,7 @@ module Arena
       @reward_inputs = @combatants.index_with { |entry| [entry.participant_level, entry.max_hp] }
       players = @combatants.select(&:player?).sort_by(&:character_id)
       players.group_by(&:team).flat_map do |team, members|
-        enemies = defeated_enemies(team)
+        enemies = reward_enemies(team)
         next members.map { skipped("no_defeated_enemy") } if enemies.empty?
 
         total_damage = members.sum { |member| member.metadata.to_h["damage_dealt"].to_i }
@@ -53,8 +53,10 @@ module Arena
 
     attr_reader :match, :winning_team
 
-    def defeated_enemies(player_team)
-      @combatants.reject { |entry| entry.team == player_team }.select(&:defeat?)
+    def reward_enemies(player_team)
+      @combatants.reject { |entry| entry.team == player_team }.select do |entry|
+        entry.defeat? || (entry.player? && entry.metadata.to_h["damage_taken"].to_i.positive?)
+      end
     end
 
     def parameters
@@ -83,7 +85,8 @@ module Arena
       else
         1.0
       end
-      (base * group_bonus * risk * (victory ? 1 : parameters.fetch("loss_multiplier"))).round
+      loss_multiplier = enemies.any?(&:player?) ? parameters.fetch("pvp_loss_multiplier") : parameters.fetch("loss_multiplier")
+      (base * group_bonus * risk * (victory ? 1 : loss_multiplier)).round
     end
 
     def award(recipient, amount)

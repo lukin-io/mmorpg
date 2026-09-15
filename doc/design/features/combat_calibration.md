@@ -243,3 +243,13 @@ Limited-artifact admission uses the existing artifact grade multiplier≤1.1,
 configurable as `arena_rules.limited_artifact_max_multiplier`. This is an
 explicit local approximation; [ITEMS](../../ITEMS.md) owns authored grade inputs.
 Unknown grades fail restricted admission. No clothing/weapons in unarmed offers.
+
+## September 14 PvP contribution correction
+
+The first human Duel disproves a kill requirement for every PvP recipient:
+[194 damage/no kill/177XP](../reference/combat/observations/2026-09-14_arena_fist_duel.md).
+Eligible player opponents include surviving damaged participants. PvP defeat
+uses `pvp_loss_multiplier=1.0`; NPC defeat retains0.1. Existing HP/risk factors
+produce181 for that loser, not an exact recovery of the source equation.
+The observed566 winner XP remains an uncalibrated anchor; do not claim exact
+level/alignment/magic/Premium reward parity from a single Duel.

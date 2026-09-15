@@ -29,7 +29,7 @@ RSpec.describe "Arena match transition and reconciliation", type: :system do
 
   # ===========================================================================
   # Match creation persists for both participants. The room-scoped live update
-  # starts the countdown only for participants currently viewing that room;
+  # opens the reserved Duel only for participants currently viewing that room;
   # other Arena pages reconcile from the authoritative match on navigation.
   # ===========================================================================
 
@@ -221,7 +221,7 @@ RSpec.describe "Arena match transition and reconciliation", type: :system do
   # UI: Countdown display
   # ===========================================================================
 
-  describe "countdown display", js: true do
+  describe "Duel confirmation", js: true do
     let!(:application) do
       create(:arena_application,
         applicant: character_a,
@@ -233,17 +233,39 @@ RSpec.describe "Arena match transition and reconciliation", type: :system do
         trauma_percent: 30)
     end
 
-    it "shows countdown overlay when match is accepted" do
+    it "allows refusal and reacceptance before the applicant starts" do
       login_as user_b, scope: :user
       enter_arena_from_city!(character_b)
 
       visit arena_room_path(arena_room)
       click_button "Accept"
 
-      # Should see countdown or be redirected
-      expect(page).to have_css(".arena-countdown", visible: true, wait: 3).or(
-        have_current_path(%r{/arena_matches/\d+})
-      )
+      expect(page).to have_content("Waiting for the fight to begin!")
+      expect(page).not_to have_button("Start Duel")
+      click_button "Refuse Duel"
+      expect(page).to have_current_path(arena_room_path(arena_room))
+      click_button "Accept"
+      expect(page).to have_button("Refuse Duel")
+      match = application.reload.arena_match
+      using_session(:applicant_confirmation) do
+        # A background poll in the other session can consume Warden's global
+        # next-request login hook. Authenticate this browser through its form.
+        visit new_user_session_path
+        fill_in "Email", with: user_a.email
+        fill_in "Password", with: "password123"
+        click_button "Enter"
+        expect(page).to have_current_path(arena_match_path(match))
+        visit arena_match_path(match)
+        click_button "Start Duel"
+        expect(page).to have_css(".arena-action-panel")
+        expect(match.reload).to be_live
+        within(".nl-top-bar") { click_link "Fighter A" }
+        expect(page).to have_current_path(player_path(name: character_a.name))
+        expect(page).not_to have_css("body[data-game-layout-encounter-url-value]")
+        click_link "in combat"
+        expect(page).to have_current_path(public_fight_log_path(match))
+      end
+      expect(page).to have_css(".arena-action-panel", wait: 8)
     end
   end
 

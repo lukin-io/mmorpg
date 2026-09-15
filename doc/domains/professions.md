@@ -9,9 +9,15 @@ and Inventory handoff.
 ## Documentation chain
 
 - [Required working context and update rules](../DOCUMENTATION.md#21-required-context-and-update-map)
+- Implemented adjacent workflows: [ECONOMY](../ECONOMY.md) explains Merchant
+  qualification and licensed trade; [MEDICAL](../MEDICAL.md) explains Doctor
+  requirements and injury treatment. Neither implies complete profession growth.
 - Existing adjacent content: [items/tools/licenses](../ITEMS.md),
   [world resources/actions](../WORLD.md#4-npc-habitats-and-resources),
   [active and absent formulas](../FORMULAS.md#11-compatibility-and-absent-formulas)
+- Cross-feature guides: [SKILLS profession counters](../SKILLS.md#profession-counters)
+  and [PERKS profession permissions](../PERKS.md#2-implemented-perks) keep
+  numeric proficiency, boolean ownership, qualification and licenses distinct.
 - Neverlands source summary: [doc/design/reference/professions/README.md](../design/reference/professions/README.md)
 - Captured cell-action boundaries and user eligibility/progression decisions:
   [doc/design/reference/world/observations/2026-09-08_cell_content_and_world_rules.md](../design/reference/world/observations/2026-09-08_cell_content_and_world_rules.md)

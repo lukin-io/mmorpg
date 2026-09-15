@@ -7,7 +7,9 @@ instructions for editing them. It catalogs the baseline; managed database
 content may differ. It is not a new source survey or a live position report.
 
 Companion books: [NPC](NPC.md), [ITEMS](ITEMS.md), [FORMULAS](FORMULAS.md) and
-[ARTWORK](ARTWORK.md). Canonical design remains in
+[ARTWORK](ARTWORK.md). [COMBAT](COMBAT.md) explains encounter-to-fight/return
+behavior; [SCROLLS](SCROLLS.md) explains targeted PvP in shared cells/rooms and
+its admission/charge rules. Canonical design remains in
 [World map](design/areas/world_map.md), [Movement](design/features/movement.md)
 and [Cities/buildings](design/areas/cities_and_buildings.md). Runtime and
 acceptance belong to [World](features/world.md), [City](features/city.md) and
@@ -15,6 +17,10 @@ acceptance belong to [World](features/world.md), [City](features/city.md) and
 [World evidence index](design/reference/world/README.md) and
 [City evidence index](design/reference/city/README.md); delivery scope is the
 [MVP plan](design/launch_mvp_plan.md).
+
+[CHARACTER](CHARACTER.md) explains effective movement/capacity inputs;
+[MEDICAL](MEDICAL.md) owns injury movement restrictions and Hospital treatment;
+[ECONOMY](ECONOMY.md) explains Shop transactions and qualification after entry.
 
 Before changing existing geography/actions or adding a location, follow the
 [context/update map](DOCUMENTATION.md#21-required-context-and-update-map).
@@ -33,6 +39,7 @@ update the affected owners together with the location entry.
 - [7. Editing existing content](#7-editing-existing-content)
 - [8. Adding a location or region](#8-adding-a-location-or-region)
 - [9. Verification and maintenance](#9-verification-and-maintenance)
+- [Use cases and cross-feature effects](#use-cases-and-cross-feature-effects)
 
 ## 1. World structure and identities
 
@@ -358,6 +365,23 @@ timed waypoints. If connecting by walking, establish the source transition
 before implementing the crossing. A second region is outside the current
 one-zone MVP until its scope is explicitly changed.
 
+## Use cases and cross-feature effects
+
+Illustrative current-rule handoffs; route/cell identity and exact content stay
+in the sections above, while [FORMULAS](FORMULAS.md#8-world-movement-and-encounter-timing)
+owns timing arithmetic.
+
+| Preconditions / use case | Action and authoritative result | Related effects and boundaries |
+|---|---|---|
+| Wanderer 50, adjacent passable target, no explicit cell duration | Accept movement →27-second persisted deadline | [SKILLS](SKILLS.md) affects fallback timing; later skill/equipment edits do not rewrite an accepted command |
+| Target cell explicitly supplies a positive duration | Move using the authored duration | The override wins over Wanderer; visual forest density is not another travel multiplier |
+| Standing in an eligible authored NPC habitat | Due encounter builds one complete roster and enters combat | [NPC](NPC.md) owns placement/levels; [COMBAT](COMBAT.md) owns turns/rewards. Moving outward does not calculate levels from distance |
+| Same-cell target and valid attack scroll | Submit targeted use through Inventory | [SCROLLS](SCROLLS.md) revalidates target/context/availability and enters the same fight pipeline; presence alone never authorizes damage |
+| After combat, eligible for passive recovery | Server evaluates elapsed HP/MP using effective recovery skills | [SKILLS](SKILLS.md) and fatigue affect recovery; persistent injuries require [medical care](features/medical_care.md) |
+| Drink at an available source | Current local action removes 2 fatigue and holds its lock | [PERKS](PERKS.md#3-remaining-neverlands-catalog) records Nature Child's published 4-point variant, but that perk handoff is not implemented |
+| Fish without bait | Current bounded missing-bait result and timer | Does not award fish or profession proficiency; [Professions](domains/professions.md) owns successful catch/growth |
+| Change a cell image to dark Ogre scenery | World display changes | Passability, coordinates and encounter source still require explicit authored data and validation; see [ARTWORK](ARTWORK.md) |
+
 ## 9. Verification and maintenance
 
 Useful existing checks include [open-world seeds](../spec/models/open_world_seed_spec.rb),
@@ -383,4 +407,20 @@ constitute a seed run, new Neverlands observation or browser acceptance.
 
 ## Arena reservation and future outdoor PvP
 
-A posted or joined Arena offer reserves the player: City/world travel, Inventory/equipment, Character and other location-changing requests return to the reserved room. Due offers recover before this guard; cancelled/expired offers release navigation. Active physical Arena fights and each player's unfinished result return to their match, including after login. Finish restores the accessible original hall/tab. [Arena](design/areas/arena.md) owns this contract and [Arena Combat](features/arena_combat.md) its acceptance. Future same-cell PvP should authorize the attacker and target at the world boundary then create participations in the shared engine; this stage adds no outdoor attack endpoint.
+Use [ARENA](ARENA.md#2-city-entry-halls-and-presence) for the hall catalog,
+entry/resume rules and location audience, and its
+[application lifecycle](ARENA.md#4-duel-and-group-lifecycle) for reservations,
+expiry and original-hall return.
+
+A posted or joined Arena offer reserves the player: City/world travel, Inventory/equipment, Character and other location-changing requests return to the reserved room. Due offers recover before this guard; cancelled/expired offers release navigation. Active physical Arena fights and each player's unfinished result return to their match, including after login. Finish restores the accessible original hall/tab. [Arena](design/areas/arena.md) owns this contract and [Arena Combat](features/arena_combat.md) its acceptance. [Attack scrolls](design/features/scrolls.md) now authorize two co-located players
+through Inventory and enter that same engine. `Presence.context_key` includes
+zone/cell plus an accessible room: a Shop and its city square are different
+locations even with equal coordinates. The same rule applies to village rooms
+and outdoor cells. Travel/airship state, online target, ±3 levels, current
+combat and item requirements are rechecked under locks. No separate outdoor
+PvP resolver exists. On city/building/Inventory pages, the shell checks persisted
+combat status every five seconds without rolling NPC encounters. The attacked
+player enters the shared fight automatically and Finish restores the prior
+accessible context; the scroll user returns to Inventory. Live target execution
+is pending; [Inventory acceptance](features/player_inventory.md#september-14-attack-scrolls)
+separates local proof from source evidence.

@@ -298,7 +298,7 @@ RSpec.describe "Synthetic 3x3 team combat", type: :system, js: true do
 
   def add_log_entries_until(count)
     next_sequence = @match.combat_log_entries.maximum(:sequence).to_i + 1
-    while @match.combat_log_entries.count < count
+    while @match.combat_log_entries.where.not(log_type: "action").count < count
       create(
         :combat_log_entry,
         arena_match: @match,

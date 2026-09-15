@@ -86,6 +86,10 @@ class ArenaMatch < ApplicationRecord
     nil
   end
 
+  def awaiting_duel_confirmation?
+    pending? && metadata.to_h["duel_applicant_id"].present? && metadata.to_h["duel_start_confirmed"] != true
+  end
+
   def start_due?(now: Time.current)
     pending? && scheduled_start_at.present? && now >= scheduled_start_at
   end

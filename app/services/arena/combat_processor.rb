@@ -277,12 +277,14 @@ module Arena
     # @return [Boolean] true if match started successfully
     def start_match
       return false unless match.reload.pending? || match.matching?
+      return false if match.awaiting_duel_confirmation?
 
       prepare_combat_profiles!
 
       started = ApplicationRecord.transaction do
         match.lock!
         next false unless match.pending? || match.matching?
+        next false if match.awaiting_duel_confirmation?
 
         started_at = Time.current
         match.update!(

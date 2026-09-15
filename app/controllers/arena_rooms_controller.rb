@@ -4,6 +4,7 @@
 class ArenaRoomsController < ApplicationController
   before_action :authenticate_user!
   before_action :require_character
+  before_action :restore_training_offer, only: :show
   around_action :with_city_arena_entry
   before_action :set_room, only: :show
 
@@ -67,6 +68,19 @@ class ArenaRoomsController < ApplicationController
   end
 
   private
+
+  # Run before the character-locked entry wrapper: all Arena writers acquire
+  # the room before characters. Persisted supply recovers even without a worker.
+  def restore_training_offer
+    room = ArenaRoom.find(params[:id])
+    return unless Arena::NpcApplicationService::REPLENISHED_ROOMS.include?(room.slug)
+
+    context = Game::World::ResumeContext.new(character: current_character)
+    return unless (context.arena_entered? || context.arena_room) && context.arena_room_available?(room:)
+    return if room.arena_applications.open.from_npcs.where("expires_at > ?", Time.current).exists?
+
+    Arena::NpcApplicationService.new.create_for_room(room:)
+  end
 
   def set_room
     @room = ArenaRoom.find(params[:id])

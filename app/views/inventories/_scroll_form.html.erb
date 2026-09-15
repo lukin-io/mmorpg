@@ -1,0 +1,10 @@
+<section class="nl-scroll-use" aria-labelledby="scroll-use-title">
+  <h2 id="scroll-use-title"><%= Game::Inventory::AttackScroll.definition(@scroll_item.item_template).fetch(:title) %></h2>
+  <%= form_with url: scroll_use_path, method: :post, data: {turbo_frame: "_top"} do |form| %>
+    <%= form.hidden_field :action_key, value: @scroll_offer.action_key %>
+    <%= form.label :target_name, "Target nickname:" %>
+    <%= form.text_field :target_name, required: true, maxlength: 25, class: "LogintextBox", autocomplete: "off", autofocus: true %>
+    <%= form.submit "Execute", class: "lbut" %>
+    <%= link_to "Cancel", inventory_path(category: @category, subcategory: @subcategory, info: @info_mode), class: "lbut" %>
+  <% end %>
+</section>

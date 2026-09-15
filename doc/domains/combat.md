@@ -1,5 +1,10 @@
 # Combat and Arena Domain
 
+Fresh evidence: [September14 human unarmed Duel](../design/reference/combat/observations/2026-09-14_arena_fist_duel.md) — accepted
+application, applicant Start/refusal, six exchanges including opponent magic,
+loss XP, public log/profile location, Finish and recovery. September12 absence
+of a live human fight below is historical, superseded for this Duel scope.
+
 Current September12 work: the user authorized pragmatic completion of the22-fight
 observations. [Combat calibration](../design/features/combat_calibration.md)
 owns fitted coefficients and placement; [Medical Care](../features/medical_care.md)
@@ -17,6 +22,13 @@ player-facing completion/loot fact handoff, and responsive fight presentation.
 ## Documentation chain
 
 - [Required working context and update rules](../DOCUMENTATION.md#21-required-context-and-update-map)
+- Build/aftermath guides: [CHARACTER](../CHARACTER.md) explains effective inputs
+  and progression; [MEDICAL](../MEDICAL.md) explains injury penalties, supplies
+  and treatment after defeat.
+- Arena area guide: [ARENA](../ARENA.md) for halls, applications, training,
+  admission/assembly, presentation, recovery and editing.
+- General feature guide: [COMBAT](../COMBAT.md); targeted entry guide:
+  [SCROLLS](../SCROLLS.md). Read these for the complete local flow and editing map.
 - Game reference books: [NPC catalog and editing](../NPC.md),
   [formulas and tuning](../FORMULAS.md)
 - Related inputs and outputs: [item properties](../ITEMS.md#3-fields-slots-and-effective-properties),
@@ -132,3 +144,9 @@ a recovered source equation.
 ## September 12 Arena extension
 
 [Fresh Duel/Group observations](../design/reference/combat/observations/2026-09-12_arena_duels_and_groups.md) feed [Arena design](../design/areas/arena.md), [FORMULAS](../FORMULAS.md) and `doc/features/arena_combat.md`. Physical player applications and persisted group assembly use the existing shared fight pipeline. No new source player fight was possible; local multiplayer acceptance is separate evidence.
+
+Scroll admission uses the same owners: [normalized scroll rules](../design/features/scrolls.md),
+[Inventory runtime](../features/player_inventory.md#september-14-attack-scrolls),
+[entry formulas](../FORMULAS.md#scroll-01--attack-entry) and
+[location context](../WORLD.md). New scroll fights are physical; Permit
+intervention preserves the receiving fight's rules and living roster.

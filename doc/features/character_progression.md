@@ -30,6 +30,18 @@ learned allocations or deleting history. Final validation is recorded in [Arena 
 
 ## 1. Design authority and related documents
 
+The [CHARACTER guide](../CHARACTER.md) connects the complete build, saved versus
+effective values, level/point grants, AP/capacity and editing. [MEDICAL](../MEDICAL.md)
+explains injury/recovery distinctions; [ECONOMY](../ECONOMY.md) explains the
+wallet and purchased-license handoffs. This handbook retains runtime acceptance.
+
+Global guides: [SKILLS](../SKILLS.md) owns the complete numeric catalog,
+profession-counter distinction, formulas/consumers and editing use cases;
+[PERKS](../PERKS.md) owns boolean choices, grants/exclusions, source-only
+descriptions and profession/license handoffs. Their
+[September 14 reference](../design/reference/character/observations/2026-09-14_skills_and_perks.md)
+is supplied-image/wiki evidence, not new local browser acceptance.
+
 Read [FORMULAS](../FORMULAS.md) for grants, allocations, caps and recovery,
 [ITEMS](../ITEMS.md#3-fields-slots-and-effective-properties) for equipment and
 requirements, and the [Combat](arena_combat.md) / [Medical Care](medical_care.md)
@@ -266,8 +278,8 @@ controller, NPC generator or browser script.
 | Receive points | Stat, combat-skill, peace-skill and perk pools increase separately. For example reaching13 gives10 stat points,14 gives12,15 gives15. These do not automatically raise Strength or heal HP/MP. |
 | Allocate | Stats/Skills/Perks save under ownership and row-lock checks. Primary additions persist in `allocated_stats`; numeric skills and owned perks retain separate maps. |
 | Build effective values | `Character#stats` combines base1, saved primary additions, `floor(level/2)` Strength for More Strength, and equipped primary modifiers. Numeric skills combine saved base values and equipped bonuses without clipping the effective total at100; allocation remains capped at100. |
-| Enter combat | `Arena::CombatProfile` snapshots AP, attack costs and block-table selection. `Arena::CombatResolver` consumes current effective primary values and equipment-backed attack/defense for player, NPC and mixed fights. The [combat handbook](arena_combat.md) owns downstream outcome/mitigation rules. |
-| Notify | Arena sends the actual persisted XP amount to the shell after Finish. Chat never recalculates grants or changes progression state. |
+| Enter combat | `Arena::CombatProfile` persists AP, attack costs and block-table selection. Ordinary profiles retain those values; `no_weapons` rederives AP/physical costs and forces normal blocks to suppress stale gear overrides. `Arena::CombatResolver` consumes current effective player values and NPC snapshots. The [combat handbook](arena_combat.md) owns downstream outcome/mitigation rules. |
+| Notify | Arena publishes actual persisted XP through the [Shell event catalog](game_shell.md#gameplay-event-catalog): group/PvP results publish at finalization, while the solo-NPC positive-XP notice is deferred to Finish. Chat never recalculates grants or changes progression state. |
 
 At level0 there are15 free stat points plus five base points. The source's
 level17 cumulative167 means five base points plus162 granted points across
@@ -323,7 +335,10 @@ Combat builds AP as base `80`, plus `10` at level `5`, another `10` at level
 `10`, and one point per effective Extra Action Points value. Persisted
 per-fight profile overrides remain authoritative for captured fights. September12 additionally connects weapon mastery to AP/damage, physical
 resistance to mitigation, Observation to loot probability, Self-Healing/Fast Mana
-Regeneration to elapsed recovery, and Doctor to bag requirements. The
+Regeneration to elapsed recovery. Authored Doctor bag thresholds are not
+enforced: Doctor is outside the numeric allocation registry, and the current
+requirement checker skips that key. [Medical Care](medical_care.md) owns this
+remaining `[IMPL]` gap. The
 [calibration](../design/features/combat_calibration.md) identifies fitted terms.
 Unobserved spell families and unrelated profession actions remain separate work.
 
@@ -344,7 +359,8 @@ roll. Source IDs `34` and `35` provide Merchant/Healer ownership to Shop
 license prerequisite checks. Selecting a profession perk grants neither quest
 completion nor a timed license. Shop implements the bounded Merchant
 qualification path; Doctor qualification quests remain separate, while [Medical care](medical_care.md)
-implements treatment using an active Doctor license and effective prerequisites.
+implements treatment using an active Doctor license and supported requirements,
+with effective Doctor proficiency independently enforced by Medical Care.
 Reset behavior and other uncaptured prerequisite/effect rules remain deferred.
 
 ### 6.5 World-related skill and perk gaps
@@ -619,14 +635,14 @@ Arbitrary saved browser fields, translated labels, or profile URLs do not grant 
 | Conflicting captured perks | Reject the entire perk save under lock |
 | Numeric skill reaches `100` | Cap at `100`; no further visible spend is enabled |
 | Equipment changes effective Wanderer | Rebuild effective display; World uses it only for the next authored offer, never to rewrite an active command |
-| Equipment changes effective Extra Action Points | Rebuild effective display; Combat snapshots it only into a new fight profile, never an active profile |
+| Equipment changes effective Extra Action Points | Rebuild effective display; ordinary stored Combat profiles retain their AP, while `no_weapons` rederives its budget; see [CHARACTER's state boundary](../CHARACTER.md#6-implementation-and-state-ownership) |
 | Equipment changes another effective skill | Rebuild effective display; no uncaptured formula is applied |
 | Missing public character name | Return `404`, not an account-profile fallback |
 | Simultaneous/stale Stats or Skills saves | Serialize under the Character row lock; recheck current pools and reject an over-budget request without a lost update |
 | XP below next threshold | Add XP with no grant or level change |
 | XP crosses several rows | Apply every complete row once and aggregate one NV ledger adjustment |
 | XP at level `27` | Persist XP but do not invent a level `28` threshold or grant |
-| Multi-player PvE winning side | Award no XP until the Neverlands group distribution formula is captured |
+| Multi-player PvE result | Shared Combat settlement applies the current capped group contribution formula; [FORMULAS](../FORMULAS.md#reward-01--shared-npc-and-player-experience) distinguishes published rules and fitted coefficients |
 | Deferred profession/perk action | Render no control and create no inferred effect |
 
 ## 14. Acceptance criteria
@@ -835,3 +851,21 @@ Before extending Character Progression:
 | 2026-07-29 | Reordered the parameter column to the captured profile sequence, dropped the uncaptured Attack/Defense/Critical rows, gave the visitor profile its own identity line, and split the presentation into `character_sheet.css` and `player.css`. |
 | 2026-08-23 | Documented that Arena supplies the actual persisted solo-NPC XP award for recipient fight-completion feedback while Character Progression remains the XP/level authority. |
 | 2026-08-26 | Added the exact `80 + level thresholds + Extra Action Points` combat-profile effect and source perk `15` Careful Fighter with half-probability equipment wear. |
+
+### September 14 profile battle-location evidence
+
+The [first live human Duel](../design/reference/combat/observations/2026-09-14_arena_fist_duel.md)
+confirms the existing public profile contract: city on the first line, selected
+Arena room below, and an in-combat link to public fight history. The source
+still showed that link at0HP while the completed result awaited Finish.
+`PlayerProfileHelper#profile_location` and `PlayersController#location_payload`
+already retain the match through that acknowledgement. The players request
+spec covers live → completed/unacknowledged → finished link visibility.
+`PlayersController#show` suppresses the shell's immediate incoming-attack poll
+only when the viewer already has an active match or unfinished physical result.
+This permits intentional profile inspection during combat. A profile opened
+without an existing fight retains incoming scroll-attack recovery. The
+in-combat link targets `_top`, because the public log has no profile Turbo
+frame. The two-player Arena system spec follows profile → public log.
+[Arena](../ARENA.md#september-14-live-human-duel) owns entry/Finish and
+[Combat](../COMBAT.md#september-14-live-human-duel) owns the public log/result.

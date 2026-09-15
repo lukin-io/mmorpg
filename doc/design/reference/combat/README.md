@@ -1,7 +1,14 @@
 # Neverlands Combat and Arena Source Summary
 
+Fresh evidence: [September14 human unarmed Duel](observations/2026-09-14_arena_fist_duel.md) — accepted
+application, applicant Start/refusal, six exchanges including opponent magic,
+loss XP, public log/profile location, Finish and recovery. September12 absence
+of a live human fight below is historical, superseded for this Duel scope.
+
 For the design, delivery status and current implementation using this evidence,
-follow the [Combat domain](../../../domains/combat.md).
+follow the [Combat domain](../../../domains/combat.md). The current local
+[ARENA guide](../../../ARENA.md) explains halls/applications and links their
+source versus local acceptance; it does not add new source observations.
 
 - Document type: neverlands-source-summary
 - Domain: combat
@@ -266,3 +273,5 @@ the provenance or certainty of the preserved observations.
 ## September 12 Arena lobby cycle
 
 [Duels and Groups](observations/2026-09-12_arena_duels_and_groups.md) records city entry, ten-hall gates, equipment/timeout/risk forms, side fields, posting/cancellation, waiting navigation lock, 1×1→1×2 normalization and empty-opponent expiry. Level17 Dummy acceptance remained unavailable. New completed source Arena fights: **0**. The user authorizes pragmatic local physical PvP; [Arena design](../../areas/arena.md) records inferred start/admission rules and the runtime handbook owns local verification.
+
+- [September 15 Arena/medical review](observations/2026-09-15_arena_medical_gap_review.md): published Doctor thresholds, Group waiting, XP caps and bounded percentage/Snowball research; no new source fight.

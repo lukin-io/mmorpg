@@ -13,7 +13,7 @@ module PlayerProfileHelper
       location_label = active_match.arena_room.name if active_match.arena_room
       first_line.concat([
         " [ ",
-        link_to("in combat", public_fight_log_path(active_match), class: "nl-profile-fight-link"),
+        link_to("in combat", public_fight_log_path(active_match), class: "nl-profile-fight-link", data: {turbo_frame: "_top"}),
         " ]"
       ])
     end

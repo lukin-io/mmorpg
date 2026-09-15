@@ -1,6 +1,9 @@
 # Arena Area
 
 Domain navigation: [Combat](../../domains/combat.md).
+General area guide: [ARENA](../../ARENA.md), including halls, applications,
+training supply, admission/assembly, UI/artwork and editing consequences.
+[COMBAT](../../COMBAT.md) explains shared player/NPC resolution and formulas.
 
 [Combat design](../features/combat.md) owns the shared fight rules;
 [FORMULAS](../../FORMULAS.md#5-combat) and [NPC lifecycle](../../NPC.md#7-encounter-and-fight-lifecycle)
@@ -42,7 +45,9 @@ empty or invalid opposition expires safely. Starting underfilled sides and
 waiting even when full are explicit local inferences, not completed source
 multiplayer evidence. Delayed jobs and lobby reads recover the same transition.
 
-Duels retain the ten-second local countdown. Every new Arena fight has the
+The September14 live human Duel supersedes the earlier countdown inference:
+acceptance reserves both people; the applicant explicitly starts and either
+participant can refuse before combat. Refusal reopens the original offer. Every new Arena fight has the
 user-selected **300-second global deadline**, independently of the turn timer.
 Shared cards, turns, live-player readiness, defeat, credited damage, XP,
 injury, wear, logs, chat events and Finish use the existing combat pipeline.
@@ -50,7 +55,8 @@ Defeated participants disappear from active play, remaining in history/rewards.
 Each participant acknowledges the result with Finish. The local asynchronous
 PvP contract restores an unacknowledged result after login, then returns to the
 original accessible hall/tab on Finish. This recovery detail is a local
-adaptation; no new completed source multiplayer fight was available to capture.
+adaptation. September14 now supplies a completed human Duel and confirms
+manual Finish, lobby return and the weak-player recovery state.
 A future same-cell outdoor attack should create participations in that same
 engine; this stage does not add an outdoor attack endpoint.
 
@@ -58,6 +64,13 @@ The source hall scheme is two rows of five: Help0–5, Training5–10, Trial5–
 Initiation9–33, Patrons16–33, then Law/Light/Balance/Chaos/Dark0–33 with matching
 alignment restrictions. The level-1 Dummy is available to the authored Help
 and Training halls through the same NPC configuration and application path.
+
+The later [September 14 scroll contract](../features/scrolls.md) supplies
+targeted PvP entry and Permit intervention into eligible non-closed fights;
+earlier statements below about absent outdoor entry/late intervention describe
+the September 12 stage. Lobby applications still do not expose late join.
+The current complete entry map is maintained in [ARENA](../../ARENA.md) and
+[SCROLLS](../../SCROLLS.md).
 
 ## Neverlands Reference
 

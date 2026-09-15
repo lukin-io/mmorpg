@@ -1,7 +1,7 @@
 # Documentation Domain Registry
 
 - Status: Current
-- Updated: 2026-09-12
+- Updated: 2026-09-15
 - Purpose: domain-first navigation across evidence, design, delivery status,
   implementation contracts, and code ownership.
 
@@ -39,10 +39,21 @@ For generation, editing or integration of game illustrations, also read
 for the asset's subject/layout and verified runtime status.
 
 Cross-domain game books: [NPC.md](../NPC.md) inventories creatures, cells,
-groups, equipment and loot; [FORMULAS.md](../FORMULAS.md) explains the current
+groups, equipment and loot. [SKILLS.md](../SKILLS.md) explains numeric allocation,
+proficiency and consumers; [PERKS.md](../PERKS.md) explains boolean selection
+and effects. [FORMULAS.md](../FORMULAS.md) explains the current
 calculations, tables, tuning owners and consequences; [ITEMS.md](../ITEMS.md)
 catalogs item definitions, acquisition, effects and artwork; and
-[WORLD.md](../WORLD.md) maps zones, cells, routes, actions and scenes. The
+[WORLD.md](../WORLD.md) maps zones, cells, routes, actions and scenes.
+[SCROLLS.md](../SCROLLS.md) covers scroll catalog/use, targeting, permissions,
+combat entry and editing; [COMBAT.md](../COMBAT.md) explains the complete shared
+Arena/wilderness/player/NPC fight lifecycle, formula effects and aftermath.
+[ARENA.md](../ARENA.md) covers the hall catalog, applications/admission,
+assembly, training supply, presentation and editing.
+[CHARACTER.md](../CHARACTER.md) explains the whole build and saved/effective
+development; [MEDICAL.md](../MEDICAL.md) connects injuries, requirements,
+Hospital and treatment; [ECONOMY.md](../ECONOMY.md) connects NV, stock/prices,
+qualification, licenses and settlement. The
 [gameplay event catalog](../features/game_shell.md#gameplay-event-catalog)
 describes producers, audiences, wording and delivery. Keep the affected
 reference current during relevant work under the DOCUMENTATION.md maintenance

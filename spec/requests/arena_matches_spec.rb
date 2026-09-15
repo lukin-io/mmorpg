@@ -511,17 +511,15 @@ RSpec.describe "ArenaMatches", type: :request do
       expect(result.match).to be_persisted
     end
 
-    it "transitions match to live after countdown" do
+    it "transitions match to live after applicant confirmation" do
       handler = Arena::ApplicationHandler.new
       result = handler.accept(application: application, acceptor: other_character)
       match = result.match
 
       expect(match.status).to eq("pending")
 
-      # Simulate job execution
-      perform_enqueued_jobs do
-        Arena::MatchStarterJob.perform_later(match.id)
-      end
+      post confirm_duel_arena_match_path(match), as: :json
+      expect(response).to have_http_status(:ok)
 
       expect(match.reload.status).to eq("live")
     end
@@ -531,9 +529,8 @@ RSpec.describe "ArenaMatches", type: :request do
       result = handler.accept(application: application, acceptor: other_character)
       match = result.match
 
-      perform_enqueued_jobs do
-        Arena::MatchStarterJob.perform_later(match.id)
-      end
+      post confirm_duel_arena_match_path(match), as: :json
+      expect(response).to have_http_status(:ok)
 
       expect(character.reload.in_combat).to be true
       expect(other_character.reload.in_combat).to be true

@@ -19,6 +19,9 @@
       data-action="nl-world-map:refreshed->game-layout#refreshPlayersList nl-world-map:refreshed->game-layout#refreshChat nl-world-map:movement-state->game-layout#updateWorldMovementState chat:context->game-layout#updateLocalChatContext"
       <% if controller_name == "world" && @zone&.outdoor? %>
         data-game-layout-encounter-url-value="<%= world_encounter_check_path %>"
+      <% elsif current_character && controller_name != "arena_matches" && !@browsing_existing_fight_profile && !devise_controller? %>
+        data-game-layout-encounter-url-value="<%= combat_status_path %>"
+        data-game-layout-encounter-interval-value="5000"
       <% end %>>
   <% world_actions_locked = controller_name == "world" && (@active_movement.present? || @active_world_action.present?) %>
 
@@ -205,7 +208,7 @@
 
   <%# Flash messages %>
   <div class="nl-flash-container" id="flash">
-    <% flash.to_hash.except("world_action_result", "world_action_result_offer_id").each do |type, message| %>
+    <% flash.to_hash.except("world_action_result", "world_action_result_offer_id", "scroll_error").each do |type, message| %>
       <%= render "shared/flash", type:, message: %>
     <% end %>
   </div>

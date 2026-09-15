@@ -2,12 +2,25 @@
 title: Medical Care Feature
 description: Persisted combat injuries and same-cell healer treatment with patient-approved NV payment.
 status: Partially Implemented
-updated: 2026-09-12
+updated: 2026-09-15
 owners: Combat and Character
 template: feature-v3
 ---
 
 # Medical Care
+
+[MEDICAL](../MEDICAL.md) is the complete injury/supplies/qualification and
+treatment guide, with editing recipes and worked cross-feature examples.
+[CHARACTER](../CHARACTER.md) explains effective stats/resources;
+[ECONOMY](../ECONOMY.md) explains license acquisition and payment ownership.
+
+[COMBAT](../COMBAT.md#8-injuries-wear-recovery-and-finish) explains how fights
+produce injuries and affect recovery; [SCROLLS](../SCROLLS.md#7-peace-scrolls-and-purchased-licenses)
+explains Doctor license acquisition/expiry. Treatment state and acceptance remain here.
+Use [PERKS: Healer](../PERKS.md#healer) and
+[SKILLS: profession counters](../SKILLS.md#profession-counters) to distinguish
+boolean ownership, numeric Doctor proficiency, qualification and timed licenses;
+numeric Self-Healing restores HP without curing an injury record.
 
 ## 1. Authority and scope
 
@@ -26,14 +39,16 @@ The user's September 12 approximation authorization is normalized in
 [Arena Combat](arena_combat.md) owns finalization; [Inventory](player_inventory.md)
 and [World](world.md) own their existing interfaces and transactions.
 
-Current audit (September 12): **[IMPL] Doctor proficiency thresholds are
-authored and displayed but not enforced.** `RequirementChecker` has no
-`doctor` reader and skips an unknown requirement. A read-only, in-memory Rails
-check with a level-1 character and a bag requiring Doctor 600 returned allowed.
-The active Healer perk, Doctor license, effective Knowledge and other treatment
-gates remain enforced. This is a runtime gap, not missing source evidence;
-the documentation audit did not modify gameplay. Earlier browser acceptance
-below proves its exercised treatment flow, not the missing Doctor boundary.
+September 15 closes the previously audited Doctor-threshold gap. Treatment
+checks `Character#doctor_proficiency`: the nonnegative integer saved at
+`metadata.profession_skills.doctor`, plus usable equipped flat/nested `doctor`
+bonuses. Missing/malformed counters contribute zero; broken/expired equipment
+contributes nothing. Doctor has no 100-point Skills allocation cap and the
+Healer perk does not supply proficiency. Both free treatment and paid acceptance
+recheck this value under the existing character locks. The
+[September 15 source review](../design/reference/combat/observations/2026-09-15_arena_medical_gap_review.md)
+confirms the bag thresholds and equipment contribution. Automatic profession
+growth and Doctor quests remain separate incomplete flows.
 
 ## 2. Player contract and non-goals
 
@@ -57,7 +72,8 @@ paid treatment produces an expiring request for the patient to accept or decline
 The patient and healer must share a cell and neither may be in an active fight
 or moving. Self-treatment excludes combat injuries. Healer perk, active Doctor
 license, effective Knowledge and matching bag are required. Bag data also
-requires Doctor proficiency, but that threshold is currently unenforced.
+requires effective Doctor proficiency; insufficient proficiency rejects without
+spending a use, healing, charging or creating a quote.
 Published price maxima: light 80, medium 150, heavy 500, combat 7000 NV.
 
 Hospital bags use the captured 10-use assortment and published corresponding
@@ -100,8 +116,8 @@ ERB renders all outcomes; the browser never decides healing or prices.
 ## 5. Security, concurrency, and failure behavior
 
 Missing/foreign bags and requests, expired licenses/quotes/injuries, insufficient
-Knowledge/NV, active combat and movement reject. Insufficient Doctor
-proficiency alone currently does not reject; see the [IMPL] gap above.
+Knowledge/Doctor proficiency/NV, active combat and movement reject. A paid
+quote also rechecks proficiency if equipment or saved counters change.
 Expired quotes never
 charge; another valid request can replace one after expiry. Paid decline has no
 financial effect. Injury history is retained for audit. No new background timer
@@ -175,11 +191,40 @@ for both healer and patient. Fresh patient login removed the header injury
 link; Hospital → Medical care showed no active injuries after reload, then
 Return restored the city. Document width remained1728px. No CSS/artwork changed.
 The fixture's license, bags and initial injuries were prepared independently;
-all treatment and navigation actions used the UI. The pre-existing Doctor
-proficiency enforcement gap in section1 remains separate from these checks.
+all treatment and navigation actions used the UI. At that time these checks did not enforce Doctor proficiency; the
+September15 acceptance below covers that repair.
+
+### September 15 Doctor qualification acceptance
+
+The [combined final acceptance](arena_combat.md#september-15-verification-and-manual-acceptance)
+records the full **3,087 non-system / 301 system** passing gate and source/local
+provenance. Qualification specs cover every bag threshold immediately below/at
+its requirement, effective equipment points, malformed counters, free treatment,
+and paid acceptance after proficiency falls; rejected treatment preserves the
+injury, bag, quote and both wallets.
+
+After the gate, Chrome at native 200% exercised City → Inventory → Medical care.
+A disposable Doctor-99 healer with a valid license, Healer perk and ten-use
+beginner bag attempted treatment of an injured patient. The UI rejected Doctor
+100 (current 99), spending nothing. The separate Doctor-100 patient self-treated
+through its Injury link: ten uses became nine, the injury/header link vanished,
+and one private chat notice persisted. Inventory → Medical care and Hospital →
+Medical care revisits confirmed nine uses and no active injury. The 390×844 and
+320×740 in-app layouts and zoomed Chrome form retained reachable controls and
+complete bag artwork without document horizontal overflow. Return restored
+City. Viewport overrides and native zoom were restored.
+
+[Rejection](acceptance/2026-09-15_arena_recovery/01-doctor-rejection-200.jpg),
+[zoomed controls](acceptance/2026-09-15_arena_recovery/02-medical-controls-200.jpg),
+[healed 390px](acceptance/2026-09-15_arena_recovery/03-healed-390.jpg) and
+[320px revisit](acceptance/2026-09-15_arena_recovery/11-medical-320.jpg) are actual
+local UI evidence. Fixture counters, licenses, bags and initial injury were
+prepared separately. No new authenticated Neverlands treatment was observed;
+paid acceptance is covered by the focused regression and earlier manual record.
 
 ## 7. Responsible files and operations
 
+- `app/models/character.rb` (`doctor_proficiency` and equipment composition)
 - `app/models/character_injury.rb`
 - `app/models/injury_treatment.rb`
 - `app/services/arena/injury_awarder.rb`
@@ -194,10 +239,10 @@ proficiency enforcement gap in section1 remains separate from these checks.
 
 ## 8. Gaps and version history
 
-The September 12 content-book audit found unenforced Doctor proficiency
+The September 12 content-book audit found then-unenforced Doctor proficiency
 requirements on medical bags. Section 1 records the current code evidence;
-fixing the reader and proving below/at/above-threshold treatment behavior remain
-runtime work. The reference-book task only corrects documentation/status.
+the September 15 implementation repairs it with below/at-threshold and
+paid-acceptance revalidation tests. Older September12 acceptance predates this fix.
 
 Ordinary injury durations, penalty sizes and fitted chance bands are local
 approximations; published combat 24 h/+6 h and treatment price ceilings retain their

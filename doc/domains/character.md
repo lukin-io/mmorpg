@@ -17,8 +17,14 @@ awarded-XP feedback handoff after combat.
 ## Documentation chain
 
 - [Required working context and update rules](../DOCUMENTATION.md#21-required-context-and-update-map)
+- Whole-area guide: [CHARACTER](../CHARACTER.md) for the build, level grants,
+  effective inputs and editing; [MEDICAL](../MEDICAL.md) for injuries/recovery
+  and [ECONOMY](../ECONOMY.md) for NV grants and purchased permissions.
 - Game reference books: [NPC catalog and editing](../NPC.md),
   [formulas and tuning](../FORMULAS.md)
+- Complete catalogs and use cases: [SKILLS](../SKILLS.md) for numeric
+  allocation/profession counters; [PERKS](../PERKS.md) for boolean choices,
+  published source-only effects and separate license/qualification handoffs.
 - Equipment/requirement inputs: [ITEMS](../ITEMS.md#3-fields-slots-and-effective-properties)
 
 - Neverlands source summary: [doc/design/reference/character/README.md](../design/reference/character/README.md)
@@ -36,8 +42,9 @@ awarded-XP feedback handoff after combat.
 
 ## Current RPG status
 
-Fully Implemented for the bounded progression contract. Uncaptured high-level
-tables, formulas, prerequisites, resets, and skill effects remain outside that
+Fully Implemented for the bounded progression contract. The table supports
+levels 0–27; incomplete later rows, exact hidden formulas, remaining perk
+prerequisites/resets and unimplemented skill effects remain outside that
 boundary. Combat may project the actual persisted XP award into the shell
 timeline; Character Progression remains authoritative for experience and level
 grants. Effective Extra Action Points contributes one-for-one to a new combat
@@ -63,8 +70,12 @@ Section 16 of `doc/features/character_progression.md` is exhaustive.
 
 ## Evidence and implementation gaps
 
-Capture exact high-level progression, perk prerequisites/reset behavior, and
-remaining skill-effect formulas before extending the bounded contract.
+The [September 14 supplied images/wiki audit](../design/reference/character/observations/2026-09-14_skills_and_perks.md)
+indexes 29 numeric rows, 15 profession counters and 42 source perks. Four perks
+are selectable locally. Published descriptions and inactive formulas are known
+source evidence, not completed features. Capture missing later progression,
+perk acquisition/reset behavior and remaining coefficients before extending
+those boundaries; existing authorized calibrations remain in use.
 
 World-related skill/perk gaps are owned by
 [Character Progression, section 6.5](../features/character_progression.md#65-world-related-skill-and-perk-gaps).

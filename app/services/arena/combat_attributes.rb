@@ -70,8 +70,16 @@ module Arena
         penetration: character.armor_pierce_percent,
         resistance: character.passive_skill_level(:physical_damage_resistance),
         fatigue: Characters::FatigueService.new(character:).current_percent,
-        damage_multiplier: Game::Combat::Calibration.config.fetch("artifact_multipliers").fetch(character.metadata.to_h.fetch("artifact_grade", "none"), 1.0)
+        damage_multiplier: artifact_multiplier(character)
       }
+    end
+
+    private
+
+    def artifact_multiplier(character)
+      return 1.0 if participation&.arena_match&.metadata.to_h["fight_kind"] == "no_weapons"
+
+      Game::Combat::Calibration.config.fetch("artifact_multipliers").fetch(character.metadata.to_h.fetch("artifact_grade", "none"), 1.0)
     end
   end
 end

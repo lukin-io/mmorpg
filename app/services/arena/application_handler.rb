@@ -16,8 +16,6 @@ module Arena
   #   handler.accept(application: app, acceptor: character)
   #
   class ApplicationHandler
-    MATCH_COUNTDOWN_SECONDS = 10
-
     Result = Struct.new(:success?, :application, :match, :errors, keyword_init: true)
 
     def initialize(publisher: Arena::RealtimePublisher.new, logger: Rails.logger)
@@ -81,7 +79,7 @@ module Arena
       Result.new(success?: false, errors: [error.message])
     end
 
-    # Accept an existing application (start the fight)
+    # Reserve a human Duel; its applicant must explicitly confirm the start.
     #
     # @param application [ArenaApplication] the application to accept
     # @param acceptor [Character] the character accepting
@@ -103,7 +101,7 @@ module Arena
           Result.new(success?: false, errors: [error])
         else
           matched_at = Time.current
-          starts_at = matched_at + MATCH_COUNTDOWN_SECONDS.seconds
+          starts_at = nil
           match = create_match_from_applications(application, acceptor)
 
           application.update!(
@@ -128,10 +126,7 @@ module Arena
           )
 
           application.update!(matched_with: acceptor_app)
-          persist_match_start_schedule(match, starts_at)
-
           ActiveRecord.after_all_transactions_commit do
-            enqueue_match_start(match)
             broadcast_match_created(match, application)
           end
 
@@ -140,6 +135,56 @@ module Arena
       end
     rescue ActiveRecord::RecordInvalid => e
       Result.new(success?: false, errors: [e.message])
+    end
+
+    # Confirm or refuse a reserved human Duel. Locks the reservation, match and
+    # both players; start rechecks admission before entering the shared engine.
+    # Refusal reopens the original offer and cancels only its unused match.
+    # Returns Result; no combat/reward state is created by refusal or retries.
+    def confirm_duel(match:, character:, refuse: false)
+      return Result.new(success?: false, errors: ["This is not an Arena Duel reservation"]) unless match.arena_room && match.metadata.to_h["duel_applicant_id"].present?
+
+      ActiveRecord::Base.transaction do
+        match.arena_room.lock!
+        match.lock!
+        applications = match.arena_applications.order(:id).lock.to_a
+        original = applications.find { |entry| entry.applicant_id == match.metadata["duel_applicant_id"] }
+        opponent = applications.find { |entry| entry != original }
+        next Result.new(success?: false, errors: ["This Duel is no longer awaiting confirmation"]) unless match.awaiting_duel_confirmation? && original && opponent
+        next Result.new(success?: false, errors: ["Only the applicant can start this Duel"]) unless refuse || original.applicant_id == character.id
+        next Result.new(success?: false, errors: ["You are not part of this Duel"]) unless applications.any? { |entry| entry.applicant_id == character.id }
+
+        lock_characters!(*applications.map(&:applicant))
+        if refuse
+          opponent.update!(status: :cancelled, matched_with: nil)
+          original.update!(status: original.deadline_passed? ? :expired : :open, matched_with: nil,
+            matched_at: nil, starts_at: nil, arena_match: nil)
+          match.update!(status: :cancelled)
+          ActiveRecord.after_all_transactions_commit do
+            broadcast_new_application(original)
+            CombatBroadcaster.new(match).broadcast_state_refresh(reason: :duel_refused)
+          end
+        else
+          next Result.new(success?: false, errors: ["Application has expired; refuse the Duel to leave"]) if original.deadline_passed?
+          error = applications.filter_map do |entry|
+            player = entry.applicant
+            if !match.arena_room.accessible_by?(player)
+              "Arena room is unavailable"
+            elsif player.in_combat? || player.arena_participations.joins(:arena_match).merge(ArenaMatch.active).where.not(arena_match: match).exists?
+              "Player is already in another fight"
+            elsif !entry.character_hp_sufficient?(player)
+              "Recover before fighting: minimum 50% HP"
+            else
+              EquipmentRule.new(original.fight_kind).rejection_reason(player)
+            end
+          end.first
+          next Result.new(success?: false, errors: [error]) if error
+
+          match.update!(metadata: match.metadata.merge("duel_start_confirmed" => true))
+          CombatProcessor.new(match).start_match
+        end
+        Result.new(success?: true, application: original, match: match)
+      end
     end
 
     # Accept an NPC application (player vs bot)
@@ -157,6 +202,10 @@ module Arena
 
         unless application.arena_room.accessible_by?(acceptor)
           next Result.new(success?: false, errors: ["This arena room is unavailable"])
+        end
+
+        unless application.arena_room.has_capacity?
+          next Result.new(success?: false, errors: ["Arena room is full"])
         end
 
         unless application.acceptable_by?(acceptor)
@@ -274,6 +323,7 @@ module Arena
         trauma_percent: application.trauma_percent,
         metadata: {
           fight_kind: application.fight_kind,
+          duel_applicant_id: application.applicant_id,
           fight_timeout_seconds: 300,
           physical_only: true
         }
@@ -348,19 +398,6 @@ module Arena
       match
     end
 
-    def persist_match_start_schedule(match, starts_at)
-      match.update!(metadata: match.metadata.merge(starts_at: starts_at.iso8601))
-    end
-
-    def enqueue_match_start(match)
-      Arena::MatchStarterJob.set(wait: MATCH_COUNTDOWN_SECONDS.seconds).perform_later(match.id)
-    rescue StandardError => error
-      logger.error(
-        "[Arena::ApplicationHandler] match_start_enqueue_failed " \
-        "match_id=#{match.id} error=#{error.class}"
-      )
-    end
-
     def enqueue_application_deadline(application)
       ApplicationDeadlineJob.set(wait_until: application.expires_at).perform_later(application.id)
     rescue StandardError => error
@@ -391,7 +428,7 @@ module Arena
           application_id: application.id,
           acceptor_application_id: acceptor_application_id,
           participant_ids: participant_character_ids,
-          countdown: 10,
+          countdown: 0,
           redirect_url: "/arena_matches/#{match.id}"
         }
       )

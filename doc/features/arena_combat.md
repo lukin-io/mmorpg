@@ -3,12 +3,66 @@
 title: Arena Combat Runtime Feature
 description: Implementation handbook for arena applications, shared player and NPC turn combat, combat presentation, completion, and public fight logs.
 status: Partially Implemented
-updated: 2026-09-12
+updated: 2026-09-15
 owners: Arena and Combat
 template: feature-v1
 ---
 
 # Arena Combat Runtime
+
+[ARENA](../ARENA.md) is the complete area guide to halls, applications,
+admission/assembly, training supply, presentation and editing.
+[COMBAT](../COMBAT.md) is the general guide to modes, shared turns, input/formula
+effects, outcomes, UI and editing. [SCROLLS](../SCROLLS.md) explains targeted
+entry and licenses. This handbook retains the detailed runtime/acceptance contract.
+
+### September 15 recovery and qualification
+
+The prior documentation audit identified a broken legacy lobby URL, a missing
+NPC capacity recheck and concurrent NPC supply without a durable unique guard.
+This follow-up repairs those boundaries:
+
+- `/arena/lobby` redirects through the existing entry gate to `/arena`.
+- NPC acceptance rechecks capacity under room → application → character locks.
+- `NpcApplicationService` holds the room lock, retires expired offers and creates
+  one replacement. A partial unique index protects open room/NPC pairs even
+  outside the service. The migration preserves duplicate history as cancelled
+  offers. Publication waits for outermost commit.
+- The Training job counts only unexpired supply. Authorized Training entry/
+  refresh restores an absent offer before the character-locked controller flow;
+  later queued work is idempotent. Help still requires explicit supply. Default
+  scans recur after 60 seconds once bootstrapped; room-specific jobs are one-shot.
+- [Medical Care](medical_care.md) now enforces effective Doctor proficiency at
+  both quotation and paid acceptance, using the existing shared item checker.
+
+[Source review](../design/reference/combat/observations/2026-09-15_arena_medical_gap_review.md)
+records the published bag thresholds, Group waiting period and unresolved
+percentage/Snowball/XP details. No new source PvP fight is claimed.
+
+Verification and final manual acceptance are recorded in the September 15
+acceptance section at the end of this handbook.
+
+### September 14 scroll entry
+
+The fight header renders authoritative `trauma_percent` for every entry path.
+It no longer displays the unused metadata default “normal” for all matches.
+
+[Attack scrolls](../design/features/scrolls.md) reuse this match, participation,
+profile, processor, resolver, injury/XP/wear, chat/log and fight UI pipeline.
+[Inventory](player_inventory.md#september-14-attack-scrolls) owns admission and
+the use receipt. New matches carry `source: scroll_pvp`, `physical_only: true`
+and the existing 300-second global deadline. Fist Attack unequips both players
+before profile preparation; unarmed profiles ignore old shield/weapon preview
+overrides and use no equipment artifact multiplier. Permit intervention adds
+a player opposite the living target, retaining existing trauma/deadline and
+pending turns; the new player joins the same current-round commitment barrier.
+Closed fights and defeated targets reject intervention.
+
+Each participant finishes independently. The scroll entrant returns to
+Inventory; a newly attacked defender resumes their saved accessible location.
+Successful source scroll entry is still pending; both 17-to-5 submissions
+rejected without consumption. The observation separates local
+interpretations from live proof. No separate PvP combat resolver exists.
 
 This document describes the bounded Arena and shared Fight runtime, including
 the locally accepted physical Duel/Group applications and stronger-NPC changes. It covers city-gated Arena entry, fight applications,
@@ -17,7 +71,8 @@ fight surface, explicit completion, and the shell-free public fight log.
 Measurable desktop UI/UX parity and overall delivery completion are tracked in
 the Combat Completion Matrix under Pillar 3 of
 `doc/design/launch_mvp_plan.md`. Earlier bounded acceptance remains recorded
-below; the September 12 physical Arena section owns the latest Arena acceptance.
+below; the September 14 human Duel and September 15 follow-up sections own
+the latest relevant acceptance.
 
 ### September 12 physical Arena applications
 
@@ -31,7 +86,7 @@ to existing wilderness profiles. Forged spell keys cannot spend MP or advance a 
 
 `ApplicationHandler#create/accept/cancel` owns offers and Duels. It returns
 success/application/match/errors, locks room then character and schedules the
-existing ten-second Duel starter after commit. `GroupAssembly#join/withdraw`
+applicant-confirmed human Duel reservation after commit. `GroupAssembly#join/withdraw`
 returns that same shaped result after room→application→character locks;
 `settle(application:)` locks all roster characters in id order, creates real
 participations and starts `CombatProcessor` once at the deadline. Invalid or
@@ -50,7 +105,7 @@ commits and reload reads authoritative state. No unused auto-matchmaker remains.
 The compact white lobby uses native Rails forms, blue links/gray tabs, cream
 controls, side radios, exact saved terms, waiting navigation lock, level/all
 filters and an inline ten-hall scheme. Stimulus only enhances scheme/deadlines,
-room refresh and committed countdowns; it cleans up timers/subscriptions.
+room refresh and committed match transitions; it cleans up timers/subscriptions.
 Automatic five-second recovery refreshes begin only once the application's
 deadline is due; ordinary waiting preserves the expanded scheme and focus.
 Committed roster changes and the explicit Refresh control still reload state.
@@ -58,7 +113,7 @@ Committed roster changes and the explicit Refresh control still reload state.
 original painted icons at16px, complete-canvas64px delivery. No source bitmaps
 or oversized lobby illustration were introduced.
 
-PvP and mixed teams use `ExperienceAwarder`: defeated enemies, credited HP,
+PvP and mixed teams use `ExperienceAwarder`: defeated NPCs/damaged players, credited HP,
 snapshotted level/HP, group contribution, fitted trauma factor and the existing
 premium/level cap. Untouched surrender and draws grant zero XP. Defeated
 contributors remain in results, while active cards/targets/readiness exclude
@@ -436,7 +491,7 @@ browser gates. Stage2 completed its final full gate and affected manual browser 
 
 The player enters Arena through the City-owned arena hotspot, selects a room,
 creates or accepts a compact fight application, and enters the shared match
-runtime. Player-versus-player applications use a short start countdown; an
+runtime. Player-versus-player applications require applicant confirmation; an
 eligible NPC training application starts immediately. Wilderness NPC fights
 use the same match, participation, turn, result, and log records. A persisted
 same-cell hostile can also interrupt the outdoor surface through World's
@@ -946,7 +1001,8 @@ The shipped topology is:
 
 | Surface or behavior | Entry point | Runtime status | Owning implementation |
 |---|---|---|---|
-| Arena lobby and rooms | `GET /arena`, `/arena/lobby`, `/arena_rooms/:id` | Interactive | Arena controllers, room/application views |
+| Arena lobby and rooms | `GET /arena`, `/arena_rooms/:id` | Interactive | Arena controllers, room/application views |
+| Legacy lobby URL | `GET /arena/lobby` | Redirects to canonical overview through the City entry gate | `ArenaController#lobby` |
 | Application create/accept/cancel | Nested and member application routes | Interactive | `Arena::ApplicationHandler` plus models/controllers |
 | Active shared fight | `GET /arena_matches/:id` | Interactive | Match controller, processor, fight views/Stimulus/CSS |
 | Turn/timeout/finish | Match member POST routes | Interactive | Policy, controller, combat processor, return context |
@@ -959,7 +1015,7 @@ The shipped topology is:
 ### 6.2 Arena applications and match start
 
 `Arena::ApplicationHandler` owns player application creation, acceptance,
-cancellation, transactionally-created matches/participations, countdown jobs,
+cancellation, transactionally-created matches/participations, explicit Duel confirmation,
 and broadcasts. NPC applications use the same visible list and validation but
 enter the shared fight immediately after an accepted open side.
 
@@ -972,9 +1028,11 @@ cannot overwrite a competing acceptance; its room event is published only
 after commit. Both application rows stay
 linked to the match, transition from `matched` to `started` through the shared
 match-start path, and stop blocking replay as soon as their match is complete.
-The normal PvP start delay is ten seconds. The delayed start is enqueued after
-commit, and a participant loading a due pending match recovers the same start
-transition if the worker was unavailable.
+Human Duels now await explicit applicant confirmation, as captured September14.
+No automatic job is enqueued. Either participant can refuse before start,
+releasing the acceptor and reopening the original offer. Confirmation locks and
+revalidates admission, and the common processor rejects unconfirmed starts.
+Historical pending records with a scheduled start retain their recovery path.
 
 NPC acceptance locks its room, application, and accepting character in that
 order inside the existing transaction. It reloads access, application status,
@@ -985,7 +1043,7 @@ stable ordering for both character locks.
 
 The PvP `match_created` live update is room-scoped and includes both persisted
 participant character IDs. A participant still viewing that Arena room starts
-the countdown and redirects; there is no parallel per-user toast/notification
+an immediate redirect to the accepted lobby; there is no parallel per-user toast/notification
 stream. An applicant waiting on the Arena index or another page reconciles from
 the persisted active match on the next Arena navigation. The HTTP acceptor
 redirect and persisted match remain authoritative even if Action Cable is
@@ -1069,6 +1127,13 @@ match, not its physical seed, shield or injected actions. Item seeds, shield
 tables and signed cost adjustments use merged `InventoryItem#effect_modifiers`
 before legacy root properties. The character's transient root `block_table`
 never supplies a new fight's equipment tier.
+
+For `no_weapons`, the profile reader overrides stored AP/physical-cost values
+with character-derived values and forces normal blocking, excluding stale gear
+overrides. The ordinary snapshot guarantee is not a promise that all player
+attributes are frozen. [CHARACTER](../CHARACTER.md#6-implementation-and-state-ownership)
+documents the live-stat and current progression-endpoint boundaries;
+[MEDICAL](../MEDICAL.md) owns post-fight injury/treatment state.
 
 `Game::Combat::ActionCatalog` owns the exact normal and shield `40`, `70`, and
 `90` selector tables. A shield item must author its table identity; family
@@ -1169,7 +1234,7 @@ members, levels, rewards, probabilities, or selection formula.
 | `ArenaMatch` | Match state, per-turn/global timers, teams, return and selected-encounter metadata | Active state and the explicit World-fight deadline gate actions and completion |
 | `ArenaParticipation` | Player/NPC side, result, combat metadata | Exactly one player character or NPC template; NPC level/HP may be snapshotted per captured roster member |
 | `CombatLogEntry` | Ordered durable event | Source for active and public logs |
-| `Arena::CombatProfile` | Persisted AP/cost/selector snapshot | Explicit captured values override exact AP derivation; reload cannot drift an active fight |
+| `Arena::CombatProfile` | Persisted AP/cost/selector profile | Ordinary profiles retain captured overrides; unarmed mode rederives AP/physical cost and forces normal blocking |
 | `Game::Combat::ActionCatalog` | Attack and exact normal/shield/magic selector identities | Server owns costs, row placement, coverage, and profile availability |
 | `Arena::ExperienceAwarder` | Shared player/NPC XP | Snapshot level/HP, credited damage, team shares and recipient cap; guarded by match finalization |
 | `Arena::EquipmentWearResolver` | Independent post-fight item wear | Exact result chances, one point maximum, Careful Fighter half chance, once-only finalization |
@@ -1288,13 +1353,16 @@ state plus HTML/JSON reload is the recovery authority.
 
 | Route | Purpose | Response |
 |---|---|---|
-| `GET /arena` and `/arena/lobby` | Arena entry/list | Authenticated HTML/JSON where supported |
+| `GET /arena` | Arena entry/list | Authenticated HTML/JSON |
+| `GET /arena/lobby` | Compatibility redirect | City-gated redirect to `/arena` |
 | `GET /arena_rooms/:id` | Room and applications | Authenticated HTML/JSON |
 | `GET/POST /arena_rooms/:arena_room_id/arena_applications` | List/create room applications | HTML partial/redirect or JSON |
 | `POST /arena_rooms/:arena_room_id/arena_applications/:id/accept` | Accept nested application | Match redirect or JSON payload |
 | `POST /arena_applications/:id/accept` | Accept direct application | Match redirect or JSON payload |
 | `DELETE /arena_applications/:id/cancel` | Cancel own open application | Redirect or JSON |
 | `GET /arena_matches/:id` | Active/waiting/result fight | Authenticated HTML/JSON |
+| `POST /arena_matches/:id/confirm_duel` | Original applicant starts a reserved Duel | Redirect or JSON |
+| `DELETE /arena_matches/:id/refuse_duel` | Either reserved participant refuses before start | Room redirect or JSON |
 | `POST /arena_matches/:id/action` | Submit turn or surrender intent | Redirect, Turbo status, or JSON |
 | `POST /arena_matches/:id/switch_opponent` | Consume one manual target switch | Redirect or JSON |
 | `POST /arena_matches/:id/claim_timeout` | Claim eligible timeout result | Redirect or JSON |
@@ -1514,7 +1582,7 @@ separate Neverlands evidence gaps in the launch matrix.
 | Lifecycle slice | Model/unit and edge traits | Service/job/channel | Request/policy | Browser/system | Status |
 |---|---|---|---|---|---|
 | Create, cancel, and replay | `arena_application_lifecycle_spec`; `open`, `matched`, `started`, `expired`, and `cancelled` traits | `application_handler_spec` covers locked stale cancel, retry, rollback, capacity, and active-state gates | `arena_applications_spec` covers create success, invalid timeout, duplicate, authentication, accept, and owner-only cancel | `arena_match_notification_spec`; seeded browser create/cancel/replay | `DONE` |
-| Accept, countdown, start, and recovery | `arena_match_lifecycle_spec`; `countdown` and `countdown_due` traits, exact due boundary, malformed/null schedule | handler, `match_starter_job_spec`, `realtime_publisher_spec`, and channel snapshot coverage | application accept plus due-start recovery in `arena_matches_spec` | lifecycle/notification specs; seeded ten-second countdown and reload | `DONE` |
+| Historical countdown recovery; current human Duel confirmation | `arena_match_lifecycle_spec`; `countdown` and `countdown_due` traits, exact due boundary, malformed/null schedule | handler, `match_starter_job_spec`, `realtime_publisher_spec`, and channel snapshot coverage | application accept plus due-start recovery in `arena_matches_spec` | lifecycle/notification specs; seeded ten-second countdown and reload | `DONE` |
 | Complete turn, waiting, and shared resolution | catalog/profile/resolver unit specs; `waiting_for_opponent` trait | deterministic seeded `combat_processor_spec`; exact reconnect target in `arena_match_channel_spec` | indexed and JSON turn shapes, forged/allied/foreign rejection, and full two-user `arena_pvp_lifecycle_spec` | composer/reset/over-budget system specs; seeded both-player round | `DONE` |
 | Timeout victory and draw | `arena_match_timeout_spec`; `timeout_claimable` and `drawn` traits | processor claim rules and timeout job's one-advance/one-schedule checks | participant/non-participant, pre-boundary, victory, and explicit-draw request/policy cases | draw/result system presentation; seeded victory/draw browser paths | `DONE` |
 | Surrender, result, finish, reload | participation `surrendered`, `victory`, `defeat`, `draw`, and `finished` traits | processor finalization, event, reward, wear, and retry specs | surrender plus participant-only, premature, anonymous, outsider, repeated Finish, and end-to-end lifecycle requests | lifecycle/layout result specs; seeded winner/draw, both Finish/reload paths | `DONE` |
@@ -1867,3 +1935,230 @@ supplies only authoritative completion/loot facts and stable source keys.
 | 2026-08-26 | Closed the bounded physical PvE browser gate with a seeded immediate Arena NPC `1x1` and City-exit-to-`[7,7]` wilderness `1x2`: persisted random due, passive entry, AP reset, target handoff, per-NPC search, capped result, one XP/win, Finish/same-cell reload, and no duplicate reward. Added exact-cell schedule service coverage and retained timing/probability/roster selection as explicit evidence gaps. |
 | 2026-09-01 | Closed the bounded physical MVP's remaining local gates with a disposable `3x3` player browser run and deterministic request/system coverage: living-opponent switching and pending-target reload, first-five-wait/sixth-submit shared resolution, locked stale-round rejection, side surrender and six results, responsive active/waiting/timeout/result states, and shell-free public log/statistics/pagination/empty/error states. |
 | 2026-09-02 | Added source-sample wilderness selection through the existing shared combat path: validated complete roster/delay samples, server RNG, mixed/repeated per-member level/HP, persisted sample/XP/risk/repeatability, DB-only template resolution, sampled-anchor eligibility after full victory/Finish, and an explicit `300`-second World-fight deadline checked by views, jobs, and action requests. The generic typed item pipeline is now explicitly covered for consumables, weapons, and armor; exact NPC pools/probabilities remain evidence-gated. |
+
+## September 14 live human Duel parity
+
+[Six-exchange source capture](../design/reference/combat/observations/2026-09-14_arena_fist_duel.md)
+now supplies the first completed human Arena evidence. See [ARENA](../ARENA.md#september-14-live-human-duel),
+[COMBAT](../COMBAT.md#september-14-live-human-duel) and [FORMULAS](../FORMULAS.md#september-14-pvp-loss-contribution).
+
+- `ApplicationHandler#accept` reserves a human Duel with paired matched
+  applications and participant records, no start job. `confirm_duel(match:,
+  character:, refuse: false)` owns the locked confirmation/refusal transition
+  and returns its existing Result. Only the original applicant can start;
+  either participant can refuse. Refusal cancels the unused match and reopens
+  the same offer (or expires it at its deadline). Repeated/stale commands cannot
+  duplicate combat, rewards or acceptance. Start rechecks room access, health,
+  equipment and expiry before invoking the shared processor. NPC/Group start
+  behavior stays with its existing owners. Existing historical scheduled
+  records still use their old due-start recovery.
+- POST `/arena_matches/:id/confirm_duel` and DELETE
+  `/arena_matches/:id/refuse_duel` authenticate and authorize through the match
+  policy. Confirmation shows the accepted lobby at the reserved match URL;
+  shared match broadcasts/polling restore authoritative transitions. Low-HP
+  lobby state hides the application form and renders the recovery message.
+- The shared XP awarder includes damaged surviving player opponents. PvP loss
+  has a separate 1.0 multiplier; NPC loss remains 0.1 and needs an NPC defeat.
+  This reproduces nonzero loss eligibility, not exact source coefficients:
+  the captured 177 XP is approximated as 181; the observed winner's 566 remains an
+  uncalibrated reward anchor. Match reward guards and normal progression own
+  settlement and prevent duplicate awards.
+- The public log preserves durable event ordering and groups only adjacent
+  actor/round/minute outcomes into paragraphs. Names carry side colors and
+  levels, body zones are gray, negative amounts bold, critical damage red.
+  Public HTML omits internal `action` submission/stance rows and paginates
+  the remaining outcomes; those rows remain in the database, live waiting
+  history and raw JSON export. Sentence punctuation separates grouped events.
+  Minute timestamps retain exact seconds in title/datetime; even a short log
+  has page 1 and a Statistics footer link. Original header decoration replaces
+  the CSS text emblem; [ARTWORK](../ARTWORK.md#september-14-public-fight-log-decoration)
+  owns exact prompt, dimensions and rejected crop provenance.
+- Public profile city/room/in-combat→public-log links retain completed but
+  unacknowledged fights. A profile opened during an existing fight suppresses
+  the shell's incoming-fight redirect, and its log link escapes the Turbo
+  frame to the full public page. A profile opened without an existing fight
+  still polls for a new incoming scroll attack. No new source formula was
+  inferred from the profile percentage.
+
+The source opponent used magic in an unarmed Duel. Local physical-only Arena
+remains the user's explicit MVP adaptation; Spirit Arrow/Chaos Mirror/Iris/HP
+restoration in this sample do not prove their hidden formulas. The observed
+pocket Snowball does not establish unrestricted pocket admission. Those two
+bounds remain [EVIDENCE]/post-MVP work, with the raw log retained for that work.
+
+Focused coverage: `spec/requests/arena_duel_confirmation_spec.rb`,
+`spec/requests/arena_pvp_lifecycle_spec.rb`,
+`spec/services/arena/application_handler_spec.rb`,
+`spec/services/arena/pvp_experience_spec.rb`,
+`spec/requests/public_fight_logs_spec.rb` and
+`spec/helpers/public_fight_logs_helper_spec.rb`.
+### September 14 verification and manual acceptance
+
+Automated checks on the main Duel/XP/log/artwork implementation:
+`bin/verify full` passed **3,063 non-system examples and 301 system examples**,
+620 Ruby files with no lint offenses, zero Brakeman warnings, no Bundler or
+Importmap vulnerabilities, and both documentation audits. The earlier full
+attempt had two system failures: a Warden next-request login hook consumed by
+the other browser's background poll, corrected by actual UI login in that
+session; and a Selenium stale-document/node error in the existing synthetic
+3×3 check, which passed on its focused rerun and the subsequent full run.
+
+Manual inspection then found public action-row noise and profile navigation
+issues. After correcting those, the final `bin/verify fast` passed **3,064
+non-system examples**, lint and both documentation audits. The affected
+player/public-log/helper/two-player Arena system files passed **43 examples**.
+The final full suite was not repeated after these bounded presentation fixes;
+the focused system file and final manual flow cover their UI changes. No CI
+run is claimed here. Existing Rack status-name deprecation warnings and the
+documented Partially Implemented handbook warnings remain non-failing.
+
+Agent-performed local browser acceptance used Chrome at **1039×853** and a
+separate in-app browser session at **593×944**, with **320×740** and **390×844**
+viewport checks. `FistCapture0914A[17]` and `FistCapture0914B[24]` are dedicated
+development test characters, not Neverlands evidence. All actions below used
+actual forms/links/buttons; a final read-only database inspection confirmed
+both players acknowledged both results.
+
+1. City Arena hotspot → Initiation Hall → Unarmed / 2 min / 30% application.
+   The cross-level opponent used the **all** filter, accepted, refused, and
+   reaccepted the same terms. Only A received Start Duel. B's refusal restored
+   the original offer. Background Chrome used explicit Refresh to reconcile
+   acceptance; realtime push latency is not claimed from this run.
+2. A activated Start with Enter. Match **57** used the shared 200-AP composer.
+   Three simple attacks previewed **210/200** with a 75-point penalty. Reset
+   restored the composer; a head attack plus head/torso block used **95/200**.
+   After A submitted, it waited for B; the next exchange resolved both sides.
+3. Two physical exchanges ended normally after 45 seconds: A dealt **117**, B
+   received credit for **225**, A earned **109 XP**, B **50 XP**. A received a
+   light injury; the result and chat showed it. These numbers are local fixture
+   outcomes, not a replacement for source fight 771016917's magic-heavy data.
+4. On the corrected final code, the profile stayed readable while the result
+   awaited Finish. Its city/room/in-combat link opened the full public log.
+   Log → Statistics → Log worked with pointer and Enter. Minute stamps, side
+   colors/levels, grouped punctuated outcomes, injury emphasis, original header
+   art, page 1 and footer navigation rendered correctly. Internal submission
+   and stance rows remained in the live/raw history but disappeared from public
+   HTML. At 390px the statistics region scrolled horizontally with ArrowRight
+   to its 90px limit, exposing XP; the outer page stayed 390px. The 320px log
+   also stayed within a 320px document width. Viewport overrides were restored.
+5. Finish and profile reload removed the battle link for match 57 without
+   changing its rewards. The first run's players had regenerated during checks,
+   so a second final-code Duel (**58**) verified immediate aftermath: two
+   exchanges, 39 seconds, credited damage **59 / 225**, XP **55 / 50**. Both
+   players clicked Finish. A returned at **2/225 HP** with the recovery warning
+   and no Submit Application control; reload preserved that gate. No active
+   match or unacknowledged result remains for either test character.
+
+Native browser 200% zoom was not established by the browser key transport;
+no zoom-specific pass is claimed. Responsive widths and keyboard interaction
+above were exercised. Source-specific magic, Snowball admission and exact XP
+coefficients retain the evidence/post-MVP boundaries described above.
+
+Screenshots: [accepted Duel](acceptance/2026-09-14_arena_fist/01-accepted-desktop.png),
+[320px acceptance](acceptance/2026-09-14_arena_fist/02-accepted-320.png),
+[physical controls](acceptance/2026-09-14_arena_fist/03-live-physical-controls.png),
+[result/chat](acceptance/2026-09-14_arena_fist/04-result-and-chat.png),
+[final public log](acceptance/2026-09-14_arena_fist/05-public-log-desktop.png),
+[statistics](acceptance/2026-09-14_arena_fist/06-statistics-desktop.png),
+[profile before Finish](acceptance/2026-09-14_arena_fist/07-profile-before-finish.png),
+[390px log](acceptance/2026-09-14_arena_fist/08-public-log-390.png),
+[390px statistics](acceptance/2026-09-14_arena_fist/09-statistics-390.png),
+[low-HP return](acceptance/2026-09-14_arena_fist/10-low-hp-return.png),
+[320px log](acceptance/2026-09-14_arena_fist/11-public-log-320.png),
+[profile after Finish](acceptance/2026-09-14_arena_fist/12-profile-after-finish.png).
+
+### September 15 verification and manual acceptance
+
+`bin/verify full` passed on the final runtime: **3,087 non-system examples,
+301 system examples, 622 Ruby files without lint offenses**, zero Brakeman
+warnings, no Bundler/Importmap vulnerabilities, 12 feature documents and 92
+architecture documents. No CI or production health claim is implied.
+The first full attempt retained two failures: the public-pagination fixture
+counted internal `action` rows, and the two-browser Duel assertion timed out
+while its start request stalled for 144 seconds. The fixture now counts visible
+outcomes; the second login explicitly waits for its Arena redirect. The Duel
+and all three team browser scenarios passed a focused four-example rerun,
+then the complete gate passed. The stall did not reproduce. Earlier setup also
+caught a PostgreSQL-version-specific schema-dump setting; the final structure
+contains only the new index/version and loaded successfully for these checks.
+Logs: `/tmp/combat-0915-full.log`, `/tmp/combat-0915-regression.log` and
+`/tmp/combat-0915-full-final.log`.
+
+Focused coverage includes concurrent NPC replenishment and acceptors using
+independent connections, direct duplicate insertion, exact expiry/replay,
+outer-transaction rollback with no announcement, disabled/full-room rejection,
+worker scheduling failure and later replay, legacy-route navigation, and
+Doctor qualification at 99/100, 299/300, 399/400 and 599/600. Existing physical
+1x1/1xN/3x3 authorization, waiting/reconnect, target, timeout, dead-participant,
+settlement and Finish regressions passed in the same full suite. These are
+local automated scenarios, not additional Neverlands fights.
+
+After that gate, the agent personally exercised Chrome and a separate in-app
+browser through actual links, forms and buttons. Disposable development
+characters `ArenaCheck0915A/B[5]`, initial license/bag/Doctor counters and B's
+initial light injury were prepared as fixtures. They are not seed balance or
+source observations.
+
+1. Chrome's native toolbar reported **200%**; DOM viewport was approximately
+   **576×409 CSS px**, DPR 4 on a Retina display. City → Inventory → Medical
+   care showed Doctor **99**, the bag's requirement **100**, and ten uses.
+   Treating B rejected with the exact current/required proficiency and preserved
+   the injury, bag, NV and absence of a treatment receipt.
+2. B used its Injury link at **390×844**. Doctor **100** self-treatment healed
+   the light injury, removed the header link, spent **10→9** uses and persisted
+   one private treatment notice. Inventory revisit showed durability **9/10**;
+   Hospital → Medical care at **320×740** retained the healed empty state and
+   nine uses. The document fit both widths; labels wrapped and controls and
+   complete 60×60 bag art remained reachable. Return restored City.
+3. A used City Arena hotspot → Training Hall with the dedicated worker paused.
+   The naturally expired offer 29 was replaced by **30** on entry; Refresh
+   retained only 30. The room showed one captured Dummy[1] offer, Free, 5 min,
+   30%, acceptor levels 0–5. Radio → Tab focused Accept; **Enter** started
+   match **59** immediately in the shared physical UI.
+4. At native 200%, the composer remained reachable by scrolling its containing
+   panel. Aimed head attack + head/torso block previewed **115/190 AP**. The
+   actual Turn form resolved the fight: displayed hit **−110** against 30 HP,
+   credited damage **30**, one defeated NPC, **5 XP**, and one committed
+   return hit for **−1** to the player. The 39-second result removed the NPC's
+   active card while preserving log/statistics history.
+5. Profile retained Training Hall and the in-combat public-log link before
+   Finish. Log → Statistics worked outside the game shell: minute timestamps,
+   bold amounts/names, side colors, no internal action rows, full original
+   header, page 1, and defeated NPC history. Public pages fit the 576px viewport.
+   Browser Back restored the result. **Finish Fight** returned to Training Hall,
+   published exactly one positive-XP chat event and restored offer **31**.
+   Profile revisit removed the battle link; native reload preserved XP/receipt
+   state. Groups showed the empty application form; `/arena/lobby` opened the
+   canonical `/arena` overview with recent-fight navigation.
+
+Worker evidence is separate from browser evidence. An isolated Sidekiq queue
+`arena_acceptance_0915` processed two real room-specific jobs: the first created
+one offer and the second was inert. The worker was quieted before natural
+expiry; a third job remained queued while browser entry/Finish repaired supply.
+After restart that delayed job completed and retained offer 31, with queue size
+zero. The temporary workers were stopped; unrelated workers were untouched.
+The host's Redis is on port 6381; the initial default-port startup failed, and
+one initial Cable publish failed while committed supply survived. The restart
+used the correct Sidekiq/Cable endpoints. This demonstrates bounded local
+execution/replay and read recovery, not production scheduling or push latency.
+Default 60-second recurrence and scheduling-failure recovery were automated
+specs; only room-specific one-shot jobs were dispatched in this manual check.
+
+Native zoom was restored to 100% (DPR 2, approximately 1153×819) and the in-app
+viewport override was reset. Final readback found no active fights or unfinished
+results for either fixture, A's bag still ten uses/XP 5, B's bag nine uses/no
+active injury, and one event per completed action. No physical touch device or
+new source treatment/PvP fight was exercised. The source percentage, Snowball
+use and exact XP/formula bounds remain in the linked source review.
+
+Screenshots: [Doctor rejection](acceptance/2026-09-15_arena_recovery/01-doctor-rejection-200.jpg),
+[zoomed medical controls](acceptance/2026-09-15_arena_recovery/02-medical-controls-200.jpg),
+[healed 390px](acceptance/2026-09-15_arena_recovery/03-healed-390.jpg),
+[recovered offer and keyboard focus](acceptance/2026-09-15_arena_recovery/04-training-offer-200.jpg),
+[composer](acceptance/2026-09-15_arena_recovery/05-composer-200.jpg),
+[result](acceptance/2026-09-15_arena_recovery/06-result-200.jpg),
+[public log](acceptance/2026-09-15_arena_recovery/07-public-log-200.jpg),
+[statistics](acceptance/2026-09-15_arena_recovery/08-statistics-200.jpg),
+[Finish/replenishment](acceptance/2026-09-15_arena_recovery/09-finish-replenishment-200.jpg),
+[legacy URL destination](acceptance/2026-09-15_arena_recovery/10-legacy-lobby-200.jpg),
+[medical 320px](acceptance/2026-09-15_arena_recovery/11-medical-320.jpg).

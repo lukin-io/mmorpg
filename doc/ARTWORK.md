@@ -1,15 +1,142 @@
 # Project Artwork Guide
 
+## September 14 public fight-log decoration
+
+Source layout: [first human Duel](design/reference/combat/observations/2026-09-14_arena_fist_duel.md).
+Runtime consumer: [public history](features/arena_combat.md#september-14-live-human-duel-parity),
+with [COMBAT](COMBAT.md#september-14-live-human-duel) and [ARENA](ARENA.md#september-14-live-human-duel).
+The source public page has a wide ornamental heading, gray/white paper, side
+decoration, compact paragraphs and footer pagination/statistics. Its Neverlands
+logo, clan badges and original bitmaps remain evidence only.
+
+One built-in generation, no bitmap input, produced original iron/pewter scrollwork,
+dark crimson cloth and a blank shield. Native generated filename:
+`exec-3fda39b3-ad3a-479d-8590-90da94e0150b.png`.
+Requested 1600×240; native output 1983×793.
+Final [arena/fight_log_header.png](../app/assets/images/arena/fight_log_header.png)
+is **1600×640 PNG**, uniformly downscaled using `sips -Z 1600`, no stretch.
+An initial 530px crop cut the top ornament and was rejected; the final asset
+was restored from the complete native output before downscaling. Every tip,
+shield edge and cloth tail remains visible. CSS uses contain fit in a 130px
+desktop header, 86px below 900px and 62px below 520px. Blank background is retained.
+Typography, source-like emphasis, accessible links, responsive wrapping and
+border treatment remain HTML/CSS. No text or control is baked into the image.
+Final in-context acceptance is recorded with the consuming handbook.
+
+Portrait rule confirmed by the same capture: the unarmed participants have
+empty equipment rails while their cosmetic portraits still depict clothing,
+armor or a shield. Do not generate an undressed portrait merely because the
+fight is unarmed, or derive equipped items from the painted avatar. The
+existing original player portraits remain appropriate; actual inventory slots
+and the [Arena equipment rule](ARENA.md#september-14-live-human-duel) govern admission.
+
+Exact submitted prompt:
+
+```text
+Use case: stylized-concept. Asset type: original decorative header for a classic early-2000s fantasy browser RPG public fight log. Wide horizontal composition, requested 1600x240 pixels, pale neutral gray-white background #f7f7f7. A symmetrical wrought dark iron and engraved pewter ornament with a restrained dark crimson cloth ribbon behind it. A small central blank steel shield, geometric original shape, no lettering, no initials or monogram, no identifiable game logo; fine curling acanthus and short metal flourishes spread horizontally, tapering to open space near both ends. Decoration occupies upper three quarters, bottom fades into clean pale background. Entire complete ornament within canvas, modest clear margins, realistic matte painted metal and cloth, dark silver and burgundy, restrained highlights, crisp silhouette readable at 900x135 CSS pixels. No characters, weapons, skulls, neon, glow, UI text, buttons, labels, words, watermarks, existing brand emblem or copied game assets. Original artwork only, no reference bitmap inputs.
+```
+
 For implementation context, use the [documentation read/update map](DOCUMENTATION.md#21-required-context-and-update-map),
 [NPC equipment/portraits](NPC.md#5-equipment-and-artwork),
 [item artwork mappings](ITEMS.md#5-artwork-and-presentation) and
-[world scenes/cells](WORLD.md#6-map-and-location-artwork). Read the consuming
+[world scenes/cells](WORLD.md#6-map-and-location-artwork). For scroll/fight
+flows and image consumers, use the [SCROLLS UI/art guide](SCROLLS.md#9-ui-and-artwork)
+and [COMBAT UI/art guide](COMBAT.md#9-ui-realtime-delivery-logs-and-artwork).
+[ARENA's UI/art guide](ARENA.md#7-ui-logs-and-artwork) maps hall/application
+presentation, icon dimensions and Dummy portrait consumers. Read the consuming
 feature's evidence/design and handbook before editing an illustration. Update
 the exact production record here, affected catalog links and that handbook's
 integration/visual acceptance together. Content identity, stats and availability
 remain with those owners; dimensions and exact prompts remain here.
 
+## September 15 integration recheck
+
+The [Arena/Medical acceptance](features/arena_combat.md#september-15-verification-and-manual-acceptance)
+reused the existing original Dummy/player portraits, 16px application icons,
+1600×640 public-log header and 1254×1254 healer-bag illustration. No new image
+or prompt was needed for capacity/worker recovery or Doctor qualification.
+Native Chrome **200%** showed the recovered offer, shared composer, result,
+public log and statistics; Medical care also passed **320/390px** layouts.
+The bag retains **60×60 CSS px**, contain fit and full-object padding. Doctor
+points/requirements and remaining uses stay accessible text. Native zoom and
+viewport overrides were restored. These are local integration checks, not new
+Neverlands artwork or inferred equipment on painted portraits.
+
+## Skills and Perks presentation reference
+
+The [Skills guide](SKILLS.md#7-ui-ux-and-artwork) and
+[Perks guide](PERKS.md#7-ui-ux-and-artwork) own the profile's current controls,
+catalog/consumer distinctions and presentation gaps. Their
+[September14 source record](design/reference/character/observations/2026-09-14_skills_and_perks.md)
+preserves original supplied PNGs: numeric table1380×946 and boolean table1380×910.
+Those are evidence-crop dimensions, **not new runtime image dimensions**.
+
+The numeric source separates learned `/100`, red bonuses, available pools and
+profession counters; the boolean source groups42 Yes/No rows into six sections.
+Local forms currently render29 allocatable numeric definitions and four perks,
+with a different bonus/category presentation. Tables, labels, controls and
+help affordances belong in semantic HTML/CSS. No rasterized text table or
+copied Neverlands question-mark bitmap is authorized for runtime.
+
+This documentation update generates no artwork and adds no invented prompt
+record. If a later task needs an original help/category illustration, use the
+existing [brief](#prepare-the-asset-brief), [prompt templates](#prompt-templates)
+and [integration requirements](#generation-and-integration), record its exact
+prompt and final asset mapping here, and verify the final profile flow.
+
+## Use cases and cross-feature effects
+
+Artwork affects recognizability, layout and reachable controls. It supplies no
+gameplay coefficients; the consuming guide owns every behavioral rule.
+
+For the illustrated systems, [CHARACTER](CHARACTER.md#5-profile-ui-and-artwork)
+explains player/equipment presentation, [MEDICAL](MEDICAL.md#5-ui-notifications-and-artwork)
+maps bag/elixir art to treatment, and [ECONOMY](ECONOMY.md#5-ui-events-and-artwork)
+connects Shop images to purchase/Inventory flows. Exact prompts and dimensions
+remain here; those guides do not introduce new image variants or production claims.
+
+| Preconditions / use case | Production/integration action and result | Related effect and boundary |
+|---|---|---|
+| NPC portrait fails required combat dimensions | Produce/package to the documented portrait specification; verify paper doll | [NPC](NPC.md#5-equipment-and-artwork)/[COMBAT](COMBAT.md#9-ui-realtime-delivery-logs-and-artwork) presentation improves; HP, armor and loot stay data-owned |
+| Remote Ogre habitat needs a darker cell | Generate scene/atlas asset and map it to the authored cell | [WORLD](WORLD.md#6-map-and-location-artwork) governs coordinates/hotspots. Darkness alone does not create a high-level encounter |
+| New weapon or scroll needs an inventory image | Follow item specification and record exact prompt/mapping | [ITEMS](ITEMS.md)/[SCROLLS](SCROLLS.md) own slot, stats, charge and use rules; a depicted shield is not a block-table definition |
+| Arena application icon changes | Integrate original icon within the documented application layout | [ARENA](ARENA.md#7-ui-logs-and-artwork) owns terms and controls; verify clicking/navigation, not merely an isolated image |
+| Skills/Perks source table is supplied | Preserve evidence; implement any authorized later UI changes with HTML/CSS | [SKILLS](SKILLS.md)/[PERKS](PERKS.md) keep learned values, bonuses and ownership distinct. Source dimensions do not mandate a screenshot-sized player UI |
+| Asset looks correct but covers a hotspot at another viewport | Treat browser acceptance as failed and correct integration | Artwork completion includes usable affected flows; [adaptive acceptance](design/areas/game_client_layout.md#adaptive-ui-acceptance) owns viewport/input checks |
+
+## September 14 attack-scroll artwork
+
+Consumer: [Inventory attack scrolls](features/player_inventory.md#september-14-attack-scrolls)
+and [Shop](features/shop_economy.md). Content/source variants live in
+[ITEMS](ITEMS.md#attack-scroll-use) and [the live capture](design/reference/inventory/observations/2026-09-14_attack_scrolls.md).
+Duel Permit I reuses [its original image](../app/assets/images/items/duel_permit_i.png).
+The new [Fist Attack image](../app/assets/images/items/fist_attack.png) is original
+painted parchment with a fist wax/ink motif, generated without source bitmap input.
+
+Selected output: `exec-6653adca-826b-4179-8277-512fb6ebb184.png`, from
+`/Users/sesharim/.codex/generated_images/01a09048-8cf7-7d32-8832-36d18025f07c/`.
+Requested 600 × 600 composition; actual native output **1254 × 1254 PNG**.
+Delivery is **384 × 384 PNG**, full-canvas uniform downscale with
+`sips -z 384 384 SOURCE --out app/assets/images/items/fist_attack.png`.
+No crop/stretch or readable labels. It uses the ordinary goods contract below:
+Shop 62 × 91 CSS box with containment; Inventory contains it in its existing item
+image box. The cream bordered target form is HTML/CSS, not text baked into art.
+Final visual/interaction acceptance passed in [Chrome acceptance](features/player_inventory.md#september-14-local-acceptance), including the original image in Shop/Inventory, autofocus, keyboard order, narrow wrapping and the shared unarmed fight UI.
+
+The later [zMey rejection capture](design/reference/inventory/observations/2026-09-14_attack_scrolls.md#live-17-to-5-attempts--zmey)
+adds an Inventory failure state: bold 12px #c00 text above the category strip,
+rendered as accessible HTML/CSS. Both existing scroll illustrations are reused;
+no new raster asset or generation prompt is needed for this text-only state.
+
+Exact generation prompt:
+
+```text
+Use case: stylized-concept. Asset type: original individual Fist Attack scroll illustration for a classic early-2000s painted fantasy browser RPG Shop and Inventory, readable at 60 by 60 CSS pixels. One complete aged parchment sheet with softly curled upper edge and two lower corners, a small dark russet wax seal bearing an indistinct raised clenched-fist motif. Only faint illegible ink marks, no readable text. Square canvas, entire object centered with clear padding on every side, near-overhead three-quarter catalog view. Detailed matte painted parchment fibers, restrained warm earth colors, uniform pale warm gray off-white background and small soft contact shadow. No weapons, people, detached actual hands, extra objects, scenery, border, frame, labels, words, numbers, UI, watermark, logo, neon or glossy 3D. Original project artwork; do not copy Neverlands bitmaps. Requested final composition 600x600.
+```
+
 ## September 12 Arena application icons
+
+Area context and editing impact: [ARENA](ARENA.md#7-ui-logs-and-artwork).
 
 Consumer: [Arena application rows](features/arena_combat.md#september-12-physical-arena-applications),
 from [live lobby evidence](design/reference/combat/observations/2026-09-12_arena_duels_and_groups.md).

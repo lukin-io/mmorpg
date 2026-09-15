@@ -25,7 +25,7 @@ deliberate implementation improvements.
 | Normalized design | `doc/design/gdd.md`, `doc/design/areas/**`, `doc/design/features/**` | Which source-backed rules and local adaptations define the target? | Shipped status |
 | MVP/parity | `doc/design/launch_mvp_plan.md` | Is a bounded delivery target Done or Not Done? | Broader feature completeness |
 | Current implementation | `doc/features/**` | What does the application verifiably do now and who owns it? | Unimplemented plans |
-| Game reference books | [NPC.md](NPC.md), [FORMULAS.md](FORMULAS.md), [ITEMS.md](ITEMS.md), [WORLD.md](WORLD.md) | What content/calculations exist, where are they configured, and what does editing them affect? | Independent design authority or a substitute for feature acceptance |
+| Game reference books | [NPC.md](NPC.md), [FORMULAS.md](FORMULAS.md), [ITEMS.md](ITEMS.md), [WORLD.md](WORLD.md), [SCROLLS.md](SCROLLS.md), [COMBAT.md](COMBAT.md), [ARENA.md](ARENA.md), [SKILLS.md](SKILLS.md), [PERKS.md](PERKS.md), [CHARACTER.md](CHARACTER.md), [MEDICAL.md](MEDICAL.md), [ECONOMY.md](ECONOMY.md) | How does the whole area work locally: content, rules, formulas, flows, use cases, cross-feature effects and editing? | Independent design authority or a substitute for feature acceptance |
 | Technical guidance | `doc/RUBY_ON_RAILS_GUIDE.md` | How should Rails/Hotwire code satisfy the contract? | Neverlands mechanics |
 | Original artwork production | `doc/ARTWORK.md`, with visual guides in `doc/artwork/` | Which style, exact prompts, visual inputs and packaging steps produced an illustration? | Gameplay rules or verified runtime completion |
 | Runtime authority | code, schema, config/seeds, specs | What currently executes and persists? | Product justification |
@@ -65,12 +65,38 @@ use [FORMULAS.md](FORMULAS.md) for current calculations, tables, coefficients,
 rounding, dependencies and safe tuning; [ITEMS.md](ITEMS.md) for the item
 catalog, requirements/effects, acquisition, artwork and editing; and
 [WORLD.md](WORLD.md) for zones, cells, city routes, services, resources,
-habitats and scene/atlas mapping. The
+habitats and scene/atlas mapping. [SCROLLS.md](SCROLLS.md) covers the complete
+local scroll catalog, attack/peace/license distinctions, acquisition, targeting,
+admission, charges, combat handoff and editing. [COMBAT.md](COMBAT.md) explains
+Arena/wilderness entry, PvP/NPC/mixed and unarmed fights, shared turns, the
+influence of levels/stats/equipment, outcome formulas, rewards, injuries, UI,
+logs and extension points. [ARENA.md](ARENA.md) covers the structured fight
+hub: city entry, the hall catalog, application terms/admission, Duel/Group
+assembly, Dummy supply, shared combat handoff, UI/artwork, recovery and editing.
+[SKILLS.md](SKILLS.md) explains numeric skills, profession counters, point
+spending, equipment bonuses and consumers; [PERKS.md](PERKS.md) explains
+boolean choices, level grants, exclusions, profession permissions and effects.
+Their implemented entries precede flagged missing entries and attributed wiki
+descriptions. Source descriptions never imply a working local effect.
+[CHARACTER.md](CHARACTER.md) explains the complete build: saved development,
+effective stats/ratings, levels/grants, AP, equipment, resources and capacity.
+[MEDICAL.md](MEDICAL.md) follows injuries, penalties/restrictions, expiry,
+healer qualifications, bags, Hospital and treatment/payment.
+[ECONOMY.md](ECONOMY.md) follows NV wallets, Shop stock/funds, purchase/resale,
+Merchant qualification, licenses, receipts and the reward/payment handoffs.
+These books are general feature guides; detailed evidence and runtime acceptance
+remain linked to their owners. The
 [gameplay event catalog](features/game_shell.md#gameplay-event-catalog) stays
 with the shared-shell owner and explains triggers, producers, audiences,
 wording, emphasis and persistence. These references link the evidence, design,
 runtime and configuration owners above. Their maintenance contract is
 [section 4.10](#410-game-reference-books).
+
+Use a root book to understand an entire gameplay area. Use `doc/features/`
+for the responsible implementation contract: precise current guarantees,
+public entry points, acceptance evidence, tests and remaining gaps. For example,
+SCROLLS spans Inventory, Shop, Combat and Medical Care; it does not move those
+owners into one replacement handbook. No folder reorganization is required.
 
 Before generating, editing, replacing or integrating a game illustration, read
 [ARTWORK.md](ARTWORK.md) and the relevant domain's evidence/design. This applies
@@ -91,11 +117,20 @@ The physical layout is:
 ```text
 doc/
 ├── DOCUMENTATION.md
+├── GAME_GUIDE_TEMPLATE.md # reusable outline and usage for global area guides
 ├── ARTWORK.md
 ├── NPC.md               # bestiary, placement, gear, loot and editing guide
 ├── FORMULAS.md          # current calculations, provenance and tuning guide
 ├── ITEMS.md             # item definitions, availability, art and editing
 ├── WORLD.md             # zones, cells, city graph, actions, art and editing
+├── SCROLLS.md           # scroll catalog, use, permissions, targeting and editing
+├── COMBAT.md            # shared fight flows, formulas, outcomes, UI and editing
+├── ARENA.md             # halls, applications, admission, assembly, UI and editing
+├── SKILLS.md            # numeric catalog, allocation, effects and profession counters
+├── PERKS.md             # boolean catalog, grants, exclusions and effect/permission flows
+├── CHARACTER.md         # build composition, levels, stats, vitals, AP and capacity
+├── MEDICAL.md           # injuries, recovery, healer requirements, bags and treatment
+├── ECONOMY.md           # NV, stock, prices, qualification, licenses and settlement
 ├── artwork/             # visual generation guides, not runtime images
 ├── domains/
 │   ├── README.md
@@ -136,15 +171,20 @@ Use the rows that match the task, including its direct consumers. For example,
 an NPC weapon/drop change needs the NPC, item and combat/reward context; changing
 an item requirement can also affect Medical Care. A new Arena mode must inspect
 the existing shared combat pipeline and living-participant rules.
+Each matching row triggers the [change/update obligation](#22-change-triggered-documentation-updates).
 
 | Work area | Reference context to read | Runtime/handoff owners and update impact |
 |---|---|---|
+| Any formula, coefficient, numerical table, cap, rounding or input meaning | [FORMULAS](FORMULAS.md) and the affected area book(s) | The calculator/configuration owner and consuming feature handbook(s); synchronize equations, units, bounds, operation order, worked examples, provenance and tuning consequences wherever changed |
+| Arena halls, applications, reservations, training supply or lobby presentation | [ARENA](ARENA.md), [COMBAT](COMBAT.md), [FORMULAS: admission](FORMULAS.md#arena-01--admission-and-deadlines), applicable [NPC](NPC.md), [WORLD](WORLD.md) and [ARTWORK](ARTWORK.md) sections | [Combat domain](domains/combat.md), [Arena design](design/areas/arena.md), [Arena Combat](features/arena_combat.md), related City/Shell/Inventory owners; update changed room gates, terms, assembly/timers, NPC supply, entry/return, presentation and acceptance |
 | NPC type, level, mixed group, gear or loot | [NPC](NPC.md), [FORMULAS: rewards](FORMULAS.md#6-experience-loot-and-premium), [ITEMS](ITEMS.md), [WORLD: habitats](WORLD.md#4-npc-habitats-and-resources) | [NPC domain](domains/npcs_quests.md), [Combat](features/arena_combat.md), [World](features/world.md); synchronize changed roster, stats, pool, placement and item references; artwork/events when affected |
-| Arena, PvP, PvE, attacks, defense or results | [FORMULAS: combat](FORMULAS.md#5-combat), [NPC: lifecycle](NPC.md#7-encounter-and-fight-lifecycle), [ITEMS: effective properties](ITEMS.md#3-fields-slots-and-effective-properties) | [Combat domain](domains/combat.md), [Combat](features/arena_combat.md), [Medical Care](features/medical_care.md), [event catalog](features/game_shell.md#gameplay-event-catalog); update changed inputs, shared behavior, aftermath, logs and acceptance |
-| Levels, stats, skills, perks or recovery | [FORMULAS](FORMULAS.md), [ITEMS: effective properties](ITEMS.md#3-fields-slots-and-effective-properties) | [Character domain](domains/character.md), [Progression](features/character_progression.md), affected Combat/Medical/World consumers; update grants, caps, requirements and active versus unused effects |
+| Arena, PvP, PvE, attacks, defense or results | [COMBAT](COMBAT.md), [FORMULAS: combat](FORMULAS.md#5-combat), [NPC: lifecycle](NPC.md#7-encounter-and-fight-lifecycle), [ITEMS: effective properties](ITEMS.md#3-fields-slots-and-effective-properties) | [Combat domain](domains/combat.md), [Combat](features/arena_combat.md), [Medical Care](features/medical_care.md), [event catalog](features/game_shell.md#gameplay-event-catalog); update changed inputs, shared behavior, aftermath, logs and acceptance |
+| Scroll definitions, targeted attacks, peace activation or license permissions | [SCROLLS](SCROLLS.md), [COMBAT](COMBAT.md), [ITEMS](ITEMS.md), [FORMULAS: scroll entry](FORMULAS.md#scroll-01--attack-entry), [WORLD: context](WORLD.md#5-travel-context-and-return-behavior) | [Inventory domain](domains/inventory.md), [scroll design](design/features/scrolls.md), [Inventory](features/player_inventory.md), [Shop](features/shop_economy.md), relevant Combat/Medical owners; update catalog status, acquisition, admission, effect/charge, permissions, failure/replay, artwork and source evidence together |
+| Levels, stats, skills, perks or recovery | [CHARACTER](CHARACTER.md), [SKILLS](SKILLS.md), [PERKS](PERKS.md), [FORMULAS](FORMULAS.md), [ITEMS: effective properties](ITEMS.md#3-fields-slots-and-effective-properties) | [Character domain](domains/character.md), [Progression](features/character_progression.md), affected Combat/Medical/World/Shop consumers; update grants, caps, requirements, saved versus effective values, active versus unused effects, use cases and wiki-status distinctions |
 | Item definitions, equipment, consumables or ownership | [ITEMS](ITEMS.md), [FORMULAS: stats](FORMULAS.md#3-character-stats-and-equipment), [FORMULAS: inventory/economy](FORMULAS.md#9-inventory-and-economy) | [Inventory domain](domains/inventory.md), [Inventory](features/player_inventory.md), [Shop](features/shop_economy.md), [Medical Care](features/medical_care.md); update definitions, acquisition, slot/effect/requirement readers and affected NPC pools |
 | Zones, cells, routes, buildings, habitats or travel | [WORLD](WORLD.md), [NPC: placement](NPC.md#4-locations-cells-and-complete-groups), [FORMULAS: timing](FORMULAS.md#8-world-movement-and-encounter-timing) | [World domain](domains/world.md), [City domain](domains/city.md), [World](features/world.md), [City](features/city.md), [Airship](features/airship_travel.md), [Shell](features/game_shell.md); update coordinates, entry/return, availability, timing and audience handoffs |
-| Prices, stock, licenses, rewards or treatment | [ITEMS](ITEMS.md), [FORMULAS: recovery](FORMULAS.md#7-recovery-wear-and-injuries), [FORMULAS: economy](FORMULAS.md#9-inventory-and-economy), [WORLD: services](WORLD.md#2-forpost-city-and-services) | [Economy domain](domains/economy.md), [Shop](features/shop_economy.md), [Medical Care](features/medical_care.md), relevant Inventory/Character/Combat owners; update prerequisites, settlement and reward/event references |
+| Prices, stock, NV, licenses, qualification or rewards | [ECONOMY](ECONOMY.md), [ITEMS](ITEMS.md), [FORMULAS: economy](FORMULAS.md#9-inventory-and-economy), [WORLD: services](WORLD.md#2-forpost-city-and-services), affected [CHARACTER](CHARACTER.md) / [NPC](NPC.md) reward sections | [Economy domain](domains/economy.md), [Shop](features/shop_economy.md), relevant Inventory/Character/Combat/Medical owners; update prerequisites, funds/stock, quotes/receipts, settlement and reward/event references |
+| Injuries, restrictions, expiry, healer proficiency, bags or treatment | [MEDICAL](MEDICAL.md), [CHARACTER](CHARACTER.md), [FORMULAS: recovery](FORMULAS.md#7-recovery-wear-and-injuries), [ECONOMY](ECONOMY.md), relevant [SKILLS](SKILLS.md), [PERKS](PERKS.md) and [ITEMS](ITEMS.md) sections | [Medical Care](features/medical_care.md), [Character](domains/character.md) / [Combat](domains/combat.md), affected Shop/World/Inventory owners; update chance versus severity, effective penalties, clocks, qualification, supplies, cure/payment and event contracts |
 | Chat, presence, notifications or fight-log wording | [Gameplay event catalog](features/game_shell.md#gameplay-event-catalog), [WORLD: context](WORLD.md#5-travel-context-and-return-behavior) | [Social](domains/social.md), [Shell](domains/shell.md), [Game Shell](features/game_shell.md), the actual producer's handbook; update trigger, audience, destination, emphasis, persistence and retry contract together |
 | Images, scenes, paper dolls or responsive UI | [ARTWORK](ARTWORK.md), [adaptive UI](design/areas/game_client_layout.md#adaptive-ui-requirements), applicable [NPC art](NPC.md#5-equipment-and-artwork), [item art](ITEMS.md#5-artwork-and-presentation), [world art](WORLD.md#6-map-and-location-artwork) | Owning feature's evidence/design and handbook; update exact prompts/specifications, asset mappings, consuming content and final visual acceptance |
 | New profession, Quest or underground flow | [Profession](domains/professions.md), [NPC/Quest](domains/npcs_quests.md) or [Dungeon](domains/dungeons.md) evidence/gap chain; applicable NPC/ITEMS/WORLD/FORMULAS sections | [Professions](features/professions.md), [Quests](features/quests.md), [Dungeons](features/dungeons.md) plus existing handoffs; add only verified new content/formulas and preserve explicit absences until implementation/acceptance |
@@ -182,6 +222,56 @@ Maintain **meaningful links in both directions**:
 
 This is a reading and review obligation, not a requirement to create a new
 planning receipt, copy every rule into every document, or read unrelated areas.
+
+Start attack-scroll work at [SCROLLS](SCROLLS.md) and the shared fight guide
+[COMBAT](COMBAT.md), then follow these owners: [scroll design/evidence](design/features/scrolls.md),
+[ITEMS editing](ITEMS.md#attack-scroll-use), [entry formulas](FORMULAS.md#scroll-01--attack-entry),
+[Inventory runtime](features/player_inventory.md#september-14-attack-scrolls),
+[shared Combat](features/arena_combat.md#september-14-scroll-entry) and
+[location context](WORLD.md). Follow these links when changing targeted PvP
+admission; combat resolution remains common to Arena, NPC and player fights.
+
+### 2.2 Change-triggered documentation updates
+
+This is the mandatory synchronization workflow referenced by
+[AGENTS.md](../AGENTS.md#documentation-synchronization). It applies to all
+related documentation, including ARTWORK.md, technical/process/operational
+guides and future documents, without a separate request from the user. The
+named books and the context-map rows are examples of ownership, not a closed
+list of files eligible for updates.
+
+1. **Before editing, identify affected documentation.** Use section 2.1, the
+   domain index and relevant links; search with `rg` for the changed mechanic,
+   formula ID, stable content key or implementation owner. Follow actual inputs,
+   outcomes and handoffs, even when a consumer belongs to another area.
+2. **Update changed truth in the same task.** Additions, fixes, removals,
+   refactors, seeds/configuration, formulas and artwork can all trigger updates.
+   Synchronize the affected global book and `doc/features/` handbook, plus
+   evidence/design, formula, artwork and technical/process/operational owners
+   where their facts changed.
+   Correct stale examples, tables, editing instructions and links as well as
+   prose. Remove or reclassify discontinued behavior. Update the affected
+   guide's **Use cases and cross-feature effects** section when preconditions,
+   outcomes, formulas or downstream consumers change, including ARTWORK for
+   visual integration. Recheck numerical examples and inactive/source-only flags.
+3. **Check the final diff against those owners before reporting completion.**
+   For example, a dodge calculation change updates FORMULAS.md, COMBAT.md and
+   the combat handbook wherever their descriptions change; an NPC's authored
+   dodge-stat change also updates the affected NPC.md entry. Verify numerical
+   examples against current code/configuration. Run the applicable documentation
+   audits and check changed links; passing link checks alone does not prove
+   semantic agreement. Stale affected guidance remains a `[DOC]` gap.
+
+For example, changing an NPC portrait's dimensions, generation prompt or asset
+mapping triggers review of ARTWORK.md, the NPC book and the consuming feature's
+design/handbook. Update the changed specifications, production record, image
+references and integration/acceptance claims under their respective owners.
+
+Only changed facts require edits. A refactor preserving gameplay may still
+change documented code ownership or editing instructions; if those remain
+accurate too, review is sufficient. Keep detailed facts with their canonical
+owner and synchronize affected summaries instead of copying full documents.
+No separate receipt or new handbook is required for each change.
 
 ## 3. Domain indexes
 
@@ -312,8 +402,20 @@ it is not a receipt, state machine, or prerequisite for `bin/verify`.
 
 ### 4.10 Game reference books
 
+New global guides start from [GAME_GUIDE_TEMPLATE.md](GAME_GUIDE_TEMPLATE.md).
+It explains the purpose, [usage steps](GAME_GUIDE_TEMPLATE.md#how-to-use) and a
+copyable outline based on the current area books. Copy the outline into
+`doc/<AREA>.md`, verify its contents against the owning evidence/code, adapt
+sections to the subject and register meaningful references. Existing guides
+need no forced reformat beyond a discoverable **Use cases and cross-feature
+effects** section, also required in ARTWORK. This template serves complete area explanations;
+[FEATURE_TEMPLATE.md](features/FEATURE_TEMPLATE.md) continues to serve precise
+runtime handbooks under `doc/features/`.
+
 The user-requested root books [NPC.md](NPC.md), [FORMULAS.md](FORMULAS.md),
-[ITEMS.md](ITEMS.md) and [WORLD.md](WORLD.md)
+[ITEMS.md](ITEMS.md), [WORLD.md](WORLD.md), [SCROLLS.md](SCROLLS.md),
+[COMBAT.md](COMBAT.md), [ARENA.md](ARENA.md), [SKILLS.md](SKILLS.md), [PERKS.md](PERKS.md),
+[CHARACTER.md](CHARACTER.md), [MEDICAL.md](MEDICAL.md) and [ECONOMY.md](ECONOMY.md)
 are maintained game guides spanning design and implementation. They are
 explanatory catalogs of current content/rules, not new feature handbooks or
 parallel sources of gameplay authority.
@@ -338,6 +440,54 @@ Their reading dependencies and reciprocal navigation follow the
   entrances, routes/services, resources/actions, NPC habitat policy and scene
   assets. Explain authored baseline versus managed records, passability and
   visual-only scenery, and the steps/consequences of editing each owner.
+- **SCROLLS.md** inventories every local scroll-family definition and related
+  typed license, distinguishing executable activation, catalog-only content and
+  missing source evidence. Explain acquisition, target/permission rules,
+  formulas, transaction/charge/replay, shared combat handoff, aftermath,
+  presentation/artwork and safe editing. A similar item name is not an effect.
+- **COMBAT.md** explains the complete shared fight lifecycle across Arena,
+  wilderness, players/NPCs, groups and unarmed modes: entry/application terms,
+  state/validation/commit order, living-only participation, level/stat/item/skill
+  effects, formulas, results/rewards, injuries/recovery, UI/logs, owners and
+  editing examples. Separate current physical scope, bounded magic support,
+  authorized calibrations and unfinished features.
+- **ARENA.md** inventories halls and their gates, City entry/room context,
+  Duel/Group terms and assembly, training NPC supply, reservation, deadlines,
+  shared combat/formula effects, rewards/return, lobby UI/artwork, recovery and
+  editing. Keep room capacity, side capacity and active combat separate;
+  preserve source/local distinctions and link the shared COMBAT/FORMULAS owners.
+- **SKILLS.md** inventories all allocatable numeric definitions and separate
+  profession counters: source/local names, IDs/keys, pools, rates, caps,
+  equipment contributions, allocation validation, formulas, current consumers,
+  UI and editing. Distinguish registered values from implemented effects and
+  source-only descriptions; explain influence on combat, walking, recovery,
+  loot, equipment and scroll requirements.
+- **PERKS.md** inventories implemented boolean choices before the remaining
+  source catalog: categories, level grants, ownership/selection, exclusions,
+  stat/wear effects, profession/license chains, formulas, UI and editing.
+  Keep proficiency, quest qualification and timed permissions separate; track
+  published but inactive equations and source-document discrepancies.
+- **CHARACTER.md** explains saved development versus effective stats, resource
+  maxima, AP/capacity and equipment composition; level/XP grants and their
+  combat, walking, recovery and qualification consumers. Explain when edits
+  affect current values, future actions, saved profiles or historical grants.
+- **MEDICAL.md** catalogs implemented injuries/supplies and follows random
+  severity, penalties, restrictions, expiry, Doctor/perk/license requirements,
+  Hospital and free/paid treatment. Keep HP restoration, injury cure, quote
+  expiry and permission expiry distinct, including atomic fee/use outcomes.
+- **ECONOMY.md** explains NV ownership/ledger, Shop funds/stock, prices/resale,
+  qualifications/licenses, valuable settlement and reward/medical handoffs.
+  Distinguish baseline definitions, current balances, quoted terms and saved
+  receipts, with editing consequences and checked cross-feature examples.
+- Formula summaries/examples in these feature books must agree with
+  their current runtime. Put implemented catalog entries first; flag partial,
+  inactive and unimplemented entries, with concise attributed wiki descriptions
+  where available and explicit evidence gaps where not. Each guide's
+  **Use cases and cross-feature effects** section traces preconditions, action,
+  result, failure/boundary and actual consumers. Detailed equations remain in
+  **FORMULAS.md** and the actual calculator/configuration. Link the full numeric
+  reference and update both affected descriptions in the same task; do not
+  maintain competing constants or promote an example to source evidence.
 - The **gameplay event catalog** belongs in
   [Game Shell](features/game_shell.md#gameplay-event-catalog), not a separate
   root book. Keep each producer's trigger, audience, destination, example
@@ -394,7 +544,8 @@ cannot communicate clearly.
 8. Add applicable focused tests while implementing.
 9. Review the stable diff using `doc/RUBY_ON_RAILS_GUIDE.md`.
 10. Update the feature handbook to reflect verified behavior and pending checks;
-    synchronize the affected NPC.md, FORMULAS.md, ITEMS.md, WORLD.md and shared
+    synchronize the affected NPC.md, FORMULAS.md, ITEMS.md, WORLD.md,
+    SCROLLS.md, COMBAT.md, ARENA.md, SKILLS.md, PERKS.md and shared
     event catalog when their owned reference content changes, following
     section 4.10. Check incoming and outgoing links for changed contracts so a
     future task can discover both its required context and update obligations.
@@ -433,6 +584,12 @@ handbook, books and handoff partners under
 [section 2.1](#21-required-context-and-update-map). Add supported content and
 formulas to the appropriate existing books. Prefer a section of an existing
 owner when the material does not justify a separate document.
+
+For a justified new global game guide, follow
+[GAME_GUIDE_TEMPLATE's usage instructions](GAME_GUIDE_TEMPLATE.md#how-to-use).
+Add it to this document's navigation and book inventory, and link its relevant
+domain/handbook and direct consumers. Its changed sections follow the same
+mandatory update triggers as existing guides.
 
 ## 8. Auditing and maintenance
 

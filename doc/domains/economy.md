@@ -11,6 +11,9 @@ flows.
 ## Documentation chain
 
 - [Required working context and update rules](../DOCUMENTATION.md#21-required-context-and-update-map)
+- Whole-area guide: [ECONOMY](../ECONOMY.md) for money/stock, qualification,
+  license and settlement lifecycles; [MEDICAL](../MEDICAL.md) for the related
+  supplies/treatment-fee flow and [CHARACTER](../CHARACTER.md) for level grants.
 - General references: [item definitions and availability](../ITEMS.md),
   [city and linked-location services](../WORLD.md)
 - Price, capacity and license calculations: [FORMULAS](../FORMULAS.md#9-inventory-and-economy)
@@ -34,10 +37,12 @@ flows.
 
 Partially Implemented. The bounded Shop shell and server-authoritative
 transactions exist. The typed NPC NV award path credits the same wallet/ledger
-transactionally before social feedback; no production NPC amount/probability is
-authored without further evidence. Full populated live-state parity,
-market trading, profession quest chains, medical treatment, repair and other
-service economies remain outside the completed transaction boundary.
+transactionally before social feedback; current pools include the explicitly
+authorized fits documented in [NPC](../NPC.md#6-loot-and-experience).
+[Medical Care](../features/medical_care.md) separately implements bounded
+free/paid treatment and Hospital purchases through the shared Shop pipeline.
+Full populated live-state parity, marketplace settlement, complete profession
+quest chains, repair and other service economies remain incomplete.
 
 The September 9 slice adds the 19 observed category controls, original Shop
 interior/icon art, explicit source-backed goods and one-use trade offers. One

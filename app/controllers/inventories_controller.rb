@@ -29,6 +29,12 @@ class InventoriesController < ApplicationController
     @items = filtered_inventory_items(@inventory, @category, @subcategory)
     @equipment = current_character_equipment
     @equipment_sets = Game::Inventory::EquipmentSetService.new(character: current_character).all
+    if params[:scroll_item_id].present?
+      @scroll_item = @inventory.inventory_items.includes(:item_template).find(params[:scroll_item_id])
+      @scroll_offer = Game::Inventory::AttackScroll.new(character: current_character).offer_for(item: @scroll_item)
+    end
+  rescue Game::Inventory::AttackScroll::Unavailable => error
+    redirect_to inventory_path(category: "things", subcategory: "scrolls"), alert: error.message
   end
 
   # POST /inventory/equip

@@ -125,7 +125,7 @@ RSpec.describe "Players", type: :request do
       room = create(:arena_room, name: "Training Hall", slug: "training")
       character = create(:character, user: user, name: "max_kerby")
       create(:character_position, character: character, zone: zone, x: 3, y: 4)
-      match = create(:arena_match, :live, arena_room: room)
+      match = create(:arena_match, :live, arena_room: room, metadata: {physical_only: true})
       create(:arena_participation, arena_match: match, character: character, user: user, team: "a")
 
       get player_path(name: character.name)
@@ -135,6 +135,19 @@ RSpec.describe "Players", type: :request do
       expect(response.body).to include("in combat")
       expect(response.body).to include("Training Hall")
       expect(response.body).to include(public_fight_log_path(match))
+      sign_in user
+      get player_path(name: character.name)
+      expect(response.body).to include("in combat")
+      expect(response.body).not_to include("data-game-layout-encounter-url-value")
+      match.update!(status: :completed)
+      get player_path(name: character.name)
+      expect(response.body).to include(public_fight_log_path(match), "in combat")
+      expect(response.body).not_to include("data-game-layout-encounter-url-value")
+      participation = match.arena_participations.find_by!(character:)
+      participation.update!(metadata: {finished_at: Time.current.iso8601})
+      get player_path(name: character.name)
+      expect(response.body).not_to include("nl-profile-fight-link")
+      expect(response.body).to include('data-game-layout-encounter-url-value="/combat_status"')
     end
 
     it "shows the same current pond label to its owner, visitors, and the public JSON reader" do

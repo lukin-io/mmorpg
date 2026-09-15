@@ -61,7 +61,7 @@ class ArenaApplicationsController < ApplicationController
           render json: {
             success: true,
             match_id: result.match&.id,
-            countdown: result.match ? (result.match.live? ? 0 : 10) : nil,
+            countdown: result.match ? 0 : nil,
             redirect_url: destination
           }
         end

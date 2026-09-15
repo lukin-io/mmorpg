@@ -2,6 +2,12 @@
 
 Domain navigation: [Character](../../domains/character.md).
 
+The complete [SKILLS](../../SKILLS.md) and [PERKS](../../PERKS.md) guides map
+current catalogs, implemented/missing effects, allocation rules, formulas and
+cross-feature use cases. [September14 screenshots/wiki](../reference/character/observations/2026-09-14_skills_and_perks.md)
+add source descriptions; published-but-unimplemented effects remain separate
+from current runtime and do not change MVP delivery status.
+
 [FORMULAS](../../FORMULAS.md#2-experience-levels-and-grants) records level
 tables and links the current stat/skill calculations;
 [ITEMS](../../ITEMS.md#3-fields-slots-and-effective-properties) identifies

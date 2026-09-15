@@ -195,8 +195,8 @@ RSpec.describe "Arena NPC Combat UI", type: :system do
     it "does not show accept button for matched applications" do
       visit arena_room_path(arena_room)
 
-      # Matched applications should not appear in open applications list
-      expect(page).not_to have_button("Accept")
+      expect(page).not_to have_css("[data-application-id='#{matched_application.id}']")
+      expect(page).to have_button("Accept")
     end
   end
 
@@ -224,8 +224,8 @@ RSpec.describe "Arena NPC Combat UI", type: :system do
     it "does not show accept button for expired applications" do
       visit arena_room_path(arena_room)
 
-      # Expired applications should not appear in open applications list
-      expect(page).not_to have_button("Accept")
+      expect(page).not_to have_css("[data-application-id='#{expired_application.id}']")
+      expect(page).to have_button("Accept")
     end
   end
 
@@ -239,10 +239,11 @@ RSpec.describe "Arena NPC Combat UI", type: :system do
       enter_arena_from_city!
     end
 
-    it "shows empty message when no applications exist" do
+    it "restores the captured Dummy when Training has no applications" do
       visit arena_room_path(arena_room)
 
-      expect(page).to have_content("No open applications")
+      expect(page).to have_content("Training Dummy[1]")
+      expect(page).to have_button("Accept")
     end
 
     it "shows application form" do

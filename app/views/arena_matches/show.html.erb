@@ -62,7 +62,7 @@
     <span><b><%= fight_type_label(@arena_match.match_type) %></b></span>
     <span class="badge badge--<%= @arena_match.status %>"><%= arena_match_status_badge(@arena_match.status) %></span>
     <span>Turn timeout: <b><%= (@arena_match.turn_timeout_seconds || 300) / 60 %> min</b></span>
-    <span>Trauma: <b><%= @arena_match.metadata.to_h.fetch("trauma", "normal") %></b></span>
+    <span>Trauma: <b><%= @arena_match.trauma_percent %>%</b></span>
     <%= link_to "Inventory", inventory_path, class: "fr_but" %>
     <span class="fr_but_dis">Mercenary</span>
     <%= link_to "Fight log", public_fight_log_path(@arena_match), class: "fr_but", data: {turbo_frame: "_top"} %>

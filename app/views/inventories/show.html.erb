@@ -29,6 +29,10 @@
     <% end %>
 
     <main class="nl-inventory-main">
+      <% if flash[:scroll_error].present? %>
+        <p class="nl-scroll-error" role="alert"><%= flash[:scroll_error] %></p>
+      <% end %>
+      <%= render "scroll_form" if @scroll_offer %>
       <%= link_to "Medical care", medical_care_path, class: "lbut", data: {turbo_frame: "_top"} %>
       <nav class="nl-icon-strip" aria-label="Inventory categories">
         <% InventoriesHelper::INVENTORY_FAMILY_STRIP.each do |key| %>

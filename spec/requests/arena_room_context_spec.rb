@@ -19,6 +19,26 @@ RSpec.describe "Arena room location context", type: :request do
     post interact_hotspot_world_path, params: {hotspot_id: hotspot.id, action_key: offer.action_key}
   end
 
+  it "redirects the legacy lobby URL through the canonical overview" do
+    enter_arena
+    get lobby_arena_index_path
+    expect(response).to redirect_to(arena_index_path)
+    follow_redirect!
+    expect(response).to have_http_status(:ok)
+  end
+
+  it "recovers the Training offer on reload without a worker or duplicate supply" do
+    room.update!(slug: "training", level_min: 0, level_max: 10)
+    enter_arena
+    get arena_room_path(room)
+    offer = room.arena_applications.open.sole
+    offer.update!(expires_at: Time.current)
+    2.times { get arena_room_path(room) }
+    expect(response).to have_http_status(:ok)
+    expect(offer.reload).to be_expired
+    expect(room.arena_applications.open.count).to eq(1)
+  end
+
   it "keeps a completed city entry when a late response restores its older cookie" do
     get world_path
     before_entry_cookies = cookies.to_hash

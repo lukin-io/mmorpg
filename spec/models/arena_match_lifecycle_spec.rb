@@ -206,10 +206,11 @@ RSpec.describe ArenaMatch, "Lifecycle and Status Transitions" do
       expect(result.match.status).to eq("pending")
     end
 
-    it "stores starts_at in metadata" do
+    it "stores applicant confirmation instead of an automatic deadline" do
       result = handler.accept(application: application, acceptor: character2)
 
-      expect(result.match.metadata["starts_at"]).to be_present
+      expect(result.match.metadata["starts_at"]).to be_nil
+      expect(result.match.metadata["duel_applicant_id"]).to eq(application.applicant_id)
     end
 
     it "stores fight_kind from application" do

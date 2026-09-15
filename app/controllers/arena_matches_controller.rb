@@ -2,11 +2,16 @@
 
 class ArenaMatchesController < ApplicationController
   before_action :authenticate_user!
-  before_action :set_arena_match, only: [:show, :action, :switch_opponent, :claim_timeout, :finish, :log]
-  before_action :require_character, only: [:action, :switch_opponent, :claim_timeout, :finish]
+  before_action :set_arena_match, only: [:show, :action, :switch_opponent, :claim_timeout, :finish, :log, :confirm_duel, :refuse_duel]
+  before_action :require_character, only: [:action, :switch_opponent, :claim_timeout, :finish, :confirm_duel, :refuse_duel]
 
   def show
     authorize @arena_match
+
+    if @arena_match.cancelled? && @arena_match.metadata.to_h["duel_applicant_id"].present?
+      redirect_to arena_room_path(@arena_match.arena_room)
+      return
+    end
 
     # The delayed job is the normal start path. A due pending match also starts
     # when either participant reconnects, providing a bounded recovery path if
@@ -28,8 +33,28 @@ class ArenaMatchesController < ApplicationController
     @broadcaster = Arena::CombatBroadcaster.new(@arena_match)
 
     respond_to do |format|
-      format.html
+      format.html do
+        render :confirmation if @arena_match.awaiting_duel_confirmation?
+      end
       format.json { render json: match_payload }
+    end
+  end
+
+  def confirm_duel
+    authorize @arena_match
+    result = Arena::ApplicationHandler.new.confirm_duel(match: @arena_match, character: current_character)
+    respond_to do |format|
+      format.html { redirect_to @arena_match, alert: result.errors&.join(", "), status: :see_other }
+      format.json { render json: {success: result.success?, errors: result.errors}, status: result.success? ? :ok : :unprocessable_entity }
+    end
+  end
+
+  def refuse_duel
+    authorize @arena_match
+    result = Arena::ApplicationHandler.new.confirm_duel(match: @arena_match, character: current_character, refuse: true)
+    respond_to do |format|
+      format.html { redirect_to arena_room_path(@arena_match.arena_room), alert: result.errors&.join(", "), status: :see_other }
+      format.json { render json: {success: result.success?, errors: result.errors}, status: result.success? ? :ok : :unprocessable_entity }
     end
   end
 
@@ -268,6 +293,11 @@ class ArenaMatchesController < ApplicationController
   end
 
   def finish_destination_path
+    participation = @arena_match.arena_participations.find_by(character: current_character)
+    return inventory_path if participation&.metadata.to_h["scroll_entry"]
+    if @arena_match.metadata.to_h["source"] == "scroll_pvp"
+      return Game::World::ResumeContext.new(character: current_character).resume_path
+    end
     if @arena_match.metadata.to_h["physical_only"]
       room = @arena_match.arena_room
       context = Game::World::ResumeContext.new(character: current_character)

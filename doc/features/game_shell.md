@@ -3,7 +3,7 @@
 title: Game Shell Feature
 description: Implementation handbook for the Neverlands-based persistent game frame, compact vitals, location presence, mixed chat/game-event timeline, and shell preferences.
 status: Partially Implemented
-updated: 2026-09-12
+updated: 2026-09-14
 owners: Game Shell and Social Presence
 template: feature-v1
 ---
@@ -25,6 +25,23 @@ share the same recovery owner. An active injury links to Medical care. Injury,
 paid-treatment request and successful-healing events join existing durable
 personal fight/XP/item/NV rows. See [Medical Care](medical_care.md) and
 [calibration](../design/features/combat_calibration.md). Final validation is recorded in [Arena acceptance](arena_combat.md#september-12-final-calibrated-acceptance).
+
+### September 14 incoming player combat
+
+Ground pages outside the fight render `/combat_status` as the existing shell
+poller's five-second endpoint. This authenticated POST only reads the current
+character's active fight/unacknowledged physical result, returns its local URL,
+and never rolls an NPC encounter or accepts another character id. Outdoor World
+keeps the encounter endpoint. The ordinary persisted combat screen recovers on
+reload/login; polling is presentation, never authority for admission.
+
+[Inventory attack scrolls](player_inventory.md#september-14-attack-scrolls) own
+admission. A committed use publishes one personal system-information event to
+each player with a unique `scroll:<offer-id>:entry:<character-id>` key, plus a
+shared combat log entry. Rollback/replay cannot duplicate those events. Existing
+combat owns the following hits, blocks, injuries, XP and result logs. See
+[scroll design](../design/features/scrolls.md), [WORLD context](../WORLD.md) and
+[shared Arena Combat](arena_combat.md#september-14-scroll-entry).
 
 ## 1. Design authority and related documents
 
@@ -1344,6 +1361,14 @@ Before extending Game Shell:
 11. Update status, non-goals, acceptance criteria, responsible files, focused checks, and version history here.
 
 ## 18. Version history
+
+September 14 combat-profile navigation: the shell omits its incoming-fight
+poller when `PlayersController` identifies a profile intentionally opened by
+a viewer who already has an active match or unfinished physical result.
+The profile and its `_top` public-log link remain usable during combat.
+Profiles opened without an existing fight retain incoming scroll-attack
+recovery. See [Combat profile acceptance](arena_combat.md#september-14-live-human-duel-parity)
+and [Character Progression](character_progression.md#september-14-profile-battle-location-evidence).
 
 | Date | Change |
 |---|---|

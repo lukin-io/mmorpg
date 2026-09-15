@@ -10,6 +10,8 @@ to Character, Combat, Social, and Shop.
 
 - [Required working context and update rules](../DOCUMENTATION.md#21-required-context-and-update-map)
 - General item catalog, artwork and editing: [ITEMS](../ITEMS.md)
+- Complete scroll catalog, activation, permissions and editing: [SCROLLS](../SCROLLS.md);
+  shared fight consumer: [COMBAT](../COMBAT.md)
 - Calculations and image standards: [FORMULAS](../FORMULAS.md), [ARTWORK](../ARTWORK.md)
 - Neverlands source summary: [doc/design/reference/inventory/README.md](../design/reference/inventory/README.md)
 - Current observations: [doc/design/reference/inventory/observations/](../design/reference/inventory/observations)
@@ -23,7 +25,7 @@ to Character, Combat, Social, and Shop.
 ## Current RPG status
 
 Fully Implemented for the declared current equipment/item boundary. Empty or
-uncaptured production families, transfers, targeted use, repair, and some
+uncaptured production families, remaining targeted use, repair, and some
 fight-slot behaviors remain outside it. A personal item-found event is emitted
 by Combat only after Inventory reports a successful NPC-loot award; it is not
 item ownership state. Multi-unit additions are atomic under one Inventory lock
@@ -31,6 +33,13 @@ and savepoint, including when a Combat caller records a capacity failure.
 Combat owns the exact result-based durability roll and Careful Fighter's
 half-chance modifier. Repair remains an unimplemented workshop/profession
 transaction, not a direct Inventory reset.
+
+[Attack scrolls](../design/features/scrolls.md) connect Inventory ownership,
+[FORMULAS entry rules](../FORMULAS.md#scroll-01--attack-entry) and the existing
+Combat processor. The first two variants have source forms/requirements and
+local runtime; two live 17-to-5 attempts rejected without consumption, while
+successful source entry remains pending. [ITEMS](../ITEMS.md#attack-scroll-use)
+owns catalog editing and personal-use restrictions.
 
 ## Important responsible implementation files
 

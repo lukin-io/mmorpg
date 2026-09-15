@@ -3,12 +3,38 @@
 title: Shop and Economy Feature
 description: Implementation handbook for the Neverlands-based city shop, NV wallet, catalog buying, inventory selling, and transaction ledger.
 status: Partially Implemented
-updated: 2026-09-12
+updated: 2026-09-14
 owners: Shop and Economy
 template: feature-v1
 ---
 
 # Shop and Economy
+
+[ECONOMY](../ECONOMY.md) is the complete NV, stock/pricing, qualification,
+license and settlement guide. [MEDICAL](../MEDICAL.md) owns the related
+Hospital/treatment explanation; [CHARACTER](../CHARACTER.md) explains level
+reward ingress. Detailed transaction guarantees and acceptance remain here.
+
+[SCROLLS](../SCROLLS.md) explains the full scroll catalog, activation and typed
+license permissions across Shop, Inventory and Combat; [ITEMS](../ITEMS.md)
+retains the general item/stock editing guide. This handbook owns transactions
+and acquisition acceptance.
+
+### September 14 attack-scroll acquisition
+
+Both purchases and their Inventory/combat handoff are recorded in
+[September 14 local acceptance](player_inventory.md#september-14-local-acceptance).
+
+The ordinary assortment now has 80 goods: the previous 79 plus personal-use
+Fist Attack (`fist_attack`, 250 NV, one use, mass 1, level 10). Initial 500/500
+stock is user-authorized starter content, not captured replenishment. Duel
+Permit I retains 16 NV, one use, level 5 and Stealth 20. Both use the existing
+Purchase/TradeOffers, inventory and wallet receipt. Fist Attack's
+`personal_only` flag prevents sale offers and is rechecked under the sale lock.
+Use remains [Inventory-owned](player_inventory.md#september-14-attack-scrolls).
+See [source variants](../design/reference/inventory/observations/2026-09-14_attack_scrolls.md),
+[ITEMS](../ITEMS.md#attack-scroll-use) and
+[ARTWORK](../ARTWORK.md#september-14-attack-scroll-artwork).
 
 This document is the implementation contract for the current Shop and Economy feature. It explains City and linked-village Shop access, catalog modes and filters, NV payments, stock and inventory mutations, resale pricing, login resume, UI ownership, security, concurrency, and test coverage.
 
@@ -22,13 +48,18 @@ pipeline. Saved Hospital context/current node selects a separate ShopAccount
 and ShopStock. Existing quotes, locks, capacity, price, funds, stock, receipt
 and duplicate-offer checks apply. Stock seeds preserve traded quantities.
 Doctor licenses now qualify the bounded injury-treatment service together with
-Healer, bag and effective Knowledge checks. Authored Doctor proficiency
-thresholds remain unenforced; Medical Care records the current implementation
-gap. Qualification quests,
+Healer, bag, effective Knowledge and Doctor proficiency checks. Medical Care
+records the September15 threshold enforcement and acceptance. Qualification quests,
 medical crafting and unrelated exchange/market work remain outside this flow.
 Final Hospital purchase and treatment checks are recorded in [Medical Care](medical_care.md#6-acceptance-and-tests).
 
 ## 1. Design authority and related documents
+
+[PERKS: Merchant/Healer](../PERKS.md#2-implemented-perks) explains license
+permission chains; [SKILLS: profession counters](../SKILLS.md#profession-counters)
+explains the separate Trading proficiency reader. Neither selecting a perk nor
+completing a sale automatically trains that counter. Keep their use cases and
+formula links aligned with changed Shop prerequisites and resale behavior.
 
 Read [ITEMS](../ITEMS.md) for definitions, eligibility and licenses,
 [FORMULAS](../FORMULAS.md#9-inventory-and-economy) for prices/capacity and
@@ -671,7 +702,7 @@ owns category-atlas presentation, the centered 800px catalog, compact tabs,
 property/requirement cells and one-item controls. Shared framing and navigation
 remain owned by Game Shell.
 
-All 79 authored ordinary goods and six license definitions have original PNG illustrations
+All 80 authored ordinary goods and six license definitions have original PNG illustrations
 under `app/assets/images/items/`. `InventoriesHelper::ITEM_ARTWORK_PATHS` maps
 their explicit stable keys to assets. Buy and Sell reuse those files in a
 62 × 91px box with `object-fit: contain`, preserving the original square art.
@@ -994,7 +1025,7 @@ repeated seeds preserve traded counts and funds. Forpost's initial balance is
 the captured 99,977,307.40 NV snapshot, not a replenishment rule. Existing
 legacy template counts are bootstrap inputs only, never live global supply.
 No other shop inherits those funds/counts. `db/seeds/data/starter_shop.json`
-authors 79 ordinary goods (five per equipment category and four Duel Permits);
+authors 80 ordinary goods (five per equipment category, four Duel Permits and Fist Attack);
 `db/seeds/shop_inventory.rb` adds six license definitions. Relics and Runes were
 empty in the source; the user excluded Wood Chips, so Other is also empty.
 `db/seeds.rb` already invokes the catalog and account seed owners in order.
@@ -1012,8 +1043,10 @@ Shield block points and belt pocket counts are display properties; combat
 block selection and inventory pocket capacity do not consume them. Fast Mana
 Regeneration is a recognized equipment skill bonus whose mana-restoration
 effect remains unimplemented. Duel Permit II–IV descriptions do not add use
-effects. Duel permits can be bought/carried/sold under existing Shop rules,
-but their use remains unsupported by the Inventory effect dispatcher.
+effects. Duel permits can be bought/carried/sold under existing Shop rules;
+Duel Permit I now uses the targeted combat-entry adapter. Personal Fist Attack
+can be bought/used/deleted but cannot be transferred or sold. Other permit
+variants remain unsupported for activation.
 
 ### Local prerequisite emulation and validation
 

@@ -1,6 +1,6 @@
 # Game Formula Reference
 
-Reviewed against the working tree on **2026-09-12**. This book inventories the
+Reviewed against the working tree on **2026-09-14**. This book inventories the
 current game's numerical rules, their inputs, rounding, owners and editing
 consequences. It covers progression, skills/perks, combat, NPC rewards,
 recovery, injuries, movement, inventory, trade and configured transport. It also
@@ -8,7 +8,11 @@ identifies calculations that exist in code but are not active gameplay.
 
 Use [NPC.md](NPC.md) for creatures, groups, cells, equipment and drops,
 [ITEMS.md](ITEMS.md) for item definitions/effects and
-[WORLD.md](WORLD.md) for geography, routes and cell actions. The
+[WORLD.md](WORLD.md) for geography, routes and cell actions.
+[COMBAT.md](COMBAT.md) explains how fight inputs and calculations connect through
+the complete player/NPC lifecycle; [SCROLLS.md](SCROLLS.md) explains scroll
+admission, activation and permissions. Keep their numerical summaries/examples
+synchronized with changed formulas here. The
 [documentation architecture](DOCUMENTATION.md) defines ownership: this is a
 cross-domain reference, while detailed design, evidence and runtime acceptance
 remain in their canonical documents. In particular,
@@ -34,6 +38,7 @@ consumers determine which NPC/item/location entries also need updating.
 - [10. Transport](#10-transport)
 - [11. Compatibility and absent formulas](#11-compatibility-and-absent-formulas)
 - [12. Change impact, verification and maintenance](#12-change-impact-verification-and-maintenance)
+- [Use cases and cross-feature effects](#use-cases-and-cross-feature-effects)
 
 ## 1. Reading and editing formulas
 
@@ -69,6 +74,9 @@ parallel NPC/PvP pipeline, or turn a displayed rounded number back into an input
 | Prices, equipment/consumable properties | ItemTemplate, InventoryItem; [starter Shop data](../db/seeds/data/starter_shop.json) | Equipment, use, purchase and resale |
 
 ## 2. Experience levels and grants
+
+[CHARACTER](CHARACTER.md) traces the complete level-up/build flow and when saved
+or effective values change; [ECONOMY](ECONOMY.md) explains the NV grant writer.
 
 Runtime/acceptance owner: [Character Progression](features/character_progression.md).
 
@@ -217,6 +225,8 @@ stats and family coefficients supply their combat inputs; see [NPC.md](NPC.md).
 
 Runtime owner: [Character Progression](features/character_progression.md);
 [Professions](features/professions.md) owns the separate absent profession loops.
+The complete [SKILLS](SKILLS.md) and [PERKS](PERKS.md) books explain their
+catalogs, allocation/ownership, UI, consumers, editing and worked use cases.
 
 ### SKILL-01 — Spending learned skill points
 
@@ -303,6 +313,22 @@ the 29-skill allocation registry. The current game has no general profession
 level-up/yield formula. Qualification, licenses, item requirements and medical
 treatment have bounded implementations described below and in their handbooks.
 
+### Source-only perk formulas
+
+Published perk descriptions and inactive equations are indexed in
+[PERKS: remaining catalog](PERKS.md#3-remaining-neverlands-catalog), with
+[dated wiki provenance](design/reference/character/observations/2026-09-14_skills_and_perks.md#public-wiki-provenance).
+They include other stat bonuses, lifetime HP, capacity, elemental resistance
+and Nature Child's Drink variant. **None is an active local formula merely
+because it is documented.** Use that catalog's flags and unresolved basis,
+stacking and rounding notes before implementing a new consumer.
+
+The [perk grant overview discrepancy](PERKS.md#grants-and-the-wiki-overview-discrepancy)
+is separate from arithmetic: the wiki overview stops at24, while the preserved
+experience table/current configuration also grants at25–27. Keep PROG-02
+authoritative for current runtime; no grant reconciliation occurred in this
+documentation task.
+
 ## 5. Combat
 
 [Combat design](design/features/combat.md) owns the intended fight contract;
@@ -319,6 +345,11 @@ Changing these owners affects Arena, NPC, PvP and mixed teams together.
 ### COMBAT-01 — Physical action cost and package validation
 
 Captured action tables plus calibrated mastery fit:
+
+Ordinary persisted participation profiles retain their AP/cost values.
+`no_weapons` rederives AP/physical costs and forces normal blocks, overriding
+stale equipment profile values; [CHARACTER](CHARACTER.md#6-implementation-and-state-ownership)
+explains this exception and the separately live player-stat inputs.
 
 ```text
 weapon cost[i] = ItemTemplate.requirements.ap (default 45) - floor(mastery[i]/15)
@@ -499,15 +530,15 @@ manual choice requires multiple living enemies and an eligible living target.
 Automatic handoff after defeat chooses a living opponent and spends no manual
 switch. It does not restore spent switches or make a dead opponent selectable.
 
-Arena acceptance currently requires
-`round(current HP / saved max HP * 100) >= 50`; a nil/zero saved maximum bypasses
-that helper. This rounded saved-maximum gate is distinct from equipment-aware
-fight HP and the one-decimal vital display. Room level/alignment/capacity
+Arena acceptance requires a positive saved maximum and exact
+`current HP * 100 >= saved max HP * 50`; nil/zero maximum rejects. This
+unrounded saved-maximum gate is distinct from equipment-aware fight HP and
+the one-decimal vital display. Room level/alignment/capacity
 restrictions are separate authored eligibility gates.
 
 Arena application turn choices are 120/180/240/300 seconds (ordinary default
-180); training NPC applications use 300. Accepted fights use a ten-second
-start countdown where that application flow applies. A turn expires strictly
+180); training NPC applications use 300. Human Duels require applicant confirmation after acceptance; NPC/Group start
+rules are separate. Historical scheduled pending matches retain due recovery. A turn expires strictly
 after its start + timeout. Whole-fight deadlines expire at or after their
 timestamp: World explicitly configures **300 seconds**, the user-approved
 five-minute policy; an unconfigured match falls back to twice its turn timeout.
@@ -530,7 +561,7 @@ wallet and notice handoffs respectively.
 
 Owner: [ExperienceAwarder](../app/services/arena/experience_awarder.rb).
 Captured solo totals have precedence; the general fallback is calibrated.
-Draws, invalid winners and no defeated enemies yield no award.
+Draws, invalid winners and no eligible damaged player/defeated NPC enemies yield no award.
 
 For a match containing exactly one player, the applicable explicit
 `encounter_experience_reward` or `encounter_defeat_experience_reward` is the
@@ -540,13 +571,14 @@ suppresses fallback. A loss award still requires a defeated enemy NPC.
 Otherwise, for each recipient at their participant level:
 
 ```text
-n = count of defeated enemies (not initial or surviving fighters)
+n = count of defeated NPCs plus player opponents who were defeated or took credited damage
 NPC contribution = maxHP * 0.85 * 0.75^max(playerLevel - npcLevel - 2, 0)
 Player contribution = min(maxHP, credited damage taken) * 0.85
                       * 0.75^max(playerLevel - enemyLevel - 2, 0)
 if n == 1 and enemy is NPC and template XP > 0: use template XP instead
 risk = 1 for NPC-only enemies; otherwise trauma 10/30/50/80 => 1/1.1/1.2/1.35
-gross = round(sum(contributions) * (1 + 0.45*(n-1)) * risk * (winning team ? 1 : 0.1))
+lossFactor = 1 on victory; on defeat: 1 if any player enemy, otherwise 0.1
+gross = round(sum(contributions) * (1 + 0.45*(n-1)) * risk * lossFactor)
 ```
 
 With more than one player on the recipient's team, let `p` be team size and
@@ -573,6 +605,8 @@ metadata.
 
 ### ARENA-01 — Admission and deadlines
 
+[ARENA](ARENA.md#3-applications-and-admission-rules) explains these terms in the
+player flow, including hall gates, side assembly, examples and editing impact.
 [Arena design](design/areas/arena.md) owns the application contract;
 [EquipmentRule](../app/services/arena/equipment_rule.rb) reads equipped items and
 character `artifact_grade`. Unarmed accepts no equipment; no-artifacts accepts
@@ -634,6 +668,10 @@ processed, not retried as another random roll; successful item/NV mutations
 and their deduplication marker commit together.
 
 ## 7. Recovery, wear and injuries
+
+[MEDICAL](MEDICAL.md) connects these equations to injury lifecycle, restrictions,
+bag/Doctor requirements and free/paid treatment. [CHARACTER](CHARACTER.md)
+distinguishes current HP/MP, saved maxima and effective primary-stat penalties.
 
 [Vitals design](design/features/character_vitals.md) supplies the recovery and
 injury context for these calculations.
@@ -736,9 +774,19 @@ integer in `0..80` light, `0..150` medium, `0..500` heavy, `0..7000` combat.
 Paid requests expire after **five minutes** and require patient acceptance;
 free treatment completes immediately. Acceptance rechecks same cell, no
 movement/combat, Healer perk, active Doctor license, matching usable owned bag
-and the supported bag requirements. Effective Knowledge is checked, but the
-authored Doctor proficiency key is skipped by the current RequirementChecker;
-see the [Medical Care implementation gap](features/medical_care.md#1-authority-and-scope).
+and bag requirements through `RequirementChecker`.
+
+`effective Doctor = max(valid saved profession_skills.doctor + usable equipped
+doctor bonuses, 0)`. Saved data must be a nonnegative integer; absent/malformed
+data contributes zero. Flat `doctor` and nested `skill_bonuses.doctor` item
+effects add points; broken, expired or unequipped items do not qualify. This
+profession counter is separate from allocatable Skills and the Healer perk.
+
+The seeded bags require Knowledge/Doctor **20/100, 45/300, 90/400, 160/600**.
+Changing seed requirements changes admission, not cure amount/chance. At 99/100
+a light-bag request fails with unchanged state; at 100/100 it may proceed if
+all other checks pass. Removing a qualifying item after quoting makes paid
+acceptance fail atomically. See [Medical Care](features/medical_care.md).
 Combat injuries cannot be self-treated.
 
 Success marks the injury healed, removes one bag durability use, transfers the
@@ -747,7 +795,7 @@ There is no extra random cure roll or Doctor-skill XP gain. Bag requirements,
 use counts, prices and potion healing are authored item data in
 [combat_care seeds](../db/seeds/combat_care.rb), not inferred from the artwork.
 
-| Bag / kit | Severity | Base NV price | Uses | Required Knowledge | Authored Doctor threshold (not enforced) |
+| Bag / kit | Severity | Base NV price | Uses | Required Knowledge | Required effective Doctor |
 |---|---|---:|---:|---:|---:|
 | Beginner healer bag | Light | 300 | 10 | 20 | 100 |
 | Skilled healer bag | Medium | 750 | 10 | 45 | 300 |
@@ -834,6 +882,10 @@ not a global distance-level equation; strong habitat validation checks
 
 ## 9. Inventory and economy
 
+[ECONOMY](ECONOMY.md) explains stock/funds, qualification, quotes, receipts and
+payment flows around these equations; [MEDICAL](MEDICAL.md) owns treatment use
+cases and [CHARACTER](CHARACTER.md) explains capacity and build inputs.
+
 [Item/equipment design](design/features/items_inventory_equipment.md) and
 [Economy design](design/features/economy_trading_shops.md) supply the capacity,
 acquisition and settlement contracts behind these calculations.
@@ -864,9 +916,53 @@ Removing units subtracts their weight, with recorded weight clamped at zero.
 Known consumable effects are flat `heal_hp`, flat `restore_mp`, and the legacy
 `reset_allocation` branch. The first recognized effect is applied, then one
 unit/use consumed; this is not an arbitrary list of combinable effects.
-Durability decrease is `max(current - amount,0)`. Item/equipment requirements
+Targeted attack scrolls use the separate entry adapter below, not this generic
+effect dispatcher. Durability decrease is `max(current - amount,0)`. Item/equipment requirements
 compare explicit required level/stats/skills/permissions against current
 authoritative values; there is no hidden item-level scaling formula.
+
+### SCROLL-01 — Attack entry
+
+Owner: [AttackScroll](../app/services/game/inventory/attack_scroll.rb), with
+[RequirementChecker](../app/services/game/inventory/requirement_checker.rb) and
+[starter Shop definitions](../db/seeds/data/starter_shop.json). Inputs are an
+owned server-issued action key and target nickname. The server rechecks:
+
+```text
+abs(attacker.level - target.level) <= 3  # inclusive, wiki rule
+Duel Permit I: level >= 5, effective Stealth >= 20
+Fist Attack: level >= 10, no skill gate
+new fight global limit = 300 seconds; turn limit = 300 seconds
+new Permit trauma = 10%; new Fist trauma = 80%
+Fist after removing equipment: HP = min(current HP, effective naked max HP)
+                              MP = min(current MP, effective naked max MP)
+```
+
+The target window comes from the wiki. Both live 17-to-5 attempts rejected
+without charge, a result consistent with that rule but insufficient to measure
+its ±3 boundary or isolate the generic error's cause. Local out-of-window
+rejection uses the captured generic message, "Error using item. Scroll use
+failed." Requirements are source-backed. Low/maximum ordinary
+trauma map to the captured Arena categories; they are a cross-source inference,
+not a measured scroll injury rate. Severity uses the shared injury formula.
+This is not the separate guaranteed special combat-injury attack.
+
+`RULES` and `LEVEL_DIFFERENCE` are the small entry-rule edit points. Changing
+them changes admission only; attacks, blocks, dodge, crit, armor, XP and
+injuries continue through the combat owners in section 5. Fist removes both
+players' gear before snapshots, uses derived unarmed AP/block costs and omits
+artifact damage multipliers; stale preview overrides cannot retain a shield.
+Gear stays in Inventory afterward; source persistence is pending observation.
+
+An ordinary Permit entering an open live fight joins opposite the living target
+and preserves that fight's trauma, equipment rules, round commits and deadlines.
+Closed/stale fights, defeated targets and Fist intervention reject without cost.
+The latter is an explicit evidence boundary. Location equality uses validated
+Presence context (cell plus room), not browser coordinates. One charge is
+consumed only on committed entry; the ten-minute offer expires at its deadline,
+and a completed retry returns the original match without another charge.
+See [ITEMS](ITEMS.md#attack-scroll-use), [scroll design](design/features/scrolls.md)
+and [source observations](design/reference/inventory/observations/2026-09-14_attack_scrolls.md).
 
 ### ECON-01 — Shop purchase, sale and NV transfers
 
@@ -971,6 +1067,24 @@ it in the existing owner, and then change the status here. Full source formula
 identity remains unknowable without source code; that does not disable the
 authorized v1 calibration already implemented.
 
+## Use cases and cross-feature effects
+
+These checked examples illustrate current rules; their complete equations,
+provenance and owners remain in the named sections. Tuning one input can
+affect multiple features without changing all their formulas.
+
+| Preconditions / use case | Calculation and result | Consumer and boundary |
+|---|---|---|
+| Lifetime XP crosses multiple supported thresholds | Add XP once; grant each reached row | [SKILLS](SKILLS.md)/[PERKS](PERKS.md) gain their separate unspent pools; old allocations are not repriced |
+| Sword learned 24, equipment+50, spend 2 | Learned 24→32→38; effective 88 | Skills tiers use learned values; item requirements/combat read effective values |
+| Level 17 with More Strength, no injury | Bonus 8 Strength | Shared physical attack and capacity can change; no direct HP or hit-probability bonus is invented |
+| Wanderer 50, no authored duration | `30-floor(50*6/100)=27 s` | [WORLD](WORLD.md) persists the accepted deadline; later stat changes do not rewrite it |
+| Eligible NPC 12% base chance, Observation 100/200 |18% /20% effective chance | [NPC](NPC.md)/[COMBAT](COMBAT.md) retain independent entry eligibility and random rolls; chance is not a promised drop |
+| Careful Fighter, Arena/World NPC defeat |1%→0.5% /50%→25% per qualifying item | [ITEMS](ITEMS.md) wear changes; injury and loot probabilities do not |
+| maxHP 600, Self-Healing 100, fatigue≤50, recovery allowed |2 HP/sec;10 s gives 20 HP before maximum cap | Out-of-combat recovery cannot heal an injury record or create Doctor proficiency |
+| Permit I with Stealth 20 | Skill gate passes | [SCROLLS](SCROLLS.md) still validates target/level/presence and charge atomically; premium loot windows do not widen attack eligibility |
+| Change an illustration | No numerical change | [ARTWORK](ARTWORK.md) alters presentation, never formula inputs by inference |
+
 ## 12. Change impact, verification and maintenance
 
 ### Editing procedure
@@ -1031,3 +1145,16 @@ verification pointers. Update table values when their owner changes. If a
 previously dormant helper becomes live, update its status and consumers.
 Unrelated edits need no artificial document touch. The maintenance requirement
 is part of [DOCUMENTATION.md](DOCUMENTATION.md#410-game-reference-books).
+
+## September 14 PvP loss contribution
+
+[Source fight](design/reference/combat/observations/2026-09-14_arena_fist_duel.md): loser damage194, no kill, XP177; winner
+credited225/one kill/XP566. A living player opponent who took credited damage
+now qualifies for the shared reward calculation. `pvp_loss_multiplier=1.0`
+replaces the NPC-only0.1 defeat factor on PvP. With the retained coefficients,
+level17 versus24,194HP credited and30%trauma gives
+`round(194 * .85 * 1.1)=181`, close to177 but explicitly approximate.
+The winner566 is preserved evidence, not a claimed match to this general fit.
+Level, alignment, premium and spell-dependent reward coefficients remain
+unknown. NPC explicit loss totals, NPC kill eligibility, caps, team sharing and
+once-only finalization keep their existing contracts.

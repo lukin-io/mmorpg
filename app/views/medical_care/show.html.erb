@@ -21,11 +21,13 @@
     </div>
   <% end %>
   <h2>Healer bags</h2>
+  <p>Doctor: <strong><%= current_character.doctor_proficiency %></strong></p>
   <% if @bags.empty? %><p>You carry no healer bags. Bags are sold at the Hospital; Doctor licenses are sold in the Shop.</p><% end %>
   <% @bags.each do |bag| %>
     <div class="nl-healer-bag">
       <%= image_tag "items/healer_bag.png", width: 60, height: 60, alt: bag.item_template.name %>
       <div><strong><%= bag.item_template.name %></strong> — <%= pluralize(bag.current_durability, "use") %> left.
+        <p>Requirements: Knowledge <%= bag.requirements["knowledge"].to_i %>, Doctor <%= bag.requirements["doctor"].to_i %>.</p>
         <%= form_with url: treat_injury_path, data: {turbo_frame: "_top"} do |form| %>
           <%= form.hidden_field :bag_id, value: bag.id %>
           <%= form.label :patient_name, "Patient name", for: "patient_#{bag.id}" %>

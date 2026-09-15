@@ -1,0 +1,42 @@
+<% content_for :title, "Duel - #{@arena_match.arena_room.name}" %>
+<div class="nl-arena-frame" data-controller="arena-match"
+     data-arena-match-match-id-value="<%= @arena_match.id %>"
+     data-arena-match-status-value="pending">
+  <div class="nl-arena-topline">
+    <% if current_character %>
+    <b><%= current_character.name %>[<%= current_character.level %>]</b>
+    <span class="nl-arena-vitals"><%= current_character.current_hp %>/<%= current_character.max_hp %> | <%= current_character.current_mp %>/<%= current_character.max_mp %></span>
+    <% else %>
+      <b>Waiting Duel</b>
+    <% end %>
+    <div class="nl-arena-controls">
+      <% %w[Character Inventory City].each do |label| %><button disabled class="nl-arena-link"><%= label %></button><% end %>
+      <%= link_to "Arena", arena_room_path(@arena_match.arena_room), class: "nl-arena-link" %>
+    </div>
+  </div>
+  <div class="nl-arena-room-heading"><b><%= @arena_match.arena_room.name %></b></div>
+  <div class="nl-arena-tabs"><span class="nl-arena-tab nl-arena-tab--active">Duels</span><span class="nl-arena-tab">Groups</span></div>
+  <div class="nl-arena-application-form"><div class="nl-arena-current-row"><b>Waiting for the fight to begin!</b></div></div>
+  <div class="nl-arena-application-row">
+    <div class="nl-arena-application-line">
+      <span class="nl-arena-rule-icons">
+        <%= image_tag "arena/rule.png", width: 16, height: 16, alt: fight_kind_label(@arena_match.metadata["fight_kind"]) %>
+        <%= image_tag "arena/timeout.png", width: 16, height: 16, alt: "Timeout" %><span><%= @arena_match.turn_timeout_seconds / 60 %> min</span>
+        <%= image_tag "arena/trauma.png", width: 16, height: 16, alt: "Trauma" %><span><%= @arena_match.trauma_percent %>%</span>
+      </span>
+      <% @participations.each_with_index do |participant, index| %>
+        <% if index.positive? %><span>versus</span><% end %>
+        <span><b><%= participant.participant_name %></b>[<%= participant.participant_level %>]</span>
+      <% end %>
+    </div>
+    <div class="nl-arena-application-line">
+      <% if policy(@arena_match).refuse_duel? %>
+        <%= button_to "Refuse Duel", refuse_duel_arena_match_path(@arena_match), method: :delete, class: "nl-arena-small-button" %>
+      <% end %>
+      <% if policy(@arena_match).confirm_duel? %>
+        <%= button_to "Start Duel", confirm_duel_arena_match_path(@arena_match), class: "nl-arena-small-button" %>
+      <% end %>
+      <%= link_to "Refresh", arena_match_path(@arena_match), class: "nl-arena-filter" %>
+    </div>
+  </div>
+</div>

@@ -5,7 +5,7 @@ follow the [Inventory domain](../../../domains/inventory.md).
 
 - Document type: neverlands-source-summary
 - Domain: inventory
-- Updated: 2026-09-09
+- Updated: 2026-09-14
 - Evidence status: current for the bounded launch surface
 
 ## Current observations
@@ -40,9 +40,15 @@ workshop/profession listing and retrieval flow rather than an Inventory reset.
 
 ## Evidence gaps
 
-- Player transfer, targeted item use, crafting/production families, some
-  fight-slot interactions, and an authenticated repair transaction remain
-  outside the completed local boundary.
+- The [September 14 attack-scroll capture](observations/2026-09-14_attack_scrolls.md)
+  records Duel Permit I/Fist Attack rows, requirements and target forms plus
+  wiki rules. Later Permit I and Fist Execute attempts from level 17 against
+  co-located zMey [5] both returned a generic failure without consumption or
+  equipment changes. This is compatible with the wiki's ±3 window, not a
+  successful fight or proof of the rejection cause. Other targeted items, source transfer
+  edge cases, production, fight-slot interactions and authenticated repair
+  retain their own evidence gaps. [Scroll design](../../features/scrolls.md)
+  distinguishes local admission behavior from those source observations.
 
 ## Design linkage
 

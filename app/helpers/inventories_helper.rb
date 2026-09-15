@@ -103,6 +103,7 @@ module InventoriesHelper
   }.freeze
 
   ITEM_ARTWORK_PATHS = {
+    "fist_attack" => "items/fist_attack.png",
     "penknife" => "items/penknife.png",
     "assassin_dagger" => "items/assassin_dagger.png",
     "butcher_cleaver" => "items/butcher_cleaver.png",

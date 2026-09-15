@@ -1,6 +1,8 @@
 # Combat
 
 The [Combat domain](../../domains/combat.md) connects evidence and delivery.
+[COMBAT](../../COMBAT.md) is the complete local lifecycle/formula/editing guide;
+[SCROLLS](../../SCROLLS.md) covers targeted admission to that same pipeline.
 [FORMULAS](../../FORMULAS.md#5-combat) records current calculations,
 [NPC lifecycle](../../NPC.md#7-encounter-and-fight-lifecycle) describes mixed
 rosters, and [item properties](../../ITEMS.md#3-fields-slots-and-effective-properties)
@@ -1207,3 +1209,26 @@ expired-entitlement denial, original art, effective skill allocation and
 responsive/zoom acceptance. Those checks validate the bounded implementation,
 not uncaptured coefficients or source probabilities. Current delivery status
 belongs to the [Combat Completion Matrix](../launch_mvp_plan.md#combat-completion-matrix).
+
+## September 14 human Duel refinement
+
+[Live fight771016917](../reference/combat/observations/2026-09-14_arena_fist_duel.md)
+confirms an explicit applicant Start after human acceptance, physical AP/block
+and dodge behavior, credited overkill, nonzero loss XP without a kill, and a
+public profile link to city/room/fight history through Finish. [Arena design](../areas/arena.md)
+owns Start/refusal admission; [calibration](combat_calibration.md#september-14-pvp-contribution-correction)
+owns the updated approximate reward eligibility/coefficient. The shared log
+preserves ordered paragraphs, side colors, levels, minute stamps with exact
+times available, bold critical damage and footer Statistics navigation.
+The public narrative contains outcomes; internal submission/stance bookkeeping
+remains durable but is excluded from public HTML pagination. A profile opened
+during an existing fight stays readable and links to the full public log;
+new incoming attacks still interrupt ordinary profile browsing.
+[Runtime acceptance](../../features/arena_combat.md#september-14-live-human-duel-parity)
+and [original decoration](../../ARTWORK.md#september-14-public-fight-log-decoration)
+remain separate from the preserved source screenshots.
+
+The source's unarmed equipment rule allows magic: this opponent used direct
+magic damage, reflected damage/weakening and healing. Physical-only Arena is
+still the user's MVP boundary. Neither the197 damage spell nor the non-HP
+percentage is used to infer an unsupported physical formula.

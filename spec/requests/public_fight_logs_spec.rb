@@ -34,7 +34,7 @@ RSpec.describe "Public fight logs", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("Fight Log ##{match.id}")
-    expect(Nokogiri::HTML(response.body).text.squish).to include("max_kerby hits Training Dummy")
+    expect(Nokogiri::HTML(response.body).text.squish).to include("max_kerby[1] hits Training Dummy[1]")
     expect(response.body).to include("nl-public-layout--fight-log")
     expect(response.body).not_to include("nl-game-layout")
     expect(response.body).not_to include("Neverlands administration")
@@ -49,6 +49,27 @@ RSpec.describe "Public fight logs", type: :request do
     body = JSON.parse(response.body)
     expect(body["fight_id"]).to eq(match.id)
     expect(body["entries"].first["description"]).to include("Training Dummy")
+  end
+
+  it "paginates public outcomes without deleting internal action evidence" do
+    51.times do |index|
+      create(:combat_log_entry, arena_match: match, actor: player_participation,
+        log_type: "action", round_number: 0, sequence: index + 1,
+        message: "Internal turn submission #{index}")
+    end
+
+    get public_fight_log_path(match)
+
+    document = Nokogiri::HTML(response.body)
+    expect(document.css("[data-log-id]").size).to eq(1)
+    expect(document.text).to include("6 damage [14/20].")
+    expect(document.text).not_to include("Internal turn submission")
+    expect(document.css(".page-link")).to be_empty
+    expect(match.combat_log_entries.where(log_type: "action").count).to eq(51)
+
+    get public_fight_log_path(match, format: :json)
+
+    expect(response.parsed_body.fetch("entries").size).to eq(52)
   end
 
   it "renders statistics from the same fight log entries" do
@@ -100,7 +121,8 @@ RSpec.describe "Public fight logs", type: :request do
     participant = document.at_css(".fight-participants .team-alpha .participant")
     expect(participant["class"].split).to include("dead")
     expect(participant.at_css(".vitals").text).to eq("[0/#{player_participation.max_hp}]")
-    expect(document.css(".log-entry").size).to eq(2)
+    expect(document.css(".log-entry").size).to eq(1)
+    expect(document.css("[data-log-id]").size).to eq(2)
     expect(character.reload.current_hp).to eq(1)
   end
 
@@ -128,6 +150,7 @@ RSpec.describe "Public fight logs", type: :request do
         target: npc_participation,
         round_number: 1,
         sequence:,
+        log_type: "system",
         message: format("Synthetic event %02d", sequence)
       )
     end
@@ -180,6 +203,7 @@ RSpec.describe "Public fight logs", type: :request do
       target: npc_participation,
       round_number: 1,
       sequence: 2,
+      log_type: "system",
       message: "max_kerby sees <script>alert('unsafe')</script>")
 
     get public_fight_log_path(match)

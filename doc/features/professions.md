@@ -3,7 +3,7 @@
 title: Professions Feature
 description: NOT_IMPLEMENTED placeholder for source-backed gathering and production profession behavior.
 status: NOT_IMPLEMENTED
-updated: 2026-09-12
+updated: 2026-09-15
 owners: Professions domain
 template: feature-gap-v2
 ---
@@ -35,8 +35,9 @@ counter, failure, interruption, or production loop is shipped.
 No gathering/production route, state, mutation or runtime spec is claimed here.
 The bounded Doctor injury-treatment workflow is documented under
 [Medical Care](medical_care.md), separate from crafting and profession
-progression. Its authored Doctor proficiency thresholds are currently
-unenforced; the Medical Care handbook owns that implementation gap.
+progression. Medical Care enforces effective Doctor bag thresholds; automatic
+Doctor growth, quests and crafting remain absent. Its handbook owns the
+qualification checks and current acceptance.
 
 The remaining categories belong to this domain, even though World links them
 from its map/cell gap matrix:

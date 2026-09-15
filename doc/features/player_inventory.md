@@ -3,12 +3,195 @@
 title: Player Inventory Feature
 description: Implementation handbook for the Neverlands-based carried inventory, equipment paper doll, capacity, filters, item rows, and item actions.
 status: Fully Implemented
-updated: 2026-09-12
+updated: 2026-09-14
 owners: Player Inventory
 template: feature-v1
 ---
 
 # Player Inventory
+
+[SCROLLS](../SCROLLS.md) is the complete guide to scroll definitions, forms,
+admission/effects, licenses, charges, evidence and editing; [COMBAT](../COMBAT.md)
+explains the shared fight after entry. This handbook owns Inventory's detailed
+runtime contract and acceptance.
+
+## September 14 attack scrolls
+
+The first pair is `duel_permit_i` and `fist_attack`. Their
+[live item/form evidence](../design/reference/inventory/observations/2026-09-14_attack_scrolls.md)
+and [normalized rules](../design/features/scrolls.md) define this entry adapter;
+[Arena Combat](arena_combat.md) still owns all fight mechanics/presentation.
+[ITEMS](../ITEMS.md#attack-scroll-use) owns editable definitions and
+[FORMULAS](../FORMULAS.md#scroll-01--attack-entry) lists thresholds/impact.
+
+Shop purchases use the existing trade/receipt/capacity pipeline. Inventory Use
+opens an inline nickname form above the category strip; Cancel spends nothing.
+Execute enters physical combat immediately without an Arena application.
+Fist Attack removes both players' equipment into their inventories, clamps
+current HP/MP without healing and uses normal unarmed costs/blocks. Its
+`personal_only` flag separately blocks Transfer/Gift/Sell while retaining Delete.
+Other permit tiers remain outside executable scroll scope.
+
+`Game::Inventory::AttackScroll#offer_for(item:)` issues/reuses a ten-minute
+`WorldActionOffer` of type `scroll_attack` for the owned item/current presence
+context. `#call(action_key:, target_name:)` returns an ArenaMatch or raises
+`Unavailable`. Lock order is existing match, sorted characters, offer,
+inventories and item. A changed target fight rejects before taking a new match
+lock. Rechecks cover ownership, the online account’s playable target character, current cell/room, movement,
+airship, HP, levels, expiry/durability, effective Stealth, reservations,
+unacknowledged results and intervention restrictions. Client price, side,
+trauma, gear flags and match ids are never trusted.
+
+The charge, shared match/participation, local-action interruption, fight log
+and two personal GameEvents commit together. The offer receipt stores
+match/target/item identities, quantity/durability before use and remaining
+quantity. Completed-key replay returns the original match even after item
+deletion. Concurrent attacks cannot put a target into two active fights;
+failures roll back the charge and fight.
+
+`ScrollUsesController#create`, POST `/inventory/scroll_use`, deliberately
+avoids Inventory's outer single-character lock. HTML/Turbo receive a 303 to the
+match. The `_top` form has a labelled autofocus input, keyboard-operable
+Execute/Cancel and wrapping controls. Finish returns the scroll entrant to
+Inventory; an attacked defender resumes their saved accessible ground context.
+
+`CombatStatusesController#create`, POST `/combat_status`, only reads the
+authenticated character's active match/unacknowledged physical result. Ground
+pages poll it through the existing shell every five seconds; it never rolls an
+NPC encounter. Outdoor World retains its passive encounter endpoint. Login
+prioritizes active combat over the saved ordinary destination.
+
+Coverage: `spec/services/game/inventory/attack_scroll_spec.rb`,
+`spec/requests/scroll_uses_spec.rb`, `spec/system/attack_scroll_spec.rb`, shared
+combat/profile/resolver, Shop seed and item-artwork specs. Check/browser
+results are recorded below. Live Permit/Fist attempts against co-located zMey
+[5] from level 17 both rejected without consumption; no source scroll fight
+has started. Fist Attack against an already-fighting
+player is an explicit evidence boundary and fails without consumption; Permit
+intervention is implemented.
+
+Scroll-use failures return a 303 to Inventory using the dedicated
+`scroll_error` flash. Inventory owns its single `role="alert"` paragraph above
+the category strip; the shell excludes it from global flashes. It uses the
+captured red (#c00), bold 12px treatment and disappears when Use is reopened.
+Out-of-window levels use "Error using item. Scroll use failed." to match the
+observed generic failure; other diagnostic wording remains local. The wiki's
+±3 gate is retained. Rejection precedes gear removal and has no charge, fight,
+event or equipment side effects, including repeated attempts.
+
+### September 14 local acceptance
+
+Chrome Max, two separate host-cookie sessions (`127.0.0.1` and `localhost`),
+1155 × 819 CSS px / DPR 2, mouse and keyboard. Exact development players
+`ScrollProofA0914` and `ScrollProofB0914` were prepared without resetting other
+players, stock or funds. Both existing source scrolls remained untouched.
+
+- Shop → Scrolls & Potions → native confirmation: bought Permit I for 16 NV
+  and Fist Attack for 250 NV; 1000 → 984 → 734 NV. Inventory showed both original
+  images, requirements and personal Fist Use/Delete controls.
+- Equipped each player's Penknife and Advantage Shield through Wear. Opened
+  Permit Use, cancelled, reopened and submitted an unknown nickname: visible
+  “Player not found”, item retained. Successful targeting on the same city
+  square created match **53**; the other session entered automatically.
+- Both players selected head attack/head block and submitted real Turn forms.
+  The shared exchange produced a 24-damage hit/breakthrough and a miss, with
+  both submissions/defenses in the internal log and a personal entry event in
+  chat. Surrender/Finish returned the scroll user to Inventory and defender to
+  Central Square. The Permit disappeared; equipment stayed worn.
+- Fist Use had autofocus, Tab to Execute then Cancel. Chrome's viewport override
+  did not change the existing tab; actual 300% browser zoom provided
+  **385 × 273 effective CSS px**. The reachable form wrapped Cancel below the
+  input, with no document horizontal overflow. Normal 100% zoom was restored
+  on the exact local tab and measured again at 1155 × 819. This was a desktop
+  zoom/keyboard check, not a claimed mobile-device test.
+- Fist entry created match **54** and removed both equipped items on both players.
+  The same UI showed empty gear slots and 45 AP unarmed attacks instead of the
+  knife's 40 AP. Both players submitted another head attack/block exchange:
+  35 damage and a successful opposing block. Surrender produced a light chest
+  muscle hematoma through the shared injury system; Finish again restored each
+  player's destination. Both inventories retained their knife/shield as Wear
+  rows, and the Fist scroll was gone.
+
+Browser automation required native Chrome confirmation handling and refreshing
+stale tab/dialog handles; this was tooling recovery, not source-game evidence.
+One stale Shop offer rejected safely during recovery, then a fresh UI purchase
+succeeded. The acceptance pass found the header's legacy “normal” trauma label;
+it was corrected to the match's actual percentage and covered at 10% and 80%.
+Final post-correction `bin/verify full` passed: **619 Ruby files, no lint
+offenses; 3054 non-system examples and 301 system examples, zero failures;
+Brakeman zero security warnings; Bundler/Importmap audits no vulnerabilities;
+12 feature documents and 89 architecture documents passed**. The preceding
+rerun was intentionally stopped to add the playable-character admission guard;
+these totals belong to the completed final run. Focused final scroll checks
+also passed (34 examples), and header/request coverage passed (40 examples).
+
+After that final gate, Chrome repeated Use → target → automatic two-player
+entry → committed unarmed exchange → surrender → independent Finish for
+match **55**. The header showed **80%**, gear slots were empty and the log
+recorded a 30-damage hit and opposing block. Both pages were reloaded after
+Finish: attacker Inventory, defender Central Square; reopening defender
+Inventory showed both gear rows still unequipped. The extra Fist purchase
+cost 250 NV (734 → 484). The acknowledged match54 result was revisited and
+also showed 80%. Its absent Finish button is expected after acknowledgement;
+browser Back returned to Inventory. No new source attack occurred.
+The final [Fist UI capture](acceptance/2026-09-14_scrolls/fist_final.png)
+supersedes the initial exchange images for the trauma label. `git diff --check`
+passed, and the evidence-only documentation update was audited afterward.
+
+Images: [Duel exchange](acceptance/2026-09-14_scrolls/duel.png),
+[Fist form](acceptance/2026-09-14_scrolls/fist_form.png),
+[narrow keyboard form](acceptance/2026-09-14_scrolls/fist_form_narrow.png),
+[Fist exchange](acceptance/2026-09-14_scrolls/fist_fight.png).
+The initial exchange images preserve the legacy label found during acceptance;
+use the final capture above for the corrected presentation.
+
+### September 14 rejection acceptance
+
+After the [two live zMey rejections](../design/reference/inventory/observations/2026-09-14_attack_scrolls.md#live-17-to-5-attempts--zmey),
+the generic level-window feedback was moved into Inventory's source-positioned
+inline error. This follow-up did not change the admission formula or combat
+resolver. Focused service/request/system verification passed **39 examples,
+zero failures**. An older request assertion expected the former global alert;
+it was updated for Inventory's dedicated flash before the passing rerun.
+`bin/verify fast` then passed **619 Ruby files without offenses, 3058 non-system
+examples without failures, 12 feature documents and 89 architecture documents**.
+The full/system/security gate recorded above belongs to the preceding larger
+scroll implementation; this small feedback follow-up used fast plus its
+focused real-browser system path.
+
+The agent then exercised the final development UI in Chrome Max using new,
+isolated `ScrollRangeA0914` (17) and `ScrollRangeB0914` (5) fixtures, separate
+127.0.0.1/localhost cookie sessions, Central Square and full HP/MP. Items were
+provided as test setup; this pass does not claim another Shop acquisition.
+
+- Both players wore their fixture Penknife and Advantage Shield through UI
+  Wear controls. Permit I Use → nickname → Execute produced exactly one red
+  **Error using item. Scroll use failed.** above the Inventory categories.
+  The nickname panel disappeared; the item remained at quantity 1, 1/1.
+- Fist Use → the same nickname → Execute produced the same rejection. Both
+  players' paper dolls retained the knife/shield and showed 200/200 HP,
+  70/70 MP. No new chat event or combat appeared. Reopening Use cleared the
+  error, and Cancel restored Inventory without charge.
+- At **1155 × 819 CSS px, DPR 2**, the error matched the captured computed
+  style: **#c00, 12px, weight 700**. At actual **200% Chrome zoom** the viewport
+  was **577 × 409, DPR 4**. Keyboard Tab reached Execute and Enter submitted;
+  the error, Use and Cancel remained reachable through owned vertical
+  scrolling, with no document horizontal overflow. Intermediate 150% and
+  250% zoom states occurred during adjustment; only the measured 200% state
+  is the final zoom evidence. This is not a new touch/mobile-device audit.
+- Zoom was restored to **100%, 1155 × 819, DPR 2**. Return → Central Square →
+  Inventory → reload retained both scrolls at 1/1 and both worn items, with no
+  stale error. The target Inventory was also reloaded. A read-only database
+  audit corroborated zero matches for both fixtures and unchanged gear/vitals.
+
+The attacker fixture signed out through the UI. User activity changed Chrome
+focus during target sign-out; that local confirmation was cancelled and both
+temporary tabs closed. Target logout is not claimed. No further source attack
+was submitted. Subsequent source capture waits for the user's next nickname.
+
+Screenshots: [desktop rejection](acceptance/2026-09-14_scrolls/level_rejection.png),
+[200% zoom rejection](acceptance/2026-09-14_scrolls/level_rejection_zoom.png).
+Existing original item artwork is reused; the new state is accessible HTML/CSS.
 
 This document is the shipped implementation contract for the bounded launch
 Inventory feature: authoritative carried/equipped state and the authenticated
@@ -195,7 +378,7 @@ Each row renders action buttons, durability, properties, and requirement rows.
 `RequirementChecker` determines current availability; the controller resolves
 the item only through the current inventory before mutation.
 
-The 79 authored ordinary Shop goods share original item illustrations across
+The 80 authored ordinary Shop goods share original item illustrations across
 Shop Buy/Sell and carried Inventory. Equippable goods also
 reuse the same image in filled paper-doll slots.
 `InventoriesHelper::ITEM_ARTWORK_PATHS` explicitly maps stable item keys to

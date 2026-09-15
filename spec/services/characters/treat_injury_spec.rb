@@ -4,7 +4,7 @@ require "rails_helper"
 
 RSpec.describe Characters::TreatInjury do
   include ActiveSupport::Testing::TimeHelpers
-  let(:healer) { create(:character, perks: {"healer" => true}, allocated_stats: {"intelligence" => 29}, passive_skills: {"doctor" => 100}) }
+  let(:healer) { create(:character, perks: {"healer" => true}, allocated_stats: {"intelligence" => 29}, metadata: {"profession_skills" => {"doctor" => 100}}) }
   let(:patient) { create(:character) }
   let(:zone) { create(:zone) }
   let(:injury) { CharacterInjury.create!(character: patient, severity: "light", name: "Chest muscle hematoma", stat_penalty_percent: 5, expires_at: 30.minutes.from_now) }
@@ -30,6 +30,47 @@ RSpec.describe Characters::TreatInjury do
     expect(bag.reload.current_durability).to eq(9)
     expect(patient.user.currency_wallet.reload.nv_balance).to eq(1000)
     expect(GameEvent.where("event_key LIKE ?", "treatment:#{result.id}:completed:%").count).to eq(2)
+  end
+
+  [100, 300, 400, 600].each do |threshold|
+    it "requires effective Doctor #{threshold} at the exact bag boundary" do
+      template.update!(requirements: {"doctor" => threshold})
+      healer.update!(metadata: {"profession_skills" => {"doctor" => threshold - 1}})
+      expect { service.request!(price: 0) }.to raise_error(described_class::Unavailable, /Doctor #{threshold}/)
+      expect(injury.reload.healed_at).to be_nil
+      expect(bag.reload.current_durability).to eq(10)
+      expect(InjuryTreatment.count).to eq(0)
+      healer.update!(metadata: {"profession_skills" => {"doctor" => threshold}})
+      expect(service.request!(price: 0).status).to eq("completed")
+    end
+  end
+
+  it "rechecks Doctor when the patient accepts a paid quote" do
+    treatment = service.request!(price: 50)
+    healer.update!(metadata: {"profession_skills" => {"doctor" => 99}})
+    expect { service.accept!(treatment:, patient:) }.to raise_error(described_class::Unavailable, /Doctor 100/)
+    expect(treatment.reload.status).to eq("pending")
+    expect(injury.reload.healed_at).to be_nil
+    expect(bag.reload.current_durability).to eq(10)
+    expect([healer, patient].map { |c| c.user.currency_wallet.reload.nv_balance }).to eq([1000, 1000])
+  end
+
+  it "uses usable Doctor equipment without treating passive Skills or the perk as proficiency" do
+    healer.update!(metadata: {"profession_skills" => {"doctor" => 90}}, passive_skills: {"doctor" => 600})
+    bonus_template = create(:item_template, slot: "amulet", stat_modifiers: {"doctor" => 10})
+    bonus = create(:inventory_item, inventory: healer.inventory, item_template: bonus_template, equipped: true, equipment_slot: "amulet")
+    expect(healer.doctor_proficiency).to eq(100)
+    bonus.update!(equipped: false)
+    expect { service.request!(price: 0) }.to raise_error(described_class::Unavailable, /Doctor 100/)
+    bonus.update!(equipped: true)
+    expect(service.request!(price: 0).status).to eq("completed")
+  end
+
+  [nil, "100", -1, {}, true].each do |malformed|
+    it "treats malformed Doctor counter #{malformed.inspect} as zero" do
+      healer.update!(metadata: {"profession_skills" => {"doctor" => malformed}})
+      expect { service.request!(price: 0) }.to raise_error(described_class::Unavailable, /current 0/)
+    end
   end
 
   it "quotes a paid treatment, requires the patient and commits only once" do

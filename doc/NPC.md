@@ -5,7 +5,8 @@ to authored NPCs: what exists, where encounters belong, what fighters wear and
 drop, and how to change them. It describes shipped content and editing rules;
 it does not turn an atlas label or an unused image into an implemented NPC.
 
-Start here for content; use [FORMULAS.md](FORMULAS.md) for calculations,
+Start here for content; use [COMBAT.md](COMBAT.md) for shared player/NPC fight
+flows, living-only groups, damage/defense and aftermath, [FORMULAS.md](FORMULAS.md) for calculations,
 [ITEMS.md](ITEMS.md) for item definitions and acquisition,
 [WORLD.md](WORLD.md) for geography, cell actions and location artwork,
 [ARTWORK.md](ARTWORK.md) for image specifications and exact prompts, and
@@ -36,6 +37,7 @@ NPC entry; their books and feature handbooks link back to this catalog.
 - [7. Encounter and fight lifecycle](#7-encounter-and-fight-lifecycle)
 - [8. Editing recipes and impact](#8-editing-recipes-and-impact)
 - [9. Validation, verification and maintenance](#9-validation-verification-and-maintenance)
+- [Use cases and cross-feature effects](#use-cases-and-cross-feature-effects)
 
 ## 1. Evidence and scope
 
@@ -271,6 +273,10 @@ encounter metadata.
 
 ## 6. Loot and experience
 
+[ECONOMY](ECONOMY.md) follows awarded NV/items into wallets, eligible Shop sales
+and license purchases. [CHARACTER](CHARACTER.md) explains the level/point grants
+after combat XP; creature profiles remain authored NPC data, not player builds.
+
 ### What can drop now
 
 The finishing player's eligible NPC defeat can award independent item/NV
@@ -424,6 +430,21 @@ member rows, not three independently sampled species pools. The same combat
 participation/team architecture is used for mixed player groups; do not build a
 second PvP or Arena damage engine.
 
+## Use cases and cross-feature effects
+
+Illustrative applications of the current rules; exact source encounters remain
+in the linked observations. For each change, follow the affected consumer,
+not only the NPC's visible name or level.
+
+| Preconditions / use case | Action and authoritative result | Related effects and boundaries |
+|---|---|---|
+| Authored `O3+O3+G3` sample selected near Forpost | Start the complete roster; defeat one Orc | Only living members remain actionable. Dead members stay in statistics/logs/reward accounting; see [COMBAT](COMBAT.md#3-shared-state-and-server-pipeline) |
+| Change an NPC from level 13 to 14 | Supply the matching explicit level profile and roster HP | Level alone does not generate armor, damage, gear or XP. [FORMULAS](FORMULAS.md#5-combat) consumes those authored inputs; [ARTWORK](ARTWORK.md) follows visible gear independently |
+| Add a remote Ogre habitat | Validate distance, passability and complete supplied profiles, then seed/install | [WORLD](WORLD.md#4-npc-habitats-and-resources) determines availability/travel; neither darker artwork nor distance automatically scales NPC stats |
+| Defeat an eligible NPC with a12% drop row and Observation 100 | Search chance becomes 18%, then rolls | [SKILLS](SKILLS.md#5-formulas-and-effects-on-related-systems) changes chance; premium/level eligibility still gates search. Visible NPC equipment is not automatically loot |
+| Player owns Careful Fighter and loses a World NPC fight | Per-item wear chance 50% becomes 25% | [PERKS](PERKS.md#2-implemented-perks) affects durability, not NPC damage or injury chance; medical treatment is a separate aftermath flow |
+| Add a portrait with no template/roster | Asset can be referenced by presentation | It creates no NPC, encounter, profession target or reward; follow [editing recipes](#8-editing-recipes-and-impact) |
+
 ## 9. Validation, verification and maintenance
 
 Content boundaries include unique stable keys, supported combat roles,
@@ -474,6 +495,14 @@ pools/weights, exact hidden coefficients and missing rat profiles; fitted v1
 behavior is already active and is not held disabled by those uncertainties.
 
 ## Arena Dummy and player-side reuse
+
+The [Arena book](ARENA.md#5-training-dummy-and-npc-supply) explains application
+gates, template synchronization and the distinction between Help eligibility
+and the Training-only default replenishment loop. Authorized Training refresh
+also restores missing/expired supply through that same service. A room lock
+and partial unique index allow one open offer per NPC/room; acceptance
+rechecks active-match capacity. Historical duplicate offers are retained as
+cancelled records. See [September 15 recovery](features/arena_combat.md#september-15-recovery-and-qualification).
 
 The level-1 `arena_training_dummy` remains a normal application opponent with
 Wood Chips loot. Its `scarecrow.png` portrait now uses the complete narrow

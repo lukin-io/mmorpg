@@ -32,7 +32,7 @@ module Game
           reject!("A trading license is required to sell items to the shop.") unless LicenseRules.new(character:).active?(:trading)
           reject!("Item not found.") unless inventory_item.inventory_id == inventory.id
           reject!("Not enough items in stack.") unless inventory_item.quantity.positive?
-          reject!("This item cannot be sold.") if inventory_item.protected_from_discard?
+          reject!("This item cannot be sold.") unless inventory_item.tradable?
           reject!("This item has invalid durability and cannot be sold.") unless inventory_item.valid_sale_durability?
           reject!("Broken items cannot be sold.") if inventory_item.broken?
           offers.validate_target!(offer, inventory_item)

@@ -3062,6 +3062,13 @@ CREATE UNIQUE INDEX index_zones_on_name ON public.zones USING btree (name);
 
 
 --
+-- Name: one_open_npc_offer_per_room; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX one_open_npc_offer_per_room ON public.arena_applications USING btree (arena_room_id, npc_template_id) WHERE ((status = 0) AND (npc_template_id IS NOT NULL));
+
+
+--
 -- Name: one_pending_injury_treatment; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -3658,6 +3665,7 @@ ALTER TABLE ONLY public.arena_application_memberships
 
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20260915090000'),
 ('20260912120000'),
 ('20260912090000'),
 ('20260910170000'),

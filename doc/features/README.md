@@ -14,9 +14,20 @@ Before changing an existing feature or implementing a missing one, use the
 [context/update map](../DOCUMENTATION.md#21-required-context-and-update-map)
 to read its evidence/design/MVP chain and the applicable
 [NPC](../NPC.md), [FORMULAS](../FORMULAS.md), [ITEMS](../ITEMS.md),
-[WORLD](../WORLD.md), [ARTWORK](../ARTWORK.md) and
+[WORLD](../WORLD.md), [SCROLLS](../SCROLLS.md), [COMBAT](../COMBAT.md),
+[ARENA](../ARENA.md), [SKILLS](../SKILLS.md), [PERKS](../PERKS.md), [ARTWORK](../ARTWORK.md) and
 [event catalog](game_shell.md#gameplay-event-catalog) sections. Each handbook's
 opening authority section links the references and handoffs it consumes.
+
+The root books provide an end-to-end explanation of a gameplay area across
+owners. These handbooks retain precise runtime contracts, verification history
+and gaps. Start scroll/fight/hall work with SCROLLS/COMBAT/ARENA, then follow the responsible
+Inventory, Shop, Arena, World or Medical handbook; neither layer replaces the other.
+
+For a new global area guide, use [GAME_GUIDE_TEMPLATE.md](../GAME_GUIDE_TEMPLATE.md)
+and its usage instructions. For a new runtime handbook in this directory,
+continue using [FEATURE_TEMPLATE.md](FEATURE_TEMPLATE.md). The distinction is
+document purpose, not a requirement to create both for every change.
 
 ## Current handbooks
 
@@ -27,7 +38,7 @@ opening authority section links the references and handoffs it consumes.
 | [character_progression.md](character_progression.md) | Fully Implemented | Bounded vitals, attributes, skills, XP, perks and professional-license prerequisites |
 | [city.md](city.md) | Fully Implemented | Five-quarter navigation, original scenes and hotspots, both gate handoffs and persisted context; other service interiors remain separate |
 | [game_shell.md](game_shell.md) | Partially Implemented | Shell, saved-context navigation, cell/room chat and presence, and durable gameplay-event composition |
-| [medical_care.md](medical_care.md) | Partially Implemented | Persistent injuries, healer requests/acceptance and Hospital bags; authored Doctor proficiency thresholds remain unenforced; broader crafting remains separate |
+| [medical_care.md](medical_care.md) | Partially Implemented | Persistent injuries, healer requests/acceptance and Hospital bags with effective Doctor thresholds; profession growth and crafting remain separate |
 | [player_inventory.md](player_inventory.md) | Fully Implemented | Inventory, equipment, capacity, grants, and item ownership |
 | [shop_economy.md](shop_economy.md) | Partially Implemented | Wallet/ledger, per-building stock and funds, atomic buy/sell, typed licenses and Merchant qualification; broader parity remains open |
 | [world.md](world.md) | Partially Implemented | Bounded region/cell reads, eight-neighbor movement, gate/village entry, empty Look, and NPC handoff; full region content and successful gathering remain gaps |

@@ -47,10 +47,9 @@ class ArenaController < ApplicationController
   end
 
   # GET /arena/lobby
-  # Turbo frame for lobby updates
+  # Retain bookmarked legacy URLs through the authoritative entry flow.
   def lobby
-    @rooms = ArenaRoom.active.where(zone_id: [nil, current_character.position&.zone_id]).order(:room_type)
-    render partial: "arena/lobby", locals: {rooms: @rooms}
+    redirect_to arena_index_path
   end
 
   private
