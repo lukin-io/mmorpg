@@ -43,25 +43,22 @@ RSpec.describe Characters::VitalsService do
       expect(summary[:vitality]).to eq(12)
     end
 
-    it "calculates attack power from strength and dexterity" do
+    it "calculates the calibrated Strength damage input" do
       summary = service.stats_summary
 
-      # Base: strength * 2 + dexterity / 2 + level / 2 = 10 * 2 + 8 / 2 + 1 / 2 = 24
-      expect(summary[:attack_power]).to eq(24)
+      expect(summary[:attack_power]).to eq(15)
     end
 
-    it "calculates defense from vitality and strength" do
+    it "reads actual equipped armor" do
       summary = service.stats_summary
 
-      # Base: vitality + strength / 3 + level / 2 = 12 + 10 / 3 + 1 / 2 = 15
-      expect(summary[:defense]).to eq(15)
+      expect(summary[:defense]).to eq(0)
     end
 
-    it "calculates crit rate from dexterity and luck" do
+    it "reports the base critical chance before opposing ratings" do
       summary = service.stats_summary
 
-      # Base: 5 + dexterity / 5 + luck / 10 = 5 + 8/5 + 3/10 = 5 + 1 + 0 = 6
-      expect(summary[:crit_rate]).to eq(6)
+      expect(summary[:crit_rate]).to eq(10)
     end
 
     context "with equipped items" do
@@ -83,15 +80,13 @@ RSpec.describe Characters::VitalsService do
       it "includes equipment attack bonus in attack power" do
         summary = service.stats_summary
 
-        # Base (24) + sword attack bonus (15) = 39
-        expect(summary[:attack_power]).to eq(39)
+        expect(summary[:attack_power]).to eq(30)
       end
 
       it "includes equipment defense bonus in defense" do
         summary = service.stats_summary
 
-        # Base (15) + explicit defense bonus (10) = 25
-        expect(summary[:defense]).to eq(25)
+        expect(summary[:defense]).to eq(10)
       end
 
       it "includes equipment HP and mana bonuses in visible vitals" do

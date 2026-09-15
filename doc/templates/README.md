@@ -2,12 +2,12 @@
 
 - Document type: documentation process
 - Status: Current
-- Updated: 2026-08-26
+- Updated: 2026-09-14
 
 This directory defines how a Neverlands observation becomes normalized design,
 delivery status, a verified local implementation contract, and maintainable
 runtime ownership. `doc/DOCUMENTATION.md` owns the architecture; these files
-provide the reusable layouts.
+and the linked guide/handbook templates provide the reusable layouts.
 
 ## Required chain
 
@@ -29,6 +29,7 @@ canonically owned by another domain.
 
 | Need | Template | Destination |
 |---|---|---|
+| Complete global game-area guide | [GAME_GUIDE_TEMPLATE.md](../GAME_GUIDE_TEMPLATE.md) | `doc/<AREA>.md` |
 | Domain navigation | `DOMAIN_INDEX_TEMPLATE.md` | `doc/domains/<domain>.md` |
 | Current Neverlands summary | `NEVERLANDS_SOURCE_SUMMARY_TEMPLATE.md` | `doc/design/reference/<domain>/README.md` |
 | One dated/sanitized capture | `NEVERLANDS_OBSERVATION_TEMPLATE.md` | `doc/design/reference/<domain>/observations/YYYY-MM-DD_<flow>.md` |
@@ -36,6 +37,14 @@ canonically owned by another domain.
 | Missing normalized design | `DESIGN_PLACEHOLDER_TEMPLATE.md` | `doc/design/areas/` or `doc/design/features/` |
 | Verified implemented feature | `doc/features/FEATURE_TEMPLATE.md` | `doc/features/<feature>.md` |
 | Missing implementation | `doc/features/NOT_IMPLEMENTED_TEMPLATE.md` | `doc/features/<feature>.md` |
+
+For a global guide, follow the template's [purpose](../GAME_GUIDE_TEMPLATE.md#purpose)
+and [usage steps](../GAME_GUIDE_TEMPLATE.md#how-to-use). Copy only its outline,
+adapt the sections, verify current behavior and link the relevant owners.
+The guide explains the whole area; the feature handbook retains the precise
+runtime contract and acceptance. Prefer extending an existing guide when the
+subject does not justify another one. Neither template requires duplicate
+specifications or a folder migration.
 
 ## Observation-to-implementation procedure
 

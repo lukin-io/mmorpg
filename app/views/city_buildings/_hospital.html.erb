@@ -4,16 +4,21 @@
   <% end %>
 </div>
 
-<h2>Treatment shop observation</h2>
-<table class="nl-detail-table nl-city-building-table">
-  <thead><tr><th>Item</th><th>Resource</th><th>Price</th><th>Observed stock</th></tr></thead>
-  <tbody>
-    <% building["goods"].each do |name, resource, price, stock| %>
-      <tr><td><%= name %></td><td><%= resource %></td><td><%= number_with_delimiter(price) %> NV</td><td><%= stock %></td></tr>
-    <% end %>
-  </tbody>
-</table>
+<h2>Treatment shop</h2>
+<% @hospital_items.each do |item| %>
+  <div class="nl-healer-bag">
+    <%= image_tag "items/healer_bag.png", width: 60, height: 60, alt: item.name %>
+    <div><strong><%= item.name %></strong><p><%= pluralize(item.durability_max, "use") %> · <%= item.base_price.to_i %> NV</p>
+      <p>Requires Knowledge <%= item.requirements["knowledge"] %>, Doctor <%= item.requirements["doctor"] %>, Healer perk and Doctor license.</p>
+      <% if (offer = @hospital_offers[item.id]) %>
+        <%= button_to "Buy #{item.name}", hospital_purchase_path(building_key: "hospital"),
+          params: {item_key: item.key, action_key: offer.action_key}, class: "lbut", form: {data: {turbo_frame: "_top"}} %>
+      <% end %>
+    </div>
+  </div>
+<% end %>
+<%= link_to "Medical care", medical_care_path, class: "lbut", data: {turbo_frame: "_top"} %>
 
 <h2>Recovery and pharmacy</h2>
-<p>Rest room and hospital bed were observed as "Entry forbidden" for a full-health character.</p>
-<p>The Pharmacy is a resource-processing surface; processing controls remain deferred.</p>
+<p>Rest room — Entry forbidden. Hospital bed — Entry forbidden.</p>
+<p>Pharmacy — Unavailable.</p>

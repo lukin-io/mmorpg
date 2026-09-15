@@ -2,7 +2,7 @@
 title: Airship Travel Feature
 description: Implementation handbook for paid scheduled journeys, bounded flight maps, and region-qualified destination handoffs.
 status: Partially Implemented
-updated: 2026-09-08
+updated: 2026-09-12
 owners: World Transport
 template: feature-v3
 ---
@@ -10,6 +10,12 @@ template: feature-v3
 # Airship Travel
 
 ## 1. Authority and scope
+
+Read [WORLD](../WORLD.md#5-travel-context-and-return-behavior) for route, region
+and return context, [FORMULAS](../FORMULAS.md#10-transport) for configured fare
+and timing, and [ARTWORK](../ARTWORK.md) for flight/location images. Read and
+update affected references and City/World/Shell/Economy handoffs under the
+[context/update map](../DOCUMENTATION.md#21-required-context-and-update-map).
 
 Neverlands is the sole game-design authority. Evidence is the completed
 `doc/design/reference/world/observations/2026-09-08_forpost_oktal_airship_journey.md`.

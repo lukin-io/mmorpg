@@ -1,5 +1,12 @@
 # Launch MVP Plan
 
+For implementation work, use the [context/update map](../DOCUMENTATION.md#21-required-context-and-update-map)
+to read each delivery row's evidence, design, handbook and affected
+[NPC](../NPC.md), [FORMULAS](../FORMULAS.md), [ITEMS](../ITEMS.md),
+[WORLD](../WORLD.md), artwork and event references. Update changed owners and
+their navigation in the same task. Catalog coverage and working links do not
+promote a delivery row: its runtime and applicable acceptance gates still apply.
+
 ## Purpose
 
 The launch MVP is the smallest coherent browser RPG loop that should feel like
@@ -19,10 +26,25 @@ The Neverlands-based marketplace/shop loop is also required for MVP. It is not
 a separate pillar because it depends on person, city movement, inventory, and
 server-authored actions, but the launch loop is incomplete without a
 source-backed Shop entrance. Current status: city Shop and the captured
-village Trading Post share the starter Shop owner. Buy/Sell and eligible license purchases use protected one-unit transactions. Licenses persist typed expiry; licensed Sell updates independent Shop funds/stock. Novice remains denial/empty. Merchant qualification is playable through Market and Shop; source activation, quest reward and higher Doctor qualification gaps remain explicit.
+village Trading Post share the starter Shop owner. Buy/Sell and eligible license purchases use protected one-unit transactions. Licenses persist typed expiry; licensed Sell updates independent Shop funds/stock. Novice remains denial/empty. Merchant qualification is playable through Market and Shop; source activation, quest reward, Doctor qualification quests and profession-growth gaps remain explicit.
 
 ## Launch Principles
 
+- The single outdoor launch zone has lower-level starter encounters near
+  Forpost and stronger authored groups farther away (user-confirmed
+  Neverlands rule, September 11). Preserve captured habitats and per-member
+  levels; no numeric distance curve is inferred. The first ten-fight cycle
+  supplies exact Orc/Goblin `[3–4]` and Skeleton `[7–9]` profiles on local
+  `[4,12]` / `[4,11]`. The relocated stronger-NPC cycle has ten completed
+  fights; its exact source coordinates are unknown. The September12 authorized
+  calibration places those exact rosters on remote local cells [19,9]/[19,10];
+  that placement is a local MVP decision, not a recovered source coordinate.
+- The last two Ogre fights complete the 22-fight observation register. The
+  starter atlas independently supports Ogres 16–18 at local [20,6]/[20,7],
+  well away from both Forpost gates. Two active calibrated placements and a
+  continuous darker habitat painting are authored there. The shared fitted
+  damage model reproduces their observed difficulty; observed critical outputs
+  are not universal NPC base damage. Do not extrapolate Ogres 19–24.
 - Player-facing implementation is English-only.
 - Server state is authoritative; browser state previews and submits choices.
 - Every mutating world action is issued by the server and validated on submit.
@@ -94,7 +116,7 @@ contract while an adjacent uncaptured state remains Not Done.
 | `ECONOMY-TRANSACTIONS-001` | Captured populated buy/sell/license variants; one-item purchase persistence complete | Not Done for full parity | Gameplay fidelity and adaptive UI matrix |
 | `COMBAT-ARENA-001` | Bounded Arena lifecycle and authoritative resolution | `DONE` for the declared runtime boundary | Pillar 3 Combat Completion Matrix |
 | `COMBAT-FIGHT-UI-001` | Active fight composer and state variants | `DONE` for the captured bounded states | Gameplay fidelity and adaptive UI matrix and Pillar 3 Combat Completion Matrix |
-| `COMBAT-LOG-001` | Separate public fight log parity | `DONE` for the captured bounded states | Gameplay fidelity and adaptive UI matrix and Pillar 3 Combat Completion Matrix |
+| `COMBAT-LOG-001` | Separate public fight log parity | `DONE` within the captured bounded scope | Gameplay fidelity and adaptive UI matrix and Pillar 3 Combat Completion Matrix |
 | `NPC-RUNTIME-001` | Outdoor and Arena NPC combat | Implemented within World/Arena boundaries | Pillars 3 and 4 |
 | `QUEST-FLOW-001` | Complete Quest lifecycle | `NOT_IMPLEMENTED`; `EVIDENCE_NEEDED` | NPC/Quest design and implementation placeholder |
 | `PROFESSION-FLOW-001` | Complete profession action lifecycle | `NOT_IMPLEMENTED`; `EVIDENCE_NEEDED` | Character-development audit and profession design |
@@ -175,12 +197,12 @@ status is owned by the Pillar 3 Combat Completion Matrix.
 
 | Area | MVP relevance | Implementation after audit | Remaining evidence or work |
 | --- | --- | --- | --- |
-| Level and experience table | Required | Implemented for complete rows `0..27`, level-0 defaults, cumulative thresholds, grants, per-fight XP caps, and no extrapolation. | `[EVIDENCE]` complete row `28+` values. |
-| Solo PvE XP | Required | Implemented at idempotent fight finalization from one configured NPC or an explicit encounter-level reward; the captured paired-rat encounter awards `35` total, capped by current level. | `[EVIDENCE]` general multi-NPC formula, player-group/team distribution, fame, valor, and XP-loss rules. |
+| Level and experience table | Required | Complete rows `0..27`, level-0 defaults, grants and per-fight XP caps are supported without extrapolation. Wiki XP rows are per-level costs; cumulative thresholds must sum those costs. The new level 17 proof gives `29,946,496 + 20,053,504 = 50,000,000`, equal to rows 0–17 summed. | Catalog now sums preceding per-level costs; verification remains with the Progression owner; verified stat grants are unchanged. `[EVIDENCE]` complete row `28+` values. |
+| Solo PvE XP | Required | Idempotent finalization supports one configured NPC or an explicit victory total, and a separate explicit positive defeat total for one player after defeating an enemy NPC. Captured examples are `35` total for paired rats and `57` despite a solo loss; recipient level/entitlement caps apply. | Stage2 full/manual acceptance passed. September12 adds calibrated general/group XP. Fame, valor and XP deductions remain separate; positive defeat XP is not an XP-deduction rule. |
 | Primary stats | Required | Five base-1 stats, starter pool `15`, locked save, aliases, public/effective display implemented. | Other downstream formula coefficients remain owned by their features. |
-| HP and MP maxima | Required | `Health × 5` and `Knowledge × 7` implemented without allocation refill. | `[EVIDENCE]` complete regeneration timing and skill multipliers. |
+| HP and MP maxima | Required | Base `Health × 5` and `Knowledge × 7` persist without allocation refill. Stage2 combat projections read equipment-aware maxima separately from base values and the fight magic-hit ceiling. | Stage2 full/manual acceptance passed; `[EVIDENCE]` complete regeneration timing and skill multipliers. |
 | Carrying mass | Required | `effective Strength × 5 + effective Health × 10 + level × 10` enforced for inventory add/loot, transfer, and Shop. | Travel-time encumbrance remains `[EVIDENCE]`. |
-| Numeric skills | Required | Captured 29-skill registry, separate combat/peace pools, tiered rates, locked spending, and cap charging implemented. | Most gameplay effects remain `[EVIDENCE]`; labels alone do not activate them. |
+| Numeric skills | Required | Captured 29-skill registry, separate combat/peace pools, tiered rates, locked spending and base allocation cap 100. Stage2 effective readers add usable equipment once and retain captured totals above 100; movement clamps its own input. | Stage2 full/manual acceptance passed. September12 adds calibrated weapon-mastery AP/damage; its new acceptance is tracked below. |
 | Binary perks | Required bounded subset | Source perks `7` More Strength, `15` Careful Fighter, `34` Merchant and `35` Healer use the shared save/exclusion flow. Strength/wear effects and professional license prerequisites are implemented. | Prerequisites/reset and other named perks remain `[EVIDENCE]`. |
 | Wilderness fatigue | Required | Step `+1..2`, three-minute recovery, `86%` Move/Look/Enter gate, reload persistence, and city exclusion implemented. | High-fatigue combat penalty is `[EVIDENCE]`. |
 | Action points and weapon mastery | Required for broader Combat | New fight profiles use `80` base AP, `+10` at levels `5` and `10`, and effective Extra Action Points one-for-one; explicit captured profiles still override derivation. A live mace/dagger swap produced `72 AP/150 mastery -> 62` and `66 AP/130 mastery -> 58`. | `[EVIDENCE]` exact weapon-mastery attack-cost reduction and damage coefficients—the fitting `floor(mastery / 15)` candidate is not uniquely proved—plus temporary status modifiers. |
@@ -189,7 +211,7 @@ status is owned by the Pillar 3 Combat Completion Matrix.
 | Drop and Observation | Required bounded loot | Explicit-chance NPC loot tables and participant-level rolls implemented; omitted probabilities are rejected. | `[EVIDENCE]` exact Plague Rat probability, nonlinear Observation, and multi-drop curve; the rat entry stays at an explicit local `0.0` evidence hold and no modifier is guessed. |
 | Armor, pierce, damage, modifiers, resistances | Required for broader Combat | Separate local fields/profile outputs exist; equipment effects are integrated. | `[EVIDENCE]` exact coefficients and interactions; see `COMBAT-RESOLUTION-COEFFICIENTS` in the Combat Completion Matrix. |
 | Self-healing and mana recovery | Useful for MVP readiness | Skills are allocatable; core vitals persist. | `[EVIDENCE]` exact recovery formula before either skill changes runtime. |
-| Professions | Successful gathering explicitly deferred for this task | Separate design owner; World ships empty Look (28 seconds), the no-bait Fish entry (30 seconds), and immediate two-point Drink recovery (60-second lock), with no profession mutation. | Capture the successful eligibility/tool/yield/counter/failure/interruption loop. Naturalist/Herbalist plant discovery is distinct from Alchemy potion making; `doc/features/professions.md` owns these deferred gaps. |
+| Professions | Successful gathering explicitly deferred for this task | Separate design owner; World ships empty Look (28 seconds), the no-bait Fish entry (30 seconds), and immediate two-point Drink recovery (60-second lock), with no profession mutation. | Capture the successful eligibility/tool/yield/counter/failure/interruption loop. Naturalist/Herbalist plant discovery is distinct from Alchemy potion making. [Published Doctor prerequisites](reference/combat/observations/2026-09-11_stronger_npc_loot_combat_cycle.md#published-injury-and-doctor-rules) are now captured, and [Medical care](../features/medical_care.md) now implements injury treatment with patient approval, bags and licenses; full profession crafting remains separate. `doc/features/professions.md` owns these deferred gaps. |
 | Warrior/Mage/Dodger archetypes | Not a separate MVP system | No generic class-selection model is added. | Builds emerge from source-backed stats/skills/equipment; add no class record without evidence. |
 
 The source `max_npcs_in_group` column is retained in the progression catalog
@@ -266,9 +288,12 @@ Required behavior:
   equipment families, and UI previews.
 - Inventory still needs repair/breakage UX, exact layered armor/belt/pocket
   content rules, capacity enforcement across pickup and loot flows, and
-  broader cross-system coverage. Targeted scrolls, doctor effects, dealer
-  transfers, and combat item-use slots are source-backed but deferred until
-  dedicated captures define their launch behavior.
+  broader cross-system coverage. The first two [attack scrolls](features/scrolls.md)
+  now enter the shared physical combat engine from Inventory. Their live
+  17-to-5 source attempts both rejected without consumption; successful source
+  entry remains pending a suitable target. Other targeted scrolls, remaining
+  doctor effects, dealer transfers and combat item-use slots need their own
+  bounded evidence and delivery.
 - Level-up UX and allocation UX need to be treated as part of the main
   character loop, not an admin/debug sidebar.
 - Numeric `Умения` and boolean `Навыки` are the main launch progression
@@ -542,6 +567,11 @@ because another layer has tests.
 
 ## Pillar 3: Arena And Combat
 
+General guides: [ARENA](../ARENA.md) for halls, applications, training
+supply, admission and UI; [COMBAT](../COMBAT.md) for the common fight
+engine and [FORMULAS](../FORMULAS.md) for numeric rules. These explain
+current behavior; the completion matrix below retains delivery ownership.
+
 ### MVP Target
 
 Arena and combat provide the first structured fighting loop: enter the city
@@ -560,8 +590,8 @@ Required behavior:
   until all live players submit, then resolve together;
 - fights with only one live player-controlled side and NPC opponents use the
   same combat resolver and turn package, with NPC AI submitting actions;
-- combat UI supports AP, body-part attacks, one active block, magic/action
-  slots, HP/MP, combat log, waiting state, timeout, and finish result;
+- combat UI supports AP, physical body-part attacks, one active block, HP/MP,
+  combat log, waiting state, timeout, and finish result; magic is after MVP;
 - every fight writes a durable event stream keyed by the fight id, with public
   paginated log pages and `stat=1` aggregate statistics rendered from that same
   stream;
@@ -574,6 +604,22 @@ Required behavior:
 - completed fights require an explicit finish action before returning to arena
   or world.
 
+### September 12 Arena scope refinement
+
+Only Duels and Groups are in this stage. Their forms drive persisted equipment,
+turn/risk and group-side admission terms, deadline assembly and cancellation.
+The shared physical engine handles real player sides and NPC participants;
+there is no separate PvP resolver. [Arena design](areas/arena.md) owns the exact
+contract and explicit inferred start/artifact rules. [Arena Combat](../features/arena_combat.md#final-physical-arena-acceptance)
+owns current verification and browser acceptance. The fresh source Arena count
+is zero completed fights; source opponent availability does not block locally
+verified two-player/group behavior, as explicitly authorized by the user.
+Clan modes, hired intervention, excluded mode tabs and an outdoor attack entry
+are outside this basic Arena delivery. [Duel Permit I and Fist Attack](features/scrolls.md) now enter this same engine
+from Inventory in outdoor, village and city contexts. They add no combat resolver;
+both 17-to-5 source attempts rejected without consumption. Successful source
+entry remains pending, with local acceptance owned by the Inventory handbook.
+
 ### Build Guidance
 
 - Arena area design is documented in `doc/design/areas/arena.md`.
@@ -583,7 +629,7 @@ Required behavior:
 - Combat profiles support per-participant AP and dynamic physical attack costs.
 - The active combat screen follows a compact three-zone fight UI.
 - NPC training fights use the shared combat resolver path.
-- Magic/action slots are resolved through `Game::Combat::ActionCatalog` and the
+- Existing bounded magic capability is retained for post-MVP work and resolves through `Game::Combat::ActionCatalog` and the
   shared turn processor. Do not reintroduce a separate generic active-skill
   executor or arbitrary combat effect records.
 - Treat the Neverlands `logs.fcg?fid=<id>` shape as a product contract, not a
@@ -599,7 +645,7 @@ Required behavior:
   uses stable keys so retries cannot duplicate value.
 - Every typed entry declares a probability; missing values fail configuration
   validation instead of becoming a guaranteed award. The Plague Rat item entry
-  stays explicitly disabled until its exact Neverlands probability is captured.
+  uses the authorized provisional 3% probability, clearly distinguished from source evidence.
 - `GameEvent` is a separate shell-owned player-feedback projection: combat
   finalization and the typed loot awarder supply stable keys and persisted facts
   through `Chat::EventPublisher`. It does not replace the canonical fight log,
@@ -614,6 +660,114 @@ Required behavior:
   from the outdoor rat capture is treated as a source bug because the in-frame
   fight log had the complete event stream.
 
+### September 11 low-level source cycle
+
+Ten fresh fights are complete and individually registered in
+`doc/design/reference/combat/observations/2026-09-11_low_level_two_cell_combat_cycle.md`.
+The cycle adds source-backed selected-NPC responses, committed lethal strikes,
+exchange-long blocks, finite manual switching, per-level NPC equipment/mana,
+newest-first active logs, and positive-XP chat on Finish. The local shared
+pipeline and tests cover mixed NPC species and mixed player/NPC sides; exact
+large mixed-player arbitration remains uncaptured. First-cycle automated
+checks and local browser evidence are recorded in `doc/features/arena_combat.md`.
+Defeated NPCs and players leave live cards, targets and future turns; their
+participation history remains available for results, XP and logs. The user has
+since relocated the source player; the stronger cycle and its bounded local
+acceptance are recorded below.
+
+### Historical September 11 stage2 checkpoint
+
+The [stronger-NPC source register](reference/combat/observations/2026-09-11_stronger_npc_loot_combat_cycle.md)
+now contains **ten completed fresh fights**. The final Robber 14 / 815-HP fight
+ran 22:03–22:08, awarded 493 XP with an empty search and `815(1)`, and emitted
+Finish chat at 22:09:02. Its slight difference from the earlier 494-XP Robber 14
+capture does not establish a universal formula. The final local `bin/verify full` passed **2,929 non-system and 298 system
+examples, zero failures**, with lint/security/docs audits green. The
+[Arena acceptance record](../features/arena_combat.md#manual-stronger-cycle-acceptance)
+records the actual mixed-six victory, 25-NV search/event ordering, 57-XP loss,
+expired-entitlement denial, skill/equipment persistence, public statistics,
+phone/header repairs, 200% zoom and cleanup. Earlier failed browser checks and
+tool-modal failures remain recorded separately. The later source 22:11:17
+chat-only 762-XP notice is excluded from the controlled ten and presets.
+This combat observation cycle is distinct from the separate full-zone content
+expansion also called Stage2 elsewhere in this plan.
+
+Current changes cover rich escaped logs and critical dodges; separate raw and
+credited damage with defeated-opponent superscripts; removal of completed
+opponent cards; independently captured complete Bandit/Robber 13–15 gear and
+original art; effective player stats/maxima/skills; trusted entitlement search
+windows and XP caps; and an explicit `57` XP solo-loss integration. The
+[Arena handbook](../features/arena_combat.md) owns the runtime and evidence
+handoff. Public statistics now read credited participation totals, defeat counters and
+actual recipient XP through grouped actor aggregates. Service/request regressions
+are included in the passing 187-example review; public HTML includes Defeated/XP and preserves
+Hits as diagnostic events. Historical defeat overrides later recovered HP;
+survivors retain current vitals. Bounded stage2 full/manual acceptance is complete. Named-injury formatting does not implement medical
+injury state or healer treatment. Independent NPC-versus-NPC AI is unverified.
+
+Per-level gear stays in the exact-level content set and replaces inherited
+equipment as a complete map. It must not become a root default for unknown
+lower levels. New source names, images and player stat grants do not establish
+NPC formulas or map placement. General resolution coefficients remain
+unverified, and weapon-mastery AP/damage calculations remain unimplemented.
+
+Higher-level NPCs and larger NPC groups should give more XP per fight. This
+normalized direction remains bounded by actual captured awards, roster
+composition/level, combat contribution and the recipient's cap; it supplies
+no general coefficient or additive formula. Reusable `encounter_presets` now retain all ten samples and source player
+level 17 independently
+of placements. Complete stronger profiles can be reused, but no unsupported
+Forpost cells or far-area placement may be invented against the known atlas.
+Exact stronger-area placement remains an evidence gap.
+These presets are content records, not newly placed encounters or a new
+playable zone. Unknown trauma/drop inputs remain evidence gaps even when an
+existing runtime fallback applies.
+
+### September12 authorized gap closure
+
+The user authorized pragmatic approximation after22 controlled fights. The
+[calibration model](features/combat_calibration.md) now owns all fitted values,
+calibration anchors and distinctions from direct Neverlands evidence. This
+supersedes earlier instructions below to leave coefficients, drops and Ogre
+activation on evidence hold. Historical acceptance records are unchanged.
+
+Implemented and accepted for the 22-fight calibration scope: shared physical
+and magic calculations, mastery AP reduction, fatigue, general/group NPC XP,
+Observation and typed loot pools, elapsed HP/MP recovery, persisted injuries,
+patient-approved healer treatment, Hospital bag purchases, remote stronger
+habitats and Ogre activation. Original medical artwork is in ARTWORK. The
+subsequent physical Arena stage extends this same engine and interface; its
+current scope and acceptance are recorded above.
+
+Workshop repairs and unrelated gathering/production are separate feature work;
+no transaction from those systems was observed in the22-fight cycle.
+
+### September12 observation-cycle reconciliation
+
+The requested source register is complete: [ten low-level fights](reference/combat/observations/2026-09-11_low_level_two_cell_combat_cycle.md),
+[ten stronger fights](reference/combat/observations/2026-09-11_stronger_npc_loot_combat_cycle.md)
+and [two Ogre losses](reference/combat/observations/2026-09-11_ogre_combat_cycle.md).
+Unattended fights and later chat-only notices are explicitly excluded. The
+following separates delivered local behavior from unresolved source equations;
+22 observations alone do not establish full combat parity.
+
+| Requested concern | Current delivery and remaining boundary |
+|---|---|
+| Shared Arena, PvP, PvE and mixed teams | One participation/processor/resolver pipeline. Independent member snapshots, committed exchanges and living-target selection remain shared. Physical Arena now adds real Duel/Group admission, deadline assembly and per-player result recovery; [final local acceptance](../features/arena_combat.md#final-physical-arena-acceptance) covers player sides and Dummy fights. |
+| Defeated combatants | Defeat is terminal for active cards, rosters, targets, readiness and future turns. Committed returns resolve; results, XP and logs retain historical participants. |
+| Combat inputs and progression | Versioned physical/magic calculations use effective stats, weapon mastery, armor, modifiers, fatigue and trusted artifact grade. Published per-level grants and cumulative XP costs remain authoritative; fitted coefficients are documented in [calibration](features/combat_calibration.md). |
+| Timers and aftermath | Five-minute global deadline; persisted sampled encounter delays; Finish restores the same location. Server elapsed-time HP/MP recovery includes skills and fatigue without reviving an active defeated participant. |
+| Experience, loot and chat | Explicit captures take priority; calibrated general/group XP, contribution shares, level caps, premium windows, Observation and typed item/NV pools cover unconfigured outcomes. Durable personal chat follows committed rewards and injuries. |
+| Injuries and healer | Persisted named injuries, expiry/stat penalties, movement/Inventory restrictions and same-cell treatment are implemented. Paid treatment needs patient acceptance; Hospital bags, Doctor license, Healer perk, Knowledge and effective Doctor proficiency are checked. [Medical Care](../features/medical_care.md#1-authority-and-scope) owns the September15 qualification fix; Doctor growth/crafting remains separate. |
+| NPC art and equipment | Original compliant portraits, complete per-level equipment and dark habitat cells use the shared paper doll. Medical category artwork covers bags/elixir. [ARTWORK](../ARTWORK.md) owns exact prompts and dimensions. |
+| Remote habitats | Stronger exact rosters use provisional local cells [19,9]/[19,10]. Atlas-backed Ogres16–18 are active at [20,6]/[20,7]. All are remote from Forpost gates; no Ogre19–24 profile or second zone is implied. |
+
+The [Arena](../features/arena_combat.md) and [Medical care](../features/medical_care.md)
+handbooks own final current verification. September11 results remain historical;
+the September12 calibration passed its own full and browser gates: 2,972 non-system and 298 system examples, zero failures, plus the recorded final Chrome flows.
+Exact source equations remain unknown, as explicitly accepted by the user;
+that uncertainty no longer blocks the documented fitted implementation.
+
 ### Combat Completion Matrix
 
 This is the canonical mechanic-level delivery roll-up for Combat. It owns the
@@ -625,6 +779,7 @@ maintaining a second Combat completion table.
 
 Status is assigned in this precedence order:
 
+0. `DONE_CALIBRATED` — user-authorized fitted implementation with final local automated/browser acceptance; source uncertainty is preserved rather than reported as an implementation hold.
 1. `EVIDENCE_NEEDED` — Neverlands proof is missing or ambiguous, so exact
    behavior must not be invented even if a bounded local path exists.
 2. `IN_PROGRESS` — evidence is sufficient, but required local behavior or
@@ -647,49 +802,55 @@ percentage because they have unequal scope and risk.
 
 Current canonical roll-up:
 
-- Bounded physical MVP: `DONE`.
+- Bounded physical MVP including the current stage2 changes: `DONE` within the scope below.
 - Full Neverlands Combat: `EVIDENCE_NEEDED`.
+
+The earlier bounded physical MVP completed its recorded gates. Current rows
+below reopen only affected scope; historical browser and automated results
+remain evidence for the versions and flows originally exercised.
 
 | Tracking ID | Scope | Mechanic or flow | Neverlands evidence | Local runtime | Status | Exact next gate |
 |---|---|---|---|---|---|---|
 | `COMBAT-ARENA-001` | MVP | Application/start, active, waiting, timeout, surrender, result, explicit finish, and allowlisted return lifecycle | Sufficient for the bounded lifecycle; wilderness fights display a five-minute limit, while two later terminations are retained as an excluded source anomaly | Implemented and covered through the shared match runtime; World-created matches enforce their explicit `300`-second fight deadline before another turn intent | `DONE` | — |
-| `COMBAT-PVE-PHYSICAL` | MVP | Physical PvE `1x1` and `1xN` through Arena and wilderness | Bounded single- and multi-NPC flows plus passive current-coordinate entry/return are captured | Shared resolver, turn processor, NPC AI, targeting, result, and reload paths are covered; seeded Chrome completed immediate Arena `1x1`, City-exit/walk/wait wilderness `1x2`, and a sampled mixed Bandit/Robber `1x2` through target switch, both NPC responses, AP reset, exact five-minute terminal timeout, Finish/same-cell return, and a later automatic `137s` passive re-entry | `DONE` | — |
-| `COMBAT-WILDERNESS-SELECTION` | Full | Exact passive delay/probability and per-cell eligible opponent/group selection | Current-coordinate availability and variable output are confirmed: exact-cell `m_1008_1007` produced and completed mixed `1x3`, then `1x1`, `1x1`, and mixed `1x2` groups with same-cell Finish returns and intervals approximately `230..278` and `127..187` seconds; a later no-coordinate swamp chain produced `1x7 -> 1x3` and a `4..64`-second no-click interval; the complete pool, weights, probability, cooldown, delay distribution, and storage remain unexposed | One persisted cell anchor now supports validated complete roster samples and delay windows. Local `[14,15]` replays only the four exact `m_1008_1007` outputs through server RNG, persists the selected roster/levels/HP/XP/risk, and remains eligible for a newly scheduled selection after full victory and Finish; cells without samples keep explicit fixed composition and the provisional `10..30`-second fallback | `EVIDENCE_NEEDED` | Repeat controlled waits on exact hostile and adjacent non-hostile coordinates, tabulating every interval, roster, level, and fight-risk field; obtain the complete pool/weights/probability/cooldown/delay rule before replacing bounded sample replay with claimed source parity. |
-| `COMBAT-PVP-PHYSICAL` | MVP | Physical PvP `1x1` | Bounded Arena side, application, waiting, and turn behavior captured | Two seeded authenticated players are browser-verified through application/accept/countdown, both physical submissions and shared resolution, timeout victory/draw, surrender, result, idempotent finish/reload, and replay; a deterministic request integration repeats create-to-replay and the handbook maps every lifecycle slice to model/unit, service/job/channel, request/policy, and browser/system coverage | `DONE` | — |
+| `COMBAT-PVE-PHYSICAL` | MVP | Physical PvE `1x1` and `1xN` through Arena and wilderness | Bounded single- and multi-NPC flows plus passive current-coordinate entry/return are captured | Shared resolver, turn processor, NPC AI, targeting, result, and reload paths are covered; seeded Chrome completed immediate Arena `1x1`, City-exit/walk/wait wilderness `1x2`, and a sampled mixed Bandit/Robber `1x2` through target switch, NPC responses, AP reset, exact five-minute terminal timeout, Finish/same-cell return, and a later automatic `137s` passive re-entry. Stage2 additionally passed the full gate and local mixed-six victory, 57-XP loss, equipment-aware presentation and Finish/reload acceptance. | `DONE` | Stage2 full/manual acceptance passed; see the Arena handbook. Uncaptured formulas/content remain the separate evidence rows. |
+| `COMBAT-WILDERNESS-SELECTION` | Full | Exact passive delay/probability and per-cell eligible opponent/group selection | Current-coordinate availability and variable output are confirmed: exact-cell `m_1008_1007` produced and completed mixed `1x3`, then `1x1`, `1x1`, and mixed `1x2` groups with same-cell Finish returns and intervals approximately `230..278` and `127..187` seconds; a later no-coordinate swamp chain produced `1x7 -> 1x3` and a `4..64`-second no-click interval; the complete pool, weights, probability, cooldown, delay distribution, and storage remain unexposed | Fitted v1 implementation: see [calibration](features/combat_calibration.md). Source uncertainty remains explicit; runtime is enabled. | `DONE_CALIBRATED` | Final full and local browser acceptance passed; [Arena acceptance](../features/arena_combat.md#september-12-final-calibrated-acceptance) records scope and evidence. Later observations refine the same owners. |
+| `COMBAT-SCROLL-ENTRY` | MVP | Duel Permit I / Fist Attack from Inventory in city, village and outdoor contexts | Live rows/forms and wiki rules captured; both live 17-to-5 attempts rejected without consumption | Shop acquisition, server admission/charge/replay, common physical engine, incoming-player recovery, gear removal, result/chat and local two-player browser flow verified; [Inventory acceptance](../features/player_inventory.md#september-14-local-acceptance) owns the exact boundary | `DONE` for the first pair's local implementation | `[EVIDENCE]` successful source entry, precise rejection causes, Fist intervention and exact aftermath details remain bounded separately |
+| `COMBAT-PVP-PHYSICAL` | MVP | Physical PvP `1x1` | September14 live human unarmed Duel confirms explicit start/refusal, physical turns plus opponent magic, loss XP and public profile/log/Finish | Two seeded authenticated players are browser-verified through application/accept/explicit applicant start, both physical submissions and shared resolution, timeout victory/draw, surrender, result, idempotent finish/reload, and replay; a deterministic request integration repeats create-to-replay and the handbook maps every lifecycle slice to model/unit, service/job/channel, request/policy, and browser/system coverage | `DONE` | — |
 | `COMBAT-TEAM-TURNS` | MVP | Player/team and mixed `1xN` turn synchronization | Side/waiting behavior is sufficient for the bounded flow; reward distribution is tracked separately | Deterministic `3x3` request/system coverage and a disposable six-player browser run verify allied-target rejection, persisted opponent switching, the first five players waiting, the sixth releasing one shared resolution, stale-round rejection, side completion, six results, Finish, and reload | `DONE` | — |
 | `COMBAT-TURN-PACKAGE` | MVP | Four legal physical package shapes, one active block, reset/no-op, target selection, AP validation, and multi-attack penalties | Exact source script and live warning behavior captured; a 2026-09-02 authenticated turn independently displayed `62 + 62 + penalty 25 = 149 AP` | Server validation and source-shaped packages are implemented and covered | `DONE` | — |
-| `COMBAT-AP-PROFILE` | MVP | Base/level/Extra-AP budget and source-injected physical/magic profile limits | Exact bounded constants captured | Profile snapshot, AP budget, dynamic physical costs, and separate magic ceiling/current MP checks are implemented and covered | `DONE` | — |
+| `COMBAT-AP-PROFILE` | MVP | Base/level/Extra-AP budget and source-injected physical/magic profile limits | Exact bounded constants captured | Profile snapshots now use merged instance effects, signed adjustments and key-presence precedence; empty lists disable inherited actions and NPC match inheritance is field-specific. Effective Extra AP is added once without capping the shared effective skill reader at 100. | `DONE` | Stage2 full/manual acceptance passed; see the Arena handbook. Uncaptured formulas/content remain the separate evidence rows. |
 | `COMBAT-BLOCK-TABLES` | MVP | Normal and shield-selector `40/70/90` block rows and costs | Exact source rows captured | Allowlisted tables and server validation are implemented and covered | `DONE` | — |
 | `COMBAT-CRITICAL-MULTIPLIER` | MVP | Critical damage multiplier | Exact wiki value captured | `2.0` multiplier is implemented and covered | `DONE` | — |
-| `COMBAT-RESOLUTION-COEFFICIENTS` | Full | Hit, miss, dodge, critical probability, shield success/pierce, armor, and damage calibration | Outcomes captured; general coefficients remain ambiguous | Seeded bounded resolver exists, but universal Neverlands calibration is not claimed | `EVIDENCE_NEEDED` | Capture controlled equipment/stat variations or a complete source formula, then replace only disproved coefficients and verify seeded outcome boundaries. |
-| `COMBAT-WEAPON-MASTERY` | Full | Weapon-mastery AP reduction and damage gain | Two observations fit, but do not prove, `floor(mastery / 15)` | Explicit source profile inputs are supported; no global formula is inferred | `EVIDENCE_NEEDED` | Capture at least one discriminating mastery/AP point and damage comparison that separates the candidate formulas. |
-| `COMBAT-FATIGUE` | Full | High-fatigue attack, defense, recovery, and other combat penalties | Two post-fight checkpoints showed low fatigue recover `2% -> 1%` over about seven minutes despite another fight; exact cadence and high-fatigue coefficients remain missing | World fatigue/action gating exists; no source-derived combat penalty is applied | `EVIDENCE_NEEDED` | Compare otherwise equivalent fights across controlled fatigue bands and capture before/at/after recovery boundaries. |
-| `COMBAT-XP-SOLO` | MVP | Solo NPC and explicitly authored encounter XP | Starter and bounded multi-NPC totals captured | Capped, idempotent participant award and explicit encounter totals are implemented and covered | `DONE` | — |
-| `COMBAT-XP-GENERAL` | Full | General solo and multi-NPC encounter XP calculation | Two visibly equivalent level-7 Bandit `1x1` fights awarded `9` and `14` XP while their fight-risk fields differed; the controlling hidden/random inputs and general formula remain unknown | Explicit captured NPC/encounter rewards work; no visible-name/level formula or random roll is inferred | `EVIDENCE_NEEDED` | Repeat a controlled visibly equivalent opponent across risk fields and turn shapes, recording source payload, damage, duration, and XP; obtain a complete source formula or enough discriminating points before implementing non-authored rewards. |
-| `COMBAT-XP-GROUP` | Full | Player-group/team XP distribution | General distribution rule is missing | No generalized player-group distribution is claimed | `EVIDENCE_NEEDED` | Complete the same eligible encounter solo and in a player group, recording participant damage, level, result, and awarded XP. |
-| `COMBAT-LOOT-PIPELINE` | MVP | Per-defeated-NPC typed item/NV checks, atomic award, retry safety, and recipient event handoff | Bounded item/NV outputs captured; exact curves are tracked separately | Typed fail-closed probabilities, inventory/wallet mutations, processing markers, and stable publication keys are implemented and covered | `DONE` | — |
-| `COMBAT-OBSERVATION-DROPS` | Full | Observation modifier, search eligibility, multi-drop behavior, and NPC-specific item/NV probabilities | A 2026-09-02 chain visibly searched five defeated bots: four returned nothing and one returned a Small strange potion; the user confirms armor/axe equipment outcomes also exist, but exact eligibility, Observation, pool, and probability curves remain missing | Explicit known probabilities work through one generic typed-item path that accepts consumables, weapons, and armor; unknown production entries remain disabled or absent | `EVIDENCE_NEEDED` | Repeat controlled kills at materially different Observation values and capture eligibility, nothing-found, consumable/equipment/NV, and multi-drop outcomes; obtain NPC-specific pools and probabilities before authoring them. |
+| `COMBAT-RESOLUTION-COEFFICIENTS` | Full | Hit, miss, dodge, critical probability, shield success/pierce, armor, and damage calibration | Stronger fights show nonlethal damage, normal blocks and critical attempts stopped by dodges; outcomes do not expose roll ordering or general coefficients. | Fitted v1 implementation: see [calibration](features/combat_calibration.md). Source uncertainty remains explicit; runtime is enabled. | `DONE_CALIBRATED` | Final full and local browser acceptance passed; [Arena acceptance](../features/arena_combat.md#september-12-final-calibrated-acceptance) records scope and evidence. Later observations refine the same owners. |
+| `COMBAT-WEAPON-MASTERY` | Full | Weapon-mastery AP reduction and damage gain | Two observations fit, but do not prove, `floor(mastery / 15)` | Fitted v1 implementation: see [calibration](features/combat_calibration.md). Source uncertainty remains explicit; runtime is enabled. | `DONE_CALIBRATED` | Final full and local browser acceptance passed; [Arena acceptance](../features/arena_combat.md#september-12-final-calibrated-acceptance) records scope and evidence. Later observations refine the same owners. |
+| `COMBAT-FATIGUE` | Full | High-fatigue attack, defense, recovery, and other combat penalties | Two post-fight checkpoints showed low fatigue recover `2% -> 1%` over about seven minutes despite another fight; exact cadence and high-fatigue coefficients remain missing | Fitted v1 implementation: see [calibration](features/combat_calibration.md). Source uncertainty remains explicit; runtime is enabled. | `DONE_CALIBRATED` | Final full and local browser acceptance passed; [Arena acceptance](../features/arena_combat.md#september-12-final-calibrated-acceptance) records scope and evidence. Later observations refine the same owners. |
+| `COMBAT-XP-SOLO` | MVP | Solo NPC and explicitly authored encounter XP | Starter and bounded encounter totals plus a stronger-cycle solo defeat with 605 credited HP, one defeated opponent and 57 XP are captured. | Victory totals and separate integer encounter_defeat_experience_reward use the sole player recipient and level/entitlement cap. Loss requires a defeated enemy NPC and NPC winning side; missing configuration uses the documented calibrated loss branch without reusing an explicit victory total. The 57-XP request integration covers finalization, result, Finish and event retry. | `DONE` | Stage2 full/manual acceptance passed; see the Arena handbook. Uncaptured formulas/content remain the separate evidence rows. |
+| `COMBAT-XP-GENERAL` | Full | General solo and multi-NPC encounter XP calculation | Equivalent level 7 Bandits awarded 9/14 XP; stronger level 14 Bandits with 835 HP and matching displayed stats awarded 631/778 XP. Positive solo-loss XP is captured, but the controlling inputs and general formula remain unknown. | Fitted v1 implementation: see [calibration](features/combat_calibration.md). Source uncertainty remains explicit; runtime is enabled. | `DONE_CALIBRATED` | Final full and local browser acceptance passed; [Arena acceptance](../features/arena_combat.md#september-12-final-calibrated-acceptance) records scope and evidence. Later observations refine the same owners. |
+| `COMBAT-XP-GROUP` | Full | Player-group/team XP distribution | General distribution rule is missing | Fitted v1 implementation: see [calibration](features/combat_calibration.md). Source uncertainty remains explicit; runtime is enabled. | `DONE_CALIBRATED` | Final full and local browser acceptance passed; [Arena acceptance](../features/arena_combat.md#september-12-final-calibrated-acceptance) records scope and evidence. Later observations refine the same owners. |
+| `COMBAT-LOOT-PIPELINE` | MVP | Per-defeated-NPC typed item/NV checks, atomic award, retry safety, and recipient event handoff | Bounded item/NV outputs plus stronger-cycle empty searches, 25/23 NV and advertised entitlement benefits are captured; probabilities remain separate. | Typed atomic awards and retry guards remain. Trusted Character combat_entitlement is evaluated at decision time: standard/Worker ±2 and cap×1, Premium ±2/×1.5, Gold ±4/×2, VIP ±6/×2.5. Invalid/expired metadata falls back; NPC restrictions only narrow eligibility. Benefits neither multiply earned XP nor invent drops. | `DONE` | Stage2 full/manual acceptance passed; see the Arena handbook. Uncaptured formulas/content remain the separate evidence rows. |
+| `COMBAT-OBSERVATION-DROPS` | Full | Observation modifier, search eligibility, multi-drop behavior, and NPC-specific item/NV probabilities | Nothing/potion/NV outcomes and published standard ±2 plus Paid Services Gold ±4/VIP ±6 total level windows are known. Equipment outcomes are user-confirmed. Exact Observation, pool, multi-drop and probability curves remain missing. | Fitted v1 implementation: see [calibration](features/combat_calibration.md). Source uncertainty remains explicit; runtime is enabled. | `DONE_CALIBRATED` | Final full and local browser acceptance passed; [Arena acceptance](../features/arena_combat.md#september-12-final-calibrated-acceptance) records scope and evidence. Later observations refine the same owners. |
 | `COMBAT-MAGIC-SELECTORS` | MVP | Injected magic attack/block rows, AP/MP limits, and profile magic-hit ceiling | Bounded selector and one magic opener captured | Allowlisted profile injection and independent ceiling/current-MP validation are implemented and covered | `DONE` | — |
-| `COMBAT-MAGIC-STATUSES` | Full | Magic damage/statistics categories, resistance, blocks, and persisted status application/expiry | One current Spirit Arrow turn proves `50` AP, `5` MP, a critical magic hit for `10`, and non-naive ordinary hit-count presentation; complete formulas and status lifecycles are missing | Bounded allowlisted attack/block rows exist; no general magic coefficient or persisted-status engine is claimed | `EVIDENCE_NEEDED` | Capture one complete flow per magic/status family from selection through resistance/block, application, repeated-turn effect, expiry, and result-statistics categorization. |
+| `COMBAT-MAGIC-STATUSES` | Full | Magic damage/statistics categories, resistance, blocks, and persisted status application/expiry | A Spirit Arrow turn proves 50 AP, 5 MP and a critical magic hit for 10. The stronger cycle resolves superscripts as defeated opponents; complete elemental attribution, formulas and status lifecycles remain missing. | Fitted v1 implementation: see [calibration](features/combat_calibration.md). Source uncertainty remains explicit; runtime is enabled. | `DONE_CALIBRATED` | Final full and local browser acceptance passed; [Arena acceptance](../features/arena_combat.md#september-12-final-calibrated-acceptance) records scope and evidence. Later observations refine the same owners. |
 | `COMBAT-EQUIPMENT-WEAR` | MVP | Arena/non-Arena result-based durability loss and Careful Fighter | Exact rates, cap, and perk effect captured | Transactional one-point-per-item wear with perk-adjusted chance is implemented and covered | `DONE` | — |
-| `COMBAT-INJURIES` | Full | Ordinary injury chance, type, severity, duration, and Arena/wilderness risk-field mapping | Taxonomy and selected guaranteed cases are known; current same-cell fights varied from `30` medium to `80` very high, but winning results produced no injury and do not establish the outcome mapping | No ordinary source-derived outcome is inferred | `EVIDENCE_NEEDED` | Capture repeated eligible defeats across Arena and wilderness risk values, including injury display, duration, stacking, and recovery. |
+| `COMBAT-INJURIES` | Full | Ordinary injury chance, type, severity, duration, and Arena/wilderness risk-field mapping | Taxonomy, guaranteed cases, variable risk fields and one named light injury after defeat with a remaining-duration display are captured. Published Injury/Doctor rules now establish movement/Inventory restrictions, the guaranteed combat-injury 24h/+6h duration and treatment prerequisites. The observed light injury's initial duration/penalty and an actual treatment flow remain unobserved. | Fitted v1 injury/treatment runtime is enabled: see [calibration](features/combat_calibration.md). September15 enforces effective Doctor thresholds on bags at request and paid acceptance; source uncertainty and profession growth/crafting remain separate. | `DONE_CALIBRATED` | [Medical Care](../features/medical_care.md#1-authority-and-scope) owns current qualification verification; [Arena acceptance](../features/arena_combat.md#september-12-final-calibrated-acceptance) retains the earlier fitted injury/combat evidence. |
 | `COMBAT-REPAIRS` | Full | Workshop request, item handoff, skill/material/payment failure, completion, and owner retrieval | Direction and item-level × `30` gate are known; one authenticated transaction is missing | No repair transaction is implemented | `EVIDENCE_NEEDED` | Record one complete authenticated success flow plus insufficient-skill, material/payment, cancellation, and retrieval failure states. |
-| `COMBAT-FIGHT-UI-001` | MVP | Active composer plus waiting, timeout, surrender, victory/defeat, multi-target, and finish states | Required structures and representative states are captured | Deterministic browser coverage and the disposable `3x3` run verify every listed state, selected-target persistence, six participant/result rows, and accessible no-overflow layouts at desktop, `820px`, and `390px` | `DONE` | — |
-| `COMBAT-LOG-001` | MVP | Public chronological log, participant summary, pagination, statistics, and shell separation | Public log/stat captures are sufficient | Request/system coverage and the disposable browser run verify a six-participant stream, `50`-entry page boundary, page `2`, statistics, Fight-log navigation, empty state, bounded `404`, shell exclusion, escaping, and mobile fit | `DONE` | — |
+| `COMBAT-FIGHT-UI-001` | MVP | Active composer plus waiting, timeout, surrender, victory/defeat, multi-target, and finish states | Required structures and representative states are captured | Deterministic browser coverage and the disposable `3x3` run verify every listed state, selected-target persistence, six participant/result rows, and accessible no-overflow layouts at desktop, `820px`, and `390px`. Stage2 additionally verified raw/credited/defeated totals, independently captured NPC equipment, complete portrait geometry, effective maxima, living-only handoffs, completed opponent removal and phone header recovery. | `DONE` | Stage2 full/manual acceptance passed; see the Arena handbook. Uncaptured formulas/content remain the separate evidence rows. |
+| `COMBAT-LOG-001` | MVP | Public chronological log, participant summary, pagination, statistics, and shell separation | Earlier public captures plus stronger-cycle rich log styling and corrected defeated-opponent semantics are available. | Earlier gates remain historical. Public statistics now use persisted credited physical/total damage, distinct defeated counters and actual recipient XP, including loss XP. Hits and body-part/round diagnostics retain event semantics; older missing metadata falls back to log sums. Actor-grouped reads avoid per-participant queries. Service/request regressions passed in main's final 187-example combined review. Public HTML shows credited Damage, Defeated, Hits and actual XP; unknown historical defeat counts render an em dash, and persisted defeat overrides recovered HP without removing history. | `DONE` | Stage2 full/manual acceptance passed; see the Arena handbook. Uncaptured formulas/content remain the separate evidence rows. |
 
 ### Remaining Design Detail
 
-- Combat formulas need continued consolidation around weapon-mastery physical
-  cost/damage, defense, fatigue, magic/status, and injury coefficients. AP
-  growth, selector injection, and the four physical block tables are now exact.
+- The centralized [calibration model](features/combat_calibration.md) owns fitted weapon-mastery costs/damage, defense, fatigue, magic/status and injury coefficients. Future source observations refine these values in the same engine; AP growth, selector injection and the four block tables retain their exact provenance.
 - Arena player, player-team, Arena NPC, and wild NPC physical paths use the same
   shared combat processor. The bounded `3x3` browser/request gate is complete;
-  uncaptured team reward distribution remains the separate `COMBAT-XP-GROUP`
-  evidence row.
-- Explicit captured encounter XP is complete for the MVP; universal solo and
-  multi-NPC calculation remains the separate `COMBAT-XP-GENERAL` evidence row.
-- Magic and special action behavior needs launch-level balancing and UI
-  clarity.
+  team reward distribution uses the calibrated `COMBAT-XP-GROUP` owner and
+  now covers physical Arena PvP. The September12 Duel/Group application stage
+  adds real side assembly, physical-only admission, per-player result recovery
+  and original row icons; its final acceptance is recorded in the
+  [Arena handbook](../features/arena_combat.md#september-12-physical-arena-applications).
+  Unobserved coefficients remain fitted, with later evidence refining this owner.
+- Explicit captured victory/defeat XP has bounded implementation and focused
+  coverage; stage2 full/manual acceptance passed. General solo/multi-NPC calculation is now enabled under the calibrated `COMBAT-XP-GENERAL` row.
+- Captured magic selectors, MP cost, damage buckets and barriers are implemented with fitted resolution. Uncaptured spell families need their own source catalog before content authoring.
 - Combat logs now use the canonical event schema for arena fights. Expand
   coverage only by adding missing structured fields to this layer, not by
   creating a second log format.
@@ -819,9 +980,9 @@ resale settle with owned one-use offers. Full parity remains tracked below.
 | Neverlands `Навыки` boolean perks | Full id/name/category catalog, starter save flow, exclusion rules, More Strength/Careful Fighter effects and Merchant/Healer license prerequisites are documented. | Source perks `7`, `15`, `34` and `35` are selectable with the separate point pool and locked save. Merchant/Healer provide license prerequisites; they do not grant professional permissions or skill automatically. | Capture prerequisites/reset and exact effects before exposing additional branches; complete profession activity and quest-reward parity separately. |
 | Movement | Documented across movement, fatigue wiki rules, and live movement/city/village captures, including both verified gate directions, bounded starter atlas cells, local actions, fixed `100 x 100` tiles, viewport-dependent dimensions and sampled off-screen retention, `24`/`32`-second travel states, hidden NPCs, and the one-region `1000 x 1000` boundary. | MVP world/city/village pass implemented: exact/fallback timed offers, sparse bounds, project-owned cell-art slices, fixed-cursor animation, paired city gates, village location handoff, plus persisted `1..2` step fatigue, three-minute recovery, and the `86%` outdoor action gate. | The expanded starter routes, cell import and prior artwork passed the recorded checks. The later September 10 viewport/composition replacement passed fresh automated and desktop/390px Chrome acceptance; the rejected prior artwork and its earlier checks remain historical. Full-zone content/art remains Stage 2; deeper location operations remain separate domain work. |
 | Arena | Documented across arena, combat, live arena captures, and public log captures. | The bounded Arena lifecycle, physical `1x1` PvP, physical PvE, `3x3` team synchronization, captured fight states, and public log are `DONE`. | Keep full-combat evidence gaps separate in the Combat Completion Matrix. |
-| Combat | Documented across combat reference captures, arena observations, wiki development constants, logs, equipment effects, and the 2026-08-26 live level-17 shield fight. | Bounded physical MVP: `DONE`. Full Neverlands Combat: `EVIDENCE_NEEDED`. | Use the Combat Completion Matrix; its mechanic rows and exact next gates are canonical. |
+| Combat | Documented across combat reference captures, arena observations, wiki development constants, logs, equipment effects, and the 2026-08-26 live level-17 shield fight. | Bounded physical MVP: `DONE`; the 22-fight observation scope and pragmatic calibration are tracked by the current completion matrix. Uncaptured Workshop and later Arena catalog work remain separate. | Use the Combat Completion Matrix; its mechanic rows and exact next gates are canonical. |
 | Wild cells | Documented across outdoor movement, exact-current-coordinate hostile observations, variable roster/timing captures, composable cell contents, `look`, and fatigue/XP rules. | Fully implemented for the declared World boundary: composed cells, fatigue gate, movement/building/shell interruption, server-persisted passive due state, fixed or sampled mixed NPC rosters, participant loot, capped explicit solo XP, five-minute World-fight deadline, surrender, duplicate-start protection, and allowlisted return. | Keep successful gathering under the Professions gap owner; capture the complete per-cell pool/weights and passive probability/cooldown/delay distribution under NPCs before promoting bounded sample replay to full parity. |
-| Neverlands marketplace/shop | September 9 purchase/Inventory handoff plus September 10 active-session starter catalog and license recapture. | Central Shop has 19 categories, 79 ordinary goods, six license definitions, original item/license art, typed expiry, independent funds/stock and one-use atomic transactions. | Capture remaining source failure/sale/novice/license variants; do not infer replenishment or complete assortment. |
+| Neverlands marketplace/shop | September 9 purchase/Inventory handoff plus September 10 active-session starter catalog and license recapture. | Central Shop has 19 categories, 80 ordinary goods, six license definitions, original item/license art, typed expiry, independent funds/stock and one-use atomic transactions. | Capture remaining source failure/sale/novice/license variants; do not infer replenishment or complete assortment. |
 | Neverlands NPC quest interactions | Needs dedicated Neverlands capture. | General NPC quest/story stack remains absent. Shop implements the published Merchant license-qualification steps, with original dialogue and garment reward incomplete. | Capture exact NPC quest entry points, dialogue/action states, journal/task display, reward/turn-in rules, location gates, and failure/cancel states before rebuilding. |
 
 ## Neverlands Coverage Checklist
@@ -850,17 +1011,17 @@ the next implementation step is.
 | Wilderness movement | Yes: live movement captures, wiki fatigue rules, and movement feature doc. | Timed offers, acceptance, completion, reload, sparse boundaries, stale-offer cancellation, bounded Wanderer timing, `1..2` step fatigue, three-minute recovery, and `86%` Move/Look/Enter gate implemented. | Isolate terrain/effect/encumbrance timing and high-fatigue combat inputs before adding them. |
 | City movement | Yes: the current five live nodes, native-pixel hotspot/hover behavior, eight route arrows, Central and Law gate handoffs, building return, and level-16 Arena availability are captured. | Implemented for MVP: immediate five-node transitions, level-zero Arena, fresh owned offers, project city art with CSS highlight crops, original generated route-arrow decorations, tooltips, keyboard landmarks, shared pane-relative display sizing on a fixed native plane, a complete original Central Square image with reauthored targets, four distinct original quarter scenes, missing-art fallback controls, Central and Law gate pairings, and no city grid/timer or geometry authority. | Use the September 9 Main → Residential → Law recheck for the eastern starter handoff; capture each deferred service interior before extending its actions. |
 | Tile-local action offers | Yes: movement, outdoor NPC, city/building entry, and `look`/`fis`/`dri`/`dig` client observations. | Empty Look (28 seconds), immediate Drink recovery (two fatigue, 60-second lock), and no-bait Fish (30-second lock) are implemented with owned offers, persisted deadlines and one-time effects/results. Fishing and drinking have no skill gate; digging has no completed flow. | Keep successful fishing/proficiency, plant gathering and digging deferred. Preserve wiki inputs without inventing catch/growth formulas or underground mine mechanics. Nature Child's published four-point recovery awaits the supported perk handoff tracked by Character Progression. |
-| NPCs and drops | Yes: hostile behavior, arena mannequin drops, paired wild rat-tail drops, supplied `24 NV` result, participant-level defeat, XP caps, and source-backed return context. | Implemented for the declared encounter/typed-award pipeline: explicit paired rats, distinct targeting, all-NPC response, atomic retry-safe item/NV awards, exact `35` total paired-encounter XP, fixed-anchor final defeat, sampled-anchor post-victory eligibility, surrender-compatible sides, and allowlisted return. The active Training Dummy item chance is explicit; the authored Plague Rat item identity remains at a `0.0` evidence hold. | Capture the exact Plague Rat item probability, Observation/multi-drop, general multi-NPC/player-group XP, and NPC-specific NV probability before enabling/tuning those values or authoring money onto a production NPC; quest NPC behavior remains separate. |
+| NPCs and drops | Yes: hostile behavior, arena mannequin drops, paired wild rat-tail drops, supplied `24 NV` result, participant-level defeat, XP caps, and source-backed return context. | Implemented for the declared encounter/typed-award pipeline: explicit paired rats, distinct targeting, selected-NPC committed response, atomic retry-safe item/NV awards, exact `35` total paired-encounter XP, fixed-anchor final defeat, sampled-anchor post-victory eligibility, surrender-compatible sides, and allowlisted return. The active Training Dummy chance remains explicit; Plague Rat uses the authorized fitted 3% chance. Observation, independent typed item/NV rolls and general/group XP are enabled under combat calibration v1. | Refine fitted chances and reward shares from new source evidence in the same owners; quest NPC behavior remains separate. |
 | NPC quest interactions | Needs dedicated Neverlands capture. | General NPC quest/story stack remains absent. Shop implements the published Merchant license-qualification steps, with original dialogue and garment reward incomplete. | Capture exact quest UI, NPC dialogue flow, task/journal state, reward/turn-in rules, and location gating before implementation. |
-| Combat | Yes: combat captures, public logs, wiki AP/critical/wear/XP constants, item/NV search outputs, magic, equipment effects, and result flow. | Bounded physical MVP: `DONE`. Full Neverlands Combat: `EVIDENCE_NEEDED`. | Use the canonical Combat Completion Matrix for each mechanic and exact next gate. |
-| Arena combat | Yes: arena rooms/applications, NPC training, wilderness NPC captures, and public-log captures. | Bounded lifecycle, physical `1x1` PvP/PvE, `3x3` team turns, captured active/result states, and public log: `DONE`. | Preserve these gates while formula, group-XP, and wilderness-selection evidence remain separate `EVIDENCE_NEEDED` rows. |
-| Character vitals | Yes: live player capture, wiki HP/MP maxima, and vitals doc. | Exact starter/base `Health × 5` HP and `Knowledge × 7` MP are implemented; broader regeneration remains partial. | Capture the complete Self-Healing/Fast Mana Regeneration timer formulas. |
-| Progression, stats, and skills | Yes: live profile allocation, wiki level/AP/formulas, exact numeric IDs/rates, More Strength, Careful Fighter, and Wanderer. | Fully implemented for the declared handbook boundary: level-0/table grants, locked allocations, exact HP/MP/mass/AP and bounded perk formulas, public display, and explicit solo-encounter XP. | Keep uncaptured mastery/other skill effects, prerequisites, general group XP, level `28+`, and profession counters unavailable. |
+| Combat | Yes: combat captures, public logs, wiki AP/critical/wear/XP constants, item/NV search outputs, magic, equipment effects, and result flow. | Bounded physical MVP: `DONE`; the 22-fight observation scope and pragmatic calibration are tracked by the current completion matrix. Uncaptured Workshop and later Arena catalog work remain separate. | Use the canonical Combat Completion Matrix for each mechanic and exact next gate. |
+| Arena combat | Yes: arena rooms/applications, NPC training, wilderness NPC captures, and public-log captures. September12 adds live Duel/Group forms; September14 adds the completed human fist Duel, including observed opponent magic. | Physical Duels/Groups, server-enforced application terms, real side assembly, shared turns/rewards, offline results, original-hall Finish and compliant artwork are implemented and locally accepted. | [Final acceptance](../features/arena_combat.md#final-physical-arena-acceptance) owns exact automated/browser results. Source-only uncertainties remain explicit; local scroll attack/intervention is implemented, successful source attack-scroll verification and clan modes remain separate. September15 adds NPC supply/capacity recovery and Doctor thresholds. |
+| Character vitals | Yes: live player capture, wiki HP/MP maxima, and vitals doc. | Exact starter/base `Health × 5` HP and `Knowledge × 7` MP are implemented; elapsed server recovery now uses calibrated timing, effective recovery skills, fatigue and persisted fractions. | Refine the fitted recovery timing from later measurements; the implemented pipeline remains active. |
+| Progression, stats, and skills | Yes: live profile allocation, wiki level/AP/formulas, exact numeric IDs/rates, More Strength, Careful Fighter, and Wanderer. | Fully implemented for the declared handbook boundary: level-0/table grants, locked allocations, exact HP/MP/mass/AP and bounded perk formulas, public display, and explicit solo-encounter XP. | Mastery and general/group XP now use the authorized calibration. Keep unrelated uncaptured skill effects, level `28+` grants and profession counters outside this bounded delivery. |
 | Items, inventory, equipment | Yes: inventory/equipment, wiki mass/wear/repair direction, 2026-06-01 item-row/equip capture, NPC item-found output, and shop rows. | Captured subset implemented, including persisted successful NPC item awards, derived mass enforcement, source-result combat wear with Careful Fighter, and zero-durability sale rejection. | Capture one authenticated repair/workshop flow, exact layered armor/belt/pocket/relic rules, and remaining family UX. |
 | Professions | Dated Fisher/Fish/Perk/Peace Skills revisions and inventory/world adjacency are documented; see the September 9 wiki observation. | Successful profession loops are not implemented. Captured empty Look and no-bait Fish grant no resource, catch or profession counter. | Gathering, fishing/proficiency and digging require a dedicated complete tool/eligibility/yield/counter/failure/interruption flow. Naturalist/Herbalist plant discovery and Alchemy potion making remain distinct capabilities. |
 | Neverlands marketplace/shop | Yes: current populated purchase/Inventory path plus earlier browse/sell rows. | Bounded Shop loop with original art, explicit goods/licenses, typed expiry, per-building funds/stock and atomic settlement. Additional shops need independently authored economics; novice remains denial/empty. | Full sale/failure/license/novice parity and stock replenishment remain open. |
 | Direct player trading | Partially captured through inventory inline transfer/gift/sale/currency forms; full trade settlement needs a dedicated capture. | Inventory transfer/gift and NV transfer are implemented. The player-sale form remains visible, but settlement is blocked even with a Trading license until buyer consent is implemented; generic trade sessions are absent. | Capture exact cancellation, timeout, visibility, commission, dealer, and settlement rules before adding a broader trade session system. |
-| Social chat and presence | Yes: live cell/village/Arena-room lists, the observed airship route roster, the Neverlands Chat article, explicit user confirmation of one-cell/room ordinary chat, and mixed personal/world event captures. | Current-cell/room/flight chat uses authenticated bounded polling and locked sends; passengers are excluded from ground audiences. Stale local reads return `403` without navigation. Delivered browser rows survive movement within one login; personal/world events remain durable. | Source onboard chat delivery, separate-departure membership, online expiry, private/moderation controls, broader event families, and NPC-specific NV probabilities remain evidence gaps. |
+| Social chat and presence | Yes: live cell/village/Arena-room lists, the observed airship route roster, the Neverlands Chat article, explicit user confirmation of one-cell/room ordinary chat, and mixed personal/world event captures. | Current-cell/room/flight chat uses authenticated bounded polling and locked sends; passengers are excluded from ground audiences. Stale local reads return `403` without navigation. Delivered browser rows survive movement within one login; personal/world events remain durable. | Source onboard chat delivery, separate-departure membership, online expiry, private/moderation controls, and broader event families remain evidence gaps; NPC-specific NV probabilities now use the documented fitted combat pools. |
 | Dungeons | Yes from source material, but post-MVP. | Not implemented for MVP. | Keep deferred until launch movement, city, combat, inventory, and social loops are stable. |
 
 ### Cross-Feature Rules
@@ -927,3 +1088,18 @@ Reference:
 - `doc/design/reference/economy/observations/2026-05-21_lavka_shop.md`
 - `doc/design/reference/inventory/observations/2026-06-01_inventory_items_and_shop_rows.md`
 - `doc/design/reference/source_material.md`
+
+### Progression and combat evidence navigation (September 11)
+
+The complete supported per-level stat grants are recorded in the
+[September 11 official-table recheck](reference/character/observations/2026-09-11_level_grants_and_combat_inputs.md).
+[Progression design](features/progression_stats_skills.md#per-level-grants-and-combat-handoff)
+and the [runtime handoff](../features/character_progression.md#level-grants-and-the-combat-handoff)
+explain summed per-level XP costs, separate point pools, allocation, equipped modifiers and
+combat consumers. CHARACTER-PROGRESSION-001's bounded grants do not imply
+verified numerical combat formulas or complete weapon-mastery effects.
+The later level 17 live checkpoint establishes the `50,000,000` cumulative
+next-level threshold by summing rows 0–17. Row values themselves are not
+cumulative thresholds. Stat grants remain verified; Catalog now sums preceding
+row costs. The linked Progression handbook owns dedicated validation of that
+correction; the final stage2 full gate and affected browser checks passed.

@@ -100,58 +100,12 @@
   background: var(--nl-surface-inset);
 }
 
-/*
- * Project-owned stand-in for the source portrait art, which is not copied.
- * A neutral silhouette keeps the 115x255 cell from reading as a broken image.
- */
-.nl-doll-figure {
-  position: relative;
+.nl-doll-character-portrait {
   display: block;
-  width: 74px;
-  height: 210px;
-  margin-bottom: 12px;
+  width: 115px;
+  height: 255px;
+  object-fit: contain;
 }
-
-.nl-doll-figure span {
-  position: absolute;
-  background: #cfc7ae;
-}
-
-.nl-doll-figure-head {
-  top: 0;
-  left: 25px;
-  width: 24px;
-  height: 26px;
-  border-radius: 50%;
-}
-
-.nl-doll-figure-body {
-  top: 30px;
-  left: 19px;
-  width: 36px;
-  height: 82px;
-  border-radius: 6px;
-}
-
-.nl-doll-figure-arm {
-  top: 34px;
-  width: 12px;
-  height: 74px;
-  border-radius: 6px;
-}
-
-.nl-doll-figure-arm--left { left: 3px; }
-.nl-doll-figure-arm--right { right: 3px; }
-
-.nl-doll-figure-leg {
-  top: 114px;
-  width: 15px;
-  height: 96px;
-  border-radius: 6px;
-}
-
-.nl-doll-figure-leg--left { left: 21px; }
-.nl-doll-figure-leg--right { right: 21px; }
 
 /* ---------------------------------------------------------------- *
  * Doll slots
@@ -360,3 +314,14 @@ button.nl-doll-slot--filled:hover {
     max-width: var(--nl-parameters-width);
   }
 }
+
+.nl-injury-link { color: #990000; font-weight: bold; }
+.nl-medical-care { padding: 12px; font: 13px Tahoma, Arial, sans-serif; color: #222; background: #f4f1e7; }
+.nl-medical-care h1, .nl-medical-care h2 { font-size: 14px; }
+.nl-healer-bag { display: flex; gap: 10px; border-top: 1px solid #b9b4a7; padding: 10px 0; }
+.nl-healer-bag img { object-fit: contain; flex: 0 0 60px; }
+.nl-healer-bag form { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; padding-top: 5px; }
+.nl-healer-bag input[type="text"] { width: 150px; max-width: 100%; }
+.nl-healer-bag input[type="number"] { width: 65px; }
+.nl-treatment-request { padding: 8px; border: 1px solid #b9b4a7; }
+.nl-treatment-request form { display: inline-block; }

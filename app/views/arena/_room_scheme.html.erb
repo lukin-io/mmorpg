@@ -1,0 +1,17 @@
+<div class="nl-arena-room-scheme" data-arena-target="roomGrid" hidden>
+  <div class="nl-arena-room-grid">
+    <% rooms.each do |room| %>
+      <div class="nl-arena-room-cell">
+        <b><%= room_type_badge(room.room_type) %></b>
+        <span><%= room.level_min %>–<%= room.level_max %></span>
+        <% if room == selected_room %>
+          <button class="nl-arena-small-button" disabled>Current hall</button>
+        <% elsif room.accessible_by?(current_character) && !@my_application %>
+          <%= link_to "Enter", arena_room_path(room, ft: active_tab), class: "nl-arena-small-button", data: {turbo_frame: "_top"} %>
+        <% else %>
+          <button class="nl-arena-small-button" disabled>Unavailable</button>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>

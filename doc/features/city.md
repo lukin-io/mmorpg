@@ -3,7 +3,7 @@
 title: City Feature
 description: Implementation handbook for the observed five-district Forpost graph, illustrated navigation, buildings, gate handoff, responsive scene scaling, and persisted context.
 status: Fully Implemented
-updated: 2026-09-11
+updated: 2026-09-12
 owners: City world context and city UI
 template: feature-v1
 ---
@@ -22,7 +22,23 @@ opens the district graph documented here; the 1250 × 600 district scenes are
 not outdoor tiles and have no walking grid. World owns that exterior rendering
 and its separate raster-density contract.
 
+### September 12 Hospital extension
+
+The Hospital's captured four-bag assortment is now purchasable through the
+existing Shop transaction, with its own stock/account. It links to Medical
+care for injury treatment. Rest room, hospital bed and pharmacy remain the
+previous bounded read-only surfaces. See [Medical Care](medical_care.md) and
+[Shop Economy](shop_economy.md). Final Hospital UI checks are recorded in [Medical Care](medical_care.md#6-acceptance-and-tests).
+
 ## 1. Design authority and related documents
+
+Read [WORLD](../WORLD.md#2-forpost-city-and-services) for districts, entrances
+and services, [ITEMS](../ITEMS.md) for content offered after entry, and
+[ARTWORK](../ARTWORK.md) for scenes and hotspot geometry. The
+[World](world.md), [Shop](shop_economy.md), [Medical Care](medical_care.md),
+[Airship](airship_travel.md) and [Shell](game_shell.md) handbooks own those
+service/context contracts. Read and update affected references under the
+[context/update map](../DOCUMENTATION.md#21-required-context-and-update-map).
 
 Domain navigation: `doc/domains/city.md`.
 

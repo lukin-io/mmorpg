@@ -75,6 +75,7 @@ module Arena
     def attack_decision
       target = find_best_target
       attacks = select_attack_package
+      block_key = Array(combat_data["response_block_keys"]).sample(random: rng)
       first_attack = attacks.first || {body_part: "torso", action_key: "simple"}
 
       Decision.new(
@@ -83,7 +84,8 @@ module Arena
         params: {
           body_part: first_attack[:body_part],
           attack_type: first_attack[:action_key],
-          attacks:
+          attacks:,
+          block_key:
         }
       )
     end
@@ -93,9 +95,7 @@ module Arena
       opponents = match.arena_participations.players.includes(:character)
       opponents = opponents.where.not(team: find_npc_participation&.team)
 
-      alive_opponents = opponents.select do |p|
-        p.character&.current_hp.to_i > 0
-      end
+      alive_opponents = opponents.select(&:combat_alive?)
 
       return nil if alive_opponents.empty?
 
@@ -120,6 +120,17 @@ module Arena
     end
 
     def select_attack_package
+      captured_counts = Array(combat_data["response_attack_counts"])
+      if captured_counts.any?
+        # Replay bounded observed response sizes. NPC AP and the source's
+        # selection weights are not exposed; do not derive them from player AP.
+        attacks = []
+        captured_counts.sample(random: rng).times do
+          attacks << {action_key: "simple", body_part: select_body_part(excluding_parts: attacks.pluck(:body_part))}
+        end
+        return attacks
+      end
+
       participation = find_npc_participation
       profile = participation ? Arena::CombatProfile.for_participation(participation, persist: true) : {}
       ap_limit = profile.fetch("ap_limit", Game::Combat::ActionCatalog::DEFAULT_AP_PER_TURN).to_i
@@ -139,7 +150,7 @@ module Arena
     end
 
     def configured_max_attacks
-      configured = npc_template.metadata&.dig("max_attacks_per_turn").to_i
+      configured = combat_data["max_attacks_per_turn"].to_i
       return configured.clamp(1, 4) if configured.positive?
 
       Game::Combat::ActionCatalog::BODY_PARTS.size
@@ -147,6 +158,10 @@ module Arena
 
     def attack_package_cost(attacks, simple_cost)
       attacks.size * simple_cost + Game::Combat::ActionCatalog.attack_penalty(attacks.size)
+    end
+
+    def combat_data
+      find_npc_participation&.npc_combat_data || npc_template.metadata.to_h
     end
 
     def select_body_part(excluding_parts: [])

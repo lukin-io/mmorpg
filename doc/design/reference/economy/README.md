@@ -1,5 +1,8 @@
 # Neverlands Economy and Shop Source Summary
 
+For the design, delivery status and current implementation using this evidence,
+follow the [Economy domain](../../../domains/economy.md).
+
 - Document type: neverlands-source-summary
 - Domain: economy
 - Updated: 2026-09-10

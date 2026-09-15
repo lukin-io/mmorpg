@@ -12,7 +12,7 @@ module Game
         def config
           @config ||= begin
             parsed = YAML.load_file(CONFIG_PATH).deep_symbolize_keys
-            validate_loot_entries!(parsed)
+            validate_entries!(parsed)
             parsed
           end
         end
@@ -29,7 +29,7 @@ module Game
         def for_room(room_slug)
           room_slug = room_slug.to_sym
           room_config = config[room_slug] || config[:default]
-          npcs = room_config[:npcs] || []
+          npcs = (room_config[:npcs] || []).dup
 
           # Also include NPCs from other sections that list this room
           config.each do |section_key, section_config|
@@ -108,9 +108,15 @@ module Game
 
         private
 
-        def validate_loot_entries!(parsed)
+        def validate_entries!(parsed)
           parsed.each_value do |section_config|
             Array(section_config[:npcs]).each do |npc|
+              minimum, maximum = npc.dig(:metadata, :arena_acceptor_level_min), npc.dig(:metadata, :arena_acceptor_level_max)
+              if !minimum.nil? || !maximum.nil?
+                unless minimum.is_a?(Integer) && maximum.is_a?(Integer) && minimum.between?(0, 33) && maximum.between?(minimum, 33)
+                  raise InvalidConfigurationError, "#{CONFIG_PATH}: NPC #{npc[:key]} has an invalid Arena acceptor level range"
+                end
+              end
               entries = npc[:loot_table] || npc[:loot] || []
               Array(entries).each_with_index do |entry, index|
                 Game::LootEntry.new(entry)

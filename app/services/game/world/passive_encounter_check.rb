@@ -48,7 +48,7 @@ module Game
         Result.new(
           interrupted: true,
           match:,
-          message: "#{npc.display_name} attacks while you wait."
+          message: "A fight starts while you wait."
         )
       rescue StartNpcFight::FightViolationError
         clear_schedule!

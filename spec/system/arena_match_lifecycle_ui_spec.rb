@@ -51,6 +51,7 @@ RSpec.describe "Arena Match Lifecycle UI", type: :system, js: true do
         })
       create(:arena_participation, arena_match: match, character: character1, user: user1, team: "a")
       create(:arena_participation, arena_match: match, character: character2, user: user2, team: "b")
+      create(:combat_log_entry, arena_match: match, log_type: "system", message: "Fight created", payload: {"description" => "Fight created"})
       match
     end
 
@@ -125,6 +126,7 @@ RSpec.describe "Arena Match Lifecycle UI", type: :system, js: true do
         })
       create(:arena_participation, arena_match: match, character: character1, user: user1, team: "a")
       create(:arena_participation, arena_match: match, character: character2, user: user2, team: "b")
+      create(:combat_log_entry, arena_match: match, log_type: "system", message: "Fight started", payload: {"description" => "Fight started"})
       match
     end
 
@@ -206,7 +208,9 @@ RSpec.describe "Arena Match Lifecycle UI", type: :system, js: true do
         status: :pending,
         match_type: :duel,
         metadata: {
-          "starts_at" => 1.second.from_now.iso8601,
+          # This example explicitly runs the starter job after asserting the
+          # pending UI. Browser startup must not race the countdown fallback.
+          "starts_at" => 2.minutes.from_now.iso8601,
           "fight_kind" => "free"
         })
       create(:arena_participation, arena_match: match, character: character1, user: user1, team: "a")
@@ -269,6 +273,7 @@ RSpec.describe "Arena Match Lifecycle UI", type: :system, js: true do
         log_type: "action",
         message: "attacks TestMage",
         payload: {"actor_name" => "TestWarrior", "description" => "attacks TestMage"})
+      create(:combat_log_entry, arena_match: match, log_type: "victory", message: "Winner: side A", payload: {"description" => "Winner: side A"})
       match
     end
 

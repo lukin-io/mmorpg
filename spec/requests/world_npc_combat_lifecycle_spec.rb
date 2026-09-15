@@ -180,7 +180,7 @@ RSpec.describe "Physical wilderness NPC combat lifecycle", type: :request do
     get arena_match_path(match)
 
     result_table = Nokogiri::HTML(response.body).at_css(".nl-fight-result-table")
-    expect(result_table.text.squish).to include("RatHunter[4] 10(2) 10(2) 35")
+    expect(result_table.text.squish).to include("RatHunter[4] 10(2) 0 10(2) 35")
     expect(response.body).to include("Finish Fight")
 
     post finish_arena_match_path(match)

@@ -6,6 +6,7 @@ RSpec.describe "Item artwork assets" do
   it "covers all starter goods and every license tier explicitly" do
     keys = JSON.parse(File.read(Rails.root.join("db/seeds/data/starter_shop.json"))).map { |item| item.fetch("key") }
     keys += %w[trading_license_i trading_license_ii trading_license_iii doctor_license_i doctor_license_ii doctor_license_iii]
+    keys += %w[beginner_healer_bag skilled_healer_bag experienced_healer_bag combat_first_aid_kit minor_health_potion]
     expect(InventoriesHelper::ITEM_ARTWORK_PATHS.keys).to match_array(keys)
   end
 

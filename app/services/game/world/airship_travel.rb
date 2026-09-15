@@ -166,7 +166,7 @@ module Game
       end
 
       def busy?
-        AirshipJourney.aboard.where(character:).exists? || MovementCommand.moving.where(character:).exists? ||
+        character.active_injuries.any?(&:blocks_movement?) || AirshipJourney.aboard.where(character:).exists? || MovementCommand.moving.where(character:).exists? ||
           LocalActionState.new(character:).call.present? ||
           character.arena_participations.joins(:arena_match).merge(ArenaMatch.active).exists? ||
           ArenaApplication.active.where(applicant: character).exists?

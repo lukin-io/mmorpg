@@ -99,7 +99,7 @@ module ShopHelper
 
   def shop_sell_block_reason(item)
     return "Invalid durability" unless item.valid_sale_durability?
-    return "equipped or protected" if item.protected_from_discard?
+    return "equipped or protected" unless item.tradable?
     return "not accepted" unless shop_sale_price(item).positive?
 
     return "A trading license is required to sell items to the shop." unless @shop_license_rules.active?(:trading)

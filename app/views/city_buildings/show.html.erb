@@ -22,6 +22,8 @@
       <p class="nl-city-building-notice">
         <% if @building["kind"] == "market" %>
           Stall rentals and player listings are read-only.
+        <% elsif @building["kind"] == "hospital" %>
+          Healer bags are available below.
         <% else %>
         This source-captured surface is read-only for MVP. No purchase, sale,
         processing, healing, or rental action is exposed.

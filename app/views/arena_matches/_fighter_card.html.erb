@@ -16,6 +16,7 @@
 end %>
 
 <div class="fighter-card fighter-card--<%= position %> <%= 'fighter-card--defeated' if defeated %> <%= 'fighter-card--npc' if p_data.is_npc %> <%= 'fighter-card--selected-target' if selected_target %>"
+     <%= "hidden" if local_assigns.fetch(:hidden, false) %>
      data-character-id="<%= p_data.id %>"
      data-character-name="<%= p_data.name %>"
      data-current-hp="<%= p_data.current_hp %>"
@@ -45,8 +46,8 @@ end %>
     <span class="fighter-hp-percent"><%= p_data.hp_percent.round %>%</span>
   </div>
 
-  <%# MP Bar (players only) %>
-  <% unless p_data.is_npc %>
+  <%# NPC mana is displayed only when its captured profile supplies it. %>
+  <% if !p_data.is_npc || p_data.max_mp.positive? %>
     <div class="fighter-mp">
       <div class="fighter-mp-bar" title="MP: <%= p_data.current_mp %>/<%= p_data.max_mp %>">
         <div class="fighter-mp-fill" style="width: <%= p_data.mp_percent %>%"></div>
@@ -60,6 +61,7 @@ end %>
     <%= render "shared/equipment_paperdoll",
       character: participation.character,
       equipment: fighter_equipment,
+      npc_equipment: arena_npc_equipment(participation),
       interactive: false,
       portrait_html: npc_portrait %>
     <% if defeated %>
@@ -67,28 +69,14 @@ end %>
     <% end %>
   </div>
 
-  <div class="fighter-combat-power">
-    <span class="fighter-power" title="Attack uses strength, dexterity, level, and weapon">
-      Attack <%= p_data.attack_power %>
-    </span>
-    <span class="fighter-power" title="Defense uses vitality, strength, level, and armor">
-      Defense <%= p_data.defense %>
-    </span>
-  </div>
-
   <%# Stats (shown for opponent) %>
   <% if show_stats %>
     <div class="fighter-stats fighter-stats--nl">
-      <div>Strength: <b><%= p_data.strength %></b></div>
-      <div>Dexterity: <b><%= p_data.dexterity %></b></div>
-      <div>Luck: <b><%= p_data.luck %></b></div>
-      <div>Knowledge: <b><%= p_data.knowledge %></b></div>
-      <div>Armor Class: <b><%= p_data.armor_class %></b></div>
-      <div>Dodge: <b><%= p_data.evasion %></b></div>
-      <div>Accuracy: <b><%= p_data.accuracy %></b></div>
-      <div>Crushing: <b><%= p_data.crushing %></b></div>
-      <div>Fortitude: <b><%= p_data.endurance %></b></div>
-      <div>Armor Pierce: <b><%= p_data.armor_penetration %></b></div>
+      <% {strength: "Strength", dexterity: "Dexterity", luck: "Luck", knowledge: "Knowledge", wisdom: "Wisdom", armor_class: "Armor Class", evasion: "Evasion", accuracy: "Accuracy", crushing: "Crushing", endurance: "Fortitude", armor_penetration: "Armor Pierce"}.each do |key, label| %>
+        <% value = p_data.public_send(key) %>
+        <% next if value.nil? %>
+        <div><%= label %>: <b><%= value %><%= "%" if %i[evasion accuracy crushing endurance armor_penetration].include?(key) %></b></div>
+      <% end %>
     </div>
   <% end %>
 

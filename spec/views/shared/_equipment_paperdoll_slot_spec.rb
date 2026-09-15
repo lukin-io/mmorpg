@@ -30,4 +30,14 @@ RSpec.describe "shared/_equipment_paperdoll_slot.html.erb", type: :view do
     expect(rendered).not_to have_css("img.nl-doll-slot-artwork")
     expect(rendered).to have_css("button[aria-label='Remove Penknife from Weapon']")
   end
+
+  it "renders escaped NPC equipment without inventory controls or invented durability" do
+    npc_equipment = {"main_hand" => {"name" => "Orc <Dagger>", "artwork" => "orc_dagger", "properties" => ["Attack: 1-2"]}}
+    render partial: "shared/equipment_paperdoll_slot", locals: {slot:, equipment: {}, npc_equipment:, interactive: false}
+
+    cell = Nokogiri::HTML.fragment(rendered).at_css(".nl-doll-slot--main_hand")
+    expect(cell.at_css("img")["src"]).to eq(view.image_path("npc/equipment/orc_dagger.png"))
+    expect(cell["title"]).to include("Orc <Dagger>", "Attack: 1-2")
+    expect(rendered).not_to include("<Dagger>", "Durability:", "<button", "<form")
+  end
 end

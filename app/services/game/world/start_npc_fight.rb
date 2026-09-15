@@ -39,6 +39,13 @@ module Game
                 Arena::CombatProcessor.new(match).start_match
               end
             end
+            # A synchronous action can start combat before its passive timer fires.
+            # Consume that timer too, so Finish schedules a fresh encounter wait.
+            character.reload
+            schedule_key = PassiveEncounterCheck::SCHEDULE_METADATA_KEY
+            if character.metadata.to_h.key?(schedule_key)
+              character.update!(metadata: character.metadata.to_h.except(schedule_key))
+            end
             WorldActionOffer.timed_local_actions.where(character:).update_all(
               status: WorldActionOffer.statuses.fetch("cancelled"),
               updated_at: Time.current
@@ -118,6 +125,9 @@ module Game
         end
         unless encounter_selection.experience_reward.nil?
           metadata["encounter_experience_reward"] = encounter_selection.experience_reward
+        end
+        unless encounter_selection.defeat_experience_reward.nil?
+          metadata["encounter_defeat_experience_reward"] = encounter_selection.defeat_experience_reward
         end
         source_metadata = tile_npc.metadata.to_h
         metadata["combat_profile"] = source_metadata[:combat_profile] if source_metadata[:combat_profile].present?

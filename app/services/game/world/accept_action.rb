@@ -69,6 +69,11 @@ module Game
           raise ActionViolationError, "Action offer does not match requested action"
         end
 
+        if offer.action_type.in?(%w[enter_building city_transition enter_city_building exit_city board_airship]) &&
+            character.active_injuries.any?(&:blocks_movement?)
+          raise ActionViolationError, "An injury prevents movement"
+        end
+
         if position&.zone&.outdoor? && FATIGUE_LOCKED_ACTIONS.include?(offer.action_type) &&
             Characters::FatigueService.new(character:).outdoor_actions_blocked?
           raise ActionViolationError, "Too fatigued for this action"

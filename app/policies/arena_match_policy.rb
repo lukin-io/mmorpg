@@ -26,10 +26,22 @@ class ArenaMatchPolicy < ApplicationPolicy
     action?
   end
 
+  def switch_opponent?
+    action?
+  end
+
   def finish?
     return false unless user.present?
 
     record.arena_participations.exists?(user: user)
+  end
+
+  def confirm_duel?
+    finish? && record.metadata.to_h["duel_applicant_id"] == user.character&.id
+  end
+
+  def refuse_duel?
+    finish? && record.metadata.to_h["duel_applicant_id"].present?
   end
 
   class Scope < Scope

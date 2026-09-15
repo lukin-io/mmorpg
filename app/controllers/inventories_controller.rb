@@ -10,9 +10,17 @@ class InventoriesController < ApplicationController
   include OutdoorActionAvailability
 
   before_action :ensure_active_character!
+  before_action :check_combat_injury
   around_action :with_available_outdoor_actions
 
   # GET /inventory
+  def check_combat_injury
+    if current_character.character_injuries.active_at(Time.current).where(severity: "combat").exists?
+      redirect_to medical_care_path, alert: "A combat injury prevents using Inventory."
+    end
+  end
+  private :check_combat_injury
+
   def show
     @inventory = current_character.inventory || current_character.create_inventory!
     @category = current_category
@@ -21,6 +29,12 @@ class InventoriesController < ApplicationController
     @items = filtered_inventory_items(@inventory, @category, @subcategory)
     @equipment = current_character_equipment
     @equipment_sets = Game::Inventory::EquipmentSetService.new(character: current_character).all
+    if params[:scroll_item_id].present?
+      @scroll_item = @inventory.inventory_items.includes(:item_template).find(params[:scroll_item_id])
+      @scroll_offer = Game::Inventory::AttackScroll.new(character: current_character).offer_for(item: @scroll_item)
+    end
+  rescue Game::Inventory::AttackScroll::Unavailable => error
+    redirect_to inventory_path(category: "things", subcategory: "scrolls"), alert: error.message
   end
 
   # POST /inventory/equip

@@ -51,6 +51,58 @@ RSpec.describe "ArenaApplications", type: :request do
     post interact_hotspot_world_path, params: {hotspot_id: hotspot.id, action_key: offer.action_key}
   end
 
+  describe "group application reservation" do
+    include ActiveSupport::Testing::TimeHelpers
+
+    it "persists form terms, reserves both sides, recovers a due group and rejects foreign room ids" do
+      post arena_room_arena_applications_path(arena_room), params: {arena_application: {
+        fight_type: "team_battle", fight_kind: "free", timeout_seconds: 240, trauma_percent: 50,
+        team_count: 2, enemy_count: 2, team_level_min: 9, team_level_max: 11,
+        enemy_level_min: 8, enemy_level_max: 12, wait_minutes: 5
+      }}, as: :json
+      expect(response).to have_http_status(:created)
+      app = ArenaApplication.find(response.parsed_body.dig("application", "id"))
+      get world_path
+      expect(response).to redirect_to(arena_room_path(arena_room, ft: 2))
+      get inventory_path, as: :json
+      expect(response).to have_http_status(:conflict)
+      sign_out user
+      sign_in other_user
+      enter_arena_from_city!(other_character)
+      post accept_arena_application_path(app), params: {team: "x"}, as: :json
+      expect(response).to have_http_status(:unprocessable_entity)
+      post accept_arena_application_path(app), params: {team: "b"}, as: :json
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body["match_id"]).to be_nil
+      expect(other_character.waiting_arena_application).to eq(app)
+      post accept_arena_room_arena_application_path(create(:arena_room), app), params: {team: "b"}, as: :json
+      expect(response).to have_http_status(:not_found)
+      travel_to(app.expires_at, with_usec: true) do
+        get arena_room_path(arena_room, ft: 2)
+        match = app.reload.arena_match
+        expect(match).to be_live
+        expect(match).to have_attributes(turn_timeout_seconds: 240, trauma_percent: 50)
+        expect(match.arena_participations.pluck(:character_id)).to match_array([character.id, other_character.id])
+        expect(response).to redirect_to(arena_match_path(match))
+        expect { get arena_room_path(arena_room) }.not_to change(ArenaMatch, :count)
+      end
+    end
+
+    it "releases a joined player's navigation when the owner cancels" do
+      result = Arena::ApplicationHandler.new.create(character:, room: arena_room, params: {
+        fight_type: "team_battle", fight_kind: "free", team_count: 2, enemy_count: 2,
+        team_level_min: 0, team_level_max: 33, enemy_level_min: 0, enemy_level_max: 33
+      })
+      app = result.application
+      Arena::GroupAssembly.new.join(application: app, character: other_character, team: "b")
+      delete cancel_arena_application_path(app), as: :json
+      expect(response).to have_http_status(:ok)
+      expect(other_character.waiting_arena_application).to be_nil
+      get inventory_path
+      expect(response).to have_http_status(:ok)
+    end
+  end
+
   # ============================================
   # Route Helper Regression Tests
   # ============================================

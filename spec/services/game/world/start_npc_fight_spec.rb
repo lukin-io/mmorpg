@@ -41,6 +41,43 @@ RSpec.describe Game::World::StartNpcFight do
     expect(match.metadata["return_context"]).to eq("name" => "world")
   end
 
+  it "copies separate victory and defeat rewards from an authored roster into the match" do
+    tile_npc.update!(metadata: {"encounter_rosters" => [{
+      "key" => "observed_partial_defeat",
+      "encounter_experience_reward" => 631,
+      "encounter_defeat_experience_reward" => 57,
+      "members" => [{"npc_key" => npc_template.npc_key, "level" => 13, "hp" => 605}]
+    }]})
+
+    match = described_class.new(character:, tile_npc:).call
+
+    expect(match.metadata).to include("encounter_experience_reward" => 631, "encounter_defeat_experience_reward" => 57)
+  end
+
+  it "consumes the previous passive wait on start and retry without erasing other character state" do
+    schedule = {"due_at" => 1.minute.ago.iso8601}
+    character.update!(metadata: {"world_passive_encounter" => schedule, "acceptance_note" => "keep"})
+    service = described_class.new(character:, tile_npc:)
+
+    match = service.call
+    expect(character.reload.metadata).to include("acceptance_note" => "keep")
+    expect(character.metadata).not_to have_key("world_passive_encounter")
+    expect(character).to be_in_combat
+
+    character.update!(metadata: character.metadata.merge("world_passive_encounter" => schedule))
+    expect { expect(service.call).to eq(match) }.not_to change(ArenaMatch, :count)
+    expect(character.reload.metadata).not_to have_key("world_passive_encounter")
+  end
+
+  it "preserves the passive wait when the encounter cannot start" do
+    character.update!(metadata: {"world_passive_encounter" => {"due_at" => 1.minute.ago.iso8601}})
+    original_metadata = character.metadata.deep_dup
+    tile_npc.update!(active: false)
+
+    expect { described_class.new(character:, tile_npc:).call }.to raise_error(described_class::FightViolationError)
+    expect(character.reload.metadata).to eq(original_metadata)
+  end
+
   it "revalidates an NPC deactivated after the caller loaded it" do
     stale_npc = tile_npc
     TileNpc.find(stale_npc.id).update!(active: false)

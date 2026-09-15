@@ -219,7 +219,8 @@ class WorldController < ApplicationController
     return respond_with_world_action_error("Local action is not supported.") unless world_action_type
 
     result = nil
-    ActiveRecord::Base.transaction do
+    # Preserve the action rollback even under a controller character lock.
+    ActiveRecord::Base.transaction(requires_new: true) do
       action_offer = accept_world_action!(world_action_type, target: tile)
       result = Game::World::PerformLocalAction.new(
         character: current_character,

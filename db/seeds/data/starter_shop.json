@@ -2567,6 +2567,34 @@
     }
   },
   {
+    "key": "fist_attack",
+    "name": "Fist Attack",
+    "item_type": "consumable",
+    "slot": "none",
+    "weight": 1,
+    "stack_limit": 1,
+    "base_price": 250,
+    "durability_max": 1,
+    "requirements": {
+      "level": 10
+    },
+    "stat_modifiers": {},
+    "enhancement_rules": {
+      "subcategory": "scrolls",
+      "inventory_family": "things",
+      "source_name": "Кулачное нападение",
+      "shop": {
+        "sold": true
+      },
+      "shop_stock": {
+        "current": 500,
+        "max": 500
+      },
+      "description": "Removes all equipment from both players and starts an open unarmed fight with maximum ordinary trauma. Fight timeout: 5 minutes. Target must be within 3 levels.",
+      "personal_only": true
+    }
+  },
+  {
     "key": "duel_permit_i",
     "name": "Duel Permit I",
     "item_type": "consumable",
@@ -2590,7 +2618,7 @@
         "current": 192,
         "max": 500
       },
-      "description": "Starts a low-trauma open fight.",
+      "description": "Starts an open fight with low trauma. Target must be within 3 levels; can intervene against a living player in an open fight.",
       "inventory_family": "things"
     }
   },

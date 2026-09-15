@@ -2,8 +2,8 @@
 
 Contract metadata:
 
-- updated_at: `2026-09-10`
-- why_changed: "Require agent-performed local browser acceptance after automated checks pass for changes affecting browser-visible flows, with explicit scope, evidence, and failure handling."
+- updated_at: `2026-09-14`
+- why_changed: "Make area changes trigger mandatory review and same-task synchronization of related game books, feature handbooks and directly affected documentation."
 
 This file is the repository entry point for engineering work. It tells an agent
 what to read, which rules are mandatory, what to verify, and what to report.
@@ -39,6 +39,8 @@ Start every gameplay task at `doc/DOCUMENTATION.md`, then follow:
 - `doc/design/gdd.md` plus applicable area/mechanic documents;
 - `doc/design/launch_mvp_plan.md` for the current delivery boundary;
 - the responsible handbook under `doc/features/`;
+- the applicable game books and direct consumers in the
+  [documentation context/update map](doc/DOCUMENTATION.md#21-required-context-and-update-map);
 - applicable sections of `doc/RUBY_ON_RAILS_GUIDE.md`.
 
 Classify mismatches explicitly:
@@ -267,11 +269,25 @@ if those surfaces actually exist.
 
 ### Documentation synchronization
 
+**Changing an area automatically triggers a documentation impact review; no
+separate user request to update docs is needed.** Before editing, identify the
+related documentation owners and direct consumers through
+[DOCUMENTATION.md's change-trigger rules](doc/DOCUMENTATION.md#22-change-triggered-documentation-updates).
+This includes game books, feature handbooks, `ARTWORK.md`, evidence/design and
+applicable technical, process or operational guides, including future documents.
+Apply this to additions, fixes, removals, refactors and content/configuration
+changes, including changes made only in seeds, numerical tables or artwork.
+Before completion, synchronize every affected description in the same task.
+Updating a global book does not replace updating its runtime handbook, or vice
+versa. The context map guides discovery; it is not an exhaustive list of docs.
+
 Documentation must reflect changed truth in the same task:
 
 - evidence changes update the relevant observation/source summary;
 - normalized game behavior changes update design/MVP scope;
 - shipped runtime behavior or ownership changes update its feature handbook;
+- content, formula, rule or editing changes update the affected global game
+  books and their directly affected examples, tables and cross-references;
 - process/tool behavior changes update its canonical process/onboarding docs;
 - cross-feature operational procedures use `doc/guides/**` only when one real
   workflow spans several owners.
@@ -372,7 +388,9 @@ Before reporting completion:
   entered runtime;
 - review applicable server authority, SRP/DI/PORO/KISS/service, Hotwire,
   atomicity/retry, query, async/cache, and operational risks;
-- ensure canonical documentation describes verified behavior;
+- review the final diff against the triggered documentation owners and ensure
+  their affected sections describe verified behavior; unresolved stale guidance
+  is a `[DOC]` gap, even when tests and link audits pass;
 - confirm final [manual browser acceptance](#manual-browser-acceptance) passed
   for the changed UI scope, or explicitly report why it is blocked/not applicable;
 - report exact checks and honest pending/pre-existing failures.

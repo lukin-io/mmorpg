@@ -81,6 +81,7 @@ RSpec.describe Game::World::PassiveEncounterCheck do
     expect(selection_rng).to receive(:rand).with(2).once.and_return(0)
     due = described_class.new(character:, clock: -> { now + 300.seconds }, rng: selection_rng).call
     expect(due).to be_interrupted
+    expect(due.message).to eq("A fight starts while you wait.")
     expect(due.match.metadata).to include("repeatable_encounter_source" => true, "encounter_roster_sample" => "2026-09-01-2340")
     expect(due.match.arena_participations.npcs.sole).to have_attributes(max_hp: 155, participant_level: 7)
 
@@ -110,6 +111,7 @@ RSpec.describe Game::World::PassiveEncounterCheck do
     ).call
 
     expect(due).to be_interrupted
+    expect(due.message).to eq("A fight starts while you wait.")
     expect(due.match).to be_live
     expect(due.match.arena_participations.npcs.count).to eq(2)
     expect(character.reload.metadata).not_to have_key(described_class::SCHEDULE_METADATA_KEY)

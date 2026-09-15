@@ -1,6 +1,12 @@
 # frozen_string_literal: true
 
 module Combat
+  # Read-only public projection of one ArenaMatch and its persisted results.
+  # Participant/team damage uses credited participation totals when present;
+  # older rows fall back to logged damage, which can include overkill. Physical
+  # and total damage share the current bounded damage bucket. Missing defeat
+  # counters stay unknown rather than being inferred from hit events.
+  # Body-part/round breakdowns and Hits remain raw log-event diagnostics.
   class FightLogStatistics
     HIT_TYPES = %w[attack damage critical].freeze
 
@@ -12,8 +18,13 @@ module Combat
     end
 
     def by_participant
-      participants.map do |participant|
-        participant_entries = entries_for(participant)
+      @by_participant ||= participants.map do |participant|
+        metadata = participant.metadata.to_h
+        damage = if metadata.key?("damage_dealt") || credited_results?
+          metadata["damage_dealt"].to_i
+        else
+          actor_total(damage_by_actor, participant)
+        end
         {
           id: participant.id,
           name: participant_name(participant),
@@ -21,28 +32,39 @@ module Combat
           level: participant_level(participant),
           is_alive: participant_alive?(participant),
           visible: true,
-          total_damage: participant_entries.sum(:damage_amount),
-          total_hits: participant_entries.where(log_type: HIT_TYPES).count,
-          xp_earned: 0
+          physical_damage: metadata.fetch("damage_by_element", {}).fetch("physical", metadata.key?("damage_by_element") ? 0 : damage),
+          magical_damage: metadata.fetch("damage_by_element", {}).except("physical").values.sum,
+          total_damage: damage,
+          opponents_defeated: (metadata["opponents_defeated"].to_i if metadata.key?("opponents_defeated") || credited_results?),
+          total_hits: actor_total(hits_by_actor, participant),
+          xp_earned: experience_for(participant)
         }
       end
     end
 
     def by_team
-      participants.group_by { |participant| participant_team(participant) }.transform_values do |team_participants|
-        ids = team_participants.map(&:id)
-        team_entries = entries.where(actor_type: "ArenaParticipation", actor_id: ids)
+      by_participant.group_by { |row| row[:team] }.transform_values do |rows|
+        defeated_counts = rows.map { |row| row[:opponents_defeated] }
         {
-          members: team_participants.count,
-          alive: team_participants.count { |participant| participant_alive?(participant) },
-          total_damage: team_entries.sum(:damage_amount),
-          total_hits: team_entries.where(log_type: HIT_TYPES).count
+          members: rows.size,
+          alive: rows.count { |row| row[:is_alive] },
+          physical_damage: rows.sum { |row| row[:physical_damage] },
+          magical_damage: rows.sum { |row| row[:magical_damage] },
+          total_damage: rows.sum { |row| row[:total_damage] },
+          opponents_defeated: defeated_counts.include?(nil) ? nil : defeated_counts.sum,
+          total_hits: rows.sum { |row| row[:total_hits] },
+          xp_earned: rows.sum { |row| row[:xp_earned] }
         }
       end
     end
 
     def total_damage
-      entries.sum(:damage_amount)
+      # Preserve the old whole-log total (including unattributed events) when
+      # no participant has recorded credited damage. Mixed older/newer rows
+      # otherwise use the same per-participant fallback as the visible table.
+      return damage_by_actor.values.sum unless credited_results? || participants.any? { |participant| participant.metadata.to_h.key?("damage_dealt") }
+
+      by_participant.sum { |row| row[:total_damage] }
     end
 
     def body_part_breakdown
@@ -90,19 +112,38 @@ module Combat
 
     private
 
+    # The shared processor finalizes credited totals even for a combatant whose
+    # only strike lands after simultaneous damage has already exhausted HP.
+    # Such a combatant has no positive-damage counter: missing means zero here.
+    def credited_results?
+      fight.metadata.to_h["rewards_processed_at"].present?
+    end
+
     def participants
       @participants ||= fight.arena_participations.includes(:character, :npc_template).to_a
     end
 
-    def entries_for(participant)
-      if participant.character_id.present?
-        entries.where(
-          "(actor_type = ? AND actor_id = ?) OR (actor_type = ? AND actor_id = ?)",
-          "ArenaParticipation", participant.id, "Character", participant.character_id
-        )
-      else
-        entries.where(actor_type: "ArenaParticipation", actor_id: participant.id)
-      end
+    def damage_by_actor
+      @damage_by_actor ||= entries.reorder(nil).group(:actor_type, :actor_id).sum(:damage_amount)
+    end
+
+    def hits_by_actor
+      @hits_by_actor ||= entries.reorder(nil).where(log_type: HIT_TYPES).group(:actor_type, :actor_id).count
+    end
+
+    def actor_total(totals, participant)
+      amount = totals.fetch(["ArenaParticipation", participant.id], 0)
+      amount += totals.fetch(["Character", participant.character_id], 0) if participant.character_id.present?
+      amount
+    end
+
+    def experience_for(participant)
+      return participant.metadata["experience_awarded"].to_i if participant.metadata.to_h.key?("experience_awarded")
+
+      experience = (@experience ||= fight.metadata.to_h.dig("rewards", "experience").to_h)
+      return 0 unless participant.character_id.present? && experience["character_id"].to_i == participant.character_id
+
+      experience["amount"].to_i
     end
 
     def fight_type
@@ -122,6 +163,8 @@ module Combat
     end
 
     def participant_alive?(participant)
+      return false if participant.defeat?
+
       participant.current_hp.positive?
     end
   end

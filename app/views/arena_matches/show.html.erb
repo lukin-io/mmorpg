@@ -16,17 +16,26 @@
     team_a
   end
   target_participation = target_side&.find do |participation|
-    participation.id == pending_target_id.to_i && participation.current_hp.positive?
+    participation.id == pending_target_id.to_i && participation.combat_alive?
   end
-  target_participation ||= target_side&.find { |participation| participation.current_hp.positive? } || target_side&.first
+  target_participation ||= current_participation&.selected_opponent(opponents: target_side || []) || target_side&.first
+  switches_remaining = current_participation&.opponent_switches_remaining(opponents: target_side || []).to_i
   target_candidates = if ["a", "alpha"].include?(user_team)
-    team_b.select { |participation| participation.current_hp.positive? }
+    team_b.select { |participation| participation.combat_alive? }
   elsif ["b", "beta"].include?(user_team)
-    team_a.select { |participation| participation.current_hp.positive? }
+    team_a.select { |participation| participation.combat_alive? }
   else
     []
   end
   target_profile = participant_data(target_participation) if target_participation
+  left_fighters = current_participation ? [current_participation] : team_a
+  right_fighters = target_side || team_b
+  if @arena_match.live?
+    left_fighters = left_fighters.select { |participation| participation.combat_alive? }
+    right_fighters = right_fighters.select { |participation| participation.combat_alive? }
+  elsif @arena_match.completed?
+    right_fighters = []
+  end
   combat_profile = arena_combat_profile(current_participation)
   ap_limit = combat_profile["ap_limit"]
   combat_config = Game::Combat::ActionCatalog.config
@@ -53,29 +62,28 @@
     <span><b><%= fight_type_label(@arena_match.match_type) %></b></span>
     <span class="badge badge--<%= @arena_match.status %>"><%= arena_match_status_badge(@arena_match.status) %></span>
     <span>Turn timeout: <b><%= (@arena_match.turn_timeout_seconds || 300) / 60 %> min</b></span>
-    <span>Trauma: <b><%= @arena_match.metadata.to_h.fetch("trauma", "normal") %></b></span>
+    <span>Trauma: <b><%= @arena_match.trauma_percent %>%</b></span>
     <%= link_to "Inventory", inventory_path, class: "fr_but" %>
     <span class="fr_but_dis">Mercenary</span>
-    <%= link_to "Fight log", public_fight_log_path(@arena_match), class: "fr_but" %>
+    <%= link_to "Fight log", public_fight_log_path(@arena_match), class: "fr_but", data: {turbo_frame: "_top"} %>
     <button type="button" class="fr_but" data-action="click->arena-match#requestMatchState">Refresh</button>
-    <button type="button"
-            class="fr_but"
-            data-action="click->arena-match#switchOpponent"
-            <%= "disabled" unless current_user_participating? && target_candidates.many? %>>
-      Switch opponent
-    </button>
+    <% if @arena_match.live? && current_user_participating? && target_candidates.many? && switches_remaining.positive? && !current_user_pending_arena_turn? %>
+      <%= button_to "Switch opponent (#{switches_remaining})", switch_opponent_arena_match_path(@arena_match),
+          params: {switches_used: current_participation.metadata.to_h["opponent_switches_used"].to_i},
+          class: "fr_but", aria: {label: "Switch opponent"}, form: {data: {turbo: false}} %>
+    <% end %>
   </div>
 
   <%# Main combat layout: Player | Actions+Log | Opponent %>
   <div class="arena-fight-layout">
-    <%# Left: complete side A roster %>
+    <%# The viewer stays on the left; only the selected opponent is expanded. %>
     <div class="arena-fighter arena-fighter--left" data-arena-match-target="fighterA">
-      <% if team_a.any? %>
+      <% if left_fighters.any? %>
         <div class="arena-fighter-stack">
-          <% team_a.each do |participation| %>
+          <% left_fighters.each do |participation| %>
             <%= render "arena_matches/fighter_card",
                 participation:,
-                show_stats: (user_team == "b" || user_team == "beta"),
+                show_stats: false,
                 position: :left,
                 selected_target: participation == target_participation %>
           <% end %>
@@ -87,7 +95,6 @@
 
     <%# Center: VS + Actions + Combat Log %>
     <div class="arena-center">
-      <div class="arena-vs-badge">VS</div>
 
       <%# Turn timeout display %>
       <% if @arena_match.live? && @arena_match.current_turn_started_at %>
@@ -153,13 +160,16 @@
           </div>
 
           <div class="nl-fight-budget">
-            Mana: <b>5..<%= combat_profile["max_magic_mana"] %></b>
+            <% if combat_profile["max_magic_mana"].positive? %>
+              Mana: <b>5..<%= combat_profile["max_magic_mana"] %></b>
+            <% end %>
             <span>Action points: <b><%= ap_limit %></b></span>
             <span>Used: <b data-arena-match-target="turnCostValue">0</b>/<%= ap_limit %></span>
             <span class="nl-fight-penalty" data-arena-match-target="turnPenalty" hidden></span>
             <strong class="nl-fight-over-budget" data-arena-match-target="turnOverBudget" hidden>OVER LIMIT!</strong>
           </div>
 
+          <% unless @arena_match.metadata.to_h["physical_only"] == true %>
           <div class="nl-fight-magic-slots" aria-label="Combat quick slots">
             <% configured_magic = magic_options.select { |_key, config| config["action_cost"].to_i.positive? }.to_a.first(5) %>
             <% 5.times do |slot_index| %>
@@ -183,6 +193,8 @@
               <% end %>
             <% end %>
           </div>
+
+          <% end %>
 
           <div class="arena-turn-composer nl-fight-turn-composer">
             <table class="nl-fight-selector-table">
@@ -257,58 +269,51 @@
         </div>
       <% end %>
 
-      <% if current_participation && target_profile %>
-        <% current_profile = participant_data(current_participation) %>
-        <div class="nl-fight-target-line">
-          <span class="nl-fight-target-name nl-fight-target-name--opponent"
-                data-arena-match-target="targetName"><%= target_profile.name %></span>
-          <span data-arena-match-target="targetVitals">[<%= target_profile.current_hp %>/<%= target_profile.max_hp %>]</span>
-          <span>against</span>
-          <span class="nl-fight-target-name nl-fight-target-name--self"><%= current_profile.name %></span>
-          [<%= current_profile.current_hp %>/<%= current_profile.max_hp %>]
+      <%= render "arena_matches/result" if @arena_match.completed? %>
+
+      <% unless @arena_match.completed? %>
+        <div class="nl-fight-target-line" aria-label="Fight participants">
+          <% [team_a, team_b].each_with_index do |team, index| %>
+            <% if index.positive? %><span>against</span><% end %>
+            <% team.each do |participant| %>
+              <% roster_data = participant_data(participant) %>
+              <% next unless participant.combat_alive? %>
+              <span data-arena-match-target="rosterParticipant"
+                    data-roster-id="<%= roster_data.id %>">
+                <b class="nl-fight-target-name"><%= roster_data.name %></b>
+                <span class="nl-fight-roster-hp">[<%= roster_data.current_hp %>/<%= roster_data.max_hp %>]</span>
+              </span>
+            <% end %>
+          <% end %>
         </div>
       <% end %>
 
       <%# Combat Log %>
       <div class="arena-combat-log" data-arena-match-target="combatLog">
-        <div class="combat-log-entry combat-log--system">
-          <span class="combat-time"><%= @arena_match.created_at.strftime("%H:%M:%S") %></span>
-          Fight created
-        </div>
-        <% if @arena_match.started_at %>
-          <div class="combat-log-entry combat-log--system combat-log--highlight">
-            <span class="combat-time"><%= @arena_match.started_at.strftime("%H:%M:%S") %></span>
-            Fight started
-          </div>
-        <% end %>
-        <% arena_match_combat_log(@arena_match).each do |entry| %>
+        <% arena_match_combat_log(@arena_match).reverse_each do |entry| %>
           <div class="combat-log-entry combat-log--<%= entry['type'] || 'action' %>">
             <span class="combat-time"><%= entry['timestamp'] %></span>
-            <%= entry['description'] %>
-          </div>
-        <% end %>
-        <% if @arena_match.completed? %>
-          <div class="combat-log-entry combat-log--<%= @arena_match.winning_team ? 'victory' : 'draw' %>">
-            <span class="combat-time"><%= @arena_match.ended_at&.strftime("%H:%M:%S") %></span>
-            <%= @arena_match.winning_team ? "Winner: #{winner_name(@arena_match)}" : "Draw" %>
+            <%= combat_log_message(entry['description'], type: entry['type'], team_a:, team_b:) %>
           </div>
         <% end %>
       </div>
+      <%= render "arena_matches/damage_statistics", participation: current_participation if @arena_match.live? && current_participation %>
     </div>
 
-    <%# Right: complete side B roster %>
+    <%# Completed opponents remain in statistics and logs, never as live cards. %>
     <div class="arena-fighter arena-fighter--right" data-arena-match-target="fighterB">
-      <% if team_b.any? %>
+      <% if right_fighters.any? %>
         <div class="arena-fighter-stack">
-          <% team_b.each do |participation| %>
+          <% right_fighters.each do |participation| %>
             <%= render "arena_matches/fighter_card",
                 participation:,
-                show_stats: (user_team == "a" || user_team == "alpha"),
+                show_stats: true,
                 position: :right,
+                hidden: current_participation.present? && participation != target_participation,
                 selected_target: participation == target_participation %>
           <% end %>
         </div>
-      <% else %>
+      <% elsif !@arena_match.completed? %>
         <div class="arena-fighter-empty">Waiting for opponent...</div>
       <% end %>
     </div>
@@ -344,64 +349,5 @@
     </div>
   </div>
 
-  <%# Result overlay %>
-  <% if @arena_match.completed? %>
-    <% result_state = current_user_arena_result %>
-    <div class="arena-result-overlay arena-result--<%= result_state %>"
-         data-arena-match-target="resultOverlay">
-      <div class="arena-result-content">
-        <h1 class="arena-result-title">
-          <%= result_state == "ended" ? "Fight finished" : result_state.titleize %>
-        </h1>
-        <div class="arena-result-details">
-          <% if @arena_match.winning_team %>
-            <p>Winner: <strong><%= winner_name(@arena_match) %></strong></p>
-          <% else %>
-            <p>Fight ended in a draw</p>
-          <% end %>
-          <p class="text-muted">Duration: <%= format_duration(@arena_match.duration || 0) %></p>
-        </div>
-        <table class="nl-fight-result-table">
-          <thead>
-            <tr>
-              <th>Character</th>
-              <th>Physical</th>
-              <th>Total</th>
-              <th>XP</th>
-            </tr>
-          </thead>
-          <tbody>
-            <% @participations.select(&:player?).each do |participation| %>
-              <% damage = participation.metadata.to_h["damage_dealt"].to_i %>
-              <% hits = participation.metadata.to_h["damage_hits"].to_i %>
-              <% experience = @arena_match.metadata.to_h.dig("rewards", "experience") || {} %>
-              <% awarded_xp = experience["character_id"].to_i == participation.character_id ? experience["amount"].to_i : 0 %>
-              <tr>
-                <td><%= participation.participant_name %>[<%= participation.participant_level %>]</td>
-                <td><%= damage %><sup>(<%= hits %>)</sup></td>
-                <td><%= damage %><sup>(<%= hits %>)</sup></td>
-                <td><%= awarded_xp %></td>
-              </tr>
-            <% end %>
-          </tbody>
-        </table>
-        <% if current_user_participating? && !current_user_finished_arena_match? %>
-          <%= button_to "Finish Fight",
-              finish_arena_match_path(@arena_match),
-              method: :post,
-              class: "btn-primary",
-              form: {data: {turbo: false}} %>
-        <% else %>
-          <% if @arena_match.metadata.to_h["source"] == "world_npc" %>
-            <%= link_to "Return",
-                Game::World::CombatReturnContext.new(character: current_character).path_for(@arena_match.metadata.to_h["return_context"]),
-                class: "btn-primary",
-                data: {turbo_frame: "_top"} %>
-          <% else %>
-            <%= link_to "To Arena", arena_index_path, class: "btn-primary", data: {turbo_frame: "_top"} %>
-          <% end %>
-        <% end %>
-      </div>
-    </div>
-  <% end %>
+
 </div>

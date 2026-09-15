@@ -133,6 +133,10 @@ module Game
 
       def resume_path
         return airship_path if character.active_airship_journey
+        active_match = character.arena_participations.joins(:arena_match).merge(ArenaMatch.active).first&.arena_match
+        return arena_match_path(active_match) if active_match
+        result = character.unfinished_arena_result
+        return arena_match_path(result) if result
 
         context = character.gameplay_context
 

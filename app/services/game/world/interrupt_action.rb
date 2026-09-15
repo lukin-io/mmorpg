@@ -46,7 +46,7 @@ module Game
             interrupted: true,
             match:,
             npc:,
-            message: "#{npc.display_name} attacks before the action completes."
+            message: "A fight starts before the action completes."
           )
         end
       end

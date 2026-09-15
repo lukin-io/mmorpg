@@ -66,6 +66,12 @@ class InventoryItem < ApplicationRecord
       truthy_property?("locked")
   end
 
+  # Some source consumables expose Use/Delete but no Transfer/Gift/Sell. Keep
+  # this restriction separate from binding, which also prevents discarding.
+  def tradable?
+    !protected_from_discard? && item_template.enhancement_rules.to_h["personal_only"] != true
+  end
+
   def decrement_durability!(amount = 1)
     with_lock do
       next current_durability unless durable?

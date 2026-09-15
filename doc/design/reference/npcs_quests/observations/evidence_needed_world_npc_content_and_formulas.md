@@ -2,7 +2,7 @@
 
 - Document type: neverlands-observation
 - Domain: npcs_quests
-- Updated: 2026-09-09
+- Updated: 2026-09-11
 - Captured at: not captured for the missing inputs below
 - Source type: existing authenticated captures, public atlas, and explicit user report
 - Evidence status: EVIDENCE_NEEDED for complete content and formulas
@@ -20,6 +20,13 @@ belong to `doc/features/world.md`; combat and reward settlement belong to
 by `evidence_needed_complete_quest_flow.md` in this directory.
 
 ## Established evidence and current bounded use
+
+- The [final Ogre cycle](../../combat/observations/2026-09-11_ogre_combat_cycle.md)
+  captures16–18 display profiles and groups of3/4. Two compatible atlas cells,
+  local[20,6]/[20,7], receive managed inactive Ogre definitions and darker art.
+  Attack power, hidden coefficients, victory XP and drops remain missing.
+  Source player damage0 and NPC critical damage502–801 cannot justify one
+  constant attack value for all future players and equipment.
 
 - The [starter atlas observation](../../world/observations/2026-09-09_starter_atlas.md)
   records cell-qualified NPC identities and level ranges. It does not contain
@@ -55,7 +62,7 @@ by `evidence_needed_complete_quest_flow.md` in this directory.
 | **NPC-ATTACK — eligibility and attack probability** | Encounters use a persisted exact-cell hostile. Eligible synchronous action interruptions start that fight; passive delivery starts after its saved deadline. | The complete Neverlands attack-probability rule, cooldowns and modifiers across idle time, movement, other actions and post-fight return are not isolated. The local eligibility/deadline pipeline is not an exact source probability formula. Capture attempted actions and non-attacks as well as attacks, with location and player state, before changing those inputs. |
 | **NPC-TIMING — interval distribution** | New starter profiles use the reported 300–360-second range. The original Bandit anchor retains captured 230–278 and 127–187-second windows. Anchors without authored windows retain the local 10–30-second fallback. The server samples integer delays uniformly within a selected window. | Exact Neverlands cooldown origin, delay distribution, window weights and state-dependent modifiers remain unknown. The user approximation does not replace measured source windows or establish uniform sampling. Further timed observations must distinguish return time, idle time, action-triggered attacks and changed player/cell conditions. |
 | **NPC-NEAR-CITY — weaker starter encounters** | Lower-strength content near Forpost can be authored from compatible captured groups: eligible cells can accept a captured single level 7 Bandit, and the original rat pair remains at its verified cell. | There is no captured distance-to-city strength formula or evidence-backed HP scaling rule. Additional weak groups, especially levels 0–3 rats, need their own stats and compositions. Broader starter balancing remains content authoring constrained by evidence, not generated difficulty rings. Painted roads do not make cells safe or suppress configured NPCs. |
-| **NPC-REWARD-INPUTS — per-NPC drops and reward modifiers** | Captures prove Rat Tails can drop, and separate timeline evidence shows an NPC-search NV result. Local typed item/NV settlement and per-participation retry protection exist. | Exact Plague Rat drop chance, NPC identity/probability behind the unassigned NV result, and broader reward modifiers remain unverified. The rat-tail `0.0` entry is an explicit local evidence hold, not source balance. The design's NPC Loot section owns these inputs; Arena owns settlement, while progression owns group-XP allocation gaps. |
+| **NPC-REWARD-INPUTS — per-NPC drops and reward modifiers** | Captures prove Rat Tails can drop, and separate timeline evidence shows an NPC-search NV result. Local typed item/NV settlement and per-participation retry protection exist. | Exact Plague Rat drop chance, NPC identity/probability behind the unassigned NV result, and broader reward modifiers remain unverified. The September12 user-authorized calibration replaces the old rat-tail hold with provisional 3%; generic typed pools and Observation also use documented fitted values. Exact source probabilities remain unknown. The design's NPC Loot section owns these inputs; Arena owns settlement, while progression owns group-XP allocation gaps. |
 
 These gaps concern evidence and authored content, not missing support for
 level-zero integers, ten-member sides, editable cell rosters or server-owned

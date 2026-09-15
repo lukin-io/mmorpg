@@ -6,7 +6,7 @@ if defined?(TileNpc) && defined?(NpcTemplate)
   seeded_tile_npc_ids = []
   outdoor_npc_templates = {}
   placement_metadata_keys = %i[
-    active combat_profile encounter_count encounter_experience_reward encounter_rosters
+    active combat_profile encounter_count encounter_experience_reward encounter_defeat_experience_reward encounter_rosters
     encounter_selection_mode passive_delay_windows trauma_percent
   ].freeze
 

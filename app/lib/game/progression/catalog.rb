@@ -34,6 +34,8 @@ module Game
         levels
       end
 
+      # Returns the source row for a current level. Its experience_to_next_level
+      # value is the cost of that level only, not a cumulative XP threshold.
       def level(level_number)
         levels[level_number.to_i]
       end
@@ -46,15 +48,19 @@ module Game
         level(level_number)&.slice(*REQUIRED_REWARD_KEYS)
       end
 
-      # Returns the cumulative combat-experience threshold for reaching the
-      # requested level. A target without a complete reward row is intentionally
-      # unsupported instead of extrapolated.
+      # Returns total combat XP needed to reach a level by summing the costs of
+      # all preceding rows. September 11 live proof: level 17 XP 29,946,496 plus
+      # 20,053,504 remaining equals the level 18 threshold of 50,000,000.
+      # A target without a complete grant row remains unsupported, even when
+      # the previous row publishes its cost (in particular, target level 28).
+      # @param level_number [Integer] target level, not the current level
+      # @return [Integer, nil] cumulative threshold, or nil beyond complete rows
       def experience_threshold_to_reach(level_number)
         target = level_number.to_i
         return 0 if target <= 0
         return unless level(target)
 
-        level(target - 1)&.fetch("experience_to_next_level")
+        (0...target).sum { |current_level| levels.fetch(current_level).fetch("experience_to_next_level") }
       end
 
       def fight_experience_cap(level_number)
@@ -79,8 +85,8 @@ module Game
           end
         end
 
-        thresholds = entries.values.map { |row| row.fetch("experience_to_next_level") }
-        raise "Experience thresholds must be strictly increasing" unless thresholds.each_cons(2).all? { |left, right| right > left }
+        costs = entries.values.map { |row| row.fetch("experience_to_next_level") }
+        raise "Per-level experience costs must be positive" unless costs.all?(&:positive?)
       end
       private_class_method :validate!
     end

@@ -138,6 +138,8 @@ module Game
           {met: true, missing: []}
         end
 
+        # Allocation caps apply to learned levels; equipment may raise the
+        # effective total above 100 without consuming the remaining allocation.
         def can_spend?(skill_key, character)
           skill = find(skill_key)
           return {allowed: false, reason: "Skill not found"} unless skill
@@ -146,7 +148,7 @@ module Game
           available = character.available_skill_points_for_pool(pool)
           return {allowed: false, reason: "No #{pool} skill points available"} if available <= 0
 
-          current_level = character.passive_skill_level(skill_key)
+          current_level = character.base_passive_skill_level(skill_key)
           max = skill[:max_level] || MAX_LEVEL
           return {allowed: false, reason: "Skill is at maximum level"} if current_level >= max
 

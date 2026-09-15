@@ -73,22 +73,6 @@ RSpec.describe Arena::CombatProcessor, "Neverlands-style combat features" do
     end
   end
 
-  describe "Body Part Targeting" do
-    it "defines BODY_PART_MULTIPLIERS constant" do
-      expect(Arena::CombatProcessor::BODY_PART_MULTIPLIERS).to include(
-        "head", "torso", "stomach", "legs"
-      )
-    end
-
-    it "head has highest damage multiplier (1.3x)" do
-      expect(Arena::CombatProcessor::BODY_PART_MULTIPLIERS["head"]).to eq(1.3)
-    end
-
-    it "legs have lowest damage multiplier (0.9x)" do
-      expect(Arena::CombatProcessor::BODY_PART_MULTIPLIERS["legs"]).to eq(0.9)
-    end
-  end
-
   describe "#process_action with attack" do
     it "accepts attack_type parameter" do
       result = processor.process_action(

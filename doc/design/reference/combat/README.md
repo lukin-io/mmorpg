@@ -1,11 +1,44 @@
 # Neverlands Combat and Arena Source Summary
 
+Fresh evidence: [September14 human unarmed Duel](observations/2026-09-14_arena_fist_duel.md) — accepted
+application, applicant Start/refusal, six exchanges including opponent magic,
+loss XP, public log/profile location, Finish and recovery. September12 absence
+of a live human fight below is historical, superseded for this Duel scope.
+
+For the design, delivery status and current implementation using this evidence,
+follow the [Combat domain](../../../domains/combat.md). The current local
+[ARENA guide](../../../ARENA.md) explains halls/applications and links their
+source versus local acceptance; it does not add new source observations.
+
 - Document type: neverlands-source-summary
 - Domain: combat
-- Updated: 2026-09-07
+- Updated: 2026-09-11
 - Evidence status: current for bounded fight/Arena states; incomplete overall
 
 ## Current observations
+
+- [Two fresh Ogre fights](observations/2026-09-11_ogre_combat_cycle.md)
+  complete the22-fight September11 register. Ogres16–18 formed groups of3/4;
+  the player's connected hits dealt0 and critical replies dealt502–801.
+  Both fights ended in defeat, without a shown injury, XP or search. One
+  return was followed by another attack before full HP recovery. Full physical
+  damage parity remains unresolved; the display profiles are not an equation.
+
+- Ten fresh stronger-NPC fights, independently captured Bandit/Robber levels
+  13–15 and equipment, six-member mixed combat, repeated critical dodges,
+  shield penetration, positive NV searches, defeat XP and a named injury in
+  [the second combat cycle](observations/2026-09-11_stronger_npc_loot_combat_cycle.md).
+  Its multi-hit evidence corrects the result parentheses to defeated opponents,
+  and distinguishes raw, HP-credited and post-lethal logged damage.
+- The [official progression and combat-input recheck](../character/observations/2026-09-11_level_grants_and_combat_inputs.md)
+  documents per-level grants, cumulative XP thresholds, equipment/mastery
+  inputs and which numerical coefficients remain unpublished.
+
+- Ten fresh low-level fights on `[998,1004]` / `[998,1003]`: Orc/Goblin mixed
+  groups, Skeleton levels 7–9, shield/empty-off-hand/dagger variants, committed
+  lethal returns, block lifetime, finite target switches, equipment profiles,
+  chat XP and the reaffirmed five-minute MVP rule in
+  `doc/design/reference/combat/observations/2026-09-11_low_level_two_cell_combat_cycle.md`.
 
 - September 7 Arena room selection and separate room-player lists, plus the
   official Bot article stating a maximum group size of ten, in
@@ -49,6 +82,16 @@ source transport, storage model, retry behavior, NPC-specific money
 probability, or relationship to the detailed combat log.
 
 ## Resolved bounded evidence
+
+- Second-cycle six-member mixed combat produced4730 credited damage and13183XP;
+  solo stronger fights gave381–778XP. A two-Bandit group gave820XP, and a loss
+  after one605HP defeat still awarded57XP. Higher levels/group size increase
+  reward potential, but repeated identical displayed profiles yielded different
+  XP; no universal level/group coefficient follows from these observations.
+- Gold's active paid-service page states drop eligibility±4 levels and maximum
+  fight XP×2.0; VIP states±6 and×2.5, Premium maximumXP×1.5. The official Bot
+  article gives standard±2. These multiply the cap or set an eligibility window,
+  not earned XP or a drop probability. Source purchases were not performed.
 
 - The current level-17 Orc fight confirms the same per-fight profile/composer
   at `200` AP, `62/82` physical costs, shield selector `90`, and a displayed
@@ -118,8 +161,8 @@ probability, or relationship to the detailed combat log.
 - One source turn combined Spirit Arrow (`50` AP, `5` MP) with the shield-`90`
   selector for `140` AP. MP changed `7 -> 2`; the critical magic hit dealt `10`
   damage. The intermediate statistics displayed `10(0)`, and the completed
-  two-hit fight displayed `155(1)`, so the ordinary hit counter cannot be
-  assumed to count each logged magic hit.
+  two-hit fight displayed `155(1)`. September11 multi-hit evidence now
+  identifies the parentheses as defeated opponents, not logged hits.
 - Two visibly equivalent one-opponent `Разбойник[7]` fights awarded `9` and
   `14` XP while their injury fields displayed `30` (medium) and `80` (very
   high). Visible name/level/HP alone are therefore insufficient for a general
@@ -207,7 +250,7 @@ probability, or relationship to the detailed combat log.
 - `app/services/arena/combat_processor.rb`
 - `app/services/arena/combat_profile.rb`
 - `app/lib/game/combat/action_catalog.rb`
-- `app/services/arena/npc_experience_awarder.rb`
+- `app/services/arena/experience_awarder.rb`
 - `app/services/arena/equipment_wear_resolver.rb`
 - `app/services/arena/npc_loot_awarder.rb`
 - `app/services/arena/combat_resolver.rb`
@@ -219,3 +262,16 @@ probability, or relationship to the detailed combat log.
 - `app/assets/stylesheets/arena.css`
 
 Local implementation linkage is context, not Neverlands evidence.
+
+## September12 authorized local calibration
+
+The completed22-fight register feeds [calibration v1](../../features/combat_calibration.md).
+The user authorized fitted coefficients and complete implementation without
+waiting for proprietary source code. This changes local delivery policy, not
+the provenance or certainty of the preserved observations.
+
+## September 12 Arena lobby cycle
+
+[Duels and Groups](observations/2026-09-12_arena_duels_and_groups.md) records city entry, ten-hall gates, equipment/timeout/risk forms, side fields, posting/cancellation, waiting navigation lock, 1×1→1×2 normalization and empty-opponent expiry. Level17 Dummy acceptance remained unavailable. New completed source Arena fights: **0**. The user authorizes pragmatic local physical PvP; [Arena design](../../areas/arena.md) records inferred start/admission rules and the runtime handbook owns local verification.
+
+- [September 15 Arena/medical review](observations/2026-09-15_arena_medical_gap_review.md): published Doctor thresholds, Group waiting, XP caps and bounded percentage/Snowball research; no new source fight.

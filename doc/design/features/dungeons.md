@@ -1,6 +1,10 @@
 # Dungeons
 
-Domain navigation: `doc/domains/dungeons.md`.
+Domain navigation: [Dungeons](../../domains/dungeons.md).
+
+[WORLD](../../WORLD.md#3-outdoor-cells-and-locations) describes the existing
+above-ground mine location; the [Dungeons handbook](../../features/dungeons.md)
+records the absent underground implementation and its prerequisites.
 
 ## Purpose
 

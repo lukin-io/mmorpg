@@ -10,14 +10,21 @@ RSpec.describe "Starter landscape seed upgrade", type: :model do
     load Rails.root.join("db/seeds/world_cells.rb")
   end
 
-  it "maps every surveyed coordinate once onto the continuous landscape without changing surveyed passability" do
+  it "maps every surveyed coordinate once onto its landscape without changing surveyed passability" do
     load_cells
     cells = MapTileTemplate.where(zone: zone.name).order(:y, :x).to_a
 
     expect(cells.size).to eq(273)
     cells.each do |cell|
-      expect(cell.cell_art).to eq("key" => "forpost_starter", "column" => cell.x, "row" => cell.y - 2)
-      expect(cell.cell_art_presentation).to have_attributes(physical_slice: true, landmarks_in_art: true)
+      expected_art = if cell.x == 20 && [6, 7].include?(cell.y)
+        {"key" => "forpost_ogre_habitat", "column" => 0, "row" => cell.y - 6}
+      else
+        {"key" => "forpost_starter", "column" => cell.x, "row" => cell.y - 2}
+      end
+      expect(cell.cell_art).to eq(expected_art)
+      expect(cell.cell_art_presentation).to have_attributes(
+        physical_slice: true, landmarks_in_art: expected_art.fetch("key") == "forpost_starter"
+      )
       expect(cell.passable).to eq(Game::World::StarterCellCatalog.default.at(cell.x, cell.y).passable)
     end
     expect(cells.map(&:cell_art).uniq.size).to eq(273)

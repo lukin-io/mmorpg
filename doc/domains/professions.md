@@ -8,18 +8,28 @@ and Inventory handoff.
 
 ## Documentation chain
 
-- Neverlands source summary: `doc/design/reference/professions/README.md`
+- [Required working context and update rules](../DOCUMENTATION.md#21-required-context-and-update-map)
+- Implemented adjacent workflows: [ECONOMY](../ECONOMY.md) explains Merchant
+  qualification and licensed trade; [MEDICAL](../MEDICAL.md) explains Doctor
+  requirements and injury treatment. Neither implies complete profession growth.
+- Existing adjacent content: [items/tools/licenses](../ITEMS.md),
+  [world resources/actions](../WORLD.md#4-npc-habitats-and-resources),
+  [active and absent formulas](../FORMULAS.md#11-compatibility-and-absent-formulas)
+- Cross-feature guides: [SKILLS profession counters](../SKILLS.md#profession-counters)
+  and [PERKS profession permissions](../PERKS.md#2-implemented-perks) keep
+  numeric proficiency, boolean ownership, qualification and licenses distinct.
+- Neverlands source summary: [doc/design/reference/professions/README.md](../design/reference/professions/README.md)
 - Captured cell-action boundaries and user eligibility/progression decisions:
-  `doc/design/reference/world/observations/2026-09-08_cell_content_and_world_rules.md`
+  [doc/design/reference/world/observations/2026-09-08_cell_content_and_world_rules.md](../design/reference/world/observations/2026-09-08_cell_content_and_world_rules.md)
 - Dated fishing/skill/herbalism wiki inputs:
-  `doc/design/reference/world/observations/2026-09-09_wiki_skills_and_cell_actions.md`
+  [doc/design/reference/world/observations/2026-09-09_wiki_skills_and_cell_actions.md](../design/reference/world/observations/2026-09-09_wiki_skills_and_cell_actions.md)
 - [Trader/Doctor prerequisite evidence](../design/reference/economy/observations/2026-09-09_licenses_and_shop_selling.md#profession-prerequisites-wiki-clarification-2026-09-10):
   separate perk, proficiency, quest qualification and license requirements.
 - Evidence gap:
-  `doc/design/reference/professions/observations/evidence_needed_complete_profession_flow.md`
-- Normalized design: `doc/design/features/professions.md`
-- Delivery ID: `PROFESSION-FLOW-001` in `doc/design/launch_mvp_plan.md`
-- Implementation placeholder: `doc/features/professions.md`
+  [doc/design/reference/professions/observations/evidence_needed_complete_profession_flow.md](../design/reference/professions/observations/evidence_needed_complete_profession_flow.md)
+- Normalized design: [doc/design/features/professions.md](../design/features/professions.md)
+- Delivery ID: `PROFESSION-FLOW-001` in [doc/design/launch_mvp_plan.md](../design/launch_mvp_plan.md)
+- Implementation placeholder: `doc/features/professions.md` ([handbook](../features/professions.md))
 - Adjacent qualification and licensed trade: [Shop handbook](../features/shop_economy.md)
   and [Character Progression](../features/character_progression.md#66-purchased-licenses-and-abilities).
 
@@ -34,7 +44,8 @@ not a missing profession prerequisite.
 Economy separately implements Merchant qualification and timed-license
 purchase/sale checks, using the Merchant/Healer perks owned by Character
 Progression. These bounded Shop features do not implement automatic Trading
-growth, Doctor qualification quests or medical treatment. The linked source
+growth or Doctor qualification quests. Bounded injury treatment now belongs to
+[Medical Care](../features/medical_care.md). The linked source
 record and Shop handbook distinguish those missing profession steps from the
 checks that already run.
 

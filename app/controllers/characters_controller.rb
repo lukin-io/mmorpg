@@ -147,12 +147,16 @@ class CharactersController < ApplicationController
     Character::PRIMARY_STATS
   end
 
+  # Keep allocation tiers/caps and the Stimulus spend state on saved levels.
+  # Effective levels remain the displayed totals; equipment is a display-only
+  # addition to the local preview and is never submitted as learned levels.
   def build_skills_data
     formula = Game::Formulas::SkillProgressionFormula.new
     skills = {}
 
     Game::Skills::PassiveSkillRegistry.all.each do |key, definition|
-      current_level = @character.passive_skill_level(key)
+      current_level = @character.base_passive_skill_level(key)
+      effective_level = @character.passive_skill_level(key)
       max_level = definition[:max_level] || 100
       points_per_spend = formula.points_per_spend(
         current_level: current_level,
@@ -160,7 +164,9 @@ class CharactersController < ApplicationController
       )
 
       skills[key] = {
-        level: current_level,
+        level: effective_level,
+        base_level: current_level,
+        equipment_bonus: effective_level - current_level,
         max_level: max_level,
         name: definition[:name],
         description: definition[:description],

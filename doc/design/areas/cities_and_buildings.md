@@ -1,6 +1,12 @@
 # Cities And Buildings
 
-Domain navigation: `doc/domains/city.md`.
+Domain navigation: [City](../../domains/city.md).
+
+[WORLD](../../WORLD.md#2-forpost-city-and-services) catalogs current districts,
+routes, service boundaries and scene references. The
+[City handbook](../../features/city.md) owns entry/navigation/return;
+[Shop](../../features/shop_economy.md) and [Medical Care](../../features/medical_care.md)
+own their respective service mutations.
 
 ## Purpose
 

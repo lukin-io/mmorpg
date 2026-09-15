@@ -1,6 +1,12 @@
 # Professions
 
-Domain navigation: `doc/domains/professions.md`.
+Domain navigation: [Professions](../../domains/professions.md).
+
+[WORLD](../../WORLD.md#4-npc-habitats-and-resources) separates resource
+annotations from supported actions, and [ITEMS](../../ITEMS.md#2-current-item-catalog)
+identifies actual tools/materials. The [Professions handbook](../../features/professions.md)
+records absent gathering/production loops; [Medical Care](../../features/medical_care.md)
+owns the bounded healer workflow and its current requirement gap.
 
 ## Purpose
 

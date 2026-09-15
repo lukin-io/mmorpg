@@ -10,6 +10,13 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
+-- Name: public; Type: SCHEMA; Schema: -; Owner: -
+--
+
+-- *not* creating schema, since initdb creates it
+
+
+--
 -- Name: guard_shop_currency_receipt(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -289,6 +296,45 @@ CREATE SEQUENCE public.arena_rooms_id_seq
 --
 
 ALTER SEQUENCE public.arena_rooms_id_seq OWNED BY public.arena_rooms.id;
+
+
+--
+-- Name: character_injuries; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.character_injuries (
+    id bigint NOT NULL,
+    character_id bigint NOT NULL,
+    arena_match_id bigint,
+    severity character varying NOT NULL,
+    name character varying NOT NULL,
+    stat_penalty_percent integer DEFAULT 0 NOT NULL,
+    expires_at timestamp(6) without time zone NOT NULL,
+    healed_at timestamp(6) without time zone,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL,
+    CONSTRAINT injury_penalty CHECK (((stat_penalty_percent >= 0) AND (stat_penalty_percent <= 90))),
+    CONSTRAINT injury_severity CHECK (((severity)::text = ANY ((ARRAY['light'::character varying, 'medium'::character varying, 'heavy'::character varying, 'combat'::character varying])::text[])))
+);
+
+
+--
+-- Name: character_injuries_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.character_injuries_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: character_injuries_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.character_injuries_id_seq OWNED BY public.character_injuries.id;
 
 
 --
@@ -636,18 +682,18 @@ CREATE TABLE public.currency_transactions (
     updated_at timestamp(6) without time zone NOT NULL,
     shop_offer_id bigint GENERATED ALWAYS AS (
 CASE
-    WHEN ((reason)::text = ANY ((ARRAY['shop.purchase'::character varying, 'shop.sale'::character varying])::text[])) THEN ((metadata ->> 'shop_offer_id'::text))::bigint
+    WHEN ((reason)::text = ANY (ARRAY[('shop.purchase'::character varying)::text, ('shop.sale'::character varying)::text])) THEN ((metadata ->> 'shop_offer_id'::text))::bigint
     ELSE NULL::bigint
 END) STORED,
     shop_account_id bigint GENERATED ALWAYS AS (
 CASE
-    WHEN ((reason)::text = ANY ((ARRAY['shop.purchase'::character varying, 'shop.sale'::character varying])::text[])) THEN ((metadata ->> 'shop_account_id'::text))::bigint
+    WHEN ((reason)::text = ANY (ARRAY[('shop.purchase'::character varying)::text, ('shop.sale'::character varying)::text])) THEN ((metadata ->> 'shop_account_id'::text))::bigint
     ELSE NULL::bigint
 END) STORED,
     CONSTRAINT currency_transactions_bounded_balance CHECK (((balance_after >= (0)::numeric) AND (balance_after < ('10000000000'::bigint)::numeric))),
     CONSTRAINT currency_transactions_finite_nonzero_amount CHECK (((amount > ('-10000000000'::bigint)::numeric) AND (amount < ('10000000000'::bigint)::numeric) AND (amount <> (0)::numeric))),
     CONSTRAINT currency_transactions_shop_amount_direction CHECK (((((reason)::text <> 'shop.purchase'::text) OR (amount < (0)::numeric)) AND (((reason)::text <> 'shop.sale'::text) OR (amount > (0)::numeric)))),
-    CONSTRAINT currency_transactions_shop_references CHECK ((((reason)::text <> ALL ((ARRAY['shop.purchase'::character varying, 'shop.sale'::character varying])::text[])) OR ((jsonb_typeof(metadata) = 'object'::text) AND (jsonb_typeof((metadata -> 'shop_offer_id'::text)) = 'number'::text) AND (jsonb_typeof((metadata -> 'shop_account_id'::text)) = 'number'::text) AND (shop_offer_id IS NOT NULL) AND (shop_offer_id > 0) AND (shop_account_id IS NOT NULL) AND (shop_account_id > 0))))
+    CONSTRAINT currency_transactions_shop_references CHECK ((((reason)::text <> ALL (ARRAY[('shop.purchase'::character varying)::text, ('shop.sale'::character varying)::text])) OR ((jsonb_typeof(metadata) = 'object'::text) AND (jsonb_typeof((metadata -> 'shop_offer_id'::text)) = 'number'::text) AND (jsonb_typeof((metadata -> 'shop_account_id'::text)) = 'number'::text) AND (shop_offer_id IS NOT NULL) AND (shop_offer_id > 0) AND (shop_account_id IS NOT NULL) AND (shop_account_id > 0))))
 );
 
 
@@ -772,6 +818,44 @@ CREATE SEQUENCE public.ignore_list_entries_id_seq
 --
 
 ALTER SEQUENCE public.ignore_list_entries_id_seq OWNED BY public.ignore_list_entries.id;
+
+
+--
+-- Name: injury_treatments; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.injury_treatments (
+    id bigint NOT NULL,
+    character_injury_id bigint NOT NULL,
+    healer_id bigint NOT NULL,
+    inventory_item_id bigint,
+    price integer DEFAULT 0 NOT NULL,
+    status character varying DEFAULT 'pending'::character varying NOT NULL,
+    expires_at timestamp(6) without time zone NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL,
+    CONSTRAINT treatment_price CHECK (((price >= 0) AND (price <= 7000))),
+    CONSTRAINT treatment_status CHECK (((status)::text = ANY ((ARRAY['pending'::character varying, 'completed'::character varying, 'declined'::character varying])::text[])))
+);
+
+
+--
+-- Name: injury_treatments_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.injury_treatments_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: injury_treatments_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.injury_treatments_id_seq OWNED BY public.injury_treatments.id;
 
 
 --
@@ -1498,6 +1582,13 @@ ALTER TABLE ONLY public.arena_rooms ALTER COLUMN id SET DEFAULT nextval('public.
 
 
 --
+-- Name: character_injuries id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.character_injuries ALTER COLUMN id SET DEFAULT nextval('public.character_injuries_id_seq'::regclass);
+
+
+--
 -- Name: character_licenses id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -1579,6 +1670,13 @@ ALTER TABLE ONLY public.game_events ALTER COLUMN id SET DEFAULT nextval('public.
 --
 
 ALTER TABLE ONLY public.ignore_list_entries ALTER COLUMN id SET DEFAULT nextval('public.ignore_list_entries_id_seq'::regclass);
+
+
+--
+-- Name: injury_treatments id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.injury_treatments ALTER COLUMN id SET DEFAULT nextval('public.injury_treatments_id_seq'::regclass);
 
 
 --
@@ -1749,6 +1847,14 @@ ALTER TABLE ONLY public.arena_rooms
 
 
 --
+-- Name: character_injuries character_injuries_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.character_injuries
+    ADD CONSTRAINT character_injuries_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: character_licenses character_licenses_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1842,6 +1948,14 @@ ALTER TABLE ONLY public.game_events
 
 ALTER TABLE ONLY public.ignore_list_entries
     ADD CONSTRAINT ignore_list_entries_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: injury_treatments injury_treatments_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.injury_treatments
+    ADD CONSTRAINT injury_treatments_pkey PRIMARY KEY (id);
 
 
 --
@@ -2199,6 +2313,27 @@ CREATE INDEX index_arena_rooms_on_zone_id ON public.arena_rooms USING btree (zon
 
 
 --
+-- Name: index_character_injuries_on_arena_match_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_character_injuries_on_arena_match_id ON public.character_injuries USING btree (arena_match_id);
+
+
+--
+-- Name: index_character_injuries_on_arena_match_id_and_character_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_character_injuries_on_arena_match_id_and_character_id ON public.character_injuries USING btree (arena_match_id, character_id);
+
+
+--
+-- Name: index_character_injuries_on_character_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_character_injuries_on_character_id ON public.character_injuries USING btree (character_id);
+
+
+--
 -- Name: index_character_licenses_on_character_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2504,6 +2639,27 @@ CREATE INDEX index_ignore_list_entries_on_ignored_user_id ON public.ignore_list_
 --
 
 CREATE INDEX index_ignore_list_entries_on_user_id ON public.ignore_list_entries USING btree (user_id);
+
+
+--
+-- Name: index_injury_treatments_on_character_injury_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_injury_treatments_on_character_injury_id ON public.injury_treatments USING btree (character_injury_id);
+
+
+--
+-- Name: index_injury_treatments_on_healer_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_injury_treatments_on_healer_id ON public.injury_treatments USING btree (healer_id);
+
+
+--
+-- Name: index_injury_treatments_on_inventory_item_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_injury_treatments_on_inventory_item_id ON public.injury_treatments USING btree (inventory_item_id);
 
 
 --
@@ -2906,6 +3062,20 @@ CREATE UNIQUE INDEX index_zones_on_name ON public.zones USING btree (name);
 
 
 --
+-- Name: one_open_npc_offer_per_room; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX one_open_npc_offer_per_room ON public.arena_applications USING btree (arena_room_id, npc_template_id) WHERE ((status = 0) AND (npc_template_id IS NOT NULL));
+
+
+--
+-- Name: one_pending_injury_treatment; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX one_pending_injury_treatment ON public.injury_treatments USING btree (character_injury_id, healer_id) WHERE ((status)::text = 'pending'::text);
+
+
+--
 -- Name: currency_transactions currency_transactions_shop_receipt_guard; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -2942,6 +3112,14 @@ ALTER TABLE ONLY public.arena_participations
 
 ALTER TABLE ONLY public.character_licenses
     ADD CONSTRAINT fk_rails_098e4ad31f FOREIGN KEY (world_action_offer_id) REFERENCES public.world_action_offers(id);
+
+
+--
+-- Name: injury_treatments fk_rails_0a06e99f5b; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.injury_treatments
+    ADD CONSTRAINT fk_rails_0a06e99f5b FOREIGN KEY (inventory_item_id) REFERENCES public.inventory_items(id);
 
 
 --
@@ -3014,6 +3192,14 @@ ALTER TABLE ONLY public.city_hotspots
 
 ALTER TABLE ONLY public.shop_stocks
     ADD CONSTRAINT fk_rails_39a197bb1d FOREIGN KEY (item_template_id) REFERENCES public.item_templates(id);
+
+
+--
+-- Name: character_injuries fk_rails_39ec66cdb9; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.character_injuries
+    ADD CONSTRAINT fk_rails_39ec66cdb9 FOREIGN KEY (character_id) REFERENCES public.characters(id);
 
 
 --
@@ -3129,11 +3315,27 @@ ALTER TABLE ONLY public.character_positions
 
 
 --
+-- Name: character_injuries fk_rails_660be36b82; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.character_injuries
+    ADD CONSTRAINT fk_rails_660be36b82 FOREIGN KEY (arena_match_id) REFERENCES public.arena_matches(id);
+
+
+--
 -- Name: chat_messages fk_rails_66c73bb60c; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.chat_messages
     ADD CONSTRAINT fk_rails_66c73bb60c FOREIGN KEY (chat_channel_id) REFERENCES public.chat_channels(id);
+
+
+--
+-- Name: injury_treatments fk_rails_6a8f01d9ad; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.injury_treatments
+    ADD CONSTRAINT fk_rails_6a8f01d9ad FOREIGN KEY (healer_id) REFERENCES public.characters(id);
 
 
 --
@@ -3249,6 +3451,14 @@ ALTER TABLE ONLY public.currency_transactions
 
 
 --
+-- Name: injury_treatments fk_rails_b69c0c9b6d; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.injury_treatments
+    ADD CONSTRAINT fk_rails_b69c0c9b6d FOREIGN KEY (character_injury_id) REFERENCES public.character_injuries(id);
+
+
+--
 -- Name: shop_stocks fk_rails_b7ce5917f4; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3358,7 +3568,106 @@ ALTER TABLE ONLY public.airship_journeys
 
 SET search_path TO "$user", public;
 
+--
+-- Name: arena_application_memberships; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.arena_application_memberships (
+    id bigint NOT NULL,
+    arena_application_id bigint NOT NULL,
+    character_id bigint NOT NULL,
+    team character varying NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL,
+    CONSTRAINT arena_membership_team CHECK (((team)::text = ANY ((ARRAY['a'::character varying, 'b'::character varying])::text[])))
+);
+
+
+
+--
+-- Name: arena_application_memberships_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.arena_application_memberships_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+
+--
+-- Name: arena_application_memberships_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.arena_application_memberships_id_seq OWNED BY public.arena_application_memberships.id;
+
+
+
+--
+-- Name: arena_application_memberships id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.arena_application_memberships ALTER COLUMN id SET DEFAULT nextval('public.arena_application_memberships_id_seq'::regclass);
+
+
+
+--
+-- Name: arena_application_memberships arena_application_memberships_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.arena_application_memberships
+    ADD CONSTRAINT arena_application_memberships_pkey PRIMARY KEY (id);
+
+
+
+--
+-- Name: index_arena_application_memberships_on_arena_application_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_arena_application_memberships_on_arena_application_id ON public.arena_application_memberships USING btree (arena_application_id);
+
+
+
+--
+-- Name: index_arena_application_memberships_on_character_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_arena_application_memberships_on_character_id ON public.arena_application_memberships USING btree (character_id);
+
+
+
+--
+-- Name: index_arena_memberships_on_application_and_character; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_arena_memberships_on_application_and_character ON public.arena_application_memberships USING btree (arena_application_id, character_id);
+
+
+
+--
+-- Name: arena_application_memberships fk_rails_039540a116; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.arena_application_memberships
+    ADD CONSTRAINT fk_rails_039540a116 FOREIGN KEY (character_id) REFERENCES public.characters(id);
+
+
+
+--
+-- Name: arena_application_memberships fk_rails_6698db9671; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.arena_application_memberships
+    ADD CONSTRAINT fk_rails_6698db9671 FOREIGN KEY (arena_application_id) REFERENCES public.arena_applications(id);
+
+
+
 INSERT INTO "schema_migrations" (version) VALUES
+('20260915090000'),
+('20260912120000'),
+('20260912090000'),
 ('20260910170000'),
 ('20260909160000'),
 ('20260909120000'),

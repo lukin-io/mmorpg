@@ -11,6 +11,12 @@ class PlayersController < ApplicationController
   def show
     @viewer_character = current_character if user_signed_in?
     @own_profile = @viewer_character.present? && @viewer_character.id == @character.id
+    # Intentional profile inspection during an existing fight must not trigger
+    # the shell's incoming-attack redirect back to that same fight.
+    @browsing_existing_fight_profile = @viewer_character && (
+      @viewer_character.arena_participations.joins(:arena_match).merge(ArenaMatch.active).exists? ||
+      @viewer_character.unfinished_arena_result.present?
+    )
     @character = @viewer_character if @own_profile
     @equipment = equipped_items_for(@character)
 

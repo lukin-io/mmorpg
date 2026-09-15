@@ -20,7 +20,7 @@ class PublicFightLogsController < ApplicationController
 
     if @view_mode == :log
       @combat_log_entries = paginated_entries
-      @total_pages = (@arena_match.combat_log_entries.count.to_f / @per_page).ceil
+      @total_pages = (public_entries.count.to_f / @per_page).ceil
     end
 
     respond_to do |format|
@@ -42,10 +42,16 @@ class PublicFightLogsController < ApplicationController
 
   def paginated_entries
     offset = (@page - 1) * @per_page
-    @arena_match.combat_log_entries
+    public_entries
       .order(round_number: :asc, sequence: :asc)
       .offset(offset)
       .limit(@per_page)
+  end
+
+  # The public narrative contains outcomes, not internal submission/stance rows.
+  # Keep those durable rows available to the live waiting UI and raw JSON export.
+  def public_entries
+    @arena_match.combat_log_entries.where.not(log_type: "action")
   end
 
   def export_payload

@@ -1,5 +1,11 @@
 # Airship Travel and Region Handoffs
 
+The [World domain](../../domains/world.md) connects the source journey to its
+delivery boundary. [WORLD](../../WORLD.md#5-travel-context-and-return-behavior)
+describes location/return context, [FORMULAS](../../FORMULAS.md#10-transport)
+records fares and timing, and the [Airship handbook](../../features/airship_travel.md)
+owns current boarding, journey and arrival behavior.
+
 ## Authority and delivery boundary
 
 Neverlands is the only design authority. The completed September 8 journey is

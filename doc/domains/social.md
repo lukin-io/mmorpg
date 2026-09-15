@@ -8,12 +8,16 @@ actions, and their shared-shell integration.
 
 ## Documentation chain
 
-- Neverlands source summary: `doc/design/reference/social/README.md`
-- Current observations: `doc/design/reference/social/observations/`
-- Normalized design: `doc/design/features/social_chat_presence.md`
-- Shared layout design: `doc/design/areas/game_client_layout.md`
-- Delivery ID: `SOCIAL-CHAT-001` in `doc/design/launch_mvp_plan.md`
-- Current implementation boundary: `doc/features/game_shell.md`
+- [Required working context and update rules](../DOCUMENTATION.md#21-required-context-and-update-map)
+- General [gameplay event catalog](../features/game_shell.md#gameplay-event-catalog):
+  triggers, producers, audiences, wording/emphasis and persistence
+- Location/audience context: [WORLD](../WORLD.md#5-travel-context-and-return-behavior)
+- Neverlands source summary: [doc/design/reference/social/README.md](../design/reference/social/README.md)
+- Current observations: [doc/design/reference/social/observations/](../design/reference/social/observations)
+- Normalized design: [doc/design/features/social_chat_presence.md](../design/features/social_chat_presence.md)
+- Shared layout design: [doc/design/areas/game_client_layout.md](../design/areas/game_client_layout.md)
+- Delivery ID: `SOCIAL-CHAT-001` in [doc/design/launch_mvp_plan.md](../design/launch_mvp_plan.md)
+- Current implementation boundary: `doc/features/game_shell.md` ([handbook](../features/game_shell.md))
 
 ## Current RPG status
 

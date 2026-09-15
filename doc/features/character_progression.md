@@ -3,7 +3,7 @@
 title: Character Progression Feature
 description: Implementation handbook for Neverlands-based primary stats, numeric skills, boolean perks, point allocation, current license permissions, and public progression display.
 status: Fully Implemented
-updated: 2026-09-11
+updated: 2026-09-12
 owners: Character Progression
 template: feature-v1
 ---
@@ -14,7 +14,39 @@ This document is the implementation contract for the current Character Progressi
 
 It describes what exists now. It does not treat the complete observed Neverlands perk/profession catalog, unknown effect formulas, or familiar RPG progression conventions as shipped behavior.
 
+### September 12 combat inputs and medical effects
+
+[Combat calibration v1](../design/features/combat_calibration.md) consumes the
+existing verified per-level grants: base stats plus allocations/perks/equipment,
+effective mastery beyond the allocation cap, fatigue, artifact metadata and
+resistance skills. The level table and cumulative XP thresholds are unchanged.
+There is no additional inherited level/Dexterity flat-damage formula. Displayed
+attack/armor summaries use the same inputs as combat; critical probability is
+opponent-dependent, so the summary exposes the base chance only.
+Self-Healing/Fast Mana Regeneration now affect elapsed server recovery, including
+fractional MP. [Medical Care](medical_care.md) owns persisted injury penalties,
+expiry and treatment; they reduce effective primary stats without rewriting
+learned allocations or deleting history. Final validation is recorded in [Arena acceptance](arena_combat.md#september-12-final-calibrated-acceptance) and [Medical Care](medical_care.md#6-acceptance-and-tests).
+
 ## 1. Design authority and related documents
+
+The [CHARACTER guide](../CHARACTER.md) connects the complete build, saved versus
+effective values, level/point grants, AP/capacity and editing. [MEDICAL](../MEDICAL.md)
+explains injury/recovery distinctions; [ECONOMY](../ECONOMY.md) explains the
+wallet and purchased-license handoffs. This handbook retains runtime acceptance.
+
+Global guides: [SKILLS](../SKILLS.md) owns the complete numeric catalog,
+profession-counter distinction, formulas/consumers and editing use cases;
+[PERKS](../PERKS.md) owns boolean choices, grants/exclusions, source-only
+descriptions and profession/license handoffs. Their
+[September 14 reference](../design/reference/character/observations/2026-09-14_skills_and_perks.md)
+is supplied-image/wiki evidence, not new local browser acceptance.
+
+Read [FORMULAS](../FORMULAS.md) for grants, allocations, caps and recovery,
+[ITEMS](../ITEMS.md#3-fields-slots-and-effective-properties) for equipment and
+requirements, and the [Combat](arena_combat.md) / [Medical Care](medical_care.md)
+handoffs for effective inputs and injuries. Read and update the affected
+references under the [context/update map](../DOCUMENTATION.md#21-required-context-and-update-map).
 
 Domain navigation: `doc/domains/character.md`.
 
@@ -55,11 +87,11 @@ Supporting documents:
 | `doc/features/world.md` | World consumes effective Wanderer for adjacent travel and supplies the profile's current cell/room/flight label. | Character Progression owns saved skill values and profile formatting; World owns the configurable `24..30` second local fallback, exact authored durations, movement lifecycle, and `Presence#label` resolution from persisted location. |
 | `doc/features/shop_economy.md` | Shop rows read character requirements and Merchant/Healer prerequisites; Your licenses displays purchased permissions. | Character Progression owns allocations and permission display; Shop owns license grants, catalog, eligibility and atomic settlement, while Inventory owns later equipment enforcement. |
 | `doc/features/player_inventory.md` | The shared character sheet and item rows consume effective stats/skills. | Character Progression owns saved/effective values; Player Inventory owns equipment state, capacity display, and requirement enforcement. |
-| `doc/features/arena_combat.md` | Fight profiles consume effective character values and eligible completed solo NPC fights may award capped XP, whose actual amount is passed onward for concise shell feedback. | Character Progression owns values, thresholds, and grants; Arena Combat owns match resolution, the idempotent award handoff, and the persisted fact supplied to Game Shell. |
+| `doc/features/arena_combat.md` | Fight profiles consume effective character values and eligible completed solo/group NPC fights may award capped XP, whose actual amount is passed onward for concise shell feedback. | Character Progression owns values, thresholds, and grants; Arena Combat owns match resolution, the idempotent award handoff, and the persisted fact supplied to Game Shell. |
 
 ## 2. Feature summary
 
-An authenticated player begins at level `0`, gains configured combat experience from solo PvE victories, receives exact table-authored level grants, and can allocate saved points on three distinct Neverlands-shaped surfaces: five primary stats, 29 numeric skills, and binary perks. Each page shows current values and remaining points, lets the browser preview reversible pending additions, and submits one explicit save. Saved additions cannot be removed through the normal allocation UI.
+An authenticated player begins at level `0`, gains explicit or calibrated combat experience from eligible solo and group PvE outcomes, receives exact table-authored level grants, and can allocate saved points on three distinct Neverlands-shaped surfaces: five primary stats, 29 numeric skills, and binary perks. Each page shows current values and remaining points, lets the browser preview reversible pending additions, and submits one explicit save. Saved additions cannot be removed through the normal allocation UI.
 
 The `Character` record is authoritative for saved allocations and point balances. `allocated_stats`, `passive_skills`, and `perks` are JSONB maps; `stat_points_available`, `combat_skill_points`, `peace_skill_points`, and `perk_points` are separate non-negative counters. The browser never grants points or finalizes an allocation.
 
@@ -83,7 +115,7 @@ The MVP currently contains:
 
 - Reproduce the captured profile-to-stats/skills/perks navigation and explicit save model.
 - Keep primary stats, numeric skills, and binary perks as separate persisted concepts and point pools.
-- Apply captured 25-level numeric-skill tier rates exactly and cap each skill at `100`.
+- Apply captured 25-level numeric-skill tier rates exactly and cap allocated base skills at `100`; effective totals include equipment beyond that cap.
 - Keep browser previews reversible while making the server authoritative for every save.
 - Keep XP/grant data finite and catalog-authored; do not extrapolate incomplete level rows or invent group distribution.
 - Expose only safe public progression facts and reserve mutation controls for the owning player.
@@ -100,6 +132,25 @@ The MVP currently contains:
 - Recreating Neverlands CGI routes, frames, Russian player-facing copy, or token formats.
 
 ## 4. Player experience
+
+### September 11 equipment-aware allocation acceptance
+
+After the passing stage2 full check (2,929 non-system and 297 system examples),
+the agent used the local in-app browser at 1366 × 768 and 390 × 844 with isolated
+`CombatAcceptance0911` data. Your character → Skills showed Knife Mastery 128
+from saved base 98 plus equipment 30. One plus click previewed 130; Save used
+one of two combat points. Reopening Skills after reload retained 130, one free
+point and disabled plus/MAX. Inventory Remove → Skills showed base 100;
+Inventory Wear → Skills restored 130. These were actual UI mutations.
+The fixture deliberately granted the gear bonus; it does not establish an NPC
+item's source stats or weapon-mastery damage/AP coefficient.
+
+Header maxima changed with the item (1530/14 equipped, 1500/7 unequipped);
+current resources were not refilled or reduced by this projection. Existing
+Inventory does not clamp current resources on gear removal, so a temporary
+current-above-maximum display is possible. The exact source gear-removal
+reconciliation policy remains an evidence gap. A later mobile header CSS fix
+has its separate final acceptance in the Arena handbook.
 
 ### 4.1 Entry conditions
 
@@ -173,7 +224,7 @@ The feature is an authored catalog and state graph rather than spatial topology.
 | `merchant` | Merchant | Spend one perk point; persist `Yes` | Boolean perk source ID `34`; prerequisite for Trading licenses, alongside Merchant qualification |
 | `healer` | Healer | Spend one perk point; persist `Yes` | Boolean perk source ID `35`; prerequisite for Doctor licenses, with Traumatologist qualification additionally required for tiers II/III |
 
-Numeric skills use captured four-value rate strings. The rate selected for a spend is based on the saved/current value before that spend:
+Numeric skills use captured four-value rate strings. The rate selected for a spend is based on the saved **base** value before that spend, excluding equipment bonuses:
 
 | Band | Current numeric skill | Rate position |
 |---|---:|---:|
@@ -199,7 +250,7 @@ Relationships must come from the source-backed registries. Categories, display o
 | Surface or behavior | Entry point | MVP status | Owning implementation |
 |---|---|---|---|
 | Public player profile | `GET /player/:name` | Interactive/read-only by viewer | `PlayersController` and profile view |
-| XP and level grants | Shared solo-PvE fight finalization | Interactive downstream entry | `NpcExperienceAwarder`, `LevelUpService`, and progression catalog |
+| XP and level grants | Shared player/NPC fight finalization | Interactive downstream entry | `ExperienceAwarder`, `LevelUpService`, and progression catalog |
 | Primary-stat allocation | `GET/PATCH /characters/:id/stats` | Interactive | `CharactersController` and `Character` |
 | Numeric-skill allocation | `GET/PATCH /characters/:id/skills` | Interactive | `CharactersController`, registry, and formula |
 | Boolean perk allocation | `GET/PATCH /characters/:id/perks` | Interactive subset | `PerkAllocation` and `PerkRegistry` |
@@ -209,6 +260,58 @@ Relationships must come from the source-backed registries. Categories, display o
 | Extra Action Points effect | Shared combat-profile preparation | Interactive downstream consumer | `Character#max_action_points` and `Arena::CombatProfile` |
 | Careful Fighter effect | Shared fight finalization | Interactive downstream consumer | `Arena::EquipmentWearResolver` |
 | Other skill/perk gameplay effects without captured formulas | No mutation | Deferred | Downstream owning feature after evidence |
+
+### Level grants and the combat handoff
+
+The [September11 source recheck](../design/reference/character/observations/2026-09-11_level_grants_and_combat_inputs.md)
+contains the complete per-level stat table and verified source boundaries.
+The [normalized design](../design/features/progression_stats_skills.md#level-and-experience-table)
+and [MVP delivery plan](../design/launch_mvp_plan.md) link that evidence to scope.
+Runtime data lives in `config/gameplay/character_progression.yml`, loaded by
+`app/lib/game/progression/catalog.rb`; do not duplicate balance numbers in a
+controller, NPC generator or browser script.
+
+| Step | Authoritative owner and behavior |
+|---|---|
+| Earn XP | Arena finalization supplies the configured, capped award to `Players::Progression::LevelUpService#apply_experience!`. The awarder's encounter guard owns retry prevention. Calling the level service twice with positive XP means two awards; it is not an independent deduplication API. |
+| Cross thresholds | The service locks/reloads Character, adds cumulative XP, applies every newly reached complete catalog row once, and atomically credits level NV through the wallet ledger. A row stores the additional XP cost of that level; the threshold to reach levelN sums rows0 throughN−1. Its grants belong to the row's own level. |
+| Receive points | Stat, combat-skill, peace-skill and perk pools increase separately. For example reaching13 gives10 stat points,14 gives12,15 gives15. These do not automatically raise Strength or heal HP/MP. |
+| Allocate | Stats/Skills/Perks save under ownership and row-lock checks. Primary additions persist in `allocated_stats`; numeric skills and owned perks retain separate maps. |
+| Build effective values | `Character#stats` combines base1, saved primary additions, `floor(level/2)` Strength for More Strength, and equipped primary modifiers. Numeric skills combine saved base values and equipped bonuses without clipping the effective total at100; allocation remains capped at100. |
+| Enter combat | `Arena::CombatProfile` persists AP, attack costs and block-table selection. Ordinary profiles retain those values; `no_weapons` rederives AP/physical costs and forces normal blocks to suppress stale gear overrides. `Arena::CombatResolver` consumes current effective player values and NPC snapshots. The [combat handbook](arena_combat.md) owns downstream outcome/mitigation rules. |
+| Notify | Arena publishes actual persisted XP through the [Shell event catalog](game_shell.md#gameplay-event-catalog): group/PvP results publish at finalization, while the solo-NPC positive-XP notice is deferred to Finish. Chat never recalculates grants or changes progression state. |
+
+At level0 there are15 free stat points plus five base points. The source's
+level17 cumulative167 means five base points plus162 granted points across
+levels0–17; allocations, gear and perks determine the displayed distribution.
+NPC level profiles are independently observed content. Do not derive an NPC's
+stats or occupied gear slots from the player's grant table.
+
+Supported exact downstream formulas remain HP=`Health×5`, MP=`Knowledge×7`,
+mass=`Strength×5 + Health×10 + level×10`, and combat AP=`80 +10 at level5
++10 at level10 + effective Extra Action Points`. Weapon mastery is published
+to reduce attack AP and increase physical damage. The exact source coefficients remain unexposed; [calibration v1](../design/features/combat_calibration.md) now implements the fitted costs, damage and opposed ratings, replacing inherited local equations.
+
+Focused ownership checks: `spec/lib/game/progression/catalog_spec.rb`,
+`spec/services/players/progression/level_up_service_spec.rb`, character model
+and allocation request specs, and `spec/services/arena/combat_profile_spec.rb`.
+The level service tests below/at thresholds, multiple crossed rows, exact
+wallet grants, unchanged vitals, zero/invalid input and the finite level27 cap.
+
+The source profile's29,946,496 XP plus20,053,504 remaining at level17 proves
+the next cumulative threshold is50,000,000. `Catalog` sums the row costs;
+level17 starts at25,000,000. This fixes the earlier row-as-threshold bug without
+altering grants or rewriting existing characters' levels, XP, items or points.
+Existing development characters advanced under the old calculation are not
+automatically rolled back; inspect/reset only explicitly selected test data.
+
+Trusted server metadata `combat_entitlement` supplies `tier` and ISO8601
+`expires_at` to `Character#combat_benefits(now:)`. Missing, malformed or expired
+entitlements fall back to standard. Standard/Worker drop windows are±2,
+Premium±2, Gold±4, VIP±6; XP cap multipliers are1/1.5/2/2.5 for
+standard/Premium/Gold/VIP. Only the maximum is multiplied. The shared combat
+handbook owns search/reward transactions; there is no premium purchase or
+activation UI in this delivery. Client submissions cannot set the entitlement.
 
 ### 6.2 Primary stats
 
@@ -220,9 +323,9 @@ The five primary stats begin at base value `1`. Saved additions are merged into 
 
 The numeric registry contains 29 captured `Умения`, each with a source ID, local key, English/source labels, category, combat-or-peace pool, maximum `100`, and exact four-band rate. One spend consumes one point from the assigned pool and may add more than one numeric level according to the current band.
 
-Multiple pending spends are applied sequentially so crossing `25`, `50`, or `75` changes the rate used by later spends. The final value is capped at `100`; requested spends after the cap do not consume points. Unknown skill keys do not consume points. Equipment bonuses contribute to `passive_skill_level`.
+Multiple pending spends are applied sequentially so crossing `25`, `50`, or `75` changes the rate used by later spends. The final allocated base value is capped at `100`; requested spends after the base cap do not consume points. Effective values add equipped bonuses afterward and can exceed100 (source mastery130/150). UI tier/cost/plus-button calculations use base values; displayed totals and equipment requirements use effective values. Unknown skill keys do not consume points. Equipment bonuses contribute to `passive_skill_level`.
 
-Two numeric skills have bounded downstream effects. World snapshots an exact
+Numeric skills have bounded downstream effects through their domain owners. World snapshots an exact
 authored cell duration when present; otherwise its configurable fallback uses
 effective Wanderer. Current defaults compute `30 - floor(wanderer * 6 / 100)`
 seconds with Wanderer clamped to `0..100` and duration bounded to `24..30`.
@@ -230,9 +333,14 @@ These values come from `config/gameplay/world_rules.yml`; the linear fallback
 is a local projection of observed samples, not the complete Neverlands formula.
 Combat builds AP as base `80`, plus `10` at level `5`, another `10` at level
 `10`, and one point per effective Extra Action Points value. Persisted
-per-fight profile overrides remain authoritative for captured fights. Every
-other downstream numeric-skill effect remains unimplemented until separately
-captured.
+per-fight profile overrides remain authoritative for captured fights. September12 additionally connects weapon mastery to AP/damage, physical
+resistance to mitigation, Observation to loot probability, Self-Healing/Fast Mana
+Regeneration to elapsed recovery. Authored Doctor bag thresholds are not
+enforced: Doctor is outside the numeric allocation registry, and the current
+requirement checker skips that key. [Medical Care](medical_care.md) owns this
+remaining `[IMPL]` gap. The
+[calibration](../design/features/combat_calibration.md) identifies fitted terms.
+Unobserved spell families and unrelated profession actions remain separate work.
 
 ### 6.4 Boolean perks and deferred behavior boundary
 
@@ -250,7 +358,9 @@ fight finalization, including the `1%` arena-defeat chance as an exact `0.5%`
 roll. Source IDs `34` and `35` provide Merchant/Healer ownership to Shop
 license prerequisite checks. Selecting a profession perk grants neither quest
 completion nor a timed license. Shop implements the bounded Merchant
-qualification path; Doctor quests and medical treatment remain unimplemented.
+qualification path; Doctor qualification quests remain separate, while [Medical care](medical_care.md)
+implements treatment using an active Doctor license and supported requirements,
+with effective Doctor proficiency independently enforced by Medical Care.
 Reset behavior and other uncaptured prerequisite/effect rules remain deferred.
 
 ### 6.5 World-related skill and perk gaps
@@ -460,7 +570,7 @@ They must not:
 
 `app/assets/stylesheets/character_sheet.css` owns the live-measured 463/5/fluid
 page composition and the shared 258/5/200 character sheet, including the
-115 × 255 CSS character silhouette, the dense stat/experience/record tables,
+115 × 255 original painted character portrait, the dense stat/experience/record tables,
 the increases banner, and the combat chips. `app/assets/stylesheets/player.css`
 owns the profile tab band, the allocation panels, and the stat/skill/perk rows.
 The reusable markup lives in
@@ -525,14 +635,14 @@ Arbitrary saved browser fields, translated labels, or profile URLs do not grant 
 | Conflicting captured perks | Reject the entire perk save under lock |
 | Numeric skill reaches `100` | Cap at `100`; no further visible spend is enabled |
 | Equipment changes effective Wanderer | Rebuild effective display; World uses it only for the next authored offer, never to rewrite an active command |
-| Equipment changes effective Extra Action Points | Rebuild effective display; Combat snapshots it only into a new fight profile, never an active profile |
+| Equipment changes effective Extra Action Points | Rebuild effective display; ordinary stored Combat profiles retain their AP, while `no_weapons` rederives its budget; see [CHARACTER's state boundary](../CHARACTER.md#6-implementation-and-state-ownership) |
 | Equipment changes another effective skill | Rebuild effective display; no uncaptured formula is applied |
 | Missing public character name | Return `404`, not an account-profile fallback |
 | Simultaneous/stale Stats or Skills saves | Serialize under the Character row lock; recheck current pools and reject an over-budget request without a lost update |
 | XP below next threshold | Add XP with no grant or level change |
 | XP crosses several rows | Apply every complete row once and aggregate one NV ledger adjustment |
 | XP at level `27` | Persist XP but do not invent a level `28` threshold or grant |
-| Multi-player PvE winning side | Award no XP until the Neverlands group distribution formula is captured |
+| Multi-player PvE result | Shared Combat settlement applies the current capped group contribution formula; [FORMULAS](../FORMULAS.md#reward-01--shared-npc-and-player-experience) distinguishes published rules and fitted coefficients |
 | Deferred profession/perk action | Render no control and create no inferred effect |
 
 ## 14. Acceptance criteria
@@ -678,7 +788,7 @@ There is no dedicated view spec for each allocation partial; request and system 
 - `app/services/game/inventory/requirement_checker.rb`
 - `app/services/characters/vitals_service.rb`
 - `app/services/game/movement/travel_time.rb`
-- `app/services/arena/npc_experience_awarder.rb`
+- `app/services/arena/experience_awarder.rb`
 - `app/controllers/concerns/outdoor_action_availability.rb`
 
 Character Progression owns saved stats, numeric skills, perks, and their allocation. Inventory owns equipment and item requirements; Vitals/Combat own their downstream formulas; World owns the bounded Wanderer movement formula. Those features may consume only implemented progression values and must capture Neverlands evidence before adding another effect.
@@ -741,3 +851,21 @@ Before extending Character Progression:
 | 2026-07-29 | Reordered the parameter column to the captured profile sequence, dropped the uncaptured Attack/Defense/Critical rows, gave the visitor profile its own identity line, and split the presentation into `character_sheet.css` and `player.css`. |
 | 2026-08-23 | Documented that Arena supplies the actual persisted solo-NPC XP award for recipient fight-completion feedback while Character Progression remains the XP/level authority. |
 | 2026-08-26 | Added the exact `80 + level thresholds + Extra Action Points` combat-profile effect and source perk `15` Careful Fighter with half-probability equipment wear. |
+
+### September 14 profile battle-location evidence
+
+The [first live human Duel](../design/reference/combat/observations/2026-09-14_arena_fist_duel.md)
+confirms the existing public profile contract: city on the first line, selected
+Arena room below, and an in-combat link to public fight history. The source
+still showed that link at0HP while the completed result awaited Finish.
+`PlayerProfileHelper#profile_location` and `PlayersController#location_payload`
+already retain the match through that acknowledgement. The players request
+spec covers live → completed/unacknowledged → finished link visibility.
+`PlayersController#show` suppresses the shell's immediate incoming-attack poll
+only when the viewer already has an active match or unfinished physical result.
+This permits intentional profile inspection during combat. A profile opened
+without an existing fight retains incoming scroll-attack recovery. The
+in-combat link targets `_top`, because the public log has no profile Turbo
+frame. The two-player Arena system spec follows profile → public log.
+[Arena](../ARENA.md#september-14-live-human-duel) owns entry/Finish and
+[Combat](../COMBAT.md#september-14-live-human-duel) owns the public log/result.

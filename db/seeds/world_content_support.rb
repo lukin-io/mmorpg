@@ -192,6 +192,10 @@ module Seeds
     end
 
     def starter_cell_art(x, y)
+      if x == 20 && (6..7).cover?(y)
+        return {"key" => "forpost_ogre_habitat", "column" => 0, "row" => y - 6}
+      end
+
       {"key" => "forpost_starter", "column" => x, "row" => y - 2}
     end
 

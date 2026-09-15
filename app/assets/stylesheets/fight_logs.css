@@ -41,17 +41,10 @@ body.nl-public-layout--fight-log {
   top: 0;
   right: 44px;
   left: 44px;
-  height: 120px;
-  border-bottom: 1px solid #aaaaaa;
-  background:
-    linear-gradient(160deg, transparent 0 34%, #6e0000 35% 40%, #d10000 41% 47%, #2b2b2b 48% 54%, transparent 55%) left top / 50% 100% no-repeat,
-    linear-gradient(200deg, transparent 0 34%, #6e0000 35% 40%, #d10000 41% 47%, #2b2b2b 48% 54%, transparent 55%) right top / 50% 100% no-repeat;
-  content: "FIGHT LOG";
-  color: #d41414;
-  font: 900 22px/112px Arial, Helvetica, sans-serif;
-  letter-spacing: 0.16em;
-  text-align: center;
-  text-shadow: -2px -2px #111111, 2px 2px #ffffff;
+  height: 130px;
+  background: url("arena/fight_log_header.png") center top / contain no-repeat;
+  content: "";
+
 }
 
 .nl-public-fight-log::after {
@@ -106,10 +99,9 @@ body.nl-public-layout--fight-log {
 .round-header { display: none; }
 
 .log-entry {
-  display: grid;
-  grid-template-columns: 62px minmax(0, 1fr);
-  gap: 2px;
-  padding: 4px 0;
+  display: block;
+  margin: 0 0 12px;
+  padding: 0;
   border: 0;
   background: transparent;
   color: #151515;
@@ -124,7 +116,7 @@ body.nl-public-layout--fight-log {
   white-space: nowrap;
 }
 
-.entry-time { color: #888888; }
+.entry-time { color: #888888; margin-right: 5px; white-space: nowrap; }
 .entry-sequence { display: none; }
 
 .entry-content {
@@ -140,6 +132,11 @@ body.nl-public-layout--fight-log {
 
 .nl-log-name--alpha { color: #1768ac; }
 .nl-log-name--beta { color: #18852e; }
+.nl-log-damage { font-weight: 700; }
+.nl-log-damage--critical,
+.nl-log-injury { color: #b30000; }
+.nl-log-body-part { color: #888888; }
+.log-type-skill .raw-message > strong:not(.nl-log-name):not(.nl-log-damage) { color: #e44242; }
 
 .fight-participants {
   display: flex;
@@ -238,7 +235,6 @@ body.nl-public-layout--fight-log {
   }
 
   .log-entry {
-    grid-template-columns: 56px minmax(0, 1fr);
     font-size: 14px;
   }
 }
@@ -262,11 +258,22 @@ body.nl-public-layout--fight-log {
   .nl-public-fight-log::after { height: 30px; }
 
   .log-entry {
-    grid-template-columns: 46px minmax(0, 1fr);
     padding: 3px 0;
     font-size: 12px;
   }
 
   .fight-participants { margin-top: 12px; }
   .log-pagination { margin-top: 16px; }
+}
+
+/* Preserve readable data columns in the minimum-width public view. */
+.nl-fight-statistics-scroll {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.nl-fight-statistics-scroll:focus-visible {
+  outline: 2px solid #1768ac;
+  outline-offset: 2px;
 }

@@ -23,6 +23,17 @@ RSpec.describe Game::World::EncounterRosterSelector do
     )
   end
 
+  it "preserves a fixed defeat reward separately and rejects malformed persisted values" do
+    tile_npc.update!(metadata: {"encounter_experience_reward" => 631, "encounter_defeat_experience_reward" => 57})
+    selection = described_class.new(tile_npc:).call
+    expect(selection).to have_attributes(experience_reward: 631, defeat_experience_reward: 57)
+
+    [nil, -1, 1.5, "57"].each do |value|
+      tile_npc.update_columns(metadata: {"encounter_defeat_experience_reward" => value})
+      expect { described_class.new(tile_npc:).call }.to raise_error(described_class::InvalidRosterError)
+    end
+  end
+
   it "keeps the fixed repeated-template fallback without consuming randomness" do
     tile_npc.update!(metadata: {"encounter_count" => 2, "encounter_experience_reward" => 35})
     rng = instance_double(Random)

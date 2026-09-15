@@ -1,6 +1,22 @@
 # Social Chat And Presence
 
-Domain navigation: `doc/domains/social.md` and `doc/domains/shell.md`.
+Domain navigation: [Social](../../domains/social.md) and
+[Shell](../../domains/shell.md).
+
+The [gameplay event catalog](../../features/game_shell.md#gameplay-event-catalog)
+connects actual producers, audiences, wording and persistence to the Shell
+implementation. [WORLD](../../WORLD.md#5-travel-context-and-return-behavior)
+describes the location/room changes that determine chat and presence context.
+
+## September12 authorized calibration
+
+The user authorized the best evidence-grounded approximation after22 controlled
+fights. [Calibration v1](combat_calibration.md) owns the fitted combat, mastery,
+fatigue, magic, XP/drop, injury/recovery and remote-placement rules. It
+supersedes earlier implementation holds for hidden coefficients; historical
+source observations and uncertainty remain unchanged. Medical Care supplies
+the bounded healer/patient transaction and Hospital bag purchase handoff.
+
 
 ## Purpose
 
@@ -125,6 +141,9 @@ captured Neverlands design.
   label, and event-specific emphasis. MVP producers are fight completion with
   awarded combat XP, successfully awarded NPC loot items, and successfully
   deposited NPC-loot NV.
+  The September 11 solo-NPC cycle confirms positive-XP notices on explicit
+  Finish and no private zero-XP completion row; the Combat owner records the
+  evidence and projects its already durable reward through the same timeline.
 - Game-wide announcements use an orange source marker, attention emphasis, and
   no visible timestamp in the captured state. Local runtime uses an unbranded
   English marker and never copies source promotional/service text.

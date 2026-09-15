@@ -20,6 +20,7 @@ module Game
         :sample_key,
         :members,
         :experience_reward,
+        :defeat_experience_reward,
         :trauma_percent,
         keyword_init: true
       )
@@ -95,6 +96,7 @@ module Game
           sample_key: sample["key"].to_s,
           members:,
           experience_reward: optional_non_negative_integer(sample, "encounter_experience_reward"),
+          defeat_experience_reward: optional_non_negative_integer(sample, "encounter_defeat_experience_reward"),
           trauma_percent: optional_percent(sample, "trauma_percent") || 30
         )
       end
@@ -117,6 +119,7 @@ module Game
           sample_key: nil,
           members:,
           experience_reward: fixed_experience_reward,
+          defeat_experience_reward: optional_non_negative_integer(tile_npc.metadata.to_h, "encounter_defeat_experience_reward"),
           trauma_percent: optional_percent(tile_npc.metadata.to_h, "trauma_percent") || 30
         )
       end
@@ -187,8 +190,8 @@ module Game
       def optional_non_negative_integer(data, key)
         return unless data.key?(key)
 
-        parsed = Integer(data[key], exception: false)
-        return parsed if parsed && parsed >= 0
+        value = data[key]
+        return value if value.is_a?(Integer) && value >= 0
 
         raise InvalidRosterError, "NPC encounter experience is not documented."
       end

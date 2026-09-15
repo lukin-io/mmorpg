@@ -8,6 +8,23 @@ authority; this document cannot override them. Engineering workflow belongs to
 `AGENTS.md`, verified runtime to `doc/features/**`, and documentation ownership
 to `doc/DOCUMENTATION.md`.
 
+For work on an existing or new implementation, follow the
+[context/update map](../DOCUMENTATION.md#21-required-context-and-update-map).
+Use [NPC](../NPC.md), [FORMULAS](../FORMULAS.md), [ITEMS](../ITEMS.md) and
+[WORLD](../WORLD.md) for current catalogs and edit impact; return to their
+evidence/design and feature owners before changing the contract. Synchronize
+affected entries and incoming references when an adopted design rule changes.
+
+## September12 authorized calibration
+
+The user authorized the best evidence-grounded approximation after22 controlled
+fights. [Calibration v1](features/combat_calibration.md) owns the fitted combat, mastery,
+fatigue, magic, XP/drop, injury/recovery and remote-placement rules. It
+supersedes earlier implementation holds for hidden coefficients; historical
+source observations and uncertainty remain unchanged. Medical Care supplies
+the bounded healer/patient transaction and Hospital bag purchase handoff.
+
+
 ## Reference Hierarchy
 
 1. Neverlands live behavior and preserved reference observations establish game
@@ -18,6 +35,14 @@ to `doc/DOCUMENTATION.md`.
    establish uncaptured source parity.
 
 Non-Neverlands game rules are not alternate design authority.
+
+The September11 combat evidence now contains10 low-level,10 stronger and2
+Ogre fights. Captured profiles and UI/lifecycle rules do not establish the
+source's hidden numerical damage formula. The
+[Ogre observation](reference/combat/observations/2026-09-11_ogre_combat_cycle.md)
+and [launch matrix](launch_mvp_plan.md) retain that boundary. Weak encounters
+belong near Forpost; the atlas's two remote Ogre habitats receive darker
+original art and active encounter definitions under the September12 authorized calibration. Their captured displayed profiles remain distinct from fitted hidden coefficients.
 
 Adaptive UI, accessibility, original art and modern engineering are project
 requirements, as clarified by the user on September 10. Preserve Neverlands'
@@ -321,6 +346,12 @@ location entry is accepted only through an entrance offered by the character's
 current outdoor cell.
 
 ## Combat
+
+The outdoor MVP uses weaker authored groups near Forpost and stronger groups
+farther away within its one launch zone, following the user-confirmed
+Neverlands progression rule. Exact placement/habitat evidence and the current
+two-cell starter samples live in `doc/design/areas/world_map.md` and
+`doc/design/reference/combat/observations/2026-09-11_low_level_two_cell_combat_cycle.md`.
 
 Combat is turn-based and tactical. Core expectations:
 

@@ -67,14 +67,14 @@ RSpec.describe "Synthetic 3x3 team combat", type: :system, js: true do
     login(side_a.first)
     visit arena_match_path(@match)
 
-    expect(page).to have_css(".arena-fighter--left .fighter-card", count: 3)
-    expect(page).to have_css(".arena-fighter--right .fighter-card", count: 3)
-    expect(page).to have_css("[data-arena-match-target='targetName']", text: "BrowserB1")
+    expect(page).to have_css(".arena-fighter--left .fighter-card", count: 1)
+    expect(page).to have_css(".arena-fighter--right .fighter-card", count: 1)
+    expect(page).to have_css(".fighter-card--selected-target", text: "BrowserB1")
     expect(page).to have_button("Switch opponent", disabled: false)
 
     [[820, 900], [390, 844]].each do |width, height|
       page.current_window.resize_to(width, height)
-      expect(page).to have_css(".fighter-card", count: 6)
+      expect(page).to have_css(".fighter-card", count: 2)
       expect(page.evaluate_script(<<~JS)).to be(true)
         (() => {
           const fight = document.querySelector(".arena-match-page")
@@ -88,16 +88,16 @@ RSpec.describe "Synthetic 3x3 team combat", type: :system, js: true do
     click_button "Switch opponent"
 
     expect(page).to have_css(".fighter-card--selected-target", text: "BrowserB2")
-    expect(page).to have_css("[data-arena-match-target='targetName']", text: "BrowserB2")
+    expect(page).to have_css(".fighter-card--selected-target", text: "BrowserB2")
     submit_physical_turn
 
     wait_for_pending_turn(side_a.first)
     visit arena_match_path(@match)
     expect(page).to have_content("Waiting for opponent turn")
-    expect(page).to have_css("[data-arena-match-target='targetName']", text: "BrowserB2")
+    expect(page).to have_css(".fighter-card--selected-target", text: "BrowserB2")
     page.refresh
     expect(page).to have_content("Waiting for opponent turn")
-    expect(page).to have_css("[data-arena-match-target='targetName']", text: "BrowserB2")
+    expect(page).to have_css(".fighter-card--selected-target", text: "BrowserB2")
     expect(@participations.fetch("a").first.reload.metadata.dig("pending_turn", "target_participation_id"))
       .to eq(@participations.fetch("b")[1].id)
 
@@ -202,7 +202,7 @@ RSpec.describe "Synthetic 3x3 team combat", type: :system, js: true do
     expect(page).to have_button("Accept Draw")
 
     page.current_window.resize_to(390, 844)
-    expect(page).to have_css(".fighter-card", count: 6)
+    expect(page).to have_css(".fighter-card", count: 2)
     expect(page).to have_button("Timeout Victory")
     expect(page).to have_button("Accept Draw")
     expect(page.evaluate_script(<<~JS)).to be(true)
@@ -220,7 +220,7 @@ RSpec.describe "Synthetic 3x3 team combat", type: :system, js: true do
     visit arena_match_path(@match)
     refresh_match_state
     click_button "Switch opponent"
-    expect(page).to have_css("[data-arena-match-target='targetName']", text: "BrowserB2")
+    expect(page).to have_css(".fighter-card--selected-target", text: "BrowserB2")
     find("select[data-arena-match-target='attackSelect'][data-body-part='torso']")
       .find("option[value='simple']").select_option
     find("select[data-arena-match-target='blockSelect'][data-body-part='head']")
@@ -232,7 +232,7 @@ RSpec.describe "Synthetic 3x3 team combat", type: :system, js: true do
     expect(page).to have_css("select[data-body-part='torso'] option[value='simple']:checked", visible: :all)
     expect(page).to have_css("select[data-body-part='head'] option[value='head_block']:checked", visible: :all)
     expect(page).to have_css("[data-arena-match-target='turnCostValue']", text: "80", exact_text: true)
-    expect(page).to have_css("[data-arena-match-target='targetName']", text: "BrowserB2")
+    expect(page).to have_css(".fighter-card--selected-target", text: "BrowserB2")
 
     click_button "Turn"
     wait_for_pending_turn(player)
@@ -298,7 +298,7 @@ RSpec.describe "Synthetic 3x3 team combat", type: :system, js: true do
 
   def add_log_entries_until(count)
     next_sequence = @match.combat_log_entries.maximum(:sequence).to_i + 1
-    while @match.combat_log_entries.count < count
+    while @match.combat_log_entries.where.not(log_type: "action").count < count
       create(
         :combat_log_entry,
         arena_match: @match,

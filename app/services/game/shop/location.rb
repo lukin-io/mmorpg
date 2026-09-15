@@ -15,8 +15,10 @@ module Game
       def call
         context = Game::World::ResumeContext.new(character:)
         position = character.position&.reload
-        unless character.gameplay_context["name"] == "shop" && position&.active? &&
-            context.shop_available? && !MovementCommand.moving.where(character:).exists? &&
+        hospital = character.gameplay_context.dig("params", "building_key") == "hospital" &&
+          character.gameplay_context["name"] == "city_building" &&
+          Game::World::CityBuildingCatalog.accessible?(character:, building_key: "hospital")
+        unless ((character.gameplay_context["name"] == "shop" && context.shop_available?) || hospital) && position&.active? && !MovementCommand.moving.where(character:).exists? &&
             !Game::World::LocalActionState.new(character:).call &&
             !character.arena_participations.joins(:arena_match).merge(ArenaMatch.active).exists?
           raise TradeOffers::Unavailable, "Shop is only available from an accessible trading location."
@@ -25,7 +27,7 @@ module Game
         building = context.shop_parent_location
         type = building ? "village" : "city"
         building ||= CityHotspot.for_zone(position.zone).detect do |candidate|
-          candidate.action_params.to_h["feature"] == "shop" && candidate.can_interact?(character)
+          candidate.action_params.to_h["feature"] == (hospital ? "hospital" : "shop") && candidate.can_interact?(character)
         end
         raise TradeOffers::Unavailable, "Shop is no longer available." unless building
 

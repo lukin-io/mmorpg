@@ -287,7 +287,7 @@ same-visible-opponent XP/risk results.
 - `app/services/game/world/passive_encounter_check.rb`
 - `app/services/game/world/start_npc_fight.rb`
 - `app/services/arena/combat_processor.rb`
-- `app/services/arena/npc_experience_awarder.rb`
+- `app/services/arena/experience_awarder.rb`
 - `app/lib/game/combat/action_catalog.rb`
 - `doc/design/launch_mvp_plan.md`
 

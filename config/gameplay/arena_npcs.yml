@@ -22,7 +22,10 @@ training:
           weight: 1
       metadata:
         ai_behavior: passive
+        arena_acceptor_level_min: 0
+        arena_acceptor_level_max: 5
         arena_rooms:
+          - help
           - training
         description: "Captured Neverlands training mannequin."
         avatar: "M"

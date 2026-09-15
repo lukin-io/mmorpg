@@ -103,6 +103,7 @@ module InventoriesHelper
   }.freeze
 
   ITEM_ARTWORK_PATHS = {
+    "fist_attack" => "items/fist_attack.png",
     "penknife" => "items/penknife.png",
     "assassin_dagger" => "items/assassin_dagger.png",
     "butcher_cleaver" => "items/butcher_cleaver.png",
@@ -123,6 +124,11 @@ module InventoriesHelper
     "steel_club" => "items/steel_club.png",
     "steppe_sword" => "items/steppe_sword.png",
     "war_pick" => "items/war_pick.png",
+    "beginner_healer_bag" => "items/healer_bag.png",
+    "skilled_healer_bag" => "items/healer_bag.png",
+    "experienced_healer_bag" => "items/healer_bag.png",
+    "combat_first_aid_kit" => "items/healer_bag.png",
+    "minor_health_potion" => "items/minor_health_potion.png",
     "primitive_spear" => "items/primitive_spear.png",
     "parrying_spear" => "items/parrying_spear.png",
     "pilum" => "items/pilum.png",

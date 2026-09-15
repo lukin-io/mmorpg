@@ -4,11 +4,16 @@
 class ArenaRoomsController < ApplicationController
   before_action :authenticate_user!
   before_action :require_character
+  before_action :restore_training_offer, only: :show
   around_action :with_city_arena_entry
   before_action :set_room, only: :show
 
   # GET /arena_rooms/:id
   def show
+    if (result = current_character.unfinished_arena_result)
+      redirect_to arena_match_path(result)
+      return
+    end
     # Check if user is already in an active match - redirect them there
     active_participation = current_character.arena_participations
       .joins(:arena_match)
@@ -27,14 +32,27 @@ class ArenaRoomsController < ApplicationController
       return
     end
 
+    @my_application = current_character.waiting_arena_application
+    if @my_application && @my_application.arena_room_id != @room.id
+      redirect_to arena_room_path(@my_application.arena_room, ft: @my_application.team_battle? ? 2 : 1)
+      return
+    end
+    @active_tab = params[:ft].to_s == "2" ? "2" : "1"
+    @active_tab = @my_application.team_battle? ? "2" : "1" if @my_application
+    @own_level_filter = params[:level] != "all"
     @applications = @room.arena_applications
       .open
-      .includes(:applicant, :npc_template)
+      .where(fight_type: @active_tab == "2" ? :team_battle : :duel)
+      .includes(:applicant, :npc_template, arena_application_memberships: :character)
       .order(created_at: :asc)
+      .limit(100)
+    @applications = @applications.select do |application|
+      !@own_level_filter || application.member?(current_character) ||
+        (application.team_battle? ? %w[a b].any? { |team| application.side_level_range(team).cover?(current_character.level) } : application.level_matches?(current_character))
+    end
 
     # Only show open applications as "my application", not matched ones
-    @my_application = current_character.arena_applications.open.first
-    @active_matches = @room.arena_matches.active.includes(:arena_participations)
+    @active_matches = @room.arena_matches.active.includes(arena_participations: [:character, :npc_template]).limit(20)
 
     respond_to do |format|
       format.html do
@@ -43,12 +61,26 @@ class ArenaRoomsController < ApplicationController
           next
         end
         prepare_presence_context
+        @rooms = ArenaRoom.active.where(zone_id: [nil, current_character.position&.zone_id]).order(:room_type)
       end
       format.json { render json: room_payload }
     end
   end
 
   private
+
+  # Run before the character-locked entry wrapper: all Arena writers acquire
+  # the room before characters. Persisted supply recovers even without a worker.
+  def restore_training_offer
+    room = ArenaRoom.find(params[:id])
+    return unless Arena::NpcApplicationService::REPLENISHED_ROOMS.include?(room.slug)
+
+    context = Game::World::ResumeContext.new(character: current_character)
+    return unless (context.arena_entered? || context.arena_room) && context.arena_room_available?(room:)
+    return if room.arena_applications.open.from_npcs.where("expires_at > ?", Time.current).exists?
+
+    Arena::NpcApplicationService.new.create_for_room(room:)
+  end
 
   def set_room
     @room = ArenaRoom.find(params[:id])

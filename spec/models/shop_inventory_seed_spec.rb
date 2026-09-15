@@ -18,11 +18,11 @@ RSpec.describe "Shop inventory seeds", type: :model do
     load_shop_seeds
 
     ordinary = Game::Shop::Catalog.buyable_scope.where("COALESCE(enhancement_rules -> 'shop' ->> 'mode', 'buy') = 'buy'")
-    expect(ordinary.count).to eq(79)
+    expect(ordinary.count).to eq(80)
     counts = ordinary.group("enhancement_rules ->> 'subcategory'").count
     expect(counts).to eq(%w[knives swords axes blunt polearms staves shields armor helmets boots pants belts gloves bracers jewelry]
-      .index_with(5).merge("scrolls" => 4))
-    expect(Game::Shop::Catalog.buyable_scope.count).to eq(85)
+      .index_with(5).merge("scrolls" => 5))
+    expect(Game::Shop::Catalog.buyable_scope.count).to eq(86)
     expect(ItemTemplate.find_by!(key: "penknife")).to have_attributes(
       base_price: 7, weight: 5, durability_max: 10,
       requirements: {"level" => 1, "ap" => 40},

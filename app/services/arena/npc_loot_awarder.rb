@@ -117,7 +117,7 @@ module Arena
       awards = []
       failures = []
 
-      Array(npc_participation.npc_template.loot_table).each_with_index do |raw_entry, entry_index|
+      loot_table.each_with_index do |raw_entry, entry_index|
         loot_entry = Game::LootEntry.new(raw_entry)
         entry = loot_entry.attributes
         next unless roll_succeeds?(loot_entry)
@@ -136,8 +136,27 @@ module Arena
       Result.new(awards:, failures:, already_processed: false)
     end
 
+    # Explicit authored tables win. Calibrated fallback pools use stable item
+    # keys and tier thresholds, never grant an NPC's decorative paper-doll gear.
+    def loot_table
+      authored = Array(npc_participation.npc_template.loot_table)
+      return authored if authored.any?
+      return [] unless npc_participation.npc_template.metadata.to_h["calibrated_loot"] == true
+
+      level = npc_participation.participant_level
+      config = Game::Combat::Calibration.config.fetch("loot")
+      [
+        {kind: "currency", currency: "NV", amount: [level + rng.rand(8..12), 1].max, chance: config.fetch("currency_chance_percent") / 100.0},
+        {kind: "item", item_key: "minor_health_potion", chance: config.fetch("potion_chance_percent") / 100.0},
+        {kind: "item", item_key: level >= 13 ? "assassin_dagger" : "penknife", chance: config.fetch("equipment_chance_percent") / 100.0}
+      ]
+    end
+
     def roll_succeeds?(loot_entry)
-      rng.rand(100) < loot_entry.chance_percent
+      skill = character.passive_skill_level(:observation)
+      config = Game::Combat::Calibration.config.fetch("loot")
+      bonus = config.fetch("observation_max_bonus") * skill / (skill + config.fetch("observation_scale"))
+      rng.rand(10_000) < (loot_entry.chance_percent * (1 + bonus)).clamp(0, 100) * 100
     end
 
     def award_entry(entry, entry_index)

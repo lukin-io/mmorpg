@@ -38,7 +38,7 @@ RSpec.describe "Arena room entry presence", type: :system, js: true do
       find(".nl-refresh-check input").uncheck
       click_button "Room Map" if entry == "Room Map"
 
-      within(selector) { find("a[href='#{arena_room_path(next_room)}']").click }
+      within(selector) { find("a[href='#{arena_room_path(next_room, ft: 1)}']").click }
 
       expect(page).to have_css(".nl-arena-frame[data-arena-room-id-value='#{next_room.id}']")
       expect(character.reload.gameplay_context).to eq(

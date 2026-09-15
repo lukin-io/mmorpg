@@ -1,5 +1,13 @@
 # Open World and Movement Domain
 
+Current September12 work: the user authorized pragmatic completion of the22-fight
+observations. [Combat calibration](../design/features/combat_calibration.md)
+owns fitted coefficients and placement; [Medical Care](../features/medical_care.md)
+owns injury/treatment. Earlier exact-formula evidence holds below no longer
+mean these features must remain disabled. The bounded scope passed
+[final local acceptance](../features/arena_combat.md#september-12-final-calibrated-acceptance).
+
+
 ## Scope
 
 Outdoor coordinates, fixed-cell map presentation, movement, timers, fatigue,
@@ -9,26 +17,31 @@ City handoff.
 
 ## Documentation chain
 
-- Neverlands source summary: `doc/design/reference/world/README.md`
-- Current observations: `doc/design/reference/world/observations/`
+- [Required working context and update rules](../DOCUMENTATION.md#21-required-context-and-update-map)
+- Game reference books: [geography, cells, actions and editing](../WORLD.md),
+  [NPC catalog and editing](../NPC.md),
+  [formulas and tuning](../FORMULAS.md)
+
+- Neverlands source summary: [doc/design/reference/world/README.md](../design/reference/world/README.md)
+- Current observations: [doc/design/reference/world/observations/](../design/reference/world/observations)
 - Starter topology/annotations and current live routes:
-  `doc/design/reference/world/observations/2026-09-09_starter_atlas.md` and
-  `doc/design/reference/world/observations/2026-09-09_starter_routes.md`.
+  [doc/design/reference/world/observations/2026-09-09_starter_atlas.md](../design/reference/world/observations/2026-09-09_starter_atlas.md) and
+  [doc/design/reference/world/observations/2026-09-09_starter_routes.md](../design/reference/world/observations/2026-09-09_starter_routes.md).
 - Published skill/waterbody rules:
-  `doc/design/reference/world/observations/2026-09-09_wiki_skills_and_cell_actions.md`.
+  [doc/design/reference/world/observations/2026-09-09_wiki_skills_and_cell_actions.md](../design/reference/world/observations/2026-09-09_wiki_skills_and_cell_actions.md).
 - Captured Drink/empty-fishing behavior:
-  `doc/design/reference/world/observations/2026-09-08_cell_content_and_world_rules.md`.
-- Normalized area design: `doc/design/areas/world_map.md`
-- Supporting designs: `doc/design/features/movement.md`,
-  `doc/design/features/npcs_quests.md`, and
-  `doc/design/features/professions.md`
+  [doc/design/reference/world/observations/2026-09-08_cell_content_and_world_rules.md](../design/reference/world/observations/2026-09-08_cell_content_and_world_rules.md).
+- Normalized area design: [doc/design/areas/world_map.md](../design/areas/world_map.md)
+- Supporting designs: [doc/design/features/movement.md](../design/features/movement.md),
+  [doc/design/features/npcs_quests.md](../design/features/npcs_quests.md), and
+  [doc/design/features/professions.md](../design/features/professions.md)
 - Delivery IDs: `WORLD-UI-001`, `WORLD-MOVE-001`, `WORLD-CELL-001`, and
-  `WORLD-LOCATION-001` in `doc/design/launch_mvp_plan.md`
-- Current implementation: `doc/features/world.md`; configured transport:
-  `doc/features/airship_travel.md`
-- Content operations: `doc/guides/managing_game_content.md`
-- Project artwork style and prompts: `doc/ARTWORK.md`; starter-map layout:
-  `doc/design/reference/world/starter_map_art_prompt.md`
+  `WORLD-LOCATION-001` in [doc/design/launch_mvp_plan.md](../design/launch_mvp_plan.md)
+- Current implementation: `doc/features/world.md` ([handbook](../features/world.md)); configured transport:
+  `doc/features/airship_travel.md` ([handbook](../features/airship_travel.md))
+- Content operations: [doc/guides/managing_game_content.md](../guides/managing_game_content.md)
+- Project artwork style and prompts: [doc/ARTWORK.md](../ARTWORK.md); starter-map layout:
+  [doc/design/reference/world/starter_map_art_prompt.md](../design/reference/world/starter_map_art_prompt.md)
 
 ## Current RPG status
 
@@ -62,8 +75,12 @@ separate from this bounded import; completed runtime checks are recorded in
 The atlas metadata preserves labels, activity, water/fish flags, herb-group
 identities and NPC pool ranges. Those ranges provide no HP or complete combat
 rosters. A separate validated distribution reuses eligible complete captured
-profiles for 40 additional Bandit placements, with the user's 300–360-second
-passive interval distinguished from exact source formulas. The starter rat annotation is
+profiles for 40 additional Bandit placements and two active calibrated Ogre
+habitats at `[20,6]` / `[20,7]`. Two additional remote strong habitats at
+`[19,9]` / `[19,10]` reuse the ten stronger samples. The Ogre cells have
+original darker art and captured level-16–18 rosters. These 44 bootstrap
+declarations and their provenance are cataloged in [NPC.md](../NPC.md).
+The user's 300–360-second passive interval remains distinguished from exact source formulas. The starter rat annotation is
 `0–4`; its existing captured encounter remains separately authored. The
 independent `m_1008_1007` Bandit sample belongs at local `[14,15]`, not beside
 the west gate. The wiki explicitly describes the pond as bot-free; an empty
@@ -200,5 +217,6 @@ additional settlements and full profession yields require dedicated evidence
 and implementation. Nature Child's known four-point
 drinking recovery is configuration data for a future supported perk, not an
 enabled perk feature.
-The authored Plague Rat item identity remains disabled at an explicit local
-`0.0` evidence hold until its exact Neverlands probability is captured.
+Plague Rat now has an explicit calibrated 3% Rat Tail chance, modified by
+Observation and normal search eligibility. The exact source probability remains
+unverified; the earlier 0.0 hold was superseded by the authorized calibration.

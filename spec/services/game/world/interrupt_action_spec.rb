@@ -14,6 +14,7 @@ RSpec.describe Game::World::InterruptAction do
 
     expect(result).to be_interrupted
     expect(result.npc).to eq(npc)
+    expect(result.message).to eq("A fight starts before the action completes.")
     expect(result.match.arena_participations.npcs.count).to eq(2)
     expect(result.match.metadata["return_context"]).to eq("name" => "inventory")
   end

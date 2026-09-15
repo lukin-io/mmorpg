@@ -24,6 +24,19 @@ RSpec.describe ArenaHelper, type: :helper do
   end
 
   describe "#participant_data" do
+    it "shows captured NPC totals and mana without substituting engine stats for missing labels" do
+      npc = create(:npc_template, metadata: {"max_mp" => 7, "stats" => {"attack" => 999}, "display_stats" => {"strength" => 24, "accuracy" => 90}})
+      npc_participation = create(:arena_participation, :npc, arena_match:, npc_template: npc)
+      data = helper.participant_data(npc_participation)
+
+      expect(data.strength).to eq(24)
+      expect(data.accuracy).to eq(90)
+      expect(data.wisdom).to be_nil
+      expect(data.endurance).to be_nil
+      expect(data.max_mp).to eq(7)
+      expect(data.current_mp).to eq(7)
+    end
+
     context "with character participation" do
       it "returns correct name and level" do
         data = helper.participant_data(participation)
@@ -35,6 +48,21 @@ RSpec.describe ArenaHelper, type: :helper do
         data = helper.participant_data(participation)
         expect(data.current_hp).to eq(character.current_hp)
         expect(data.max_hp).to eq(character.max_hp)
+      end
+
+      it "projects equipment-aware HP and MP without refilling current values" do
+        character.update!(current_mp: 30, max_mp: 50)
+        template = create(:item_template, stat_modifiers: {"hp" => 60, "mana" => 25})
+        create(:inventory_item, :equipped, inventory: character.inventory, item_template: template)
+
+        data = helper.participant_data(participation.reload)
+
+        expect(data.current_hp).to eq(80)
+        expect(data.max_hp).to eq(160)
+        expect(data.hp_percent).to eq(50.0)
+        expect(data.current_mp).to eq(30)
+        expect(data.max_mp).to eq(75)
+        expect(data.mp_percent).to eq(40.0)
       end
 
       it "calculates HP percentage correctly" do
@@ -84,7 +112,7 @@ RSpec.describe ArenaHelper, type: :helper do
 
     it "returns label for team_battle" do
       result = helper.fight_type_with_icon("team_battle")
-      expect(result).to eq("Team Battles")
+      expect(result).to eq("Groups")
     end
 
     it "handles unknown fight types gracefully" do
@@ -115,6 +143,37 @@ RSpec.describe ArenaHelper, type: :helper do
   end
 
   describe "#character_combat_stats" do
+    it "projects actual item modifiers separately from primary stats and derived combat values" do
+      character.update!(allocated_stats: {"strength" => 20, "dexterity" => 30, "luck" => 40, "vitality" => 50},
+        passive_skills: {"bludgeoning_mastery" => 100, "physical_damage_resistance" => 100})
+      template = create(:item_template, stat_modifiers: {
+        "weapon_family" => "axe", "attack" => 50, "armor_class" => 7,
+        "dexterity" => 2, "evasion" => 15, "accuracy" => 25,
+        "crushing" => 140, "fortitude" => 35, "physical_resistance" => 90, "armor_pierce" => 3
+      })
+      create(:inventory_item, :equipped, inventory: character.inventory, item_template: template)
+
+      data = helper.participant_data(participation.reload)
+
+      expect(data.strength).to eq(21)
+      expect(data.dexterity).to eq(33)
+      expect(data.luck).to eq(41)
+      expect(data.armor_class).to eq(7)
+      expect(data.evasion).to eq(15)
+      expect(data.accuracy).to eq(25)
+      expect(data.crushing).to eq(140)
+      expect(data.endurance).to eq(35)
+      expect(data.armor_penetration).to eq(3)
+    end
+
+    it "does not manufacture equipment modifiers for an unequipped player" do
+      character.update!(allocated_stats: {"strength" => 20, "dexterity" => 30, "luck" => 40, "vitality" => 50})
+
+      expect(helper.character_combat_stats(character)).to include(
+        armor_class: 0, evasion: 0, accuracy: 0, crushing: 0, endurance: 0, armor_penetration: 0
+      )
+    end
+
     context "with nil character" do
       it "returns empty hash" do
         expect(helper.character_combat_stats(nil)).to eq({})
