@@ -67,6 +67,12 @@ module Game
         level(level_number)&.fetch("fight_experience_cap", 0).to_i
       end
 
+      # Wilderness roster ceiling, not a promised encounter size. Unsupported
+      # levels fail closed until their complete progression row is authored.
+      def max_npcs_in_group(level_number)
+        level(level_number)&.fetch("max_npcs_in_group", 0).to_i
+      end
+
       def maximum_supported_level
         levels.keys.max
       end

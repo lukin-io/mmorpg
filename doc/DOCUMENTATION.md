@@ -11,7 +11,9 @@ Modern adaptive presentation is a project requirement: preserve source-backed
 game behavior while making the UI usable across screen sizes and input modes.
 The canonical shared standards are
 [adaptive UI requirements](design/areas/game_client_layout.md#adaptive-ui-requirements)
-and [scene image specifications](ARTWORK.md#shared-scene-image-standard).
+and [scene image specifications](ARTWORK.md#shared-scene-image-standard) and
+[category artwork standards](ARTWORK.md#category-artwork-standard) for equipment,
+portraits, scrolls, licenses, consumables and decorations.
 Historical source measurements remain evidence; they do not prohibit these
 deliberate implementation improvements.
 
@@ -25,7 +27,7 @@ deliberate implementation improvements.
 | Normalized design | `doc/design/gdd.md`, `doc/design/areas/**`, `doc/design/features/**` | Which source-backed rules and local adaptations define the target? | Shipped status |
 | MVP/parity | `doc/design/launch_mvp_plan.md` | Is a bounded delivery target Done or Not Done? | Broader feature completeness |
 | Current implementation | `doc/features/**` | What does the application verifiably do now and who owns it? | Unimplemented plans |
-| Game reference books | [NPC.md](NPC.md), [FORMULAS.md](FORMULAS.md), [ITEMS.md](ITEMS.md), [WORLD.md](WORLD.md), [SCROLLS.md](SCROLLS.md), [COMBAT.md](COMBAT.md), [ARENA.md](ARENA.md), [SKILLS.md](SKILLS.md), [PERKS.md](PERKS.md), [CHARACTER.md](CHARACTER.md), [MEDICAL.md](MEDICAL.md), [ECONOMY.md](ECONOMY.md) | How does the whole area work locally: content, rules, formulas, flows, use cases, cross-feature effects and editing? | Independent design authority or a substitute for feature acceptance |
+| Game reference books | [NPC.md](NPC.md), [FORMULAS.md](FORMULAS.md), [ITEMS.md](ITEMS.md), [WORLD.md](WORLD.md), [SCROLLS.md](SCROLLS.md), [COMBAT.md](COMBAT.md), [ARENA.md](ARENA.md), [SKILLS.md](SKILLS.md), [PERKS.md](PERKS.md), [CHARACTER.md](CHARACTER.md), [STATS.md](STATS.md), [MODIFIERS.md](MODIFIERS.md), [MEDICAL.md](MEDICAL.md), [ECONOMY.md](ECONOMY.md) | How does the whole area work locally: content, rules, formulas, flows, use cases, cross-feature effects and editing? | Independent design authority or a substitute for feature acceptance |
 | Technical guidance | `doc/RUBY_ON_RAILS_GUIDE.md` | How should Rails/Hotwire code satisfy the contract? | Neverlands mechanics |
 | Original artwork production | `doc/ARTWORK.md`, with visual guides in `doc/artwork/` | Which style, exact prompts, visual inputs and packaging steps produced an illustration? | Gameplay rules or verified runtime completion |
 | Runtime authority | code, schema, config/seeds, specs | What currently executes and persists? | Product justification |
@@ -80,6 +82,10 @@ Their implemented entries precede flagged missing entries and attributed wiki
 descriptions. Source descriptions never imply a working local effect.
 [CHARACTER.md](CHARACTER.md) explains the complete build: saved development,
 effective stats/ratings, levels/grants, AP, equipment, resources and capacity.
+[STATS.md](STATS.md) details every primary parameter and its resource, capacity,
+requirement and combat consumers, including linked source-only definitions.
+[MODIFIERS.md](MODIFIERS.md) details the four percentage-labelled combat ratings,
+player/NPC keys, opposed chances, equipment composition and temporary-effect gaps.
 [MEDICAL.md](MEDICAL.md) follows injuries, penalties/restrictions, expiry,
 healer qualifications, bags, Hospital and treatment/payment.
 [ECONOMY.md](ECONOMY.md) follows NV wallets, Shop stock/funds, purchase/resale,
@@ -129,6 +135,8 @@ doc/
 ├── SKILLS.md            # numeric catalog, allocation, effects and profession counters
 ├── PERKS.md             # boolean catalog, grants, exclusions and effect/permission flows
 ├── CHARACTER.md         # build composition, levels, stats, vitals, AP and capacity
+├── STATS.md             # primary definitions, linked quantities, effects and editing
+├── MODIFIERS.md         # four combat ratings, composition, consumers and editing
 ├── MEDICAL.md           # injuries, recovery, healer requirements, bags and treatment
 ├── ECONOMY.md           # NV, stock, prices, qualification, licenses and settlement
 ├── artwork/             # visual generation guides, not runtime images
@@ -178,10 +186,10 @@ Each matching row triggers the [change/update obligation](#22-change-triggered-d
 | Any formula, coefficient, numerical table, cap, rounding or input meaning | [FORMULAS](FORMULAS.md) and the affected area book(s) | The calculator/configuration owner and consuming feature handbook(s); synchronize equations, units, bounds, operation order, worked examples, provenance and tuning consequences wherever changed |
 | Arena halls, applications, reservations, training supply or lobby presentation | [ARENA](ARENA.md), [COMBAT](COMBAT.md), [FORMULAS: admission](FORMULAS.md#arena-01--admission-and-deadlines), applicable [NPC](NPC.md), [WORLD](WORLD.md) and [ARTWORK](ARTWORK.md) sections | [Combat domain](domains/combat.md), [Arena design](design/areas/arena.md), [Arena Combat](features/arena_combat.md), related City/Shell/Inventory owners; update changed room gates, terms, assembly/timers, NPC supply, entry/return, presentation and acceptance |
 | NPC type, level, mixed group, gear or loot | [NPC](NPC.md), [FORMULAS: rewards](FORMULAS.md#6-experience-loot-and-premium), [ITEMS](ITEMS.md), [WORLD: habitats](WORLD.md#4-npc-habitats-and-resources) | [NPC domain](domains/npcs_quests.md), [Combat](features/arena_combat.md), [World](features/world.md); synchronize changed roster, stats, pool, placement and item references; artwork/events when affected |
-| Arena, PvP, PvE, attacks, defense or results | [COMBAT](COMBAT.md), [FORMULAS: combat](FORMULAS.md#5-combat), [NPC: lifecycle](NPC.md#7-encounter-and-fight-lifecycle), [ITEMS: effective properties](ITEMS.md#3-fields-slots-and-effective-properties) | [Combat domain](domains/combat.md), [Combat](features/arena_combat.md), [Medical Care](features/medical_care.md), [event catalog](features/game_shell.md#gameplay-event-catalog); update changed inputs, shared behavior, aftermath, logs and acceptance |
+| Arena, PvP, PvE, attacks, defense or results | [COMBAT](COMBAT.md), [STATS](STATS.md), [MODIFIERS](MODIFIERS.md), [FORMULAS: combat](FORMULAS.md#5-combat), [NPC: lifecycle](NPC.md#7-encounter-and-fight-lifecycle), [ITEMS: effective properties](ITEMS.md#3-fields-slots-and-effective-properties) | [Combat domain](domains/combat.md), [Combat](features/arena_combat.md), [Medical Care](features/medical_care.md), [event catalog](features/game_shell.md#gameplay-event-catalog); update changed inputs, shared behavior, aftermath, logs and acceptance |
 | Scroll definitions, targeted attacks, peace activation or license permissions | [SCROLLS](SCROLLS.md), [COMBAT](COMBAT.md), [ITEMS](ITEMS.md), [FORMULAS: scroll entry](FORMULAS.md#scroll-01--attack-entry), [WORLD: context](WORLD.md#5-travel-context-and-return-behavior) | [Inventory domain](domains/inventory.md), [scroll design](design/features/scrolls.md), [Inventory](features/player_inventory.md), [Shop](features/shop_economy.md), relevant Combat/Medical owners; update catalog status, acquisition, admission, effect/charge, permissions, failure/replay, artwork and source evidence together |
-| Levels, stats, skills, perks or recovery | [CHARACTER](CHARACTER.md), [SKILLS](SKILLS.md), [PERKS](PERKS.md), [FORMULAS](FORMULAS.md), [ITEMS: effective properties](ITEMS.md#3-fields-slots-and-effective-properties) | [Character domain](domains/character.md), [Progression](features/character_progression.md), affected Combat/Medical/World/Shop consumers; update grants, caps, requirements, saved versus effective values, active versus unused effects, use cases and wiki-status distinctions |
-| Item definitions, equipment, consumables or ownership | [ITEMS](ITEMS.md), [FORMULAS: stats](FORMULAS.md#3-character-stats-and-equipment), [FORMULAS: inventory/economy](FORMULAS.md#9-inventory-and-economy) | [Inventory domain](domains/inventory.md), [Inventory](features/player_inventory.md), [Shop](features/shop_economy.md), [Medical Care](features/medical_care.md); update definitions, acquisition, slot/effect/requirement readers and affected NPC pools |
+| Levels, stats, skills, perks or recovery | [CHARACTER](CHARACTER.md), [STATS](STATS.md), [MODIFIERS](MODIFIERS.md), [SKILLS](SKILLS.md), [PERKS](PERKS.md), [FORMULAS](FORMULAS.md), [ITEMS: effective properties](ITEMS.md#3-fields-slots-and-effective-properties) | [Character domain](domains/character.md), [Progression](features/character_progression.md), affected Combat/Medical/World/Shop consumers; update grants, caps, requirements, saved versus effective values, active versus unused effects, use cases and wiki-status distinctions |
+| Item definitions, equipment, consumables or ownership | [ITEMS](ITEMS.md), applicable [STATS](STATS.md) and [MODIFIERS](MODIFIERS.md) input sections, [FORMULAS: stats](FORMULAS.md#3-character-stats-and-equipment), [FORMULAS: inventory/economy](FORMULAS.md#9-inventory-and-economy) | [Inventory domain](domains/inventory.md), [Inventory](features/player_inventory.md), [Shop](features/shop_economy.md), [Medical Care](features/medical_care.md); update definitions, acquisition, slot/effect/requirement readers and affected NPC pools |
 | Zones, cells, routes, buildings, habitats or travel | [WORLD](WORLD.md), [NPC: placement](NPC.md#4-locations-cells-and-complete-groups), [FORMULAS: timing](FORMULAS.md#8-world-movement-and-encounter-timing) | [World domain](domains/world.md), [City domain](domains/city.md), [World](features/world.md), [City](features/city.md), [Airship](features/airship_travel.md), [Shell](features/game_shell.md); update coordinates, entry/return, availability, timing and audience handoffs |
 | Prices, stock, NV, licenses, qualification or rewards | [ECONOMY](ECONOMY.md), [ITEMS](ITEMS.md), [FORMULAS: economy](FORMULAS.md#9-inventory-and-economy), [WORLD: services](WORLD.md#2-forpost-city-and-services), affected [CHARACTER](CHARACTER.md) / [NPC](NPC.md) reward sections | [Economy domain](domains/economy.md), [Shop](features/shop_economy.md), relevant Inventory/Character/Combat/Medical owners; update prerequisites, funds/stock, quotes/receipts, settlement and reward/event references |
 | Injuries, restrictions, expiry, healer proficiency, bags or treatment | [MEDICAL](MEDICAL.md), [CHARACTER](CHARACTER.md), [FORMULAS: recovery](FORMULAS.md#7-recovery-wear-and-injuries), [ECONOMY](ECONOMY.md), relevant [SKILLS](SKILLS.md), [PERKS](PERKS.md) and [ITEMS](ITEMS.md) sections | [Medical Care](features/medical_care.md), [Character](domains/character.md) / [Combat](domains/combat.md), affected Shop/World/Inventory owners; update chance versus severity, effective penalties, clocks, qualification, supplies, cure/payment and event contracts |
@@ -415,7 +423,7 @@ runtime handbooks under `doc/features/`.
 The user-requested root books [NPC.md](NPC.md), [FORMULAS.md](FORMULAS.md),
 [ITEMS.md](ITEMS.md), [WORLD.md](WORLD.md), [SCROLLS.md](SCROLLS.md),
 [COMBAT.md](COMBAT.md), [ARENA.md](ARENA.md), [SKILLS.md](SKILLS.md), [PERKS.md](PERKS.md),
-[CHARACTER.md](CHARACTER.md), [MEDICAL.md](MEDICAL.md) and [ECONOMY.md](ECONOMY.md)
+[CHARACTER.md](CHARACTER.md), [STATS.md](STATS.md), [MODIFIERS.md](MODIFIERS.md), [MEDICAL.md](MEDICAL.md) and [ECONOMY.md](ECONOMY.md)
 are maintained game guides spanning design and implementation. They are
 explanatory catalogs of current content/rules, not new feature handbooks or
 parallel sources of gameplay authority.
@@ -471,6 +479,14 @@ Their reading dependencies and reciprocal navigation follow the
   maxima, AP/capacity and equipment composition; level/XP grants and their
   combat, walking, recovery and qualification consumers. Explain when edits
   affect current values, future actions, saved profiles or historical grants.
+- **STATS.md** details source/local primary-stat names and keys, allocation and
+  composition, HP/MP, armor, capacity, requirements and cross-feature consumers.
+  Cover linked wiki definitions with revisions and explicit implemented, fitted
+  or source-only status; explain how to edit inputs without rewriting history.
+- **MODIFIERS.md** details Crushing, Accuracy, Evasion and Fortitude, their
+  player/NPC aliases, equipment composition, opposed probability consumers and
+  temporary-effect boundaries. Keep primary stats, adjacent defenses, displayed
+  percentages and final probabilities distinct; equations remain in FORMULAS.
 - **MEDICAL.md** catalogs implemented injuries/supplies and follows random
   severity, penalties, restrictions, expiry, Doctor/perk/license requirements,
   Hospital and free/paid treatment. Keep HP restoration, injury cure, quote

@@ -51,7 +51,9 @@ Arena/wilderness/player/NPC fight lifecycle, formula effects and aftermath.
 [ARENA.md](../ARENA.md) covers the hall catalog, applications/admission,
 assembly, training supply, presentation and editing.
 [CHARACTER.md](../CHARACTER.md) explains the whole build and saved/effective
-development; [MEDICAL.md](../MEDICAL.md) connects injuries, requirements,
+development; [STATS.md](../STATS.md) details primary parameters and linked
+quantities; [MODIFIERS.md](../MODIFIERS.md) details the four combat ratings and
+opposed consumers. [MEDICAL.md](../MEDICAL.md) connects injuries, requirements,
 Hospital and treatment; [ECONOMY.md](../ECONOMY.md) connects NV, stock/prices,
 qualification, licenses and settlement. The
 [gameplay event catalog](../features/game_shell.md#gameplay-event-catalog)

@@ -59,6 +59,9 @@ RSpec.describe Game::Progression::Catalog do
 
   it "exposes per-fight XP and NPC-count boundaries" do
     expect(described_class.fight_experience_cap(0)).to eq(50)
+    {0 => 1, 3 => 1, 4 => 2, 6 => 3, 10 => 4, 12 => 5, 14 => 6, 16 => 8, 18 => 10, 27 => 10, 28 => 0}.each do |level, maximum|
+      expect(described_class.max_npcs_in_group(level)).to eq(maximum)
+    end
     expect(described_class.level(10)).to include("fight_experience_cap" => 2500, "max_npcs_in_group" => 4)
   end
 end

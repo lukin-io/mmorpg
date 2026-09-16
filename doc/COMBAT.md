@@ -16,6 +16,8 @@ maintains the full cross-domain numeric reference. [ARTWORK](ARTWORK.md) owns
 original images, dimensions and exact prompts.
 
 [CHARACTER](CHARACTER.md) traces the build/level inputs consumed by combat;
+[STATS](STATS.md) details primary parameters and resource boundaries, and
+[MODIFIERS](MODIFIERS.md) details the four ratings and opposed consumers;
 [MEDICAL](MEDICAL.md) follows injuries through penalties, expiry or treatment.
 [ECONOMY](ECONOMY.md) explains NV reward settlement and the sale/license uses
 of awarded loot without introducing another reward pipeline.
@@ -75,7 +77,11 @@ observations are **calibrated**, not recovered source code. Location/content
 decisions such as remote starter habitats are **authored**. Old helpers with no
 active entry point are **compatibility**, not playable features. The
 [scroll evidence](design/reference/inventory/observations/2026-09-14_attack_scrolls.md)
-contains two failed submissions, not a successful source scroll fight.
+contains two failed submissions. The [September 15 Permit fight](design/reference/inventory/observations/2026-09-15_successful_attack_scroll.md)
+adds immediate armed entry, a lethal committed exchange, 300 credited damage,
+570 XP, one charge and attacker Finish to Inventory. The later
+[Fist capture](design/reference/inventory/observations/2026-09-15_successful_fist_attack.md)
+confirms stripping, 21 exchanges, defeat XP and persistent unequipping after Finish.
 
 ## 2. Entry paths and fight rules
 
@@ -233,8 +239,10 @@ after a defeat costs no manual switch and never replenishes spent switches.
 
 ## 4. Levels, skills, equipment and combat inputs
 
-**Level is an input to progression, eligibility, AP and rewards; there is no
-extra universal level multiplier added to physical damage or defense.** A
+**Level currently affects progression, eligibility, AP, wilderness group limits
+and rewards.** Neverlands also publishes a hidden combat level-difference
+coefficient. That input is not yet implemented because its equation/magnitude
+are unknown; see the [stat audit](design/reference/character/observations/2026-09-15_levels_stats_and_modifiers.md). A
 stronger player normally has more allocated stats, mastery and better equipment;
 the actual values enter the equations. An NPC's authored level/profile provides
 its inputs instead of receiving an invented player-like stat curve.
@@ -244,8 +252,8 @@ its inputs instead of receiving an invented player-like stat curve.
 | Level grants | [Progression table](FORMULAS.md#2-experience-levels-and-grants) awards row-specific stat/combat-skill/peace-skill/perk points and fight XP caps; grants differ by level |
 | Strength | Main physical attack term; More Strength, when owned, adds `floor(level/2)` before injury adjustment |
 | Dexterity | Opposed hit, dodge and block calculations |
-| Luck | Opposed critical attack/resistance along with Crushing/Fortitude |
-| Health | Base maximum HP = `5 * base Health`; equipped HP adds to saved maximum |
+| Luck | Accuracy with Dexterity; opposed critical attack/resistance with Crushing/Fortitude |
+| Health | Base maximum HP = `5 * base Health`; equipped HP adds to saved maximum; hidden physical armor factor described below |
 | Knowledge | Base maximum MP = `7 * base Knowledge`; equipment adds MP; magic/healer inputs where active |
 | Mastery | Equipped weapon-family mastery increases damage and reduces AP cost; no weapon uses unarmed mastery |
 | Weapon damage | Equipped min/max midpoint contributions plus supported attack modifiers; actual effect fields, not rarity/name/art |
@@ -348,9 +356,9 @@ Fort = Fortitude, Pen = penetration rating, Armor = armor rating.
 
 ```text
 opposed(a,b,s) = s*(a-b)/(abs(a)+abs(b)+100)
-hit% = clamp(85 + opposed(5*DexA+AccA, 2*DexD+EvaD,15)
+hit% = clamp(85 + opposed(3*DexA+2*LuckA+AccA, 2*DexD+EvaD,15)
                   + action hit bonus + body hit, 5,95)
-dodge% = clamp(5 + opposed(5*DexD+EvaD, 5*DexA+AccA,35)
+dodge% = clamp(5 + opposed(5*DexD+EvaD, 3*DexA+2*LuckA+AccA,35)
                  + body dodge - (aimed ? 5 : 0), 0,60)
 crit% = clamp(10 + opposed(5*LuckA+CrushA, 5*LuckD+FortD,75)
                  + (aimed ? 10 : 0) + (head ? 5 : 0), 1,85)
@@ -383,7 +391,7 @@ Physical damage, with W = weapon damage and M = mastery:
 fatigueFactor(F) = 1 - clamp(F-50,0,50)/50 * 0.5
 attack = (1.5*Strength + W) * (1+M/100) * damageMultiplier * fatigueFactor(A)
 penetrationFraction = clamp(PenA/200,0,0.75)
-remainingArmor = ArmorD * armorMultiplierD * fatigueFactor(D) * (1-penetrationFraction)
+remainingArmor = ArmorD * armorMultiplierD * healthArmorFactor(D) * fatigueFactor(D) * (1-penetrationFraction)
 resistanceFraction = clamp(physicalResistanceD/200,0,0.75)
 variance = 1 + (rand(1..5)-3)/2.0 * 0.18
 rawDamage = round(max(attack-remainingArmor,0) * actionMultiplier * bodyMultiplier
@@ -456,7 +464,8 @@ award still requires a defeated NPC. Otherwise the calibrated fallback is:
 n = defeated NPCs plus defeated/damaged opposing players
 levelFactor = 0.75^max(recipientLevel-enemyLevel-2,0)
 NPC contribution = enemy maxHP * 0.85 * levelFactor
-Player contribution = min(enemy maxHP, enemy credited damage taken) * 0.85 * levelFactor
+Player contribution = max(enemy credited damage taken, 0)
+                      * (victory ? 1.9 : 0.85) * levelFactor
 single defeated NPC with positive template XP: use that template XP instead
 risk = 1 for NPC-only enemies; otherwise trauma 10/30/50/80 => 1/1.1/1.2/1.35
 lossFactor = 1 on victory; on defeat: 1 for player enemies, otherwise 0.1
@@ -476,6 +485,17 @@ awarded = min(earned, floor(level fight cap * premium cap multiplier))
 Each recipient's gross uses their own snapshotted level/maxHP inputs before
 anyone levels up. This is not one level-independent pot split among everyone.
 All details/edge cases: [REWARD-01](FORMULAS.md#reward-01--shared-npc-and-player-experience).
+Credited HP accumulates across the fight, including HP removed again after
+restoration; only each strike is bounded by available HP. The
+[September 15 wiki audit](design/reference/combat/observations/2026-09-15_wiki_experience_rules.md)
+also identifies average NPC-group level, equipment and strength peaks as source
+inputs missing from the generic fallback. Larger groups do not universally earn
+more in Neverlands. XP buffs and direct-spell eligibility remain separate slices
+in [FORMULAS](FORMULAS.md#published-inputs-outside-the-current-approximation).
+The winning-player rate **1.9** fits September 15's **300 → 570 XP** at low
+trauma and level 17→19. The retained loss fit gives 181 versus the earlier
+observed 177. Neither is a recovered general equation; the earlier level-24
+winner's 566 and unknown alignment/level/gear factors remain unexplained.
 Example: gross1000, three players with half/quarter/quarter of team damage
 receive floors466/266/266 before their individual caps, if each has that same
 gross. Rounding does not redistribute the remaining two points.
@@ -530,6 +550,12 @@ draws; do not choose a timeout winner by HP comparison. Turn expiry is strictly
 `now > roundStart+turnTimeout`. A player who already committed and is waiting
 can claim victory or a draw after eligible turn expiry, subject to the global
 deadline. A 300-second round normally meets the global boundary first.
+
+[Source Fist fight771309274](design/reference/inventory/observations/2026-09-15_successful_fist_attack.md)
+continued from17:17:57 through17:30 with a five-minute icon. That display cannot
+be a global five-minute cap for this sample. The user's suggested per-action
+reset is consistent with an inactivity timer, but exact reset/expiry remains
+unobserved. Local global termination is an intentional policy difference.
 
 [ArenaTurnTimeoutJob](../app/jobs/arena_turn_timeout_job.rb) also has an
 unclaimed-turn recovery path: advance/log the timeout, allow applicable NPC
@@ -596,15 +622,20 @@ sampled encounters can schedule again, fixed NPC anchors use their defeated/
 respawn lifecycle. Physical Arena returns to its valid original hall/tab.
 Scroll entrants return to Inventory; new scroll defenders resume their saved
 accessible context. Replaying old Finish cannot clear a newer active fight.
-Solo-NPC personal completion notice is delivered on Finish; other multiplayer
+Solo-NPC personal completion notice and each newly initiated scroll-match
+participant’s notice are delivered on their own Finish. Other multiplayer
 completion notices are published at finalization through the shell owner.
+Scroll Finish uses already recorded XP and the same idempotent event key;
+one player’s acknowledgement never clears another player’s result.
 
 ## 9. UI, realtime delivery, logs and artwork
 
 The shared fight view presents the player's paper doll/vitals and selected
 living opponent, sides, action/defense controls, profile AP, timers, actual
 trauma, target switching and compact log. Waiting submissions remain committed
-on reload. Defeated NPC/player cards leave active selection; results/statistics
+on reload. While waiting, the right paper doll is absent, with the selected
+target still stored and the living roster intact; it returns on the next
+actionable round. Defeated NPC/player cards leave active selection; results/statistics
 still contain them. Finished fights show results and independent Finish.
 
 [CombatBroadcaster](../app/services/arena/combat_broadcaster.rb) and
@@ -747,6 +778,14 @@ catalog/seed/managed-state procedures and preserve user-managed changes.
 
 ## 12. Verification, known gaps and maintenance
 
+The [linked stat definitions](STATS.md) also preserve source low-HP combat
+degradation without a known coefficient; current injury/fatigue factors do not
+implement it. The [published technique level-chance table](FORMULAS.md#source-only-level-sensitive-techniques)
+is likewise not wired up, and its scope is some techniques/abilities/spells,
+not every physical hit. [MODIFIERS](MODIFIERS.md) explains the existing opposed
+rating pipeline. These source findings do not change the physical MVP or make
+universal hidden level coefficients known.
+
 Key behavior coverage:
 
 - [Committed exchanges](../spec/services/arena/committed_exchange_spec.rb),
@@ -781,16 +820,17 @@ book does not represent another browser run, CI result or Neverlands fight.
 Retain these explicit boundaries:
 
 - **[EVIDENCE]** Exact hidden Neverlands coefficients, complete encounter
-  distributions and successful source scroll-attack aftermath remain
-  incomplete. Human Arena now has the September 14 completed Duel evidence;
+  distributions, defender-side controls, exact scroll timeout expiry and
+  intervention remain incomplete. Fist attacker aftermath and later defender
+  public recovery are captured on September 15. Human Arena now has the September 14 completed Duel evidence;
   authorized local fits and local multiplayer checks are separate.
 - **[IMPL]** Doctor growth/qualification quests, Workshop
   repair, other scroll activation, broad spell/profession/Quest mechanics and
   broader content are separate unfinished scopes, not solved by this book.
 - **Scope:** no excluded Arena tabs, automatic NPC level scaling, arbitrary
   post-MVP spells or unobserved premium combat powers are implied. NPC search
-  is not player-item looting. Source bugs do not override the explicit local
-  five-minute decision.
+  is not player-item looting. The source Fist fight continued for about13 minutes; local five-minute
+  global termination remains a deliberate policy, not verified source parity.
 
 For every relevant change, update this guide's flow/examples/edit impact,
 FORMULAS' numerical details, affected NPC/ITEMS/SCROLLS/WORLD entries, design
@@ -815,3 +855,38 @@ Its pagination counts visible outcomes. Profiles intentionally opened during
 an existing fight stay readable; their in-combat link opens the complete public
 log outside the profile Turbo frame. Incoming-attack polling remains enabled
 when a profile is opened without an existing fight.
+
+### September 15 stat and modifier interpretation
+
+The [wiki audit](design/reference/character/observations/2026-09-15_levels_stats_and_modifiers.md) distinguishes published dependencies
+from fitted coefficients. Accuracy now uses `3*Dex + 2*Luck + item Accuracy`;
+3:2 is a local fit, preserving the former rating for equal Dex/Luck builds.
+Crushing/Evasion/Fortitude are modifier ratings, not final percentages. Their
+respective Luck/Dex/Luck dependencies are published; the wiki leaves Fortitude's
+possible additional primary stat uncertain.
+
+Physical damage uses:
+
+```text
+healthArmorFactor = 1 + 0.05 * floor(clamp(effective Health, 0, 150) / 30)
+```
+
+The Health page gives approximately 5% per 30 Health in the 30–150 range.
+Complete steps and saturation above150 are local interpretations. This factor
+multiplies the armor used for physical damage before fatigue/penetration;
+displayed armor and the separate block rating remain unchanged. Armor100 at
+Health29/30/150 becomes effective armor100/105/125. Zero armor stays zero.
+Player effective Health includes applicable injury penalties. NPC Health must
+be explicitly authored in `stats.health`; HP alone
+never supplies it. The shared adapter/resolver applies this to every physical
+Arena, scroll and wilderness match.
+
+Known source-only rules: Knowledge's combat HP-restoration threshold is
+`base Knowledge >= 2*(level+3)` (level17 requires40); perks/buffs are excluded,
+gear treatment is uncertain. The source describes automatic mana spending to
+restore HP, limited by fatigue, but gives no mana-to-HP coefficient. This is not
+Doctor injury treatment. Full combat healing remains outside physical MVP.
+The Armor page additionally says elemental magic uses10% armor plus elemental
+resistance. The bounded legacy magic resolver currently ignores armor: this is
+an explicit implementation gap, not a Neverlands rule. General magic armor
+interaction/order and the hidden level coefficient need further calibration.

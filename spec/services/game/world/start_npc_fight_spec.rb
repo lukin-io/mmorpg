@@ -173,6 +173,7 @@ RSpec.describe Game::World::StartNpcFight do
   end
 
   it "creates all ten distinct opponent slots at the authored roster capacity" do
+    character.update!(level: 18)
     tile_npc.update!(metadata: {
       "encounter_rosters" => [
         {"key" => "capacity-boundary", "members" => Array.new(10) { {"npc_key" => npc_template.npc_key} }}
@@ -187,6 +188,29 @@ RSpec.describe Game::World::StartNpcFight do
     expect(match.arena_participations.npcs.count).to eq(10)
     expect(match.arena_participations.npcs.pluck(Arel.sql("metadata->>'encounter_slot'")))
       .to match_array((1..10).map(&:to_s))
+  end
+
+  it "rechecks the persisted player level before admitting a complete wilderness group" do
+    tile_npc.update!(metadata: {"encounter_count" => 2, "encounter_experience_reward" => 35})
+    stale_character = character
+    Character.find(character.id).update!(level: 3)
+    service = described_class.new(character: stale_character, tile_npc:)
+
+    expect { expect { service.call }.to raise_error(described_class::UnavailableRosterError) }
+      .not_to change(ArenaMatch, :count)
+    expect(stale_character.reload).not_to be_in_combat
+
+    character.update!(level: 4)
+    match = service.call
+    expect(match.metadata).to include("encounter_count" => 2, "encounter_size_limit" => 2, "encounter_player_level" => 4)
+    expect(match.arena_participations.npcs.count).to eq(2)
+    expect { service.call }.not_to change(ArenaMatch, :count)
+  end
+
+  it "does not extrapolate group capacity for unsupported player levels" do
+    character.update!(level: 28)
+    expect { expect { described_class.new(character:, tile_npc:).call }.to raise_error(described_class::UnavailableRosterError) }
+      .not_to change(ArenaMatch, :count)
   end
 
   it "does not let optional member metadata replace authoritative combat fields" do

@@ -21,7 +21,7 @@ RSpec.describe "Open-world seed data", type: :model do
     ])
     expect(cells.map(&:active_local_actions)).to eq([[], []])
     expect(cells).to all(be_passable)
-    character = create(:character)
+    character = create(:character, level: 17)
     create(:character_position, character:, zone: region, x: 20, y: 6)
     expect { Game::World::StartNpcFight.new(character:, tile_npc: ogres.first).call }.to change(ArenaMatch, :count).by(1)
     ogres.first.update!(metadata: ogres.first.metadata.merge("active" => false))

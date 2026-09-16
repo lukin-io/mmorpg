@@ -6,6 +6,7 @@ module Game
     # character's current outdoor cell.
     class StartNpcFight
       class FightViolationError < StandardError; end
+      class UnavailableRosterError < FightViolationError; end
 
       def initialize(
         character:,
@@ -33,6 +34,7 @@ module Game
             unless match
               tile_npc.with_lock do
                 tile_npc.reload
+                @encounter_selection = nil
                 validate!
                 match = create_match!
                 create_participations!(match)
@@ -72,6 +74,8 @@ module Game
         raise FightViolationError, "This NPC is not hostile." unless tile_npc.hostile?
         raise FightViolationError, "NPC is not on the current cell." unless npc_matches_position?
         encounter_selection
+      rescue EncounterRosterSelector::NoEligibleRosterError => error
+        raise UnavailableRosterError, error.message
       rescue EncounterRosterSelector::InvalidRosterError => error
         raise FightViolationError, error.message
       end
@@ -94,7 +98,8 @@ module Game
       end
 
       def encounter_selection
-        @encounter_selection ||= roster_selector_class.new(tile_npc:, rng:).call
+        @encounter_selection ||= roster_selector_class.new(tile_npc:, rng:,
+          max_members: Game::Progression::Catalog.max_npcs_in_group(character.level)).call
       end
 
       def normalized_return_context
@@ -112,6 +117,8 @@ module Game
           "npc_name" => tile_npc.npc_template.name,
           "npc_role" => tile_npc.npc_template.role,
           "encounter_count" => members.size,
+          "encounter_player_level" => character.level,
+          "encounter_size_limit" => Game::Progression::Catalog.max_npcs_in_group(character.level),
           "encounter_member_keys" => members.map { |member| member.npc_template.npc_key },
           "repeatable_encounter_source" => tile_npc.repeatable_encounter_source?,
           "return_context" => normalized_return_context,

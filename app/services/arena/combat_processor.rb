@@ -229,16 +229,16 @@ module Arena
       end
     end
 
-    # The observed solo-NPC completion notice appears on explicit Finish.
-    # XP is already durable; this projects it once using the existing event key.
-    def publish_npc_finish_notice!(participation)
+    # Solo NPC and newly initiated scroll fights publish on each player's Finish.
+    # Settlement already owns XP; this projects the recorded recipient once.
+    def publish_finish_notice!(participation)
       return unless match.completed? && participation.arena_match_id == match.id
-      return unless participation.metadata.to_h["finished_at"].present? && solo_npc_fight?
+      return unless participation.metadata.to_h["finished_at"].present? && finish_notice_deferred?
 
-      experience = match.metadata.to_h.dig("rewards", "experience").to_h
-      return unless experience["character_id"].to_i == participation.character_id && experience["amount"].to_i.positive?
+      experience = participation.metadata.to_h["experience_awarded"].to_i
+      return if solo_npc_fight? && !experience.positive?
 
-      publish_fight_finished_event!(participation, experience["amount"].to_i, match.winning_team)
+      publish_fight_finished_event!(participation, experience, match.winning_team)
     end
 
     # Neverlands treats player, team, and NPC fights as the same fight
@@ -301,7 +301,13 @@ module Arena
           starts_at: started_at,
           updated_at: started_at
         )
-        log_entry("system", nil, "The fight begins!")
+        if match.metadata.to_h["source"] == "scroll_pvp"
+          names = match.arena_participations.includes(:character).order(:id).map { |entry| "#{entry.participant_name}[#{entry.participant_level}]" }
+          attack_kind = match.metadata["fight_kind"] == "no_weapons" ? "fist attack" : "attack"
+          log_entry("system", nil, "Fight between #{names.join(" and ")} started (#{attack_kind}) (#{started_at.strftime("%d.%m.%Y %H:%M:%S")}).")
+        else
+          log_entry("system", nil, "The fight begins!")
+        end
         true
       end
 
@@ -1272,7 +1278,7 @@ module Arena
         log_entry("system", character, "#{character.name}'s equipment loses durability.")
       end
 
-      publish_fight_finished_events!(xp_results, winning_team) unless solo_npc_fight?
+      publish_fight_finished_events!(xp_results, winning_team) unless finish_notice_deferred?
 
       reward_metadata = {
         "experience_recipients" => xp_results.map(&:to_h),
@@ -1312,6 +1318,10 @@ module Arena
 
     def solo_npc_fight?
       npc_fight? && match.arena_participations.players.one?
+    end
+
+    def finish_notice_deferred?
+      solo_npc_fight? || match.metadata.to_h["source"] == "scroll_pvp"
     end
 
     def publish_fight_finished_event!(participation, experience, winning_team)

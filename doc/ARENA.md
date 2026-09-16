@@ -1,6 +1,6 @@
 # Arena Book
 
-Reviewed against the local working tree on **2026-09-14**. This is the complete
+Reviewed against the local working tree on **2026-09-15**. This is the complete
 area guide to Arena entry, halls, Duel/Group applications, training opponents,
 admission, match assembly, fighting, results, presentation and editing. It
 describes authored baseline content and current code; it is not a live room
@@ -363,7 +363,7 @@ is a shared model name; it does not mean every fight occurs in an Arena hall.
 | Level and allocated stats | Hall/application admission, progression grants, HP/MP/AP, reward inputs; level alone does not replace effective stats with an automatic damage curve | [Progression and grants](FORMULAS.md#2-experience-levels-and-grants), [combat inputs](COMBAT.md#4-levels-skills-equipment-and-combat-inputs) |
 | Strength, mastery, weapon family, artifact grade | Attack power, action cost and calibrated damage | [Physical cost](FORMULAS.md#combat-01--physical-action-cost-and-package-validation), [damage](FORMULAS.md#combat-03--physical-damage) |
 | Dexterity, Luck, accuracy/evasion and opposing ratings | Hit, dodge, critical and opposed defense probabilities | [Hit/dodge/block](FORMULAS.md#combat-02--hit-dodge-critical-and-physical-block) |
-| Armor, resistance and penetration | Reduce connected damage; high defenses can produce a genuine zero-damage hit | [Damage order](COMBAT.md#6-hit-block-dodge-critical-and-damage-formulas) |
+| Health, armor, resistance and penetration | Health adds the hidden physical armor factor; these inputs reduce connected damage; high defenses can produce a genuine zero-damage hit | [Damage order](COMBAT.md#6-hit-block-dodge-critical-and-damage-formulas) |
 | Shield and body selection | Shield/normal block table, protected regions, AP cost and penetration chance | [AP and defense](COMBAT.md#5-complete-turns-ap-and-defense) |
 | Subscription | NPC search level window and fight-XP cap; not a direct attack multiplier | [Premium limits](FORMULAS.md#reward-02--premium-limits) |
 | Injury and recovery | Temporary effective-stat penalties and subsequent eligibility/vitals | [Injuries](FORMULAS.md#injury-01--defeat-injury-and-stat-penalty), [recovery](FORMULAS.md#recovery-01--elapsed-hpmp-regeneration) |
@@ -402,7 +402,7 @@ server's timeout rule. Decisive timeout injury is a distinct exception below.
 
 | Outcome | Current behavior and owner |
 |---|---|
-| XP | [Shared reward formula](FORMULAS.md#reward-01--shared-npc-and-player-experience) uses defeated opponents, snapshotted level/HP, bounded credited damage, team contribution, trauma factor and level/premium cap. Draws and untouched surrender grant zero. Overkill is retained in logs but cannot inflate credited HP. |
+| XP | [Shared reward formula](FORMULAS.md#reward-01--shared-npc-and-player-experience) uses defeated NPCs or damaged player opponents, snapshotted level/HP, cumulative credited damage, team contribution, trauma factor and level/premium cap. Draws and untouched surrender grant zero. Credit is bounded by HP available per strike; restored HP can be damaged again for XP. Raw overkill remains log-only. |
 | Group reward | Each recipient's calculated gross reward is weighted by `0.2 / team player count + 0.8 × credited damage share` before applicable caps/rounding. Gross depends on that recipient's level; it is not one common level-independent pool. Defeated winning contributors remain eligible. |
 | Trauma and severity | Ordinary defeat first rolls selected 10/30/50/80% trauma, then conditional severity light 80%, medium 18%, heavy 2%. At 10% trauma: 90% no injury, 8% light, 1.8% medium, 0.2% heavy, absent exceptions. |
 | Exceptions/treatment | Decisive timeout can impose heavy injury; combat-category injury is a separate guaranteed path. Named injuries and treatment belong to [Medical Care](features/medical_care.md). Doctor bag skill thresholds are enforced at request and paid acceptance. |
@@ -415,6 +415,14 @@ a fresh XP/drop roll. Reload/login restores an unacknowledged physical result,
 including when opponents finished while the player was offline. An old Finish
 cannot clear a newer active fight. A scroll entrant returns to Inventory under
 its own entry contract, even if the receiving match originated in Arena.
+
+The shared winning-player XP coefficient is **1.9**, calibrated from the
+[September 15 Permit fight](design/reference/inventory/observations/2026-09-15_successful_attack_scroll.md):
+300 credited HP at low trauma yielded 570 XP. It applies to Arena player
+opponents too, without an Arena-specific reward pipeline. NPC and PvP-loss
+coefficients remain 0.85. This outside-Arena observation does not resolve the
+earlier level-24 Arena winner's 566 XP; [REWARD-01](FORMULAS.md#reward-01--shared-npc-and-player-experience)
+records that approximation and the remaining level/trauma/cap factors.
 
 Full mechanics and exact calculator/configuration links remain in
 [COMBAT](COMBAT.md#8-injuries-wear-recovery-and-finish) and [FORMULAS](FORMULAS.md);
@@ -748,4 +756,7 @@ the profile frame. Public log paragraphs omit internal submission/stance rows,
 which remain in storage and raw JSON for reconstruction.
 Unarmed is an equipment restriction in Neverlands, not a magic prohibition.
 Physical-only remains the explicitly approved local MVP scope. Snowball pocket
-admission is a bounded observation, not an implemented unrestricted exception.
+admission is a bounded historical observation, not an implemented unrestricted
+exception. Snowball and unarmed pocket research/implementation are explicitly
+outside launch MVP and cancelled from the active primary-list on September 16;
+see the [scope decision](design/launch_mvp_plan.md#september-16-primary-list-scope).

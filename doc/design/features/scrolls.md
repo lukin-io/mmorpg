@@ -56,8 +56,21 @@ message replaces the target panel above the category strip; Use can be reopened
 without spending a charge. Other local diagnostic messages are not claimed as
 observed Neverlands wording.
 
-Successful source entry, Fist intervention, post-fight equipment persistence and
-the exact causes of source failures remain bounded by the observation's
-explicit evidence limits. Successful-entry capture awaits another target.
+[September 15 Permit success](../reference/inventory/observations/2026-09-15_successful_attack_scroll.md)
+confirms immediate armed entry at 285/1375 HP against level 19, low trauma,
+five-minute displayed timeout, one charge and Finish to Inventory with gear
+retained. It also confirms the explicit **(attack)** start-log marker and
+positive XP chat only on the attacker's Finish. New scroll matches project
+completion notices independently on each player's Finish, without delaying
+durable reward settlement. The defender's zero-HP profile retains the completed
+fight link until separately acknowledged. The later
+[Fist capture](../reference/inventory/observations/2026-09-15_successful_fist_attack.md)
+confirms immediate unarmed entry,375→225 HP,21 exchanges, one charge and
+attacker gear staying unequipped after Finish. Its opening marker is
+**(fist attack)**. The defender later publicly recovered on the same cell.
+Defender-side controls, intervention and exact rejection causes remain source
+boundaries. The source fight lasted about13 minutes despite its five-minute
+icon, consistent with inactivity timing; the local global300s policy remains
+an explicit adaptation. Exact reset/expiry mechanics were not exercised.
 Magic, other scroll types, clan intervention exceptions and source premium
 bundle commerce are outside this first pair.

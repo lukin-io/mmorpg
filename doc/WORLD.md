@@ -19,6 +19,9 @@ acceptance belong to [World](features/world.md), [City](features/city.md) and
 [MVP plan](design/launch_mvp_plan.md).
 
 [CHARACTER](CHARACTER.md) explains effective movement/capacity inputs;
+[STATS](STATS.md#capacity-and-overload) distinguishes implemented carrying
+capacity from the published overload bonuses/timing restrictions. The latter
+are source-only: current walking does not apply graduated overload penalties;
 [MEDICAL](MEDICAL.md) owns injury movement restrictions and Hospital treatment;
 [ECONOMY](ECONOMY.md) explains Shop transactions and qualification after entry.
 
@@ -421,6 +424,23 @@ combat and item requirements are rechecked under locks. No separate outdoor
 PvP resolver exists. On city/building/Inventory pages, the shell checks persisted
 combat status every five seconds without rolling NPC encounters. The attacked
 player enters the shared fight automatically and Finish restores the prior
-accessible context; the scroll user returns to Inventory. Live target execution
-is pending; [Inventory acceptance](features/player_inventory.md#september-14-attack-scrolls)
+accessible context; the scroll user returns to Inventory.
+[September 15's lake Permit capture](design/reference/inventory/observations/2026-09-15_successful_attack_scroll.md)
+confirms immediate entry and the attacker's Inventory return while the defender
+still links the completed fight at zero HP. Defender return and Fist success
+remain source gaps; [Inventory acceptance](features/player_inventory.md#september-14-attack-scrolls)
 separates local proof from source evidence.
+
+## Player-level wilderness group ceiling
+
+World enforces the [progression NPC ceiling](FORMULAS.md#prog-02--current-level-table)
+when creating a match. [NPC eligibility](NPC.md#player-level-roster-eligibility)
+explains complete-sample selection, retained weights/rewards and fixed-group
+unavailability. Level3 only draws singles; level4 can draw pairs; level18 can
+use the full content limit10. Unsupported levels allow no new encounter.
+
+No eligible roster means no fight: shell actions continue, and a due passive
+check clears its schedule and reports a30-second recheck. Other invalid combat
+content still fails visibly. The selected player level and ceiling are saved
+on the match; client level/count parameters cannot override them. This is
+independent of near-city habitat safety and Arena team sizes.

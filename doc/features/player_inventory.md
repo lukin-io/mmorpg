@@ -3,7 +3,7 @@
 title: Player Inventory Feature
 description: Implementation handbook for the Neverlands-based carried inventory, equipment paper doll, capacity, filters, item rows, and item actions.
 status: Fully Implemented
-updated: 2026-09-14
+updated: 2026-09-15
 owners: Player Inventory
 template: feature-v1
 ---
@@ -65,8 +65,14 @@ Coverage: `spec/services/game/inventory/attack_scroll_spec.rb`,
 `spec/requests/scroll_uses_spec.rb`, `spec/system/attack_scroll_spec.rb`, shared
 combat/profile/resolver, Shop seed and item-artwork specs. Check/browser
 results are recorded below. Live Permit/Fist attempts against co-located zMey
-[5] from level 17 both rejected without consumption; no source scroll fight
-has started. Fist Attack against an already-fighting
+[5] from level 17 both rejected without consumption. The
+[September 15 Permit capture](../design/reference/inventory/observations/2026-09-15_successful_attack_scroll.md)
+now confirms immediate armed entry, low-HP admission, one charge and attacker
+Finish to Inventory with gear preserved. The
+[Fist capture](../design/reference/inventory/observations/2026-09-15_successful_fist_attack.md)
+now confirms successful unarmed entry, one charge and persistent removal of
+the attacker’s gear after Finish; both contributors remain in statistics.
+Fist Attack against an already-fighting
 player is an explicit evidence boundary and fails without consumption; Permit
 intervention is implemented.
 
@@ -78,6 +84,24 @@ Out-of-window levels use "Error using item. Scroll use failed." to match the
 observed generic failure; other diagnostic wording remains local. The wiki's
 ±3 gate is retained. Rejection precedes gear removal and has no charge, fight,
 event or equipment side effects, including repeated attempts.
+
+### September 15 successful Permit follow-up
+
+Source fight **771285270** used Permit I against a co-located level-19 player.
+The source admitted the armed level-17 attacker at **285/1375 HP**, retained
+equipment, consumed one of two scrolls and reduced mass by one. A lethal
+critical and shield-blocked return completed the exchange; Finish returned to
+Inventory. The defender's public profile still linked that completed result
+at zero HP after the attacker's Finish. Fist success, defender recovery and
+intervention are not inferred from this outcome.
+
+The shared processor now writes the source **started (attack)** opening and
+defers each new scroll match's completion notice until that player's Finish.
+XP and counters remain settled once at combat completion. The maintained
+[PvP reward fit](../FORMULAS.md#reward-01--shared-npc-and-player-experience)
+uses the new **300 credited HP → 570 XP** victory anchor. Source and local
+verification are separately recorded in
+[Combat acceptance](arena_combat.md#september-15-successful-scroll-acceptance).
 
 ### September 14 local acceptance
 
@@ -383,11 +407,18 @@ Shop Buy/Sell and carried Inventory. Equippable goods also
 reuse the same image in filled paper-doll slots.
 `InventoriesHelper::ITEM_ARTWORK_PATHS` explicitly maps stable item keys to
 `app/assets/images/items/` assets; translated names and submitted paths do not
-select images. Carried rows fit the complete image inside 60 × 60 pixels;
-equipped images fit the existing `EquipmentSlots` geometry. Names remain in
+select images. Carried rows and Shop Buy/Sell use
+`InventoriesHelper#item_artwork_dimensions`: EquipmentSlots geometry for wearables,
+42×21 for captured Duel Permits I–IV, and60×60 for other loose goods. CSS honors
+these dimensions with containment. Equipped images reuse the same slot catalog. Names remain in
 row details, slot tooltips and accessible labels. Unmapped goods retain their
 existing type/name fallbacks. The original painted character portrait is unchanged by equipment; its decorative props never imply equipped slots or stats.
-Exact generation prompts and selected outputs belong to [ARTWORK.md](../ARTWORK.md).
+Exact generation prompts, backgrounds, framing, delivery dimensions and the
+current asset audit belong to [ART-CATEGORY-001](../ARTWORK.md#category-artwork-standard).
+The [September16 observation](../design/reference/inventory/observations/2026-09-16_artwork_categories.md)
+owns the measured category shapes; `shop_purchase_spec` exercises their shared
+Shop → Inventory → Wear → Remove rendering. Final manual acceptance is recorded
+separately from automated coverage.
 
 Player-to-player selling remains unavailable even with an active Trading
 license: the legacy immediate debit of another player's wallet was removed.
@@ -696,3 +727,31 @@ shipped Inventory management routes.
 | 2026-08-25 | Made the shared multi-unit item-add contract explicitly atomic: an Inventory lock plus nested savepoint rolls back partial stack and carried-mass writes before a caller records a capacity failure. |
 | 2026-08-26 | Clarified the Combat-owned Careful Fighter wear handoff and recorded repair as a deferred workshop/profession transaction rather than an inventory durability reset. |
 | 2026-09-10 | Integrated seven original Shop-item illustrations into carried rows and shared equipment slots; extended the Shop browser flow through wear, persisted slot/stat confirmation, removal and resale. |
+
+
+## September 15 successful Fist follow-up
+
+[Source fight771309274](../design/reference/inventory/observations/2026-09-15_successful_fist_attack.md)
+confirms Fist consumption, both empty paper dolls, attacker375→225 HP,21
+exchanges and Inventory return with gear still unequipped. Loss93 XP chat
+appeared on Finish. Later defender public recovery on the same cell is observed;
+the defender's actual controls are not. Source elapsed duration exceeded the
+five-minute icon; local global300s remains intentional policy.
+
+`Arena::CombatProcessor#start_match` now distinguishes **(fist attack)** from
+Permit **(attack)** using the server-owned fight kind. It preserves the existing
+once-only opening and common compact/public log formatting. Regression tests
+cover the captured HP transition, preserved defender HP, one charge/opening
+on retry and both log surfaces. Existing admission, stripping, reward and
+Finish pipelines are retained. No new artwork or alternate combat engine.
+
+Final checks and local browser flow are owned by
+[Arena acceptance](arena_combat.md#september-15-fist-scroll-acceptance).
+
+## September 16 category geometry verification
+
+The [manual and automated acceptance record](acceptance/2026-09-16_artwork/README.md)
+records the source-shaped Shop/Inventory images, purchase → wear → reload →
+keyboard removal, Sell restrictions, empty category and zoom checks. Runtime
+geometry is verified. Background/framing normalization and six license-candidate
+replacements remain pending; this is not an all-artwork completion claim.

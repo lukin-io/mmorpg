@@ -1,5 +1,17 @@
 # Combat and Arena Domain
 
+[September 15 successful Permit entry](../design/reference/inventory/observations/2026-09-15_successful_attack_scroll.md)
+confirms the shared wilderness player-fight surface, low-HP armed admission,
+charge and independent attacker Finish. [SCROLLS](../SCROLLS.md) retains the
+subsequent successful Fist capture and the remaining defender-control,
+inactivity-timeout and intervention gaps; [FORMULAS](../FORMULAS.md#reward-01--shared-npc-and-player-experience)
+owns the new winning-PvP fit and its limits.
+
+The [September 15 wiki XP audit](../design/reference/combat/observations/2026-09-15_wiki_experience_rules.md)
+adds published restored-HP credit and known NPC-group/bonus inputs. The shared
+awarder removes its player maxHP clamp; generic NPC average-level/gear/peak
+terms and XP bonuses remain explicit implementation/evidence gaps.
+
 Fresh evidence: [September14 human unarmed Duel](../design/reference/combat/observations/2026-09-14_arena_fist_duel.md) — accepted
 application, applicant Start/refusal, six exchanges including opponent magic,
 loss XP, public log/profile location, Finish and recovery. September12 absence
@@ -25,6 +37,8 @@ player-facing completion/loot fact handoff, and responsive fight presentation.
 - Build/aftermath guides: [CHARACTER](../CHARACTER.md) explains effective inputs
   and progression; [MEDICAL](../MEDICAL.md) explains injury penalties, supplies
   and treatment after defeat.
+- Detailed input guides: [STATS](../STATS.md) for primary/resource dependencies
+  and [MODIFIERS](../MODIFIERS.md) for rating composition and opposed consumers.
 - Arena area guide: [ARENA](../ARENA.md) for halls, applications, training,
   admission/assembly, presentation, recovery and editing.
 - General feature guide: [COMBAT](../COMBAT.md); targeted entry guide:

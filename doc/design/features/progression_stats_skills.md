@@ -2,6 +2,12 @@
 
 Domain navigation: [Character](../../domains/character.md).
 
+[STATS](../../STATS.md) and [MODIFIERS](../../MODIFIERS.md) expand parameter
+definitions, linked resources and current opposed-rating consumers. Their
+[source coverage record](../reference/character/observations/2026-09-15_stats_guide_linked_definitions.md)
+separates published but absent overload/reset/buff/low-HP rules from active
+calibration; adding these references does not change the current MVP boundary.
+
 The complete [SKILLS](../../SKILLS.md) and [PERKS](../../PERKS.md) guides map
 current catalogs, implemented/missing effects, allocation rules, formulas and
 cross-feature use cases. [September14 screenshots/wiki](../reference/character/observations/2026-09-14_skills_and_perks.md)
@@ -14,6 +20,11 @@ tables and links the current stat/skill calculations;
 equipment requirements and modifiers. The
 [Character Progression handbook](../../features/character_progression.md)
 owns allocation, persistence and consumer handoffs.
+
+The [September 15 Experience audit](../reference/combat/observations/2026-09-15_wiki_experience_rules.md)
+compares every supported table row with the current wiki: 224 stored values
+match. No grants or cumulative thresholds changed. Reward eligibility,
+restored-HP credit and missing XP buffs belong to the shared Combat owner.
 
 ## September12 authorized calibration
 
@@ -408,3 +419,19 @@ Perk allocation rules:
 - Unlimited free respec.
 - Skills that only exist as UI decoration.
 - Extrapolated level rows, invented group-XP distribution, or generic classes.
+
+## September 15 level, stat and modifier integration
+
+The [published-rule audit](../reference/character/observations/2026-09-15_levels_stats_and_modifiers.md) adds three shared consumers:
+World filters complete NPC samples by the persisted player's progression-table
+ceiling; combat accuracy includes both Dexterity and Luck; physical armor gains
+an approximate hidden Health factor. Config owns the fitted3:2 accuracy weights
+and Health30-step/150-cap/0.05 bonus. Displayed armor and independent block rating
+remain unchanged. NPC Health is explicitly authored, never inferred from HP.
+
+The global [FORMULAS](../../FORMULAS.md#september-15-stat-and-modifier-interpretation)
+and [CHARACTER](../../CHARACTER.md#september-15-level-and-primary-stat-evidence)
+books own equations, examples and editing impact. The source's hidden combat
+level coefficient remains unimplemented with unknown magnitude. Combat HP
+restoration qualification and elemental magic's10%-armor rule are recorded as
+source-only dependencies beyond the physical MVP, not claims of shipped parity.

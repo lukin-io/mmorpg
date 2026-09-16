@@ -197,7 +197,9 @@ Design rules:
 - a bot attack creates a normal fight with side/team membership, not a special
   wild-combat shortcut;
 - a fight can include multiple NPCs on one side, up to the official article's
-  stated ten-member maximum; this is capacity, not an uncaptured roster;
+  stated ten-member content maximum, additionally bounded by the player's
+  [progression ceiling](../../FORMULAS.md#prog-02--current-level-table). Select
+  complete eligible samples, never truncate a captured group or its rewards;
 - when one NPC in a multi-NPC fight loses, the fight can continue against the
   remaining NPCs;
 - each defeated loot-bearing NPC can run its own bot-specific random loot-table

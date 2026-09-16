@@ -165,7 +165,7 @@ class ArenaMatchesController < ApplicationController
       participation.metadata ||= {}
       participation.metadata["finished_at"] ||= Time.current.iso8601
       participation.save!
-      Arena::CombatProcessor.new(@arena_match).publish_npc_finish_notice!(participation)
+      Arena::CombatProcessor.new(@arena_match).publish_finish_notice!(participation)
     end
     current_character.with_lock do
       # Replaying an old Finish must never clear a newer fight's state.

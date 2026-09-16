@@ -54,7 +54,7 @@ RSpec.describe "Inventories", type: :request do
         image = Nokogiri::HTML(response.body).at_css(".nl-inventory-item-icon img.nl-inventory-item-artwork")
         expect(image["src"]).to eq(ApplicationController.helpers.image_path("items/penknife.png"))
         expect(image.attributes.slice("width", "height", "alt").transform_values(&:value))
-          .to eq("width" => "60", "height" => "60", "alt" => "")
+          .to eq("width" => "62", "height" => "91", "alt" => "")
       end
     end
 

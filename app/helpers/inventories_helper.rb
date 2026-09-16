@@ -290,6 +290,16 @@ module InventoriesHelper
     ITEM_ARTWORK_PATHS[item_template.key.to_s]
   end
 
+  # Shop and Inventory preserve the source category footprint. Equipment uses
+  # the same catalog as both combatants' paper dolls; loose goods are square.
+  def item_artwork_dimensions(item_template)
+    slot = EquipmentSlots::ORDERED.find { |entry| entry.key == item_template.equipment_slot }
+    return {width: slot.width, height: slot.height} if slot
+    return {width: 42, height: 21} if %w[duel_permit_i duel_permit_ii duel_permit_iii duel_permit_iv].include?(item_template.key.to_s)
+
+    {width: 60, height: 60}
+  end
+
   def inventory_category_options
     INVENTORY_CATEGORIES
   end

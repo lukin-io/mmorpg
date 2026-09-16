@@ -5,10 +5,22 @@ follow the [Inventory domain](../../../domains/inventory.md).
 
 - Document type: neverlands-source-summary
 - Domain: inventory
-- Updated: 2026-09-14
+- Updated: 2026-09-15
 - Evidence status: current for the bounded launch surface
 
 ## Current observations
+
+- [September16 artwork categories](observations/2026-09-16_artwork_categories.md):
+  shared Shop/Inventory category dimensions, image versus cell backgrounds,
+  license framing and original-art adoption boundaries.
+
+- [September 15 successful Permit attack](observations/2026-09-15_successful_attack_scroll.md):
+  lake 17→19, retained gear, low-HP entry, committed lethal exchange, one charge,
+  570 XP and independent Finish.
+- [September 15 successful Fist attack](observations/2026-09-15_successful_fist_attack.md):
+  cemetery17→17, gear stripping,21 exchanges over about13 minutes, both
+  contributors in statistics,93/9835 XP, one charge, attacker Inventory return
+  with gear still removed and eventual defender public recovery.
 
 - Shop purchase and resulting carried penknife in
   `doc/design/reference/economy/observations/2026-09-09_city_shop_purchase.md`

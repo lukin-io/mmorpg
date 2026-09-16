@@ -375,3 +375,12 @@ Remaining design detail before launch:
   after Combat confirms a successful inventory award; it never grants the item.
 - `features/professions.md`: future tools and gathered materials reuse the same
   capacity and item-instance rules.
+
+## Artwork category contract
+
+The [September16 measurements](../reference/inventory/observations/2026-09-16_artwork_categories.md)
+confirm category-native images in both Shop and Inventory. Wearables share
+EquipmentSlots dimensions with the player/NPC doll; captured permits are42×21,
+other loose goods default to60×60. [ART-CATEGORY-001](../../ARTWORK.md#category-artwork-standard)
+owns original artwork, canvas colors, proportions, delivery density and acceptance.
+These are presentation rules; they grant no item effects or equipment.

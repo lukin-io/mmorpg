@@ -3,6 +3,8 @@
 require "rails_helper"
 
 RSpec.describe Game::Inventory::AttackScroll do
+  include ActiveSupport::Testing::TimeHelpers
+
   let(:zone) { create(:zone) }
   let(:attacker) { create(:character, level: 17, passive_skills: {"stealth" => 20}) }
   let(:target) { create(:character, level: 17) }
@@ -61,6 +63,22 @@ RSpec.describe Game::Inventory::AttackScroll do
     it "accepts the exact #{level} target level boundary" do
       target.update!(level:)
       expect(use_scroll).to be_live
+    end
+  end
+
+  it "admits the observed low-HP armed attacker without Arena's half-health gate or gear removal" do
+    attacker.update!(current_hp: 285, max_hp: 1375)
+    target.update!(level: 19, current_hp: 300, max_hp: 300)
+    gear = create(:inventory_item, inventory:, equipped: true, equipment_slot: "main_hand")
+    travel_to(Time.current) do
+      match = use_scroll
+
+      expect(match).to be_live
+      expect(match.arena_applications).to be_empty
+      expect(attacker.reload.current_hp).to eq(285)
+      expect(gear.reload).to be_equipped
+      expect(item.reload.quantity).to eq(1)
+      expect(match.combat_log_entries.first.message).to include("#{attacker.name}[17] and #{target.name}[19] started (attack)")
     end
   end
 
@@ -241,6 +259,22 @@ RSpec.describe Game::Inventory::AttackScroll do
     it "still requires level 10" do
       attacker.update!(level: 9)
       expect { offer }.to raise_error(described_class::Unavailable, /Level 10/)
+    end
+
+    it "preserves the observed stripped maxima and one charge on repeated Fist entry" do
+      attacker.update!(current_hp: 375, max_hp: 225)
+      target.update!(current_hp: 175, max_hp: 175)
+      gear = create(:item_template, item_type: "equipment", slot: "main_hand", stat_modifiers: {"hp" => 1150})
+      equipped = create(:inventory_item, inventory:, item_template: gear, equipped: true, equipment_slot: "main_hand")
+
+      match = use_scroll
+      expect(attacker.reload).to have_attributes(current_hp: 225, max_hp: 225)
+      expect(target.reload).to have_attributes(current_hp: 175, max_hp: 175)
+      expect(equipped.reload).not_to be_equipped
+      expect(match.combat_log_entries.first.message).to include("started (fist attack)")
+      expect(use_scroll.id).to eq(match.id)
+      expect(item.reload.quantity).to eq(1)
+      expect(match.combat_log_entries.where("message LIKE ?", "%started (fist attack)%").count).to eq(1)
     end
   end
 

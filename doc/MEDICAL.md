@@ -14,6 +14,10 @@ and [MVP plan](design/launch_mvp_plan.md) for the delivery boundary.
 owns NV, Shop settlement and license acquisition; [ITEMS](ITEMS.md) owns general
 item/instance authoring. [FORMULAS](FORMULAS.md#7-recovery-wear-and-injuries)
 retains the complete numerical reference.
+[STATS](STATS.md) distinguishes Health/HP and Knowledge/MP;
+[MODIFIERS](MODIFIERS.md) explains injury effects through primary-stat inputs.
+The published low-current-HP combat penalty is separate from implemented injury
+penalties and has no local coefficient/consumer; full HP does not cure injury.
 
 ## Contents
 
@@ -335,8 +339,12 @@ The [September 15 Doctor acceptance](features/medical_care.md#september-15-docto
 records actual local proficiency rejection and successful one-use treatment.
 These are historical runtime/browser results; this guide's review is docs-only.
 
-- `[IMPL]`: automatic Doctor growth, the complete Traumatologist quest,
-  medical crafting, pharmacy and recovery-room treatment remain absent.
+- `[IMPL]`: automatic Doctor growth, medical crafting, pharmacy and
+  recovery-room treatment remain absent.
+- **TODO — Traumatologist quest:** deferred from the primary-list medical
+  slice by the September 16 user decision. It requires complete Neverlands
+  quest evidence and implementation under [Quests](features/quests.md#traumatologist-quest-todo),
+  including the earned qualification; existing license gates stay enforced.
 - `[EVIDENCE]`: uncaptured source treatment dialogs/results and a complete
   injury-name/distribution catalog are not claimed from existing observations.
   Local ordinary timings/weights remain explicitly fitted.
@@ -349,3 +357,13 @@ fees, clocks or cure/payment flows change. Synchronize the affected MEDICAL
 handbook, FORMULAS, CHARACTER, ITEMS, ECONOMY, COMBAT, SKILLS/PERKS and source/design
 owners. Artwork changes additionally update ARTWORK and final visual acceptance
 under the [documentation update rules](DOCUMENTATION.md#22-change-triggered-documentation-updates).
+
+## Injury penalties and the hidden Health armor input
+
+Effective Health feeds the shared
+[physical armor factor](FORMULAS.md#september-15-stat-and-modifier-interpretation).
+An injury reducing Health below a30-point step can reduce physical mitigation
+without changing the displayed item armor. Treatment or expiry removes that
+penalty; merely restoring HP does not. The newly captured base-Knowledge
+qualification for combat HP-restoration magic is a separate future combat
+consumer, not a Doctor skill, bag qualification or injury cure.

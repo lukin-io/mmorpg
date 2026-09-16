@@ -1,0 +1,566 @@
+Browser tab: 1495507446, Title: "NeverLands: Земли, которых нет... - бесплатная браузерная онлайн игра в стиле фэнтези", URL: "http://www.neverlands.ru/game.php".
+0 AXWebArea NeverLands: Земли, которых нет... - бесплатная браузерная онлайн игра в стиле фэнтези, URL: neverlands.ru/game.php
+	1 container mainframes
+		745 AXWebArea neverlands.ru/main.php
+			746 container
+				747 container sesharim [17]  :[475/1375 | 7/7]
+					748 container
+						749 container sesharim [17]
+							750 text sesharim  [17]
+						751 container :[475/1375 | 7/7]
+							752 container hbar
+								753 text :[ 475 / 1375  |  7 / 7 ]
+				754 container Ваш персонаж Инвентарь Вернуться
+					755 container
+						756 button Ваш персонаж
+						757 button (disabled) Инвентарь
+						758 button Вернуться
+			760 container
+				761 container Шлем Гладиатора Класс брони: +25 HP: +60 Долговечность: 68/135 Амулет Ацтеков Удар: 3-5 Класс брони: +5 HP: +80 Долговечность: 95/110 Булава Заката Удар: 34-46 Пробой брони: +45 Долговечность: 250/250 Тяжёлые Осадные Штаны (+2) Класс брони: +115 HP: +110 Долговечность: 112/180 Кованые Сапоги (+2) Удар: 10-12 Класс брони: +64 HP: +90 Долговечность: 28/90 sesharim Печать Стража Башни Удар: 4-7 Класс брони: +15 HP: +80 Долговечность: 44/110 Печать Стража Башни Удар: 4-7 Класс брони: +15 HP: +80 Долговечность: 49/99 Печать Стража Башни Удар: 4-7 Класс брони: +15 HP: +80 Долговечность: 39/99 Печать Стража Башни Удар: 4-7 Класс брони: +15 HP: +80 Долговечность: 108/110 Слот для содержимого пояса Слот для содержимого пояса Слот для содержимого пояса Слот для кармана Слот для содержимого кармана Клёпаные Наручи Удар: 8-11 Класс брони: +20 Пробой брони: +20 HP: +60 Долговечность: 24/90 Кольчужные Перчатки (+2) Удар: 4-9 Класс брони: +54 Пробой брони: +10 HP: +50 Долговечность: 22/81 Щит Заката Удар: 10-15 Класс брони: +40 HP: +100 Долговечность: 250/250 Доспех Затмения Класс брони: +100 HP: +150 Долговечность: 173/225 Пояс Смелости Класс брони: +15 HP: +60 Долговечность: 41/120 Слот для реликвии  Сила:  135  (80+55)
+					762 container
+						763 container Шлем Гладиатора Класс брони: +25 HP: +60 Долговечность: 68/135 Амулет Ацтеков Удар: 3-5 Класс брони: +5 HP: +80 Долговечность: 95/110 Булава Заката Удар: 34-46 Пробой брони: +45 Долговечность: 250/250 Тяжёлые Осадные Штаны (+2) Класс брони: +115 HP: +110 Долговечность: 112/180 Кованые Сапоги (+2) Удар: 10-12 Класс брони: +64 HP: +90 Долговечность: 28/90
+							764 container
+								765 container Шлем Гладиатора Класс брони: +25 HP: +60 Долговечность: 68/135
+									766 button Description: Шлем Гладиатора Класс брони: +25 HP: +60 Долговечность: 68/135, URL: image.neverlands.ru/weapon/tnsx4hoq.gif
+								767 container Амулет Ацтеков Удар: 3-5 Класс брони: +5 HP: +80 Долговечность: 95/110
+									768 button Description: Амулет Ацтеков Удар: 3-5 Класс брони: +5 HP: +80 Долговечность: 95/110, URL: image.neverlands.ru/weapon/abz4cs8n.gif
+								769 container Булава Заката Удар: 34-46 Пробой брони: +45 Долговечность: 250/250
+									770 button Description: Булава Заката Удар: 34-46 Пробой брони: +45 Долговечность: 250/250, URL: image.neverlands.ru/weapon/i_w3_208.gif
+								771 container Тяжёлые Осадные Штаны (+2) Класс брони: +115 HP: +110 Долговечность: 112/180
+									772 button Description: Тяжёлые Осадные Штаны (+2) Класс брони: +115 HP: +110 Долговечность: 112/180, URL: image.neverlands.ru/weapon/i_w17_023.gif
+								773 container Кованые Сапоги (+2) Удар: 10-12 Класс брони: +64 HP: +90 Долговечность: 28/90
+									774 button Description: Кованые Сапоги (+2) Удар: 10-12 Класс брони: +64 HP: +90 Долговечность: 28/90, URL: image.neverlands.ru/weapon/d6ushtk9.gif
+						775 container sesharim Печать Стража Башни Удар: 4-7 Класс брони: +15 HP: +80 Долговечность: 44/110 Печать Стража Башни Удар: 4-7 Класс брони: +15 HP: +80 Долговечность: 49/99 Печать Стража Башни Удар: 4-7 Класс брони: +15 HP: +80 Долговечность: 39/99 Печать Стража Башни Удар: 4-7 Класс брони: +15 HP: +80 Долговечность: 108/110 Слот для содержимого пояса Слот для содержимого пояса Слот для содержимого пояса
+							776 container
+								777 container sesharim
+									778 image sesharim
+								779 container Печать Стража Башни Удар: 4-7 Класс брони: +15 HP: +80 Долговечность: 44/110 Печать Стража Башни Удар: 4-7 Класс брони: +15 HP: +80 Долговечность: 49/99 Печать Стража Башни Удар: 4-7 Класс брони: +15 HP: +80 Долговечность: 39/99 Печать Стража Башни Удар: 4-7 Класс брони: +15 HP: +80 Долговечность: 108/110
+									780 button Description: Печать Стража Башни Удар: 4-7 Класс брони: +15 HP: +80 Долговечность: 44/110, URL: image.neverlands.ru/weapon/x16gqlbp.gif
+									781 button Description: Печать Стража Башни Удар: 4-7 Класс брони: +15 HP: +80 Долговечность: 49/99, URL: image.neverlands.ru/weapon/x16gqlbp.gif
+									782 button Description: Печать Стража Башни Удар: 4-7 Класс брони: +15 HP: +80 Долговечность: 39/99, URL: image.neverlands.ru/weapon/x16gqlbp.gif
+									783 button Description: Печать Стража Башни Удар: 4-7 Класс брони: +15 HP: +80 Долговечность: 108/110, URL: image.neverlands.ru/weapon/x16gqlbp.gif
+								784 container Слот для содержимого пояса Слот для содержимого пояса Слот для содержимого пояса
+									785 button Description: Слот для содержимого пояса, URL: image.neverlands.ru/weapon/sl_l_4.gif
+									786 image
+									787 button Description: Слот для содержимого пояса, URL: image.neverlands.ru/weapon/sl_l_4.gif
+									788 image
+									789 button Description: Слот для содержимого пояса, URL: image.neverlands.ru/weapon/sl_l_4.gif
+						790 container Слот для кармана Слот для содержимого кармана Клёпаные Наручи Удар: 8-11 Класс брони: +20 Пробой брони: +20 HP: +60 Долговечность: 24/90 Кольчужные Перчатки (+2) Удар: 4-9 Класс брони: +54 Пробой брони: +10 HP: +50 Долговечность: 22/81 Щит Заката Удар: 10-15 Класс брони: +40 HP: +100 Долговечность: 250/250 Доспех Затмения Класс брони: +100 HP: +150 Долговечность: 173/225 Пояс Смелости Класс брони: +15 HP: +60 Долговечность: 41/120 Слот для реликвии
+							791 container
+								792 container Слот для кармана Слот для содержимого кармана
+									793 button Description: Слот для кармана, URL: image.neverlands.ru/weapon/sl_r_0.gif
+									794 button Description: Слот для содержимого кармана, URL: image.neverlands.ru/weapon/sl_r_1.gif
+								795 container Клёпаные Наручи Удар: 8-11 Класс брони: +20 Пробой брони: +20 HP: +60 Долговечность: 24/90
+									796 button Description: Клёпаные Наручи Удар: 8-11 Класс брони: +20 Пробой брони: +20 HP: +60 Долговечность: 24/90, URL: image.neverlands.ru/weapon/kf704b5i.gif
+								797 container Кольчужные Перчатки (+2) Удар: 4-9 Класс брони: +54 Пробой брони: +10 HP: +50 Долговечность: 22/81
+									798 button Description: Кольчужные Перчатки (+2) Удар: 4-9 Класс брони: +54 Пробой брони: +10 HP: +50 Долговечность: 22/81, URL: image.neverlands.ru/weapon/yvmqa2cg.gif
+								799 container Щит Заката Удар: 10-15 Класс брони: +40 HP: +100 Долговечность: 250/250
+									800 button Description: Щит Заката Удар: 10-15 Класс брони: +40 HP: +100 Долговечность: 250/250, URL: image.neverlands.ru/weapon/i_w20_216.gif
+								801 container Доспех Затмения Класс брони: +100 HP: +150 Долговечность: 173/225
+									802 button Description: Доспех Затмения Класс брони: +100 HP: +150 Долговечность: 173/225, URL: image.neverlands.ru/weapon/awtp4g80.gif
+								803 container Пояс Смелости Класс брони: +15 HP: +60 Долговечность: 41/120
+									804 button Description: Пояс Смелости Класс брони: +15 HP: +60 Долговечность: 41/120, URL: image.neverlands.ru/weapon/u09ops6g.gif
+								805 container Слот для реликвии
+									806 button Description: Слот для реликвии, URL: image.neverlands.ru/weapon/sl_r_7.gif
+						807 container  Сила:  135  (80+55)  Ловкость:  15  (13+2)  Удача:  126  (60+66)  Здоровье:  45  Знания:  1  Мудрость:  1
+							808 container
+								809 table
+									810 row
+										811 cell
+											812 image Передать NV
+											813 text  Деньги:
+										814 cell
+											815 text  659966.85 NV
+									816 row
+										817 cell
+											818 text  40 $
+								819 container  Сила:  135  (80+55)  Ловкость:  15  (13+2)  Удача:  126  (60+66)  Здоровье:  45  Знания:  1  Мудрость:  1
+									820 container
+										821 container  Сила:
+											822 text  Сила:
+										823 container  135, ID: st0
+											824 text  135
+										825 container  (80+55)
+											826 text  (80+ 55 )
+										827 container  Ловкость:
+											828 text  Ловкость:
+										829 container  15, ID: st1
+											830 text  15
+										831 container  (13+2)
+											832 text  (13+ 2 )
+										833 container  Удача:
+											834 text  Удача:
+										835 container  126, ID: st2
+											836 text  126
+										837 container  (60+66)
+											838 text  (60+ 66 )
+										839 container  Здоровье:
+											840 text  Здоровье:
+										841 container  45, ID: st4
+											842 text  45
+										843 container  Знания:
+											844 text  Знания:
+										845 container  1, ID: st3
+											846 text  1
+										847 container  Мудрость:
+											848 text  Мудрость:
+										849 container  1, ID: st5
+											850 text  1
+								851 table
+									852 row
+										853 cell
+											854 text Опыт
+									855 row
+										856 cell
+											857 text Боевой:
+										858 cell
+											859 text  29984153
+									860 row
+										861 cell
+											862 text Слава:
+										863 cell
+											864 text  4401455
+									865 row
+										866 cell
+											867 text Доблесть:
+										868 cell
+											869 text  0
+									870 row
+										871 cell
+											872 text  До уровня:
+										873 cell
+											874 text  20015847
+								875 table
+									876 row
+										877 cell
+											878 text  Побед:
+										879 cell
+											880 text  189
+									881 row
+										882 cell
+											883 text  Поражений:
+										884 cell
+											885 text  204
+									886 row
+										887 cell
+											888 text  Побед над NPC:
+										889 cell
+											890 text  12926
+									891 row
+										892 cell
+											893 text  Поражений от NPC:
+										894 cell
+											895 text  3277
+								896 table
+									897 row
+										898 cell
+											899 text  Усталость:
+										900 cell
+											901 container
+												902 text 8 %
+									903 row
+										904 cell
+											905 text  ОД на удар:
+										906 cell
+											907 container
+												908 text  62
+									909 row
+										910 cell
+											911 text  Арт. коэф:
+										912 cell
+											913 container
+												914 text  малый
+									915 row
+										916 cell
+											917 text  Класс брони:
+										918 cell
+											919 text  528
+									920 row
+										921 cell
+											922 text  Уловка:
+										923 cell
+											924 text  -70%
+									925 row
+										926 cell
+											927 text  Точность:
+										928 cell
+											929 text  320%
+									930 row
+										931 cell
+											932 text  Сокрушение:
+										933 cell
+											934 text  680%
+									935 row
+										936 cell
+											937 text  Стойкость:
+										938 cell
+											939 text  840%
+									940 row
+										941 cell
+											942 text  Пробой брони:
+										943 cell
+											944 text  75%
+						945 container Всего эффектов: 5 / 99
+							946 text Всего эффектов: 5 / 99
+						947 container Запомнить комплект
+							948 container
+								949 container Запомнить комплект
+									950 button Запомнить комплект
+						951 container
+							952 table
+								953 row
+									954 cell
+										955 text Ваши комплекты
+								956 row
+									957 cell
+										958 text only art
+									959 cell
+										960 button Надеть
+									961 cell
+										962 button Удалить
+								963 row
+									964 cell
+										965 text art
+									966 cell
+										967 button Надеть
+									968 cell
+										969 button Удалить
+				970 container Снять все вещи ВещиЭликсирыАлхимияРыбалкаОхота и продуктыРесурсыДеревоЖурнал заданийСнять все вещиПолная / сокращенная информацияСбросить фильтр
+					971 link Description: Снять все вещи, Value: neverlands.ru/main.php
+					972 container
+						973 container ВещиЭликсирыАлхимияРыбалкаОхота и продуктыРесурсыДеревоЖурнал заданийСнять все вещиПолная / сокращенная информацияСбросить фильтр
+							974 link Description: Вещи, Value: neverlands.ru/main.php
+							975 link Description: Эликсиры, Value: neverlands.ru/main.php
+							976 link Description: Алхимия, Value: neverlands.ru/main.php
+							977 link Description: Рыбалка, Value: neverlands.ru/main.php
+							978 link Description: Охота и продукты, Value: neverlands.ru/main.php
+							979 link Description: Ресурсы, Value: neverlands.ru/main.php
+							980 link Description: Дерево, Value: neverlands.ru/main.php
+							981 link Description: Журнал заданий, Value: neverlands.ru/main.php
+							982 link Description: Снять все вещи, Value: neverlands.ru/main.php
+							983 link Description: Полная / сокращенная информация, Value: neverlands.ru/main.php
+							984 link Description: Сбросить фильтр, Value: neverlands.ru/main.php
+						985 table
+							986 row
+								987 cell
+									988 text Масса Вашего инвентаря: 366.59/1795
+							989 row
+								990 cell
+									991 container
+										992 container x
+											993 button x, URL: image.neverlands.ru/del.gif
+											994 image
+										995 container свойства требования Маленькое странное зелье (x2) Срок годности: 26.09.2026 09:44 Цена: 100 NV Долговечность: 1/1 Описание: Странное мутное зелье желтого цвета. На запах явно непригодное к употреблению. Возможно, пригодится алхимикам. Масса: 1
+											996 container
+												997 container свойства
+													998 text свойства
+												999 container требования
+													1000 text требования
+												1001 container Маленькое странное зелье (x2) Срок годности: 26.09.2026 09:44 Цена: 100 NV Долговечность: 1/1 Описание: Странное мутное зелье желтого цвета. На запах явно непригодное к употреблению. Возможно, пригодится алхимикам.
+													1002 text Маленькое странное зелье (x2)
+													1003 text Срок годности: 26.09.2026 09:44
+													1004 text Цена:  100 NV
+													1005 text Долговечность:  1/1
+													1006 text Описание:  Странное мутное зелье желтого цвета. На запах явно непригодное к употреблению. Возможно, пригодится алхимикам.
+												1007 container Масса: 1
+													1008 text Масса:  1
+							1009 row
+								1010 cell
+									1011 container
+										1012 container x
+											1013 button x, URL: image.neverlands.ru/del.gif
+											1014 image
+										1015 container свойства требования Лотерейный билет (Тираж: 464) Срок годности: 02.10.2026 14:11 Гравировка: 1,3,5,6,7 Долговечность: 1/1 Масса: 1
+											1016 container
+												1017 container свойства
+													1018 text свойства
+												1019 container требования
+													1020 text требования
+												1021 container Лотерейный билет (Тираж: 464) Срок годности: 02.10.2026 14:11 Гравировка: 1,3,5,6,7 Долговечность: 1/1
+													1022 text Лотерейный билет (Тираж: 464)
+													1023 text Срок годности: 02.10.2026 14:11
+													1024 text Гравировка: 1,3,5,6,7
+													1025 text Долговечность:  1/1
+												1026 container Масса: 1
+													1027 text Масса:  1
+							1028 row
+								1029 cell
+									1030 container
+										1031 container x
+											1032 button x, URL: image.neverlands.ru/del.gif
+											1033 image
+										1034 container свойства требования Лотерейный билет (Тираж: 464) Срок годности: 02.10.2026 14:11 Гравировка: 2,4,10,11,12 Долговечность: 1/1 Масса: 1
+											1035 container
+												1036 container свойства
+													1037 text свойства
+												1038 container требования
+													1039 text требования
+												1040 container Лотерейный билет (Тираж: 464) Срок годности: 02.10.2026 14:11 Гравировка: 2,4,10,11,12 Долговечность: 1/1
+													1041 text Лотерейный билет (Тираж: 464)
+													1042 text Срок годности: 02.10.2026 14:11
+													1043 text Гравировка: 2,4,10,11,12
+													1044 text Долговечность:  1/1
+												1045 container Масса: 1
+													1046 text Масса:  1
+							1047 row
+								1048 cell
+									1049 container
+										1050 container x
+											1051 button x, URL: image.neverlands.ru/del.gif
+											1052 image
+										1053 container свойства требования Лотерейный билет (Тираж: 464) Срок годности: 02.10.2026 14:12 Гравировка: 1,2,4,5,7 Долговечность: 1/1 Масса: 1
+											1054 container
+												1055 container свойства
+													1056 text свойства
+												1057 container требования
+													1058 text требования
+												1059 container Лотерейный билет (Тираж: 464) Срок годности: 02.10.2026 14:12 Гравировка: 1,2,4,5,7 Долговечность: 1/1
+													1060 text Лотерейный билет (Тираж: 464)
+													1061 text Срок годности: 02.10.2026 14:12
+													1062 text Гравировка: 1,2,4,5,7
+													1063 text Долговечность:  1/1
+												1064 container Масса: 1
+													1065 text Масса:  1
+							1066 row
+								1067 cell
+									1068 container
+										1069 container Использовать Передать Подарить Продать
+											1070 button Использовать
+											1071 button Передать
+											1072 button Подарить
+											1073 button Продать
+											1074 image
+										1075 container x
+											1076 button x, URL: image.neverlands.ru/del.gif
+											1077 image
+										1078 container свойства требования Разрешение на поединок I Цена: 16 NV Долговечность: 1/1 Описание: Начинает открытый бой с низкой травматичностью. Масса: 1 Уровень: 5 Скрытность: 20
+											1079 container
+												1080 container свойства
+													1081 text свойства
+												1082 container требования
+													1083 text требования
+												1084 container Разрешение на поединок I Цена: 16 NV Долговечность: 1/1 Описание: Начинает открытый бой с низкой травматичностью.
+													1085 text Разрешение на поединок I
+													1086 text Цена:  16 NV
+													1087 text Долговечность:  1/1
+													1088 text Описание:  Начинает открытый бой с низкой травматичностью.
+												1089 container Масса: 1 Уровень: 5 Скрытность: 20
+													1090 text Масса:  1
+													1091 text Уровень:  5
+													1092 text Скрытность:  20
+							1093 row
+								1094 cell
+									1095 container
+										1096 container Использовать
+											1097 button Использовать
+											1098 image
+										1099 container x
+											1100 button x, URL: image.neverlands.ru/del.gif
+											1101 image
+										1102 container свойства требования Кулачное нападение Цена: 250 NV Долговечность: 1/1 Описание: Раздевает персонажа и его противника и начинает открытый бой с максимальной травматичностью между ними. Таймаут боя: 5 минут. Масса: 1 Уровень: 10
+											1103 container
+												1104 container свойства
+													1105 text свойства
+												1106 container требования
+													1107 text требования
+												1108 container Кулачное нападение Цена: 250 NV Долговечность: 1/1 Описание: Раздевает персонажа и его противника и начинает открытый бой с максимальной травматичностью между ними. Таймаут боя: 5 минут.
+													1109 text Кулачное нападение
+													1110 text Цена:  250 NV
+													1111 text Долговечность:  1/1
+													1112 text Описание:  Раздевает персонажа и его противника и начинает открытый бой с максимальной травматичностью между ними. Таймаут боя: 5 минут.
+												1113 container Масса: 1 Уровень: 10
+													1114 text Масса:  1
+													1115 text Уровень:  10
+							1116 row
+								1117 cell
+									1118 container
+										1119 button Description: Submit, URL: image.neverlands.ru/weapon/v52ga617.gif
+										1120 image
+										1121 image
+										1122 image
+								1123 cell
+									1124 container
+										1125 container Надеть Передать Подарить Продать
+											1126 button Надеть
+											1127 button Передать
+											1128 button Подарить
+											1129 button Продать
+											1130 image
+										1131 container x
+											1132 button x, URL: image.neverlands.ru/del.gif
+											1133 image
+										1134 container свойства требования Ядовитая Булава Цена: 1400 NV Удар: 26-36 Долговечность: 138/153 Сокрушение: +55% Стойкость: +80% Пробой брони: +38% HP: +40 Сила: +5 Удача: +2 Очки действия: 100 Масса: 34 Уровень: 16 Сила: 65 Здоровье: 42 Владение дробящим оружием: 140
+											1135 container
+												1136 container свойства
+													1137 text свойства
+												1138 container требования
+													1139 text требования
+												1140 container Ядовитая Булава Цена: 1400 NV Удар: 26-36 Долговечность: 138/153 Сокрушение: +55% Стойкость: +80% Пробой брони: +38% HP: +40 Сила: +5 Удача: +2
+													1141 text Ядовитая Булава
+													1142 text Цена:  1400 NV
+													1143 text Удар:  26-36
+													1144 text Долговечность:  138/153
+													1145 text Сокрушение: + 55%
+													1146 text Стойкость: + 80%
+													1147 text Пробой брони: + 38%
+													1148 text HP: + 40
+													1149 text Сила: + 5
+													1150 text Удача: + 2
+												1151 container Очки действия: 100 Масса: 34 Уровень: 16 Сила: 65 Здоровье: 42 Владение дробящим оружием: 140
+													1152 text Очки действия:  100
+													1153 text Масса:  34
+													1154 text Уровень:  16
+													1155 text Сила:  65
+													1156 text Здоровье:  42
+													1157 text Владение дробящим оружием:  140
+							1158 row
+								1159 cell
+									1160 container
+										1161 button Description: Submit, URL: image.neverlands.ru/weapon/md4urg8z.gif
+										1162 image
+										1163 image
+										1164 image
+								1165 cell
+									1166 container
+										1167 container Надеть Передать Подарить Продать
+											1168 button Надеть
+											1169 button Передать
+											1170 button Подарить
+											1171 button Продать
+											1172 image
+										1173 container x
+											1174 button x, URL: image.neverlands.ru/del.gif
+											1175 image
+										1176 container свойства требования Восточный Кинжал Цена: 400 NV Удар: 15-23 Долговечность: 84/100 Сокрушение: +60% Стойкость: +30% Пробой брони: +20% HP: +30 Сила: +5 Удача: +5 Владение ножами: +20 Очки действия: 66 Масса: 25 Уровень: 16 Удача: 80 Владение ножами: 110
+											1177 container
+												1178 container свойства
+													1179 text свойства
+												1180 container требования
+													1181 text требования
+												1182 container Восточный Кинжал Цена: 400 NV Удар: 15-23 Долговечность: 84/100 Сокрушение: +60% Стойкость: +30% Пробой брони: +20% HP: +30 Сила: +5 Удача: +5 Владение ножами: +20
+													1183 text Восточный Кинжал
+													1184 text Цена:  400 NV
+													1185 text Удар:  15-23
+													1186 text Долговечность:  84/100
+													1187 text Сокрушение: + 60%
+													1188 text Стойкость: + 30%
+													1189 text Пробой брони: + 20%
+													1190 text HP: + 30
+													1191 text Сила: + 5
+													1192 text Удача: + 5
+													1193 text Владение ножами: + 20
+												1194 container Очки действия: 66 Масса: 25 Уровень: 16 Удача: 80 Владение ножами: 110
+													1195 text Очки действия:  66
+													1196 text Масса:  25
+													1197 text Уровень:  16
+													1198 text Удача:  80
+													1199 text Владение ножами:  110
+						1200 link top.mail.ru/jump
+		21 AXWebArea neverlands.ru/ch/resize.html
+			22 container
+				23 button Description: Увеличить окно чата, URL: image.neverlands.ru/chat/upline_p.gif
+				24 button Description: Уменьшить окно чата, URL: image.neverlands.ru/chat/upline_m.gif
+		25 AXWebArea neverlands.ru/ch/temp.html
+		26 AXWebArea neverlands.ru/ch/msg.php
+			27 container msg
+				1201 text  NeverLands.Ru  Внимание!  Злобная нежить вырвалась из Тёмной Бездны! Защитникам Дозорной башни приготовиться. Доступно персонажам 27 уровня и старше.
+				1202 text  NeverLands.Ru  По вопросам  приобретения игровой валюты (DNV)  можно обращаться к официальным  дилерам NeverLands . Со списком дилеров можно ознакомиться
+				1203 link Description: тут, Value: money.neverlands.ru/
+				1204 text .
+				1205 text  15:34:54  Системная информация.  Поединок завершён. Получено  боевого  опыта:  570 .
+		29 AXWebArea neverlands.ru/ch.php
+			30 container Сортировка: a-z z-a 0-33 33-0 Submit Окрестность Форпоста, Озеро [ 10 ] Всего [ 1869 ]   Дети Тьмы   Angels Bearing Death (Одесса Мама!)  Лорд Асседо[23]     Дети Тьмы   Анархия (Черныш)  ~Темный Ангел~[22]     Дети Тьмы   Dark Force (STARRичок)  СТАРИЧОК[21]     Дети Хаоса   Sanctuary (Дмитро)  Feldsher[20]     Дети Тьмы   Dragons Of Death (Тапатуля)  ismv_s
+				31 container
+					32 text Сортировка:
+					33 link Description: a-z, Value: neverlands.ru/ch.php
+					34 link Description: z-a, Value: neverlands.ru/ch.php
+					35 link Description: 0-33, Value: neverlands.ru/ch.php
+					36 link Description: 33-0, Value: neverlands.ru/ch.php
+					37 image
+					38 checkbox (settable, integer) 0
+					39 button Description: Submit, URL: image.neverlands.ru/chat/reload.gif
+					40 link Description: Окрестность Форпоста, Озеро, Value: neverlands.ru/ch.php
+					41 text  [ 10 ]
+					42 text Всего  [ 1869 ]
+					43 image
+				44 image
+				46 image Дети Тьмы
+				47 image Angels Bearing Death (Одесса Мама!)
+				49 text [23]
+				50 link neverlands.ru/pinfo.cgi
+				51 image
+				53 image Дети Тьмы
+				54 image Анархия (Черныш)
+				56 text [22]
+				57 link neverlands.ru/pinfo.cgi
+				58 image
+				60 image Дети Тьмы
+				61 image Dark Force (STARRичок)
+				63 text [21]
+				64 link neverlands.ru/pinfo.cgi
+				65 image
+				67 image Дети Хаоса
+				68 image Sanctuary (Дмитро)
+				70 text [20]
+				71 link neverlands.ru/pinfo.cgi
+				72 image
+				74 image Дети Тьмы
+				75 image Dragons Of Death (Тапатуля)
+				77 text [20]
+				78 link neverlands.ru/pinfo.cgi
+				79 image
+				81 image Дети Сумерек
+				82 image Безликие
+				84 text [20]
+				85 link neverlands.ru/pinfo.cgi
+				86 image
+				88 image Дети Света
+				89 image Altera Pars (Сиксер)
+				91 text [20]
+				92 link neverlands.ru/pinfo.cgi
+				93 image
+				95 image Дети Света
+				96 image Altera Pars (ДочКа и ТочКа))
+				98 text [20]
+				99 link neverlands.ru/pinfo.cgi
+				100 image
+				103 text [19]
+				104 link neverlands.ru/pinfo.cgi
+				105 image
+				108 text [17]
+				109 link neverlands.ru/pinfo.cgi
+		110 AXWebArea neverlands.ru/ch/tempw.html
+		111 AXWebArea neverlands.ru/ch/but.php
+			112 container
+				113 image
+				114 checkbox (settable, integer) 0
+				115 container Действие
+					116 text Действие
+				117 container Сказать:
+					118 image Description: Сказать:, Help: Сказать
+				120 image
+				121 container Отправить сообщение
+					122 image Отправить сообщение
+				123 container Очистить поле ввода
+					124 image Очистить поле ввода
+				125 container Смайлы №1
+					126 image Смайлы №1
+				127 container Смайлы №2
+					128 image Смайлы №2
+				129 image
+				130 container Обновить окно чата
+					131 image Обновить окно чата
+				132 container Очистить окно чата
+					133 image Очистить окно чата
+				134 container Режим чата (Показывать все сообщения)
+					135 image Режим чата (Показывать все сообщения)
+				136 container Скорость обновления (раз в 10 секунд)
+					137 image Скорость обновления (раз в 10 секунд)
+				138 container LAT <-> RUS (Транслит выключен)
+					139 image LAT <-> RUS (Транслит выключен)
+				140 container 15:35:02
+					1206 text 15:35:02
+				142 container Возможности игрока
+					143 image Возможности игрока
+				144 image
+		1207 AXWebArea neverlands.ru/ch.php

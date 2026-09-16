@@ -69,6 +69,17 @@ existing data/flow/ownership/editing sections rather than adding a second
 lifecycle specification. [CHARACTER](CHARACTER.md), [MEDICAL](MEDICAL.md) and
 [ECONOMY](ECONOMY.md) demonstrate this for stats, injuries and payments.
 
+For a guide built from linked source definitions, include a **source coverage
+map** in its evidence section or linked observation: article, captured revision
+or redirect, concept, implementation status and responsible owner. Define the
+coverage boundary; following a Stat link to Magic does not imply capturing
+every spell/item article recursively. Preserve the source classification and
+distinguish adjacent concepts, historical advice and current rules.
+[STATS](STATS.md) and [MODIFIERS](MODIFIERS.md) demonstrate this. For numeric
+concepts, distinguish base/effective/saved values, units and displayed ratings
+from final probabilities; a visible field or source name is not an executable
+effect. Use existing sections rather than duplicating a second catalog.
+
 ## Copyable outline
 
 ```markdown
@@ -86,7 +97,8 @@ runtime handbook and companion guides. Explain what each supplies.]
 [Describe implemented capabilities and their boundaries. Separate captured
 Neverlands facts, authorized local interpretations/calibrations, verified local
 behavior, deferred features and unknowns. Link specific evidence/acceptance;
-do not imply that local tests prove source parity.]
+do not imply that local tests prove source parity. Where based on linked source
+definitions, link a revision/redirect coverage map and state its boundary.]
 
 ## 2. Concepts, content and data
 

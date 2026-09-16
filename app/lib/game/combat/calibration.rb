@@ -15,10 +15,10 @@ module Game
         raise ArgumentError, "Combat calibration must be an object" unless values.is_a?(Hash)
 
         validate_numbers!(values)
-        %w[mastery_damage_divisor mastery_ap_divisor penetration_divisor resistance_divisor].each do |key|
+        %w[mastery_damage_divisor mastery_ap_divisor penetration_divisor resistance_divisor health_armor_step].each do |key|
           raise ArgumentError, "Combat calibration #{key} must be positive" unless values.fetch(key).positive?
         end
-        %w[penetration_cap resistance_cap damage_variance fatigue_max_penalty].each do |key|
+        %w[penetration_cap resistance_cap damage_variance fatigue_max_penalty health_armor_bonus_per_step].each do |key|
           raise ArgumentError, "Combat calibration #{key} must be a fraction" unless values.fetch(key).between?(0, 1)
         end
         [["recovery", "hp_full_seconds"], ["recovery", "mp_full_seconds"],
@@ -70,12 +70,26 @@ module Game
 
       def self.damage(attacker:, defender:, action_multiplier:, body_multiplier:, critical:, variance:)
         penetration = (attacker.fetch(:penetration, 0) / config.fetch("penetration_divisor")).clamp(0, config.fetch("penetration_cap"))
-        armor = defender.fetch(:armor, 0) * defender.fetch(:armor_multiplier, 1.0) *
+        armor = armor(defender) *
           fatigue_factor(defender.fetch(:fatigue, 0)) * (1 - penetration)
         resistance = (defender.fetch(:resistance, 0) / config.fetch("resistance_divisor")).clamp(0, config.fetch("resistance_cap"))
         net = [attack(attacker) - armor, 0].max
         (net * action_multiplier * body_multiplier * (1 - resistance) * variance *
           (critical ? config.fetch("critical_multiplier") : 1)).round
+      end
+
+      # Displayed armor remains the item sum. Health's combat-only contribution
+      # is an approximate published rule; unspecified NPC Health stays neutral.
+      def self.armor(attributes)
+        health = attributes.fetch(:health, 0).clamp(0, config.fetch("health_armor_maximum"))
+        steps = (health / config.fetch("health_armor_step").to_f).floor
+        attributes.fetch(:armor, 0) * attributes.fetch(:armor_multiplier, 1.0) *
+          (1 + steps * config.fetch("health_armor_bonus_per_step"))
+      end
+
+      def self.accuracy(attributes)
+        attributes.fetch(:dexterity, 0) * config.fetch("accuracy_dexterity_weight") +
+          attributes.fetch(:luck, 0) * config.fetch("accuracy_luck_weight") + attributes.fetch(:accuracy, 0)
       end
 
       # Saturating opposed ratings keep displayed modifiers above 100 useful

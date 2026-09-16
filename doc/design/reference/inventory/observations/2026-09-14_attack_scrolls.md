@@ -1,5 +1,10 @@
 # September 14 — Attack scroll inventory, wiki and rejected target evidence
 
+Historical boundary: [September 15](2026-09-15_successful_attack_scroll.md)
+later captures successful Permit I entry and attacker aftermath. References
+below to no successful source fight describe September 14; Fist success is
+still not established by that later Permit fight.
+
 The initial inventory/form capture used the existing authenticated Chrome
 session without submitting a nickname or spending a scroll. Later the user
 authorized both attacks against **zMey [5]**, armed first. Those two submitted

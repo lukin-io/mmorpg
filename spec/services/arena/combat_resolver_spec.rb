@@ -169,6 +169,61 @@ RSpec.describe Arena::CombatResolver do
     expect(dexterity_result[:dodge_chance]).to eq(agility_result[:dodge_chance])
   end
 
+  it "uses Luck to improve landing chance against the same defender without changing displayed item Accuracy" do
+    attacker.update!(allocated_stats: {"dexterity" => 39, "luck" => 39})
+    defender.update!(allocated_stats: {"dexterity" => 99, "luck" => 39})
+    allow(rng).to receive(:rand).with(100).and_return(0, 99, 99, 0, 99, 99)
+    allow(rng).to receive(:rand).with(1..5).and_return(3)
+    baseline = resolver.resolve_physical_attack(
+      attacker_participation:, defender_participation:, action_key: "simple", body_part: "torso"
+    )
+    attacker.update!(allocated_stats: {"dexterity" => 39, "luck" => 139})
+    changed = resolver.resolve_physical_attack(
+      attacker_participation:, defender_participation:, action_key: "simple", body_part: "torso"
+    )
+
+    expect(changed[:hit_chance]).to be > baseline[:hit_chance]
+    expect(changed[:dodge_chance]).to be < baseline[:dodge_chance]
+    expect(attacker.accuracy_bonus).to eq(0)
+  end
+
+  it "applies Health armor only in combat while retaining displayed armor" do
+    attacker.update!(allocated_stats: {"strength" => 199})
+    defender.update!(allocated_stats: {"vitality" => 28})
+    armor = create(:item_template, stat_modifiers: {"armor_class" => 100})
+    create(:inventory_item, :equipped, inventory: defender.inventory, item_template: armor)
+    allow(rng).to receive(:rand).with(100).and_return(0, 99, 99, 0, 99, 99)
+    allow(rng).to receive(:rand).with(1..5).and_return(3)
+    baseline = resolver.resolve_physical_attack(
+      attacker_participation:, defender_participation:, action_key: "simple", body_part: "torso"
+    )
+    defender.update!(allocated_stats: {"vitality" => 149})
+    changed = resolver.resolve_physical_attack(
+      attacker_participation:, defender_participation:, action_key: "simple", body_part: "torso"
+    )
+
+    expect(changed[:damage]).to eq(baseline[:damage] - 25)
+    expect(defender.armor_class).to eq(100)
+  end
+
+  it "uses explicit NPC Health for shared mitigation without inferring it from HP" do
+    attacker.update!(allocated_stats: {"strength" => 199})
+    npc = create(:npc_template, metadata: {"health" => 750, "stats" => {"defense" => 100}})
+    npc_side = create(:arena_participation, :npc, arena_match:, npc_template: npc, team: "b")
+    allow(rng).to receive(:rand).with(100).and_return(0, 99, 99, 0, 99, 99)
+    allow(rng).to receive(:rand).with(1..5).and_return(3)
+    baseline = resolver.resolve_physical_attack(
+      attacker_participation:, defender_participation: npc_side, action_key: "simple", body_part: "torso"
+    )
+    npc_side.update!(metadata: {"stats" => {"health" => 150}})
+    changed = resolver.resolve_physical_attack(
+      attacker_participation:, defender_participation: npc_side, action_key: "simple", body_part: "torso"
+    )
+
+    expect(changed[:damage]).to eq(baseline[:damage] - 25)
+    expect(Arena::CombatAttributes.for(npc_side)[:armor]).to eq(100)
+  end
+
   it "marks critical hits and applies critical damage multiplier" do
     allow(rng).to receive(:rand).with(100).and_return(0, 99, 0)
     allow(rng).to receive(:rand).with(1..5).and_return(3)

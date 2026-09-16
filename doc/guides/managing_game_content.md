@@ -749,6 +749,13 @@ stable roster key and fill 1–10 member rows using the existing NPC templates;
 leave unused rows blank. For each member, supply an exact level or minimum and
 maximum levels, with HP where required below. **Remove roster** removes the
 sample on save. With no rosters, the fixed template, level, and size apply.
+At runtime the player's [level ceiling](../FORMULAS.md#prog-02--current-level-table)
+filters whole samples before their weighted draw. A fixed pair requires level4+;
+a lower-level player gets no fight from that anchor. Do not truncate members or
+reuse the full-group XP for a smaller group. Supply separate evidenced single
+samples when a habitat should serve low levels. Optional primary Health belongs
+in `stats.health`, separate from HP and the displayed-stat allowlist; it feeds
+[hidden physical armor](../FORMULAS.md#september-15-stat-and-modifier-interpretation).
 
 Example placement metadata:
 

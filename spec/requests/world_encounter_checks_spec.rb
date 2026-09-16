@@ -4,7 +4,7 @@ require "rails_helper"
 
 RSpec.describe "World encounter checks", type: :request do
   let(:user) { create(:user) }
-  let(:character) { create(:character, user:) }
+  let(:character) { create(:character, user:, level: 4) }
   let(:zone) { create(:zone, name: "Passive Encounter Woods", location_type: "outdoor") }
   let!(:position) { create(:character_position, character:, zone:, x: 5, y: 5) }
 
@@ -154,6 +154,20 @@ RSpec.describe "World encounter checks", type: :request do
       "interrupted" => false,
       "error" => "Combat startup failed."
     )
+  end
+
+  it "ignores forged level and group size when no complete roster fits the persisted level" do
+    character.update!(level: 3)
+    create(:tile_npc, :multi_npc_encounter, zone: zone.name, x: 5, y: 5)
+
+    2.times { post world_encounter_check_path, params: {level: 18, group_size: 1}, as: :json }
+
+    expect(response).to have_http_status(:ok)
+    expect(response.parsed_body).to eq("interrupted" => false, "retry_after_ms" => 30_000)
+    expect(ArenaMatch.count).to eq(0)
+    expect(ArenaParticipation.count).to eq(0)
+    expect(character.reload.level).to eq(3)
+    expect(character.metadata).not_to have_key(Game::World::PassiveEncounterCheck::SCHEDULE_METADATA_KEY)
   end
 
   it "requires authentication" do

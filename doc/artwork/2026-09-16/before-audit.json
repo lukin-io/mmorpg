@@ -1,0 +1,2726 @@
+{
+  "date": "2026-09-16",
+  "method": "Read-only PNG metadata and corner sampling; corner color is not a foreground mask or a visual acceptance result.",
+  "assets": [
+    {
+      "asset": "items/action_blade.png",
+      "sha256": "35994da3eff4e04b4333164058bef5ee5e140d65ba6bb39a324e80ab3b2f52b0",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        91
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        230,
+        227,
+        220
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/advantage_belt.png",
+      "sha256": "410fddd13bb481a6276a8ebfda36d21f1abac339d8dba2b28b791e250d496776",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        30
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        234,
+        231,
+        226
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/advantage_shield.png",
+      "sha256": "49625c3da636e125ad3d35d774b4964adbb0048bc906ae41cf2bdd34fdc560c1",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        91
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        221,
+        218,
+        211
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/adventurer_spear.png",
+      "sha256": "48847cec22849b806fabf03153cdaab63c434913c365117352cab7c7352a1c98",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        91
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        233,
+        229,
+        223
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/apprentice_hammer.png",
+      "sha256": "f4aec2f7e3285b3ef47c0f7fa617625108ed4562a92cb63fd3f99db7d3218473",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        91
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        235,
+        231,
+        223
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/assassin_dagger.png",
+      "sha256": "ea5c12bf536dc8573ade4261afdbd979fd523a9a1d8adbfd6e579538c270d680",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        91
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        224,
+        221,
+        214
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/assassin_suit.png",
+      "sha256": "373a138618d747eba346533d25f9a3bc16d8aea4c654586de2a20a5a1acc7f08",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        83
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        223,
+        219,
+        211
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/bandit_helmet.png",
+      "sha256": "6e44c95dced795a620667e1a9a818a20659d1e2fe3a0334ad3dc4de76a58aab3",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        65
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        219,
+        214,
+        206
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/butcher_cleaver.png",
+      "sha256": "68230d338ac2cf49f6d1710d29d13d2c48558c97a6eb887c29ab7349dbf88112",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        91
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        233,
+        229,
+        221
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/caution_armor.png",
+      "sha256": "bc064f834579b7fdd722999950c4fdf4156b8e774785d0de9db41777a613db61",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        83
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        218,
+        213,
+        204
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/cleaving_axe.png",
+      "sha256": "5512eb063e3ddc4580fff0942051e96d826b6407ca10f517c7515ee36ab2247b",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        91
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        229,
+        224,
+        215
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/congealed_blood_bracers.png",
+      "sha256": "f8a360c06cb8c66577ab7e755fb81cdc046a266f592d5d8bd5e14113a6665a03",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        40
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        234,
+        231,
+        224
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/curved_blade.png",
+      "sha256": "7fc441032ae86d31dc89360097d4e0cc09df737631375f75d62908a002157e09",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        91
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        221,
+        218,
+        210
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/development_bracers.png",
+      "sha256": "a70f962a2b0511c288f20d2405160c8ab29cdaef625715b784464826b5693566",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        40
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        230,
+        226,
+        217
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/dew_shield.png",
+      "sha256": "dcdc84a12986411195acb426ee08504f267bcd801111d17a50d2e759a3f98370",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        91
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        232,
+        229,
+        223
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/dexterity_gloves.png",
+      "sha256": "a55bf999934e60bee4b449f0ff2e74421272d899dcca67b0d1cfccffb4a17060",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        40
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        227,
+        224,
+        215
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/diamond_sash.png",
+      "sha256": "a721fef9c118ebdadf7ec45feedadba417a8cb6670798932d6e60853560dca81",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        30
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        227,
+        223,
+        215
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/distortion_axe.png",
+      "sha256": "44683bdd5788f49134f51a92016cbf29ad0bfbc81d33d9de6aef53778a68a734",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        91
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        236,
+        233,
+        225
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/doctor_license_i.png",
+      "sha256": "5c3cb510c02b250511c642f6dbe9aa9f75054d213e8a61820bf3d63538f2bb28",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        60,
+        60
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": true,
+      "corner_rgb": [
+        236,
+        233,
+        228
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/doctor_license_ii.png",
+      "sha256": "82416a653dfc5fdeabe00cd73655173fd0239b490eed67bfaa4e875afe428848",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        60,
+        60
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": true,
+      "corner_rgb": [
+        232,
+        227,
+        221
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/doctor_license_iii.png",
+      "sha256": "75e1964f0e9f3ad71b835df88bce9458d9723dcd07a97f52459a3286f15f8336",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        60,
+        60
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": true,
+      "corner_rgb": [
+        230,
+        227,
+        221
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/double_blade.png",
+      "sha256": "a5fa73a017fb50292821aaa0de468251dded3273e56315bc0957b8f618e9306f",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        91
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        233,
+        229,
+        223
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/duel_permit_i.png",
+      "sha256": "991a7eb8c6733ac406b1de7b55d7437f957b6b7afdb54862590ff82858d91d66",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        42,
+        21
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        234,
+        231,
+        226
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/duel_permit_ii.png",
+      "sha256": "53793931fc44ada4e3147e86080a1d9b1c7fb4362f9e6f8ceec52d9e5c7505db",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        42,
+        21
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        230,
+        227,
+        222
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/duel_permit_iii.png",
+      "sha256": "12243bdd13e33deb0f33971a6a5c0975598de80c1896d75900cc1ccd0d596b09",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        42,
+        21
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        234,
+        231,
+        226
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/duel_permit_iv.png",
+      "sha256": "6d0d1068521b16522f7efddd27f46e7cf686a331b6ec5496f960d5354e874f50",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        42,
+        21
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        228,
+        225,
+        219
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/earflap_hat.png",
+      "sha256": "3dfb83b795e4a6d4fe787b5f1bf86ee1bd398b65d73d559d968351d977ca998f",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        65
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        227,
+        224,
+        217
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/earthly_blessings_staff.png",
+      "sha256": "a5c386be55b1d985c0578531789ed9131d0780ee8c4c5bfb05d4dba68b85baa7",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        91
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        236,
+        234,
+        229
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/emerald_sash.png",
+      "sha256": "8498983f6965a73175dd64f45ba5ca1054df7f3cc9eb703cc7fe82ba7b35fab1",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        30
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        234,
+        231,
+        226
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/fist_attack.png",
+      "sha256": "e25e37db0d93576b4a2d0514a4977ca1726dd27facd79f2b26d9b88dd66d4253",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        60,
+        60
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": true,
+      "corner_rgb": [
+        236,
+        232,
+        228
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/grim_shield.png",
+      "sha256": "2f90402c60c02719b051e78b174fc50edd57ada981281c0eede34bbf4ead15c8",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        91
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        228,
+        225,
+        217
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/healer_bag.png",
+      "sha256": "db6a082cbd8b9c8a1d0d7ad1dbe429bc0e89a8a5e5ebdffb9bec01ce83ef331d",
+      "encoded": [
+        1254,
+        1254
+      ],
+      "consumer": [
+        60,
+        60
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": true,
+      "corner_rgb": [
+        185,
+        180,
+        169
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/hunter_boots.png",
+      "sha256": "7e5ba346b74a4e1f78e3f825340c5338ac155acd1daa1cda50ceb0d478c361d4",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        63
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        224,
+        220,
+        212
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/hunter_helmet.png",
+      "sha256": "cc7e1247b9c594f8257a475a96e8ca2caef944e7e1cfb1e51e21fd90aac7aac1",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        65
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        224,
+        219,
+        211
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/hunter_knife.png",
+      "sha256": "61a2f366dc3f3e24a3cb520ce3d37566030a8d1599b7328e0dbe6b528e6b925e",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        91
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        230,
+        225,
+        218
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/hunter_trousers.png",
+      "sha256": "e06d9fa9f44c6a6a22af5f3bd9e1106c02fd2fa8fd39f4cc285ef9c1d822bdaf",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        81
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        233,
+        229,
+        221
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/knowledge_shirt.png",
+      "sha256": "3bd56e28deccf835af47875fd1e2a98ede41dbf70031f6a3f5bcbc75db2a274c",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        83
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        239,
+        235,
+        230
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/leather_bracers.png",
+      "sha256": "99f6472a57c78116cf821a88fa2e57432b0349d29c84e8a68cddab081510d137",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        40
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        233,
+        229,
+        221
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/leather_breeches.png",
+      "sha256": "1b9bfe7fa0b1a6afda20b0af58a014d937c737d027c11248e538bdcab9a1f4c0",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        81
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        222,
+        217,
+        210
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/leather_cap.png",
+      "sha256": "fb390ca59993c3ea01b0fe6b9916cd39f69df0d33ca2c028194ced2962c5cb68",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        65
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        224,
+        220,
+        210
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/life_shirt.png",
+      "sha256": "5c2132d231dd98c38ac02c8e6e9c71506be68198ed68f6c8e5a45f8b245921ab",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        83
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        224,
+        220,
+        215
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/luck_gloves.png",
+      "sha256": "c574b8612bed13d18b8170d9fbc94af1a3768aa9b4cc7f923d903762046d152a",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        40
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        234,
+        231,
+        224
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/mage_apprentice_shoes.png",
+      "sha256": "6021c89b700654cc1541414c6e30d54bcdf2f5a5cb2dfc00f54585a744257e8f",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        63
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        234,
+        231,
+        224
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/mage_dagger.png",
+      "sha256": "f96e4d55a546d7aae057ebdab2e7feb32031ff0c91fb1c2483e71ad4d5f7ce6b",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        91
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        225,
+        222,
+        216
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/military_boots.png",
+      "sha256": "ae8f2bbd7680213ba080115306c01fafffdb26080ba1246f107ecb90e7cb56cc",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        63
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        219,
+        214,
+        207
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/minor_health_potion.png",
+      "sha256": "571d3f67987624e62b546983c827bf0255ee460395921f38d99aabb5497e884d",
+      "encoded": [
+        1254,
+        1254
+      ],
+      "consumer": [
+        60,
+        60
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": true,
+      "corner_rgb": [
+        195,
+        188,
+        178
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/parrying_spear.png",
+      "sha256": "444d3b165dae9d17d44f8a17f0aa9817259ca1c0a9173c570a233c678a6fed94",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        91
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        226,
+        221,
+        214
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/peasant_boots.png",
+      "sha256": "6562f04b5a4e49156be51bd998f135a310d33bad81acc21de38ad81827f6bde8",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        63
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        220,
+        216,
+        208
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/peasant_trousers.png",
+      "sha256": "7c618e0708789415847060914ccb21c8bd963989a00d5ed9c25e445d9887b338",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        81
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        230,
+        227,
+        220
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/penknife.png",
+      "sha256": "f116dcc8ee8c697a4a19fc7f467e5d9aa348b81e3fc8a08d5aa17c524ed50b61",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        91
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        231,
+        226,
+        218
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/petty_thief_sandals.png",
+      "sha256": "68b763acc5aaa7e9342f1d234cc64665df2fec1fdfe015c4ab0c69f76807f2a9",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        63
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        219,
+        215,
+        207
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/pilum.png",
+      "sha256": "a3df085e4c419fe75adeec3677f7dad092130499bd6595738b94026fa71a2c79",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        91
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        224,
+        218,
+        210
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/possibility_shield.png",
+      "sha256": "c8b960c18433944afbe9ac76dcea085f636f8e8c95f60c290a6fdc1324006797",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        91
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        229,
+        226,
+        219
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/primitive_spear.png",
+      "sha256": "2d73c896fdf5915bc631be601f7f9b33a80ecf6d19129ddda18324508001d526",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        91
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        224,
+        217,
+        208
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/prosperity_axe.png",
+      "sha256": "cd6bd04289549565f43994114974261519c1b586661a11a2e67b0fa6f564522f",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        91
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        229,
+        225,
+        217
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/quick_strike_gloves.png",
+      "sha256": "d493d30e2bf994b100d21f0f2fec342b9773eba78702b6f6abd49ae34032ee95",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        40
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        230,
+        227,
+        219
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/recruit_chainmail_pants.png",
+      "sha256": "98bba4b88c5f489edb4ddaffebc60daa739d770a9f96a692f5abf2710eca6cf1",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        81
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        223,
+        219,
+        211
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/salvation_jacket.png",
+      "sha256": "4785781d596a6ec40032467461f2f76b069da2a05afc8235736d55d1af4486da",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        83
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        220,
+        215,
+        210
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/salvation_pendant.png",
+      "sha256": "a55be64948574ad601885105e94f1ab3aacf12acd98c52f643aa20017ce090d7",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        35
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        233,
+        229,
+        222
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/search_axe.png",
+      "sha256": "2239b3f45f2ac56bd2a2a8da4b7be7da20dbef44e5b7c45eb569d94a203ddebc",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        91
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        226,
+        222,
+        215
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/sensation_sword.png",
+      "sha256": "28a6fbb1de4d46d83c0dcac261e029526b3976d2598ad0ff2c8ab7798334d894",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        91
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        227,
+        223,
+        216
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/small_aspiration_staff.png",
+      "sha256": "e6baf9dcd42eec6ebac712d75bc8e0af6c89d3f5199f2c4f7b02cf047e841477",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        91
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        229,
+        225,
+        219
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/small_crescent_staff.png",
+      "sha256": "43d99194eeb68a890a4c825a239757dab31579c9ea0cdf3d7121f0e2e019c5d3",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        91
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        225,
+        220,
+        213
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/small_earthly_blessings_staff.png",
+      "sha256": "f091addd48681daaeb9cf7557d38a11c8f90af270854b9cd8038cf9f2e26e2bc",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        91
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        236,
+        233,
+        227
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/small_knowledge_ring.png",
+      "sha256": "871847b9415fe7e4c57baf714be6594cc9659aa4e9920e0196e9c5ff86f81ef3",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        31,
+        31
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": true,
+      "corner_rgb": [
+        225,
+        222,
+        216
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/small_life_ring.png",
+      "sha256": "f861ab7034777d8d80755b62bbfc1360f2e7f10bfb086bcdb5754faad478cb04",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        31,
+        31
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": true,
+      "corner_rgb": [
+        225,
+        222,
+        215
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/small_power_staff.png",
+      "sha256": "3baac40344f3bdd3158cece3d346478bbf0b100cb5fd65d6ae43040dd3ac5d98",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        91
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        228,
+        224,
+        217
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/small_protection_ring.png",
+      "sha256": "9bdc7b731e4bf8a2f920e59fb4c1fcef6c618e5dcb0e5ecc3506ff8444e8d488",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        31,
+        31
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": true,
+      "corner_rgb": [
+        232,
+        228,
+        218
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/smile_sword.png",
+      "sha256": "1ac485475b42cb130c32390776af6e82a25f9e3a2410137aed4e099f8ae9ad2c",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        91
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        235,
+        232,
+        227
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/spellcaster_cap.png",
+      "sha256": "5094e863cd7e8c7c1b3d17425206d29ad5b92c0409d19d00784cbc87f7ea05e5",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        65
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        223,
+        220,
+        215
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/spellcaster_gloves.png",
+      "sha256": "5ffb03038b91dd728afd4b6a27fc603da85375cbc3de9c0eb5a3b1e01f4d9e4b",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        40
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        229,
+        224,
+        215
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/stability_bracers.png",
+      "sha256": "eee00d6cb8034753c917cd1acf7ea8126cd2a1339389bdac5a15f3ae18a5a410",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        40
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        231,
+        226,
+        216
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/steel_club.png",
+      "sha256": "8d6d71dfa9db444c6c0eb0b1dfe3b1d6b46999bd36bea80d137bc11513f25177",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        91
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        229,
+        226,
+        218
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/steppe_sword.png",
+      "sha256": "ade3d12e2f1b7e4c90d553ac4aaeff7b30358eef72f6dfbad0a2dfac4f2f9636",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        91
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        235,
+        232,
+        227
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/strength_gloves.png",
+      "sha256": "e4b34c83b744603afac3a16454d1cd1fff126af310d3f8824662c8f800218576",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        40
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        233,
+        230,
+        222
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/stubborn_shield.png",
+      "sha256": "eb968673ce3923fb87824efdfc4343719b83dae478f99d17486f7e5da95972e9",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        91
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        225,
+        221,
+        214
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/subtlety_ring.png",
+      "sha256": "ed1f6c941b63b99f8d31bb1da5e9df1b5e40345c1939bdaa0484d1e4aad97a27",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        31,
+        31
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": true,
+      "corner_rgb": [
+        234,
+        231,
+        227
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/thick_leather_belt.png",
+      "sha256": "a64c5aee31f4a0faa95edea210767b8703baa29181e1a11f5025e9f9d6f37c7e",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        30
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        226,
+        222,
+        213
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/thin_leather_belt.png",
+      "sha256": "fa8f47c94fb46d6a67ed096f927d0d78ebe366ced1d11b349c1cf4d586b404ba",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        30
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        222,
+        218,
+        212
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/townsman_club.png",
+      "sha256": "55707ef708222f138ef2c9290e8b33cf82246273b727ed28f5a579b9b79a3734",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        91
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        228,
+        224,
+        216
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/trading_license_i.png",
+      "sha256": "6dcdf42d063901c9bb1b49fdc193a99c1f2abb6c9981c0c0b83657d209924d32",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        60,
+        60
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": true,
+      "corner_rgb": [
+        237,
+        233,
+        229
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/trading_license_ii.png",
+      "sha256": "61bd2bc6bf1ae102c0b2bce4c6009e776fe8361fbd42a378f2ef43fefe0c2d67",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        60,
+        60
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": true,
+      "corner_rgb": [
+        231,
+        228,
+        223
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/trading_license_iii.png",
+      "sha256": "93005fbda56e90239d70c5fc49140559fe7ebdf4165de224e5a7bc9b24487105",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        60,
+        60
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": true,
+      "corner_rgb": [
+        236,
+        233,
+        228
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/trident.png",
+      "sha256": "b44fa05c4709f97fc3a2f1d513dccdaf13ceeb4bab5d19b388fc93cbb288b4d2",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        91
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        230,
+        226,
+        218
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/truth_bracers.png",
+      "sha256": "f28e2a8db1bf8b2aa1c1bfe5a2cf14270dd42c5f08d4d857e6078d65c5838fe0",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        40
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        227,
+        222,
+        212
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/war_pick.png",
+      "sha256": "c084f5a4ff8b238dd81ff99e09928f8f634363867ce54a6348a6e17cd7e06f6f",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        91
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        232,
+        229,
+        223
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/woodcutter_axe.png",
+      "sha256": "401fc4780989fdf36d67995b1e68af6cff701943c6309ba26dc96e5bc6e6de3e",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        91
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        230,
+        227,
+        220
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "items/worn_pants.png",
+      "sha256": "b020a371ceb27fb62f84250e3582fb744dfc4a974e15f528834c24605f5e7319",
+      "encoded": [
+        384,
+        384
+      ],
+      "consumer": [
+        62,
+        81
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        220,
+        214,
+        207
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "npc/bandit.png",
+      "sha256": "e70c470b785ad7e71842b45568a82a1691d7017e713d8202cf613b6058a3569c",
+      "encoded": [
+        690,
+        1530
+      ],
+      "consumer": [
+        115,
+        255
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": true,
+      "corner_rgb": [
+        193,
+        181,
+        168
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "npc/boar.png",
+      "sha256": "adabe08508f07c2b2105253e6ad7245a066fc5329caf131aa8a7c69ac6e9a0d4",
+      "encoded": [
+        1024,
+        1536
+      ],
+      "consumer": [
+        115,
+        255
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        8,
+        8,
+        7
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "npc/equipment/bandit_amulet.png",
+      "sha256": "a0ad03dae225f1913e3a623c05ab20bd9c83ed5213029da9043056edd58c2f1a",
+      "encoded": [
+        1774,
+        887
+      ],
+      "consumer": [
+        62,
+        35
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        200,
+        197,
+        189
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "npc/equipment/bandit_belt.png",
+      "sha256": "06c8f64139978c7c8ecf62265b983679fe09a96c4617bc29255818bbaab3c325",
+      "encoded": [
+        1774,
+        887
+      ],
+      "consumer": [
+        62,
+        30
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        209,
+        204,
+        196
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "npc/equipment/bandit_boots.png",
+      "sha256": "10a2d4656379af0e42fa28209723f07a2ec0644dcd87dea9690e43bbaffce98e",
+      "encoded": [
+        1254,
+        1254
+      ],
+      "consumer": [
+        62,
+        63
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        205,
+        202,
+        194
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "npc/equipment/bandit_bracers.png",
+      "sha256": "ef90e4edee4da93a4eea458d89dd807b88c01ed2fdb343e0a7af3d0188d17368",
+      "encoded": [
+        1536,
+        1024
+      ],
+      "consumer": [
+        62,
+        40
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        198,
+        196,
+        189
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "npc/equipment/bandit_dagger.png",
+      "sha256": "489c5271a9d1b284157a535a5cb5b6bb4766596eca91ea0c5146b195224ec684",
+      "encoded": [
+        1024,
+        1536
+      ],
+      "consumer": [
+        62,
+        91
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        199,
+        197,
+        188
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "npc/equipment/bandit_gloves.png",
+      "sha256": "1c1bc8b7aaceff9b5d9078fb318176deda93ba047b311e41aa157c44e2543e26",
+      "encoded": [
+        1536,
+        1024
+      ],
+      "consumer": [
+        62,
+        40
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        176,
+        174,
+        167
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "npc/equipment/bandit_headband.png",
+      "sha256": "1a0deed9a9d55516f5e2162a360a990cbb478c2b708afd07f1604ef9dbc19d32",
+      "encoded": [
+        1254,
+        1254
+      ],
+      "consumer": [
+        62,
+        65
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        196,
+        191,
+        182
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "npc/equipment/bandit_jacket.png",
+      "sha256": "6996ca580a8621faecbe5b31ee428b586549d9a7835a8f453b98f3c35e2a4ba8",
+      "encoded": [
+        1024,
+        1536
+      ],
+      "consumer": [
+        62,
+        83
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        210,
+        207,
+        200
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "npc/equipment/bandit_ring.png",
+      "sha256": "0ee512e0acaf08a60d3bc3d207b848e96feb9c7f35676253ad6a630998394c35",
+      "encoded": [
+        1254,
+        1254
+      ],
+      "consumer": [
+        31,
+        31
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": true,
+      "corner_rgb": [
+        199,
+        195,
+        187
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "npc/equipment/bandit_sword.png",
+      "sha256": "477e9aab1cac6e704805310685a30bb6d0e9046d600155e384b163dcda4f6f22",
+      "encoded": [
+        1024,
+        1536
+      ],
+      "consumer": [
+        62,
+        91
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        190,
+        187,
+        182
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "npc/equipment/goblin_chainmail.png",
+      "sha256": "8e4e847a88472b9a5de5014f5ea8d2975716b2eb8be24893aaed12985530e8e5",
+      "encoded": [
+        1024,
+        1536
+      ],
+      "consumer": [
+        62,
+        83
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        200,
+        195,
+        186
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "npc/equipment/goblin_gloves.png",
+      "sha256": "72793d5de533cbd86119c8a04ed9160f054fdd988d7ed4f4a85dc0346e2cb773",
+      "encoded": [
+        1536,
+        1024
+      ],
+      "consumer": [
+        62,
+        40
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        218,
+        214,
+        205
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "npc/equipment/goblin_sandals.png",
+      "sha256": "bae3ad764d91d8b78b14dd9ccde807a330fa7fde945104bb8b083b5a54596956",
+      "encoded": [
+        1254,
+        1254
+      ],
+      "consumer": [
+        62,
+        63
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        207,
+        204,
+        195
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "npc/equipment/goblin_stick.png",
+      "sha256": "5eac9504c5d2f0fc78bb38d4c12b8eead1a8024e1a81fa31a4e5ba73ffca79ee",
+      "encoded": [
+        1024,
+        1536
+      ],
+      "consumer": [
+        62,
+        91
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        196,
+        193,
+        185
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "npc/equipment/ogre_amulet.png",
+      "sha256": "69d97631c1e39cdd767403f9b95018d1645bd159e295cb9e059791de17619d52",
+      "encoded": [
+        1774,
+        887
+      ],
+      "consumer": [
+        62,
+        35
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        202,
+        199,
+        192
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "npc/equipment/ogre_armor.png",
+      "sha256": "9e8eb18476b30fbbf352419dcfba4dcbe5acff6ebae07dfab13f84bfa90fb421",
+      "encoded": [
+        1024,
+        1536
+      ],
+      "consumer": [
+        62,
+        83
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        200,
+        197,
+        189
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "npc/equipment/ogre_belt.png",
+      "sha256": "b9cfb4e89155f1163a830af32fa65f0f610109d5819a7f66efeae7ae84fc71f8",
+      "encoded": [
+        1774,
+        887
+      ],
+      "consumer": [
+        62,
+        30
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        184,
+        177,
+        166
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "npc/equipment/ogre_boots.png",
+      "sha256": "6cdfc54801875ba4e2cb86f43664c86e3808d129febcbd3ddb2908ed71bb1dce",
+      "encoded": [
+        1254,
+        1254
+      ],
+      "consumer": [
+        62,
+        63
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        197,
+        192,
+        183
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "npc/equipment/ogre_bracers.png",
+      "sha256": "2f69599212a4b33c6f1ece0556287a5cba3fa0638fe83e668fbba6965151f3a4",
+      "encoded": [
+        1536,
+        1024
+      ],
+      "consumer": [
+        62,
+        40
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        190,
+        184,
+        174
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "npc/equipment/ogre_club.png",
+      "sha256": "d47ecbe13c2be552d77df5a6ab7c214d220942b226240592600f63cfdb159ec9",
+      "encoded": [
+        1024,
+        1536
+      ],
+      "consumer": [
+        62,
+        91
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        211,
+        208,
+        200
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "npc/equipment/ogre_gloves.png",
+      "sha256": "fa5361d2a72f4892770c5d6cce4e74ad1375ca8dd7eb533a9356990db0692167",
+      "encoded": [
+        1536,
+        1024
+      ],
+      "consumer": [
+        62,
+        40
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        179,
+        173,
+        163
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "npc/equipment/ogre_helmet.png",
+      "sha256": "91bc673a3d7044ce619d565b331d1ca43340f7c165d4d46895ba66ef1f3f14a9",
+      "encoded": [
+        1254,
+        1254
+      ],
+      "consumer": [
+        62,
+        65
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        189,
+        184,
+        176
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "npc/equipment/ogre_ring.png",
+      "sha256": "9ec218d8815841960ba88414ec82642b20e06248df1041f8d4e62c13f37a2f43",
+      "encoded": [
+        1254,
+        1254
+      ],
+      "consumer": [
+        31,
+        31
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": true,
+      "corner_rgb": [
+        188,
+        184,
+        176
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "npc/equipment/orc_belt.png",
+      "sha256": "67cd53e0009826d062c0057e52ca2711268b74871027d63c7608c06093a45f17",
+      "encoded": [
+        1802,
+        873
+      ],
+      "consumer": [
+        62,
+        30
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        219,
+        216,
+        208
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "npc/equipment/orc_boots.png",
+      "sha256": "3ac713b26bd847f657683e4ebaa575ad7d977984acc97f5d3884f7b7960ad5a2",
+      "encoded": [
+        1241,
+        1268
+      ],
+      "consumer": [
+        62,
+        63
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        216,
+        211,
+        204
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "npc/equipment/orc_bracers.png",
+      "sha256": "baea3ffde2fe45ef109cb59e20a761404490782c9d1dfa4546e5c87cb083aa0e",
+      "encoded": [
+        1561,
+        1007
+      ],
+      "consumer": [
+        62,
+        40
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        211,
+        207,
+        199
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "npc/equipment/orc_dagger.png",
+      "sha256": "095541552bf9729fa922ecb60863838967a93d1c8e493e325d7d9a099ce7dd94",
+      "encoded": [
+        1036,
+        1519
+      ],
+      "consumer": [
+        62,
+        91
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        206,
+        202,
+        193
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "npc/equipment/robber_armor.png",
+      "sha256": "a1f296d9f48bb4d87529807355f387ec2713dfd1ce9b28e0151ee0d892899390",
+      "encoded": [
+        1024,
+        1536
+      ],
+      "consumer": [
+        62,
+        83
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        203,
+        200,
+        194
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "npc/equipment/robber_club.png",
+      "sha256": "634463dde667710680bb02f148dbb44d35988f22368cec305a50d4401328d8bf",
+      "encoded": [
+        1024,
+        1536
+      ],
+      "consumer": [
+        62,
+        91
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        204,
+        201,
+        192
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "npc/equipment/robber_helmet.png",
+      "sha256": "bc100d2aa65e397ca951d47bdc6f7d8474d726145933e402f9b0fbe23c5d0ecd",
+      "encoded": [
+        1254,
+        1254
+      ],
+      "consumer": [
+        62,
+        65
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        202,
+        198,
+        190
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "npc/equipment/robber_talisman.png",
+      "sha256": "f7eb02822f24eb7d1921f5eab8239bbe63a3f8265b9829b1ca611f3f41065e48",
+      "encoded": [
+        1774,
+        887
+      ],
+      "consumer": [
+        62,
+        35
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        199,
+        197,
+        191
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "npc/goblin.png",
+      "sha256": "7791af13abc5868b1cf4065891fa04cda0d77c7eb65514ceca57ad0ec62ae72c",
+      "encoded": [
+        843,
+        1866
+      ],
+      "consumer": [
+        115,
+        255
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        110,
+        98,
+        80
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "npc/ogre.png",
+      "sha256": "811bdfcf816b12822536bd8ccb7489c2cc5c526790140b448282715adb83dbea",
+      "encoded": [
+        690,
+        1530
+      ],
+      "consumer": [
+        115,
+        255
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": true,
+      "corner_rgb": [
+        197,
+        191,
+        183
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "npc/orc.png",
+      "sha256": "2f37debee2d483e4885290a36728de3ffe009b369fff1bd2071c6d53e23f6e5d",
+      "encoded": [
+        852,
+        1846
+      ],
+      "consumer": [
+        115,
+        255
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        44,
+        39,
+        33
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "npc/robber.png",
+      "sha256": "fe9dd111a3ae65e905f4c9ca03061f9826ea902560fdfd2312f3f3623c193598",
+      "encoded": [
+        690,
+        1530
+      ],
+      "consumer": [
+        115,
+        255
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": true,
+      "corner_rgb": [
+        198,
+        194,
+        187
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "npc/scarecrow.png",
+      "sha256": "fe48f70cf01b4f46bee1859dd4b04a722bb9cac76d628a959b09ea9bec2b5eb8",
+      "encoded": [
+        690,
+        1530
+      ],
+      "consumer": [
+        115,
+        255
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": true,
+      "corner_rgb": [
+        10,
+        8,
+        7
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "npc/skeleton.png",
+      "sha256": "21f93d90f47ff47458e16c6ed1f9879cab82fcdd8e48c974ceaea9fa2aac5276",
+      "encoded": [
+        690,
+        1530
+      ],
+      "consumer": [
+        115,
+        255
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": true,
+      "corner_rgb": [
+        9,
+        9,
+        8
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "npc/wolf.png",
+      "sha256": "c1401a988738d4c9567ad0d6f4fd2b04cb4477a55e7e5d7e34a91cb7b8d454aa",
+      "encoded": [
+        1024,
+        1536
+      ],
+      "consumer": [
+        115,
+        255
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        13,
+        11,
+        10
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "npc/zombie.png",
+      "sha256": "0569ab092b22d18568329c0bb3d5c8d61b4b619fcad404a5d268b2fe237f6dc6",
+      "encoded": [
+        1024,
+        1536
+      ],
+      "consumer": [
+        115,
+        255
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        5,
+        5,
+        5
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "avatars/adventurer.png",
+      "sha256": "2f326f4ff4a526f068aecacec13e4025d9939308eb7697138e52e1fd1c4286c1",
+      "encoded": [
+        842,
+        1867
+      ],
+      "consumer": [
+        115,
+        255
+      ],
+      "role": "runtime-allowlisted",
+      "exact_ratio": false,
+      "corner_rgb": [
+        157,
+        142,
+        121
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "avatars/arcanist.png",
+      "sha256": "eafe00e111999e4b981243862f0c1141d118b186f0902dd4330ba31788813978",
+      "encoded": [
+        1024,
+        1536
+      ],
+      "consumer": [
+        115,
+        255
+      ],
+      "role": "style-reference-only",
+      "exact_ratio": false,
+      "corner_rgb": [
+        243,
+        238,
+        234
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "avatars/dwarven.png",
+      "sha256": "487d650a5fdf142d4918190dda2167108e5103e60616444a5db0f058ed2570ee",
+      "encoded": [
+        1024,
+        1536
+      ],
+      "consumer": [
+        115,
+        255
+      ],
+      "role": "style-reference-only",
+      "exact_ratio": false,
+      "corner_rgb": [
+        253,
+        251,
+        250
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "avatars/ironbound.png",
+      "sha256": "45ae8812a0bbb530922d8e94a939ad54112a3dbf8ead1e839015049f1b769727",
+      "encoded": [
+        1024,
+        1536
+      ],
+      "consumer": [
+        115,
+        255
+      ],
+      "role": "style-reference-only",
+      "exact_ratio": false,
+      "corner_rgb": [
+        232,
+        229,
+        223
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "avatars/lightbearer.png",
+      "sha256": "23772000decf9ecd0cd784f3d7d5c13f296259c453a768dbb70ecee236e39429",
+      "encoded": [
+        1024,
+        1536
+      ],
+      "consumer": [
+        115,
+        255
+      ],
+      "role": "style-reference-only",
+      "exact_ratio": false,
+      "corner_rgb": [
+        252,
+        248,
+        245
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "avatars/nightveil.png",
+      "sha256": "d20d8920ed41b5d171dfc2206d4434bcaa52f4afe5207bcb41f3081066d33517",
+      "encoded": [
+        1024,
+        1536
+      ],
+      "consumer": [
+        115,
+        255
+      ],
+      "role": "style-reference-only",
+      "exact_ratio": false,
+      "corner_rgb": [
+        251,
+        247,
+        246
+      ],
+      "alpha": false
+    },
+    {
+      "asset": "avatars/pathfinder.png",
+      "sha256": "77e5d48c6e806498b9f2aa6b7f1f43ee4179ac51e43b07d9a12c22b51acd4201",
+      "encoded": [
+        1024,
+        1536
+      ],
+      "consumer": [
+        115,
+        255
+      ],
+      "role": "style-reference-only",
+      "exact_ratio": false,
+      "corner_rgb": [
+        249,
+        244,
+        241
+      ],
+      "alpha": false
+    }
+  ]
+}

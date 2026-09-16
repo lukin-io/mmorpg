@@ -704,10 +704,13 @@ remain owned by Game Shell.
 
 All 80 authored ordinary goods and six license definitions have original PNG illustrations
 under `app/assets/images/items/`. `InventoriesHelper::ITEM_ARTWORK_PATHS` maps
-their explicit stable keys to assets. Buy and Sell reuse those files in a
-62 × 91px box with `object-fit: contain`, preserving the original square art.
-Inventory retains its 60 × 60px image box, and the shared equipment slot fits
-the same file to its existing dimensions. Category controls retain the original
+their explicit stable keys to assets. Buy, Sell and Inventory share
+`item_artwork_dimensions`: wearables use EquipmentSlots, captured Permit I–IV
+uses42×21, other loose goods60×60. Images preserve category proportions with
+`object-fit: contain`; the69px Shop icon column retains its existing width.
+The [September16 source pass](../design/reference/inventory/observations/2026-09-16_artwork_categories.md)
+corrects the former universal weapon/square boxes. [ART-CATEGORY-001](../ARTWORK.md#category-artwork-standard)
+owns backgrounds, framing, delivery sizes and the current asset audit. Category controls retain the original
 category atlas, and unknown goods retain the existing fallback.
 
 The six professional license cards use 60 × 60px original illustrations in
@@ -1270,3 +1273,11 @@ automated completion results are recorded in
 | 2026-07-28 | Moved current Shop access to Central Square; added the project-owned CSS scene, measured 800px control frame, four mode tabs, icon category strip, compact filters, local table overflow, responsive acceptance, and source-asset/text boundary. |
 | 2026-07-29 | Linked the cross-feature management guide's future explicit `ItemTemplate` adapter while retaining Shop ownership of catalog visibility, price, stock, and transaction invariants. |
 | 2026-08-23 | Documented the source-backed NPC NV ingress: Arena owns typed loot eligibility/idempotency, while the existing Economy wallet service atomically credits the user's persisted balance and immutable `combat.npc_loot` ledger row before Shell feedback. |
+
+## September 16 category geometry verification
+
+The [manual and automated acceptance record](acceptance/2026-09-16_artwork/README.md)
+records the source-shaped Shop/Inventory images, purchase → wear → reload →
+keyboard removal, Sell restrictions, empty category and zoom checks. Runtime
+geometry is verified. Background/framing normalization and six license-candidate
+replacements remain pending; this is not an all-artwork completion claim.

@@ -269,8 +269,12 @@ The existing Duel Permit I art is reused. Fist Attack has a new original
 384 × 384 PNG under the [artwork production record](ARTWORK.md#september-14-attack-scroll-artwork).
 Other permit tiers remain catalog-only. Both live 17-to-5 attempts returned
 the same generic failure without consumption; the local level-window error
-now uses its translated wording. Successful source entry, precise rejection
-causes and post-fight equipment persistence still await a suitable target.
+now uses its translated wording. [September 15 Permit success](design/reference/inventory/observations/2026-09-15_successful_attack_scroll.md)
+confirms one-use consumption (x2→one; mass −1), retained armed equipment and
+Finish to Inventory. The subsequent
+[Fist capture](design/reference/inventory/observations/2026-09-15_successful_fist_attack.md)
+confirms one-use consumption, 1375→225 maximum HP and unequipped gear persisting
+after Finish. Precise rejection causes and Fist intervention remain uncaptured.
 
 ### Supplemental inventory definitions
 
@@ -338,6 +342,11 @@ Treatment fee limits and recovery calculations remain in
 [FORMULAS](FORMULAS.md#7-recovery-wear-and-injuries).
 
 ## 3. Fields, slots and effective properties
+
+[STATS](STATS.md) defines primary-stat aliases, requirements and resource/capacity
+consumers; [MODIFIERS](MODIFIERS.md) defines the four rating keys and their
+player/NPC distinctions. A property must have a supported reader to affect
+gameplay; neither a percentage suffix nor a rendered description activates it.
 
 | Field | How to edit / what it affects |
 |---|---|
@@ -413,7 +422,7 @@ maps stable item keys to project-owned asset paths. The helper reads this map;
 an arbitrary `enhancement_rules.image` alone does not install new inventory
 art. NPC decorative equipment has a separate allowlist described in NPC.md.
 
-Read [ARTWORK](ARTWORK.md) before generating or editing. Preserve its category
+Read [ART-CATEGORY-001](ARTWORK.md#category-artwork-standard) before generating or editing. Preserve its category
 framing, native dimensions, backgrounds, padding and equipment aspect ratios;
 slot dimensions are presentation, not game rules. Record exact prompts and
 packaging there. Reuse images only when appropriate: the four healer tools
@@ -423,8 +432,10 @@ illustration for every retained definition.
 
 For integration, add a justified allowlisted mapping, inspect the image at its
 actual Inventory/Shop/paper-doll size, and verify clipped edges and responsive
-controls through the local UI after automated checks. This documentation task
-references existing art; it generates or replaces no assets.
+controls through the local UI after automated checks. Shop Buy/Sell and Inventory
+share `item_artwork_dimensions`: slot geometry for wearables,42×21 for captured
+Duel Permits I–IV,60×60 for other loose goods. The category standard separates
+encoded delivery pixels, native display footprints and image/row backgrounds.
 
 ## 6. Editing recipes
 
@@ -531,3 +542,15 @@ The [ARENA guide](ARENA.md#3-applications-and-admission-rules) explains how
 these item restrictions combine with hall/side gates and application reservation.
 
 [EquipmentRule](../app/services/arena/equipment_rule.rb) reads all equipped items and authoritative character/item `artifact_grade`. Unarmed means no equipment, including clothing; no-artifacts requires `none`; limited-artifacts permits calibrated multiplier≤1.1. Unknown grades reject restricted entry. Item effective modifiers override template data through the existing merge; no price/name/rarity heuristic determines grade. The [formula book](FORMULAS.md#arena-01--admission-and-deadlines) owns the editable threshold; [Arena](design/areas/arena.md) rechecks it on creation, joining and group start. Waiting membership locks equipment navigation/mutations until withdrawal or completion.
+
+## Primary stats and displayed modifier meanings
+
+The [stat/modifier audit](design/reference/character/observations/2026-09-15_levels_stats_and_modifiers.md) distinguishes the
+item modifier shown as a percentage-unit rating from final opposed combat odds.
+Accuracy works with Luck and Dexterity; Crushing with Luck, Evasion with
+Dexterity, Fortitude with Luck (the wiki leaves other inputs uncertain).
+[COMBAT](COMBAT.md#september-15-stat-and-modifier-interpretation) owns the consumer.
+Displayed armor stays the worn-item sum; Health's hidden combat factor does not
+rewrite the item or Profile value. The wiki excludes gear-raised primary Health;
+the local generic alias adapter still accepts it, so adapter support alone must
+not justify authoring an item. Explicit HP bonuses remain a separate property.

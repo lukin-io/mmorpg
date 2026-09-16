@@ -258,6 +258,32 @@ RSpec.describe Arena::CombatProcessor do
         expect(participation1.metadata["damage_hits"]).to eq(1)
         expect(participation2.reload.metadata["damage_taken"]).to eq(1)
       end
+
+      it "settles cumulative damage after HP restoration once, excluding the final overkill" do
+        arena_match.update!(trauma_percent: 10)
+        allow(processor).to receive(:resolve_physical_attack).and_return(
+          {outcome: :hit, damage: 60, critical: false, block_attempted: false},
+          {outcome: :hit, damage: 150, critical: false, block_attempted: false}
+        )
+
+        first = processor.process_action(character1, :attack,
+          target: character2, attack_type: :simple, body_part: "torso")
+        expect(first).to be_success
+        expect(character2.reload.current_hp).to eq(40)
+        # Controlled restoration fixture; this does not implement a healing spell.
+        character2.update!(current_hp: 100)
+        last = processor.process_action(character1, :attack,
+          target: character2, attack_type: :simple, body_part: "torso")
+
+        expect(last).to be_success
+        expect(arena_match.reload).to be_completed
+        expect(participation1.reload.metadata).to include(
+          "damage_dealt" => 160, "raw_damage_dealt" => 210, "experience_awarded" => 304
+        )
+        expect(participation2.reload.metadata["damage_taken"]).to eq(160)
+        expect(character1.reload.experience).to eq(304)
+        expect { processor.end_match }.not_to change { character1.reload.experience }
+      end
     end
 
     context "with defend action" do
@@ -435,7 +461,7 @@ RSpec.describe Arena::CombatProcessor do
       expect(arena_match.metadata.dig("rewards", "experience", "amount")).to eq(35)
       expect(GameEvent.where(event_type: :fight_finished, recipient: user1)).to be_empty
       participation1.reload.update!(metadata: participation1.metadata.to_h.merge("finished_at" => Time.current.iso8601))
-      2.times { pve_processor.publish_npc_finish_notice!(participation1) }
+      2.times { pve_processor.publish_finish_notice!(participation1) }
       expect(GameEvent.where(event_type: :fight_finished, recipient: user1).count).to eq(1)
       expect(GameEvent.find_by!(event_type: :fight_finished, recipient: user1).payload["experience"]).to eq(35)
     end
@@ -673,7 +699,7 @@ RSpec.describe Arena::CombatProcessor do
 
     it "marks the world encounter anchor defeated only after every NPC falls" do
       world_zone = create(:zone, name: "Combat Encounter Woods", location_type: "outdoor")
-      world_character = create(:character, current_hp: 500, max_hp: 500)
+      world_character = create(:character, level: 4, current_hp: 500, max_hp: 500)
       create(:character_position, character: world_character, zone: world_zone, x: 4, y: 4)
       tile_npc = create(:tile_npc, :multi_npc_encounter,
         zone: world_zone.name,
@@ -701,7 +727,7 @@ RSpec.describe Arena::CombatProcessor do
 
     it "keeps a sampled cell anchor eligible after every selected NPC falls" do
       world_zone = create(:zone, name: "Repeatable Encounter Woods", location_type: "outdoor")
-      world_character = create(:character, current_hp: 500, max_hp: 500)
+      world_character = create(:character, level: 4, current_hp: 500, max_hp: 500)
       create(:character_position, character: world_character, zone: world_zone, x: 4, y: 4)
       template = create(
         :npc_template,

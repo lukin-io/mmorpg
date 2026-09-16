@@ -8,12 +8,15 @@ module Game
     # - tile_npc: the exact-cell encounter anchor and its seed-materialized
     #   roster samples;
     # - rng: the server-owned random source used only when several samples exist.
+    # - max_members: authoritative player-level ceiling supplied by StartNpcFight;
+    #   defaults to the content capacity for standalone catalog inspection.
     #
     # Returns a Selection containing ordered NPC members and the captured
     # fight-level XP/risk values. Missing templates or invalid persisted data
     # fail closed before a match is created.
     class EncounterRosterSelector
       class InvalidRosterError < StandardError; end
+      class NoEligibleRosterError < InvalidRosterError; end
 
       Member = Struct.new(:npc_template, :level, :max_hp, :metadata, keyword_init: true)
       Selection = Struct.new(
@@ -25,34 +28,50 @@ module Game
         keyword_init: true
       )
 
-      def initialize(tile_npc:, rng: Random.new)
+      def initialize(tile_npc:, rng: Random.new, max_members: TileNpc::MAX_ENCOUNTER_SIZE)
         @tile_npc = tile_npc
         @rng = rng
+        @max_members = max_members
       end
 
       def call
         samples = tile_npc.encounter_roster_samples
         return fixed_selection if samples.empty?
 
-        build_selection(samples.fetch(sample_index(samples)))
+        weights = sample_weights(samples)
+        eligible = samples.each_index.select do |index|
+          sample = normalized_hash!(samples[index], "NPC encounter roster is not documented.")
+          members = sample["members"]
+          raise InvalidRosterError, "NPC encounter roster members are not documented." unless members.is_a?(Array)
+
+          validate_member_count!(members.size)
+          members.size <= max_members
+        end
+        raise NoEligibleRosterError, "No complete NPC group is available for this level." if eligible.empty?
+
+        index = eligible.fetch(sample_index(eligible.map { |candidate| weights.fetch(candidate) }))
+        build_selection(samples.fetch(index))
       end
 
       private
 
-      attr_reader :tile_npc, :rng
+      attr_reader :tile_npc, :rng, :max_members
 
-      def sample_index(samples)
+      def sample_weights(samples)
         unless samples.size.between?(1, TileNpc::MAX_ROSTER_SAMPLES)
           raise InvalidRosterError, "NPC encounter roster count is unsupported."
         end
-        weights = samples.map do |sample|
+        samples.map do |sample|
           value = normalized_hash!(sample, "NPC encounter roster is not documented.").fetch("weight", 1)
           unless value.is_a?(Integer) && value.between?(1, TileNpc::MAX_ROSTER_WEIGHT)
             raise InvalidRosterError, "NPC encounter roster weight is unsupported."
           end
           value
         end
-        return 0 if samples.one?
+      end
+
+      def sample_index(weights)
+        return 0 if weights.one?
 
         ticket = rng.rand(weights.sum)
         weights.each_with_index do |weight, index|
@@ -104,6 +123,9 @@ module Game
       def fixed_selection
         count = tile_npc.encounter_size
         validate_member_count!(count)
+        if count > max_members
+          raise NoEligibleRosterError, "No complete NPC group is available for this level."
+        end
         health = [tile_npc.current_hp.to_i, tile_npc.npc_template.health.to_i].find(&:positive?)
         members = Array.new(count) do
           Member.new(

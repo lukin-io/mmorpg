@@ -4,7 +4,7 @@ require "rails_helper"
 
 RSpec.describe Game::World::InterruptAction do
   let(:zone) { create(:zone, name: "Encounter Woods", location_type: "outdoor") }
-  let(:character) { create(:character) }
+  let(:character) { create(:character, level: 4) }
   let!(:position) { create(:character_position, character:, zone:, x: 5, y: 5) }
 
   subject(:result) { described_class.new(character:, return_context: "inventory").call }
@@ -22,6 +22,16 @@ RSpec.describe Game::World::InterruptAction do
   it "does not interrupt without a source-backed hostile NPC" do
     expect(result).not_to be_interrupted
     expect(result.match).to be_nil
+  end
+
+  it "allows the action when a complete group exceeds the player level limit" do
+    character.update!(level: 3)
+    npc = create(:tile_npc, :multi_npc_encounter, zone: zone.name, x: 5, y: 5)
+
+    expect(result).not_to be_interrupted
+    expect(result.match).to be_nil
+    expect(ArenaMatch.count).to eq(0)
+    expect(npc.reload).to be_alive
   end
 
   it "does not interrupt city actions" do

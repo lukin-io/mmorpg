@@ -57,6 +57,42 @@ RSpec.describe Game::World::EncounterRosterSelector do
     expect(selection.experience_reward).to eq(35)
   end
 
+  it "filters whole groups before weighted selection without truncating their rewards" do
+    tile_npc.update!(metadata: {"encounter_rosters" => [
+      {"key" => "too-large", "weight" => 99, "encounter_experience_reward" => 999,
+       "members" => Array.new(3) { {"npc_key" => bandit.npc_key} }},
+      {"key" => "pair", "weight" => 2, "encounter_experience_reward" => 35,
+       "members" => Array.new(2) { {"npc_key" => bandit.npc_key} }},
+      {"key" => "single", "weight" => 3, "encounter_experience_reward" => 9,
+       "members" => [{"npc_key" => bandit.npc_key}]}
+    ]})
+    rng = instance_double(Random)
+    allow(rng).to receive(:rand).with(5).and_return(1, 2)
+
+    pair = described_class.new(tile_npc:, max_members: 2, rng:).call
+    single = described_class.new(tile_npc:, max_members: 2, rng:).call
+
+    expect(pair).to have_attributes(sample_key: "pair", experience_reward: 35)
+    expect(pair.members.size).to eq(2)
+    expect(single).to have_attributes(sample_key: "single", experience_reward: 9)
+    expect(single.members.size).to eq(1)
+  end
+
+  it "does not invent a smaller fixed roster or alter its captured XP" do
+    tile_npc.update!(metadata: {"encounter_count" => 2, "encounter_experience_reward" => 35})
+    expect { described_class.new(tile_npc:, max_members: 1, rng: instance_double(Random)).call }
+      .to raise_error(described_class::NoEligibleRosterError)
+    expect(tile_npc.reload.metadata).to include("encounter_count" => 2, "encounter_experience_reward" => 35)
+  end
+
+  it "fails closed for an empty eligible sample set without drawing randomness" do
+    tile_npc.update!(metadata: {"encounter_rosters" => [
+      {"key" => "pair", "members" => Array.new(2) { {"npc_key" => bandit.npc_key} }}
+    ]})
+    expect { described_class.new(tile_npc:, max_members: 1, rng: instance_double(Random)).call }
+      .to raise_error(described_class::NoEligibleRosterError)
+  end
+
   it "preserves a fixed level-zero anchor without changing its HP or reward" do
     tile_npc.update!(level: 0, metadata: {"encounter_experience_reward" => 0})
 

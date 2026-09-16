@@ -14,6 +14,9 @@ Start with the [Character domain](domains/character.md), its
 [Character Progression handbook](features/character_progression.md) owns exact
 HTTP/UI guarantees and acceptance. [SKILLS](SKILLS.md) and [PERKS](PERKS.md)
 own their complete catalogs; [FORMULAS](FORMULAS.md) owns the numerical reference.
+[STATS](STATS.md) expands primary-stat definitions and linked resource/capacity
+rules; [MODIFIERS](MODIFIERS.md) expands the four combat ratings, aliases and
+opposed consumers. Their source-only flags do not extend this runtime boundary.
 
 ## Contents
 
@@ -54,8 +57,8 @@ unless explicitly identified as captured evidence.
 |---|---|---|
 | Strength / Сила | `strength` | Physical attack input, carrying capacity, equipment requirements |
 | Dexterity / Ловкость | `dexterity` | Opposed hit/evasion inputs and requirements |
-| Luck / Удача | `luck` | Opposed critical/combat inputs and requirements |
-| Health / Здоровье | `vitality` | Base HP when allocated; effective carrying capacity and requirements |
+| Luck / Удача | `luck` | Accuracy, opposed critical attack/resistance and requirements |
+| Health / Здоровье | `vitality` | Base HP when allocated; effective carrying capacity, hidden physical armor bonus and requirements |
 | Knowledge / Знания | `intelligence` | Base MP when allocated, item/medical requirements and bounded magic inputs |
 
 Each base stat is `1 + saved allocated points`. English presentation aliases
@@ -110,6 +113,14 @@ does not allocate those points or refill/recalculate HP/MP. Combat's settlement
 guard prevents the same fight from awarding again; calling the general XP
 writer twice with a positive amount is two awards, not an idempotent command.
 
+The [September 15 wiki audit](design/reference/combat/observations/2026-09-15_wiki_experience_rules.md)
+confirmed all 224 stored progression-table values without changing grants.
+Fight caps are ceilings, not guaranteed earnings. The shared
+[reward owner](FORMULAS.md#reward-01--shared-npc-and-player-experience) counts
+actual removed player HP cumulatively, including restored HP damaged again;
+NPC fallback and XP buff limits remain explicit there. Changing the progression
+table changes thresholds/grants/caps, not those earning coefficients.
+
 ### Spend points
 
 Profile development opens the relevant Stats, Skills or Perks surface.
@@ -161,7 +172,9 @@ can exceed 100 through equipment. AP is not HP or mana: it is the budget for a
 submitted turn package; attack/block costs and item restrictions are described
 in [COMBAT](COMBAT.md) and [COMBAT-01](FORMULAS.md#combat-01--physical-action-cost-and-package-validation).
 
-Physical damage does not have a second generic “damage per level” bonus.
+Local physical damage currently has no additional level coefficient. The
+[Level wiki audit](design/reference/character/observations/2026-09-15_levels_stats_and_modifiers.md) explicitly identifies
+one in Neverlands; its magnitude is unknown and implementation remains open.
 `Arena::CombatAttributes` adapts effective player stats, weapon damage/mastery,
 armor, accuracy/evasion, crushing/fortitude, penetration, physical resistance,
 fatigue and configured artifact effects into the shared opposed calculations.
@@ -307,3 +320,26 @@ Maintain this guide when primary inputs, progression tables, resource writers,
 equipment composition, consumers or editing procedures change. Synchronize the
 affected FORMULAS examples and SKILLS/PERKS/ITEMS/MEDICAL/ECONOMY/COMBAT/WORLD
 handoffs through the [documentation context map](DOCUMENTATION.md#21-required-context-and-update-map).
+
+## September 15 level and primary-stat evidence
+
+The [source audit](design/reference/character/observations/2026-09-15_levels_stats_and_modifiers.md) records definitions, level
+unlocks and remaining implementation boundaries. Progression now exposes
+`max_npcs_in_group` to World: level3 admits singles,4 admits pairs,6 admits
+triples,17 allows8 and18 allows10. Leveling changes the eligible complete samples,
+not their individual stats/rewards or the habitat's distance rule.
+
+Health also contributes hidden physical armor through the
+[shared formula](FORMULAS.md#september-15-stat-and-modifier-interpretation).
+For example, allocating Health29→30 with armor100 changes its combat contribution
+100→105 while Profile still displays100. An injury crossing the same threshold
+can remove that bonus even if HP was restored. Luck now improves hit chance as
+well as critical comparisons. Edit the existing calibration config and shared
+adapter, never add a separate player/PvP/NPC formula.
+
+The wiki says gear cannot raise Health. The generic local stat-modifier adapter
+still accepts Health/vitality keys; that capability is not evidence of a valid
+Neverlands item. Author direct HP modifiers for source-backed HP equipment and
+verify any proposed primary-Health item against evidence before adding it.
+Combat HP restoration's Knowledge qualification is recorded in COMBAT/FORMULAS;
+it does not implement healing or remove injury penalties.

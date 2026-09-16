@@ -7,7 +7,7 @@ RSpec.describe Game::World::PassiveEncounterCheck do
   let(:clock) { -> { now } }
   let(:rng) { instance_double(Random, rand: 17) }
   let(:zone) { create(:zone, name: "Passive Encounter Woods", location_type: "outdoor") }
-  let(:character) { create(:character) }
+  let(:character) { create(:character, level: 4) }
   let!(:position) { create(:character_position, character:, zone:, x: 5, y: 5) }
   let!(:npc) { create(:tile_npc, :multi_npc_encounter, zone: zone.name, x: 5, y: 5) }
 

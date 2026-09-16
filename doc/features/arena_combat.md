@@ -60,8 +60,13 @@ Closed fights and defeated targets reject intervention.
 
 Each participant finishes independently. The scroll entrant returns to
 Inventory; a newly attacked defender resumes their saved accessible location.
-Successful source scroll entry is still pending; both 17-to-5 submissions
-rejected without consumption. The observation separates local
+The [September 15 Permit fight](../design/reference/inventory/observations/2026-09-15_successful_attack_scroll.md)
+now confirms successful armed entry and attacker aftermath. The later
+[Fist capture](../design/reference/inventory/observations/2026-09-15_successful_fist_attack.md)
+confirms stripping,21 exchanges, consumed use and gear still removed after
+attacker Finish; defender public recovery is observed, its controls are not.
+Both earlier 17-to-5 submissions
+rejected without consumption. The observations separate local
 interpretations from live proof. No separate PvP combat resolver exists.
 
 This document describes the bounded Arena and shared Fight runtime, including
@@ -335,7 +340,9 @@ Chrome tab was closed; the existing source and user tabs remain open. Final
 
 ## 1. Design authority and related documents
 
-Read the [combat formulas](../FORMULAS.md#5-combat),
+Read [STATS](../STATS.md) for primary/resource inputs,
+[MODIFIERS](../MODIFIERS.md) for the four opposed ratings and their aliases,
+the [combat formulas](../FORMULAS.md#5-combat),
 [NPC lifecycle and groups](../NPC.md#7-encounter-and-fight-lifecycle),
 [item inputs](../ITEMS.md#3-fields-slots-and-effective-properties),
 [world return context](../WORLD.md#5-travel-context-and-return-behavior) and
@@ -1009,7 +1016,7 @@ The shipped topology is:
 | Passive wilderness handoff | `POST /world/encounter_check` | Interactive on outdoor World only | World-owned authority/check; shared Arena match after creation |
 | Incremental match log | `GET /arena_matches/:id/log` | Authenticated HTML/JSON | Presenter and match controller |
 | Public durable log | `GET /log/:id` | Public HTML/JSON | Public controller/helper/view and statistics service |
-| Recipient chat feedback | Successful NPC item/NV loot; positive solo NPC XP on Finish; other player/team completion at finalization | Durable/streamed projection | Arena producer facts through injected `Chat::EventPublisher`; Game Shell owns storage/rendering |
+| Recipient chat feedback | Successful NPC item/NV loot; positive solo NPC XP and each new scroll participant's completion on Finish; other player/team completion at finalization | Durable/streamed projection | Arena producer facts through injected `Chat::EventPublisher`; Game Shell owns storage/rendering |
 | Captured bounded fight UI states | Launch parity matrix | Earlier gates plus stage2 full/manual acceptance verified | Fight views/Stimulus/CSS plus request/system acceptance matrix |
 
 ### 6.2 Arena applications and match start
@@ -1604,7 +1611,7 @@ infer general player-group XP or any other full-combat formula.
 
 | Acceptance slice | Service/authority coverage | Request coverage | Browser/system coverage | Status |
 |---|---|---|---|---|
-| Six participants and target legality | Match-local living-enemy lookup; stale/allied/foreign/defeated rejection in the shared processor | `arena_team_combat_lifecycle_spec` creates three players on each side and proves an allied target leaves state unchanged | `arena_team_combat_spec` renders six cards, cycles B1 to B2, and retains B2 after waiting-state reload | `DONE` |
+| Six participants and target legality | Match-local living-enemy lookup; stale/allied/foreign/defeated rejection in the shared processor | `arena_team_combat_lifecycle_spec` creates three players on each side and proves an allied target leaves state unchanged | `arena_team_combat_spec` retains six participants, expands one living target, cycles B1 to B2 and keeps B2 stored while its card is hidden during waiting/reload | `DONE` |
 | Synchronized shared round | Match lock rechecks live participant and posted round; one resolution clears all pending packages and advances once | First five valid packages remain pending; the sixth advances to round `2`; duplicate and stale round `1` packages are rejected | Six isolated browser-authenticated submissions run in sequence; only the sixth removes waiting and exposes the next composer, with six submitted-turn log rows | `DONE` |
 | Team completion and participant Finish | Side completion waits for the last living member; finalization and Finish remain idempotent | B1/B2 surrender keep the match live, B3 completes it, all A/B results are victory/defeat, and all six Finish calls are retry-safe | Browser verifies live partial surrender, terminal three-versus-three result, six result rows, Victory/Defeat, Finish, and completed reload | `DONE` |
 | Captured fight-state presentation | Server-rendered active/waiting/timeout/result state remains authoritative | Existing timeout/draw/surrender/result requests plus the six-participant lifecycle cover each mutation | Active composer, target switching, waiting, timeout controls, surrender, victory/defeat, six-row result, and Finish fit at desktop, `820px`, and `390px` without page overflow | `DONE` |
@@ -2162,3 +2169,222 @@ Screenshots: [Doctor rejection](acceptance/2026-09-15_arena_recovery/01-doctor-r
 [Finish/replenishment](acceptance/2026-09-15_arena_recovery/09-finish-replenishment-200.jpg),
 [legacy URL destination](acceptance/2026-09-15_arena_recovery/10-legacy-lobby-200.jpg),
 [medical 320px](acceptance/2026-09-15_arena_recovery/11-medical-320.jpg).
+
+### September 15 successful scroll acceptance
+
+Source: [Permit fight 771285270](../design/reference/inventory/observations/2026-09-15_successful_attack_scroll.md).
+This follow-up adds an explicit attack start line, per-participant Finish-time
+notices for newly initiated scroll fights, and the shared winning-player XP
+coefficient **1.9**. XP is still settled once at combat completion. Ordinary
+Arena multiplayer notices retain their prior completion timing. Intervening in
+an existing Arena fight does not change that fight's notification contract.
+The coefficient fits 300 credited HP → 570 XP; it does not explain every older
+PvP reward. See [REWARD-01](../FORMULAS.md#reward-01--shared-npc-and-player-experience).
+
+Final automated checks before manual acceptance: `bin/verify fast` passed
+**622 Ruby files**, **3,089 non-system examples**, 12 feature handbooks and 93
+documentation architecture records. Focused scroll/lifecycle system specs
+passed **37 examples**. Focused service/request checks passed **122 examples**.
+These are local results; the earlier full-suite and CI records are historical.
+
+Manual acceptance used two separate in-app browser sessions on loopback hosts,
+mouse and keyboard, **1280×720 CSS px, DPR 2**, with disposable development
+characters `ScrollLiveA0915[17]` and `ScrollLiveB0915[19]` in Central Square.
+Items, stats and initial HP were fixtures; all equipment, scroll, combat and
+Finish mutations below used actual UI controls on the final application.
+
+1. Inventory Wear equipped Penknife and Advantage Shield. Permit Use → target
+   nickname → Execute immediately created match **60**, 5-minute timeout,
+   trauma 10%, 200 AP, no lobby/acceptance screen. Both sessions entered the
+   same fight; equipment and A's current **995/1375 HP** were preserved. The
+   source's 285/1375 admission boundary is covered separately by a service spec.
+2. A selected aimed head + head block (**95/200 AP**). Turn waited for B.
+   B submitted simple head + torso block (**75/200 AP**). The completed exchange
+   displayed A's **−322** overkill, credited **300**, and B's committed return
+   **−100** after the lethal hit. Statistics retained the defeated contributor:
+   A **570 XP**, B **85 XP**. Neither private chat yet had a Finish notice.
+3. Fight log → Statistics and browser Back worked. The public start line has
+   names, levels, `(attack)` and the full start date/time; minute timestamps,
+   side colors, bold amounts, original header and history remained readable.
+   The result removed the defeated active card while preserving statistics.
+4. Keyboard Enter on A's Finish returned to Inventory: combat XP **570**, wins
+   **1**, one Permit left, Fist unchanged, carried mass **14→13**, gear retained,
+   and one private **570 XP** notice. B still had its own Finish button. Another
+   scroll attempt against B rejected with **The player must finish the previous
+   fight**, preserving both remaining scrolls and the completed match.
+5. B's own Finish returned to Central Square and published its **85 XP** notice.
+   Reloading both sessions retained the results and individual notices without
+   awarding XP or consuming a second scroll. No new source Fist use was made.
+
+The optional 390×844 viewport override did not take effect in this browser
+connection: measured dimensions stayed 1280×720, including in a fresh tab.
+The override was reset; no new narrow-viewport or physical-touch pass is
+claimed here. Existing responsive acceptance above remains separately dated.
+This change adds log text and timing, not new layout or artwork. Source Fist
+entry/stripping/aftermath, defender-side source return, intervention and timeout
+remain evidence gaps; an idle defender's input cannot be attributed to a bot
+from the public log alone.
+
+Screenshots: [armed entry](acceptance/2026-09-15_scrolls/01-entry.jpg),
+[result before Finish](acceptance/2026-09-15_scrolls/02-result.jpg),
+[public log](acceptance/2026-09-15_scrolls/03-public-log.jpg),
+[unfinished-result rejection](acceptance/2026-09-15_scrolls/05-unfinished-rejection.jpg).
+
+### September 15 wiki experience audit
+
+The [public wiki/table audit](../design/reference/combat/observations/2026-09-15_wiki_experience_rules.md)
+confirmed all 224 stored progression values and clarified repeat XP credit for
+restored HP. `ExperienceAwarder` now uses cumulative player `damage_taken`
+without a maxHP ceiling. `CombatProcessor` already bounds each strike by HP
+actually available, so overkill stays excluded. Shared team shares, captured
+NPC totals, caps and once-only settlement are unchanged.
+
+[PvP award specs](../../spec/services/arena/pvp_experience_spec.rb) cover restored
+HP, raw overkill and cap boundaries. The
+[processor regression](../../spec/services/arena/combat_processor_spec.rb)
+uses controlled HP restoration between physical strikes and checks finalization
+and replay. This is not a shipped healing-spell flow.
+
+The wiki also establishes NPC average group level, equipped-item quantity/value
+and strength peaks as XP inputs missing from the generic approximation.
+XP buffs (including published +5% Satiety), quests and direct-damage-spell
+eligibility remain separately bounded in
+[FORMULAS](../FORMULAS.md#published-inputs-outside-the-current-approximation).
+No new source fight, artwork, layout or public API was added by this audit.
+
+Final automated gate: `bin/verify combat` passed **622 Ruby files**, **505
+arena/formula examples**, 12 feature handbooks and 94 documentation architecture
+records. The earlier focused PvP/processor/NPC run passed **80 examples**.
+These are fresh local checks, not CI or a rerun of the full system suite.
+
+Manual acceptance after that gate used the in-app browser, two existing
+development test accounts on separate loopback-host sessions, **669×910 CSS px,
+DPR 2**, pointer selections and keyboard Enter for Finish. No viewport override
+or new fixture writes were needed; both test characters had naturally recovered.
+
+1. A opened Inventory → Duel Permit I Use, entered B's nickname and executed.
+   Match **61** started at 13:16:04 UTC with trauma 10 and the common physical
+   composer. A's aimed head/head block waited for B's simple head/torso block.
+2. The exchange finished at 13:16:31: raw critical **−586**, credited damage
+   **300**, one defeat and **570 XP** for A; B's blocked return credited zero
+   and earned **0 XP**. Both result tables retained the defeated participant.
+   The rendered XP column and Finish control were visible and readable.
+3. Fight log → Statistics showed 300 credited participant damage/570 XP and
+   586 raw head-event damage. B's keyboard Finish returned to Central Square
+   and published one zero-XP notice. A's Finish returned to Inventory with one
+   570-XP notice and cumulative **570→1,140 XP**.
+4. Reload retained A's 1,140 XP and both return states. No additional reward
+   was issued. The result/log remain available at local `/log/61`.
+
+This browser pass exercises ordinary physical credit, zero-XP feedback and
+persistence. Re-damaging restored HP is covered by the controlled processor
+regression, not by a claimed browser healing flow. No new zoom/touch or source
+PvP pass is claimed; layout/artwork remain unchanged.
+
+## September 15 level, stat and modifier integration
+
+The [published-rule audit](../design/reference/character/observations/2026-09-15_levels_stats_and_modifiers.md) adds three shared consumers:
+World filters complete NPC samples by the persisted player's progression-table
+ceiling; combat accuracy includes both Dexterity and Luck; physical armor gains
+an approximate hidden Health factor. Config owns the fitted3:2 accuracy weights
+and Health30-step/150-cap/0.05 bonus. Displayed armor and independent block rating
+remain unchanged. NPC Health is explicitly authored, never inferred from HP.
+
+The global [FORMULAS](../FORMULAS.md#september-15-stat-and-modifier-interpretation)
+and [CHARACTER](../CHARACTER.md#september-15-level-and-primary-stat-evidence)
+books own equations, examples and editing impact. The source's hidden combat
+level coefficient remains unimplemented with unknown magnitude. Combat HP
+restoration qualification and elemental magic's10%-armor rule are recorded as
+source-only dependencies beyond the physical MVP, not claims of shipped parity.
+
+
+## September 15 stat and roster acceptance
+
+The [World acceptance record](world.md#september-15-stat-and-roster-acceptance)
+records the final in-app Chromium669×910/DPR2 UI run after automated gates.
+Local match62 exercised the shared physical resolver, defeated-target handoff,
+35XP whole-group reward, Finish→Inventory→World return, and persisted public
+log/statistics. Health150 retained displayed armor100; a separate read-only
+calculation confirmed combat armor125. Dex40/Luck80 supplied accuracy280.
+The browser run did not measure hidden hit probabilities or prove source fits.
+
+Fresh `bin/verify fast` passed3106 non-system examples, lint and both docs audits;
+World system coverage passed2 examples. Focused resolver tests include player
+Luck sensitivity, player Health mitigation, explicit NPC `stats.health`, and
+HP-without-Health neutrality. Calibration tests cover Health step boundaries,
+zero armor, the chosen cap, invalid zero divisors and balanced-build accuracy.
+The table/selector tests cover level boundaries, filtered weights, unchanged
+complete rewards, unsupported levels, forged inputs and duplicate starts.
+No new Arena assembly/magic/artwork behavior is claimed by these changes.
+
+
+## September 15 Fist scroll acceptance
+
+Source [fight771309274](../design/reference/inventory/observations/2026-09-15_successful_fist_attack.md)
+is a separate live observation: successful17→17 Fist entry,21 physical exchanges,
+persistent removal of gear, both contributors in statistics,93/9835 XP and
+attacker Finish. Its13-minute duration distinguishes source inactivity timing
+from the approved local global300s cap. No precise source reset/expiry is claimed.
+
+Runtime correction: shared `CombatProcessor#start_match` selects **fist attack**
+for a scroll-created `no_weapons` match and keeps **attack** for Permit. The shared view also hides the right paper doll during a pending turn,
+retaining the target identity and living roster across reload and restoring
+the card after resolution. No new processor, reward coefficient, schema,
+seed or artwork is introduced.
+The source rewards expose a documented approximation limit in
+[FORMULAS](../FORMULAS.md#reward-01--shared-npc-and-player-experience).
+
+Final checks: `bin/verify combat` passed **511 examples**, read-only lint
+(**622 files**) and both documentation audits (**12 feature /97 architecture**).
+The focused scroll/1x1 request/3x3 system run passed **44 examples**. Earlier
+runs exposed a wrong route-helper name in the new assertion (corrected), the
+old mobile waiting-card count (updated to one), and one transient Selenium
+"Node with given id does not belong to the document" error. The complete
+focused set passed on rerun; the browser error is not recorded as source behavior.
+Existing Rack status deprecation warnings remain non-failing.
+
+Manual local acceptance used dedicated `FistLiveA0915[17]` and
+`FistLiveB0915[17]`, initially separate loopback in-app browser sessions
+(669×910 capture pixels), then Chrome (1153×819). Bounded development fixtures
+provided gear and one Fist scroll, rather than making another source purchase.
+An initial setup transaction used an unsupported city context and rolled back;
+it was corrected to the existing `world` context. The fixture's missing HP
+item override was corrected before executing Use. These are setup corrections,
+not changes to production data or gameplay acceptance actions.
+
+1. City → Inventory → Fist Use → nickname → Execute created **match63**.
+   Two equipped items disappeared; HP clamped from the then-recovered526/1375
+   to225/225, defender remained175/175. Both logged-in players entered the same
+   match; compact log included **started (fist attack)**. These fixture players
+   had no Additional AP training, so their100 AP is not a claimed replay of the
+   source character's200 AP. First paired physical exchange resolved normally.
+2. After the final waiting-view correction and passing checks, reload match63,
+   select aimed head65 + head block35, Turn: waiting appeared and the right
+   card count became zero. Reload preserved waiting and the full living roster.
+   The other player submitted through its own UI; both turns resolved and the
+   right card returned. This verifies the changed view on final code; the
+   earlier entry step predates only that presentation correction.
+3. The in-app browser stalled on Surrender's confirmation; its dialog API
+   exposed no dialog and native Codex control was disallowed. No successful
+   surrender is claimed. Chrome sign-in recovered the persisted result after
+   the existing global deadline ended it in a draw at **14:46:33**, exactly300s
+   after14:41:33. This tests local policy, not the source's inactivity rule.
+4. Chrome Fight log → reload retained the distinct opening; Statistics included
+   both contributors (5/2 damage, zero draw XP). Browser Back returned to the
+   result. Attacker Finish → Inventory → reload showed no Fist and no equipped
+   item controls. Log out, sign in as defender → its still-pending result →
+   Finish → Central Square → reload confirmed independent return.
+
+The changed waiting behavior was manually checked at the available669px width;
+3x3 system coverage separately checked390px waiting/timeout controls and desktop
+restoration. No new manual390px/zoom pass is claimed. An attempted extra Chrome
+session stalled before navigation; it started no additional fight. The extra
+unused Fist fixture remains local. The in-app confirmation requires user
+clearance; Chrome completed result/history/Finish acceptance without it.
+
+Screenshots: [entry](acceptance/2026-09-15_fist_scroll/01-entry.png),
+[waiting after reload](acceptance/2026-09-15_fist_scroll/02-waiting-reload.png),
+[result](acceptance/2026-09-15_fist_scroll/03-result.png),
+[public history](acceptance/2026-09-15_fist_scroll/04-public-log.png),
+[Inventory after Finish](acceptance/2026-09-15_fist_scroll/05-inventory-after-finish.png).
+No new CI/full-suite run or source reward parity is claimed.

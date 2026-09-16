@@ -1330,8 +1330,15 @@ hidden pool or weights. The ten-member capacity follows the official NPC
 article captured in
 `doc/design/reference/social/observations/2026-09-07_cell_chat_and_presence_boundaries.md`;
 existing seeded groups remain their captured sizes. The same boundary applies
-when selecting persisted data and starting the shared fight: ten members create
-ten opponent slots, while eleven members fail before a partial fight exists.
+when validating persisted content. Starting a fight additionally applies the
+player-level ceiling from `Game::Progression::Catalog.max_npcs_in_group` under
+the reloaded character lock: ten opponents require level18+, while eleven is
+invalid content at every level. Selection excludes oversized complete samples
+before the weighted draw; fixed groups are never truncated. No eligible sample
+clears a due passive schedule and returns a30-second recheck, while shell actions
+continue normally. Match metadata records `encounter_player_level` and
+`encounter_size_limit`. [NPC eligibility](../NPC.md#player-level-roster-eligibility)
+and [FORMULAS](../FORMULAS.md#prog-02--current-level-table) own the editing rules.
 
 Loot entries use the Arena-owned typed award contract after World hands off the
 match. `kind: item` resolves `item`, `item_key`, or `key` to an existing
@@ -3148,3 +3155,43 @@ The current starter survey is documented in
 Earlier September 8 manual travel to `[14,10]` exercised a placeholder default;
 the atlas now explicitly blocks that cell. The verified pond return uses
 `[12,10]` and the eastern gate, rather than retaining that old permissive path.
+
+
+## September 15 stat and roster acceptance
+
+After automated checks, manual acceptance used the in-app Chromium browser at
+669×910 CSS pixels, DPR2, normal zoom, pointer/select controls. The restarted
+local server loaded the final calibration. Two isolated development accounts
+used the same fixed pair in `StatsAcceptance0915`; no source account or existing
+habitat was modified. Synthetic fighter stats/armor were test setup, not new
+Neverlands observations or production content.
+
+- Level3: World → Inventory → Return reached both surfaces with no fight.
+  Inventory showed Health150 and displayed armor100. The authoritative player
+  still had zero fight participations afterward.
+- Level4: World → Inventory instead entered match62 with two level4 NPCs.
+  Submitted Simple Head + Head Block, then Simple Torso + Head Block (80AP
+  each) through the form. First defeat removed the dead target from active
+  participants; the second completed the fight. Victory showed200 credited
+  physical damage, two defeats and35XP. Raw hit logs were780 and708, distinct
+  from credited HP damage. The NPC response connected for0 after mitigation.
+- Finish Fight returned to the saved Inventory destination: XP35 persisted,
+  displayed armor remained100. Return reopened World at7,7. Revisiting the
+  public log and clicking Statistics preserved both defeated NPCs and35XP.
+  Forms, feedback, roster and result remained readable/reachable in this viewport.
+- Separate read-only state verification confirmed `encounter_player_level:4`,
+  `encounter_size_limit:2`, `encounter_count:2`, reward35, two defeated NPC rows,
+  effective physical armor125 and accuracy rating280 (Dex40/Luck80/item0).
+  These hidden numeric checks are not claimed as UI-visible values.
+
+`bin/verify fast` passed:622 Ruby files without offenses,3106 non-system examples
+without failures,12 feature documents and95 architecture documents audited.
+`spec/system/world_npc_encounter_spec.rb` passed2 examples, covering eligible
+pair entry and low-level Inventory reachability. After narrowing unrelated
+fixture level changes, `spec/models/open_world_seed_spec.rb` passed11 examples.
+Earlier integration failures were fixed; one overlapping test process caused a
+DB-cleaner deadlock before examples. System tests and the full fast profile
+were then rerun sequentially and passed. These are fresh local checks, not CI
+or additional Neverlands fights. No layout/artwork change or fresh zoom matrix
+is claimed. Source/calibration boundaries remain in the
+[stat audit](../design/reference/character/observations/2026-09-15_levels_stats_and_modifiers.md).

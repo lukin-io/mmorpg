@@ -54,6 +54,7 @@ RSpec.describe "Targeted attack scrolls", type: :request do
     expect(match.metadata["fight_kind"]).to eq("free")
     get arena_match_path(match)
     expect(response.body).to include("Trauma: <b>10%</b>")
+    expect(response.body).to include("started (attack)")
     expect(InventoryItem.exists?(@item.id)).to be(false)
     get inventory_path
     expect(response).to redirect_to(arena_match_path(match))
@@ -73,10 +74,14 @@ RSpec.describe "Targeted attack scrolls", type: :request do
 
     post action_arena_match_path(match), params: {action_type: "surrender"}, as: :json
     expect(match.reload).to be_completed
+    expect(GameEvent.where(event_type: :fight_finished)).to be_empty
     post combat_status_path, as: :json
     expect(response.parsed_body["interrupted"]).to be(true)
     post finish_arena_match_path(match)
     expect(response).to redirect_to(shop_path(mode: "buy", category: "scrolls"))
+    expect(GameEvent.where(event_type: :fight_finished).pluck(:recipient_id)).to eq([target.user_id])
+    post finish_arena_match_path(match)
+    expect(GameEvent.where(event_type: :fight_finished).count).to eq(1)
     post combat_status_path, as: :json
     expect(response.parsed_body["interrupted"]).to be(false)
 
@@ -84,6 +89,10 @@ RSpec.describe "Targeted attack scrolls", type: :request do
     sign_in attacker.user
     post finish_arena_match_path(match)
     expect(response).to redirect_to(inventory_path)
+    notice = GameEvent.find_by!(event_type: :fight_finished, recipient: attacker.user)
+    expect(notice.payload["experience"]).to eq(match.arena_participations.find_by!(character: attacker).metadata["experience_awarded"].to_i)
+    post finish_arena_match_path(match)
+    expect(GameEvent.where(event_type: :fight_finished).count).to eq(2)
     post scroll_use_path, params: {action_key: key, target_name: target.name}
     expect(response).to redirect_to(arena_match_path(match))
     expect(ArenaMatch.count).to eq(1)
@@ -135,6 +144,9 @@ RSpec.describe "Targeted attack scrolls", type: :request do
     match = ArenaMatch.sole
     get arena_match_path(match)
     expect(response.body).to include("Trauma: <b>80%</b>")
+    expect(response.body).to include("started (fist attack)")
+    get public_fight_log_path(match)
+    expect(response.body).to include("started (fist attack)")
   end
 
   it "renders recovery polling on Inventory and City without enabling passive NPC attacks there" do

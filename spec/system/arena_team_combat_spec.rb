@@ -94,10 +94,10 @@ RSpec.describe "Synthetic 3x3 team combat", type: :system, js: true do
     wait_for_pending_turn(side_a.first)
     visit arena_match_path(@match)
     expect(page).to have_content("Waiting for opponent turn")
-    expect(page).to have_css(".fighter-card--selected-target", text: "BrowserB2")
+    expect(page).not_to have_css(".arena-fighter--right .fighter-card")
     page.refresh
     expect(page).to have_content("Waiting for opponent turn")
-    expect(page).to have_css(".fighter-card--selected-target", text: "BrowserB2")
+    expect(page).not_to have_css(".arena-fighter--right .fighter-card")
     expect(@participations.fetch("a").first.reload.metadata.dig("pending_turn", "target_participation_id"))
       .to eq(@participations.fetch("b")[1].id)
 
@@ -118,6 +118,7 @@ RSpec.describe "Synthetic 3x3 team combat", type: :system, js: true do
     visit arena_match_path(@match)
     expect(page).to have_css(".arena-match-page[data-arena-match-turn-number-value='2']")
     expect(page).to have_button("Turn")
+    expect(page).to have_css(".arena-fighter--right .fighter-card", count: 1)
     expect(@match.arena_participations.reload.map { |entry| entry.metadata["pending_turn"] }).to all(be_blank)
     expect(
       @match.combat_log_entries.where(log_type: "action").where("message LIKE ?", "%submitted a turn%").count
@@ -202,7 +203,8 @@ RSpec.describe "Synthetic 3x3 team combat", type: :system, js: true do
     expect(page).to have_button("Accept Draw")
 
     page.current_window.resize_to(390, 844)
-    expect(page).to have_css(".fighter-card", count: 2)
+    expect(page).to have_css(".fighter-card", count: 1)
+    expect(page).not_to have_css(".arena-fighter--right .fighter-card")
     expect(page).to have_button("Timeout Victory")
     expect(page).to have_button("Accept Draw")
     expect(page.evaluate_script(<<~JS)).to be(true)

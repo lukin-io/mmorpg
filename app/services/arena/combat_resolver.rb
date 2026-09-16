@@ -143,7 +143,7 @@ module Arena
     end
 
     def hit_result(attacker, defender, action_key, body_part)
-      offense = stat(attacker, :dexterity) * 5 + stat(attacker, :accuracy)
+      offense = Game::Combat::Calibration.accuracy(attributes(attacker))
       defense = stat(defender, :dexterity) * 2 + stat(defender, :evasion)
       chance = (BASE_HIT_CHANCE + opposed(offense, defense, scale: 15) +
         Game::Combat::ActionCatalog.attack_hit_bonus(action_key) +
@@ -154,7 +154,7 @@ module Arena
     end
 
     def dodge_result(attacker, defender, action_key, body_part)
-      offense = stat(attacker, :dexterity) * 5 + stat(attacker, :accuracy)
+      offense = Game::Combat::Calibration.accuracy(attributes(attacker))
       defense = stat(defender, :dexterity) * 5 + stat(defender, :evasion)
       chance = (BASE_DODGE_CHANCE + opposed(defense, offense) +
         BODY_PART_DODGE_MODIFIERS.fetch(body_part, 0) - (action_key == "aimed" ? 5 : 0)).clamp(0.0, 60.0)

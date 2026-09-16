@@ -1,5 +1,15 @@
 # Neverlands Combat and Arena Source Summary
 
+[September 15 successful Permit attack](../inventory/observations/2026-09-15_successful_attack_scroll.md)
+adds a lake 17→19 human-character fight: low-HP armed entry, one lethal
+committed exchange, 300 credited HP/570 XP, one charge, Finish to Inventory
+and independent defender acknowledgement. Remote input may be automated;
+its origin is not visible. The later
+[Fist attack](../inventory/observations/2026-09-15_successful_fist_attack.md)
+adds21 exchanges, persistent stripping, defeated-contributor statistics and
+93/9835 XP. About13 minutes of play rules out treating its displayed5-minute
+timeout as a total duration; exact inactivity reset/expiry remains untested.
+
 Fresh evidence: [September14 human unarmed Duel](observations/2026-09-14_arena_fist_duel.md) — accepted
 application, applicant Start/refusal, six exchanges including opponent magic,
 loss XP, public log/profile location, Finish and recovery. September12 absence
@@ -275,3 +285,12 @@ the provenance or certainty of the preserved observations.
 [Duels and Groups](observations/2026-09-12_arena_duels_and_groups.md) records city entry, ten-hall gates, equipment/timeout/risk forms, side fields, posting/cancellation, waiting navigation lock, 1×1→1×2 normalization and empty-opponent expiry. Level17 Dummy acceptance remained unavailable. New completed source Arena fights: **0**. The user authorizes pragmatic local physical PvP; [Arena design](../../areas/arena.md) records inferred start/admission rules and the runtime handbook owns local verification.
 
 - [September 15 Arena/medical review](observations/2026-09-15_arena_medical_gap_review.md): published Doctor thresholds, Group waiting, XP caps and bounded percentage/Snowball research; no new source fight.
+- [September 15 Experience wiki/table audit](observations/2026-09-15_wiki_experience_rules.md): re-damaged restored HP, missing generic NPC inputs, spell/buff boundaries and 224 matching progression values. Public-source research, no new fight.
+
+## September 15 stat dependency follow-up
+
+The [Level/stat/modifier audit](../character/observations/2026-09-15_levels_stats_and_modifiers.md)
+records shared Luck/Health consumers and player-level whole-roster limits.
+Hidden level scaling, combat HP restoration, elemental magic armor and extra
+Bot XP dependencies remain explicitly bounded by missing equations or later
+magic implementation. See [FORMULAS](../../../FORMULAS.md#september-15-stat-and-modifier-interpretation).

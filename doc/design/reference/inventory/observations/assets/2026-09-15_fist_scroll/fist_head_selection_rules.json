@@ -1,0 +1,42 @@
+[
+  {
+    "disabled": false,
+    "name": "u0",
+    "value": "1"
+  },
+  {
+    "disabled": false,
+    "name": "u1",
+    "value": "n"
+  },
+  {
+    "disabled": false,
+    "name": "u2",
+    "value": "n"
+  },
+  {
+    "disabled": true,
+    "name": "u3",
+    "value": "n"
+  },
+  {
+    "disabled": false,
+    "name": "b0",
+    "value": "n"
+  },
+  {
+    "disabled": false,
+    "name": "b1",
+    "value": "n"
+  },
+  {
+    "disabled": false,
+    "name": "b2",
+    "value": "n"
+  },
+  {
+    "disabled": false,
+    "name": "b3",
+    "value": "n"
+  }
+]

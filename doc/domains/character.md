@@ -20,6 +20,9 @@ awarded-XP feedback handoff after combat.
 - Whole-area guide: [CHARACTER](../CHARACTER.md) for the build, level grants,
   effective inputs and editing; [MEDICAL](../MEDICAL.md) for injuries/recovery
   and [ECONOMY](../ECONOMY.md) for NV grants and purchased permissions.
+- Detailed build inputs: [STATS](../STATS.md) for primary definitions, linked
+  resources/capacity and requirements; [MODIFIERS](../MODIFIERS.md) for the four
+  combat ratings, aliases and opposed consumers.
 - Game reference books: [NPC catalog and editing](../NPC.md),
   [formulas and tuning](../FORMULAS.md)
 - Complete catalogs and use cases: [SKILLS](../SKILLS.md) for numeric

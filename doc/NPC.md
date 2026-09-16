@@ -249,6 +249,12 @@ entry pointing to a real ItemTemplate.
 | Robber 13–15 | 10 occupied slots; no off-hand; own helmet, talisman, club and armor; other art shared with Bandit | [helmet](../app/assets/images/npc/equipment/robber_helmet.png), [talisman](../app/assets/images/npc/equipment/robber_talisman.png), [club](../app/assets/images/npc/equipment/robber_club.png), [armor](../app/assets/images/npc/equipment/robber_armor.png) |
 | Ogre 16–18 | 10 occupied slots, including two rings | [helmet](../app/assets/images/npc/equipment/ogre_helmet.png), [amulet](../app/assets/images/npc/equipment/ogre_amulet.png), [club](../app/assets/images/npc/equipment/ogre_club.png), [boots](../app/assets/images/npc/equipment/ogre_boots.png), [ring](../app/assets/images/npc/equipment/ogre_ring.png), [bracers](../app/assets/images/npc/equipment/ogre_bracers.png), [gloves](../app/assets/images/npc/equipment/ogre_gloves.png), [armor](../app/assets/images/npc/equipment/ogre_armor.png), [belt](../app/assets/images/npc/equipment/ogre_belt.png) |
 
+[ART-CATEGORY-001](ARTWORK.md#category-artwork-standard) applies equally to NPC
+and player equipment: category geometry, neutral item canvas, complete-object
+framing and shared material/lighting requirements. Portrait background profiles
+and retained beast compositions are explicit exceptions there; an NPC level
+changes its authored loadout, not the display dimensions.
+
 These are **31 unique NPC equipment images**. Per-level equipment maps remain
 independent even when an image is reused. The early Bandit/Robber profiles do
 not inherit their level-13–15 kit. Higher level does not imply filling every
@@ -339,8 +345,14 @@ Successful awards publish private item/money facts to the shared chat timeline.
 Explicit solo encounter victory/defeat totals take precedence, including zero.
 Fallback XP considers **defeated enemy NPCs only**, their maximum HP and levels,
 number of defeated enemies, result and team contribution. The player's current
-level cap and entitlement cap multiplier apply last. More powerful/larger groups
-normally yield more fitted XP; recorded sample totals remain exact exceptions.
+level cap and entitlement cap multiplier apply last. This local fallback has
+an increasing group factor. The [published XP rules](design/reference/combat/observations/2026-09-15_wiki_experience_rules.md)
+also name average group level, equipped-item quantity/value and NPC strength
+peaks. Those explicit inputs are not implemented in the generic fallback;
+their coefficients are unpublished. Adding a weak NPC can lower Neverlands XP,
+so larger groups are not a universal reward guarantee. Recorded sample totals
+remain exact bounded overrides. Changing visible NPC gear alone does not
+change fallback XP; update its numeric/template/roster reward data deliberately.
 Dead allies can receive final XP for their prior contribution. See
 [FORMULAS.md](FORMULAS.md#6-experience-loot-and-premium) for the equations and
 [ExperienceAwarder](../app/services/arena/experience_awarder.rb) for ownership.
@@ -521,3 +533,27 @@ from hall access. Both gates apply: Help allows0–5; Training5–10 therefore
 admits only level5 against this Dummy. These optional integer bounds are
 validated when `config/gameplay/arena_npcs.yml` loads and copied to each new
 application. Other NPCs without explicit bounds retain their hall range.
+
+## Player-level roster eligibility
+
+[Level and Bot evidence](design/reference/character/observations/2026-09-15_levels_stats_and_modifiers.md) requires increasing wilderness
+capacity with the player level. The existing [level table](FORMULAS.md#prog-02--current-level-table)
+is now enforced at new-match creation under the character lock. Filter whole
+samples by the ceiling, then retain their relative authored weights and exact
+members/XP. A fixed oversized group is unavailable; no splitting or duplication
+is permitted. The paired Rat anchor therefore requires player level4+, while
+single samples can serve levels0–3. A cell with no eligible sample starts no
+fight, does not prevent a shell action, and passive checks return a30-second
+recheck after clearing the stale due schedule. Unsupported levels fail closed.
+
+`encounter_player_level` and `encounter_size_limit` record the selection basis
+on the match. Repeated requests reuse the active match. These limits do not
+change Arena assembly. Bot strength peaks and regional population may affect
+source groups; those additional adjustments remain unmodeled.
+
+NPC primary Health is optional explicit `stats.health`,
+separate from HP; missing Health gives no hidden armor bonus. Use the same
+[physical formula](FORMULAS.md#september-15-stat-and-modifier-interpretation)
+as players. The Bot page also describes less XP with more valuable player
+gear/consumables, separately from the Experience page's NPC-equipment input.
+Neither missing coefficient is manufactured by the current fallback.

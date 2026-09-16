@@ -1,6 +1,6 @@
 # Scroll Book
 
-Reviewed against the local working tree on **2026-09-14**. This is the general
+Reviewed against the local working tree on **2026-09-15**. This is the general
 guide to scroll definitions, acquisition, activation, target rules, combat
 entry, permissions, presentation and editing. It describes current local
 behavior, including implemented paths that have not yet completed a successful
@@ -50,7 +50,9 @@ supplies the permit assortment. Keep these distinctions:
 | Live execution | Level-17 Permit I then Fist submissions against co-located zMey [5] both rejected with the same generic error; no scroll spent or equipment removed |
 | Level window | Inclusive ±3 comes from the preserved wiki. The 12-level rejection is compatible with it, but does not establish the exact boundary or rejection cause |
 | Local successful entry | Both variants bought/used and shared player fights completed through local browser acceptance, independently of the source rejection |
-| Successful source fight | Still unobserved; entry timing, aftermath/gear persistence and intervention details are explicitly bounded interpretations |
+| Successful source Permit fight | [September 15, fight 771285270](design/reference/inventory/observations/2026-09-15_successful_attack_scroll.md): immediate 17→19 armed entry at 285/1375 HP, completed exchange, one charge, 570 XP and Finish to Inventory; gear retained |
+| Successful source Fist fight | [September 15, fight 771309274](design/reference/inventory/observations/2026-09-15_successful_fist_attack.md): immediate17→17 unarmed entry,375→225 HP,21 exchanges, loss93 XP, consumed scroll and gear still unequipped after Finish |
+| Remaining source scroll boundary | Fist entry/attacker persistence and later defender public recovery are captured below; defender controls, intervention and exact scroll timeout expiry remain unobserved |
 | Injury percentages | Low/maximum ordinary trauma map to captured Arena categories 10/80; these are not measured scroll injury rates |
 
 Neverlands' premium multi-use Fist bundle is a different variant from the owned
@@ -193,6 +195,15 @@ accessible location. Participants already in another kind of fight retain its
 normal return behavior. Incoming-player checks on ordinary ground pages and
 login/reload recover active combat or an unacknowledged result.
 
+The new scroll fight's opening log names both participants and includes
+**started (attack)** with its full start timestamp. XP settles once at combat
+completion; its private completion notice is projected separately on each
+player's Finish, using that participant's recorded XP and the existing event
+key. Repeated Finish cannot duplicate the notice. Arena and intervention into
+an existing non-scroll match retain that match's original notification timing.
+The source attacker independently finished while the defender's fresh profile
+still linked the old fight at zero HP.
+
 ## 6. Numerical rules and examples
 
 Full maintained entry equations: [SCROLL-01](FORMULAS.md#scroll-01--attack-entry).
@@ -215,6 +226,8 @@ Examples of local behavior, not additional source observations:
 - Permit I stack `quantity=2, durability=1` becomes `quantity=1, durability=1`
   after one successful entry. Replaying the same completed key returns that
   match; it cannot spend the other scroll or initiate a second fight.
+  The first charge and one-unit mass loss are now source-confirmed; replay
+  protection remains local verification.
 - Fist removal from `HP=180, naked maximum=120` leaves 120. Starting at 80
   leaves 80; removal never refills the player to 120.
 - An ordinary Permit defeat has fitted injury probabilities 90% none, 8%
@@ -275,8 +288,8 @@ are snapshots. Later catalog edits do not extend an existing license.
 Trading permits sale/transfer workflows; Doctor permits treatment. License
 tier changes duration, not permitted injury severity. General Traumatologist
 quest completion remains outside delivered Quest functionality. Bag Knowledge
-gates work, but authored Doctor proficiency thresholds remain an acknowledged
-[Medical Care implementation gap](features/medical_care.md#1-authority-and-scope).
+and effective Doctor proficiency gates are enforced; Doctor growth and the
+qualification quest remain separate [Medical Care gaps](features/medical_care.md#1-authority-and-scope).
 
 ## 8. Persistence, transactions and recovery
 
@@ -378,11 +391,12 @@ Historical exact runs and manual screenshots belong to
 and [rejection acceptance](features/player_inventory.md#september-14-rejection-acceptance).
 Writing this book adds documentation, not another live fight or new runtime gate.
 
-Open boundaries: successful source entry/aftermath, Fist intervention, other
+Open boundaries: defender-side entry/Finish controls, intervention and exact
+scroll timeout expiry/reset, other
 permit activation, other wiki scroll types/premium bundles, complete reset
 semantics and production summons. Keep known code absences separate from hidden
-source behavior. Until another target is supplied, retain current rules and
-the two recorded failures rather than claiming successful source verification.
+source behavior. [The successful Permit capture](design/reference/inventory/observations/2026-09-15_successful_attack_scroll.md)
+closes that variant's immediate entry, charge and attacker-Finish evidence gap.
 
 Update this book whenever a scroll's definition, action, permission, formula,
 acquisition, artwork, validation, state transition or evidence status changes.
@@ -395,5 +409,22 @@ Use `bin/verify docs` for documentation-only changes; runtime changes follow
 The [source review](design/reference/combat/observations/2026-09-15_arena_medical_gap_review.md)
 records published Snowball prerequisites and armor/block/dodge bypass. Its
 damage/AP and general unarmed pocket eligibility remain unconfirmed; it is
-not an active local scroll. The two implemented attack-scroll entry paths
-remain unchanged, with successful source initiation deferred by the user.
+not an active local scroll. Later the same day, the user supplied a target and
+both the Permit capture above and the subsequent Fist capture below succeeded.
+
+## September 15 successful Fist follow-up
+
+[The source capture](design/reference/inventory/observations/2026-09-15_successful_fist_attack.md)
+confirms direct entry, the **(fist attack)** opening marker, empty equipment
+slots, normal block/AP tables, one-use consumption, both contributors in
+statistics and Inventory return with gear still removed. It ended in defeat
+without an injury line; very-high trauma is not guaranteed injury. Completion
+chat appeared on Finish. A later defender public card showed recovery on the
+same cell; the defender's own UI was not observed.
+
+The fight continued for about13 minutes despite the five-minute icon. An
+inactivity timeout that resets with action is consistent with this; its exact
+reset/expiry was not exercised. The local global300s limit remains the approved
+MVP policy. The new93/9835 XP samples do not match the present calibrated rate;
+[FORMULAS](FORMULAS.md#reward-01--shared-npc-and-player-experience) records that
+limit explicitly. No source-specific reward constant or second resolver is added.

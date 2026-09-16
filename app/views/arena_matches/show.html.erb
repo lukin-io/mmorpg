@@ -300,9 +300,10 @@
       <%= render "arena_matches/damage_statistics", participation: current_participation if @arena_match.live? && current_participation %>
     </div>
 
+    <%# Waiting hides the card, not the committed target or living roster. %>
     <%# Completed opponents remain in statistics and logs, never as live cards. %>
     <div class="arena-fighter arena-fighter--right" data-arena-match-target="fighterB">
-      <% if right_fighters.any? %>
+      <% if right_fighters.any? && !current_user_pending_arena_turn? %>
         <div class="arena-fighter-stack">
           <% right_fighters.each do |participation| %>
             <%= render "arena_matches/fighter_card",
@@ -313,7 +314,7 @@
                 selected_target: participation == target_participation %>
           <% end %>
         </div>
-      <% elsif !@arena_match.completed? %>
+      <% elsif right_fighters.empty? && !@arena_match.completed? && !current_user_pending_arena_turn? %>
         <div class="arena-fighter-empty">Waiting for opponent...</div>
       <% end %>
     </div>

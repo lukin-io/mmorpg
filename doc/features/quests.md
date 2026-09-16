@@ -46,6 +46,17 @@ and original quest presentation remain incomplete. The September 9 economy
 observation owns its official-wiki evidence. This handoff does not supply a
 general NPC quest system or other profession quests.
 
+### Traumatologist quest TODO
+
+**TODO (September 16 user scope):** implement Traumatologist as a complete
+Neverlands-backed quest when its eligibility, dialogue/tasks, progress,
+completion and qualification reward have been captured. It is deferred from
+the current primary-list medical work. Do not auto-grant qualification or
+remove Doctor-license prerequisites to substitute for the missing quest.
+[MEDICAL](../MEDICAL.md#permissions-are-separate-from-proficiency) describes the current
+qualification handoff; the [MVP scope](../design/launch_mvp_plan.md#september-16-primary-list-scope)
+records this explicit deferral.
+
 ## 4. Prerequisites for implementation
 
 1. Capture a complete Neverlands Quest flow, including failures and completion.

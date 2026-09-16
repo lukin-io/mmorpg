@@ -12,9 +12,23 @@ RSpec.describe Arena::ExperienceAwarder, "player opponents" do
   it "uses credited HP, level and trauma with the existing recipient cap" do
     result = described_class.new(match:, winning_team: "a").call_all.find { |award| award.character_id == winner.id }
     config = Game::Combat::Calibration.config.fetch("experience")
-    expected = (1_000 * config.fetch("hp_rate") * config.fetch("pvp_trauma_multiplier").fetch("30")).round
+    expected = (1_000 * config.fetch("pvp_victory_hp_rate") * config.fetch("pvp_trauma_multiplier").fetch("30")).round
     expect(result.experience_awarded).to eq([expected, Game::Progression::Catalog.fight_experience_cap(10)].min)
     expect(winner.reload.experience).to eq(result.experience_awarded)
+    expect(loser.reload.experience).to eq(0)
+  end
+
+  it "reproduces the September 15 low-trauma 17-to-19 victory from credited HP, not raw overkill" do
+    match.update!(trauma_percent: 10)
+    winner.update!(level: 17)
+    loser.update!(level: 19, max_hp: 300)
+    a.update!(metadata: {damage_dealt: 300, raw_damage_dealt: 457})
+    b.update!(metadata: {damage_taken: 300})
+
+    awards = described_class.new(match:, winning_team: "a").call_all
+
+    expect(awards.find { |award| award.character_id == winner.id }.experience_awarded).to eq(570)
+    expect(winner.reload.experience).to eq(570)
     expect(loser.reload.experience).to eq(0)
   end
 
@@ -30,6 +44,30 @@ RSpec.describe Arena::ExperienceAwarder, "player opponents" do
     expect(loser.reload.experience).to eq(181)
   end
 
+  it "credits HP removed again after restoration without using raw overkill" do
+    match.update!(trauma_percent: 10)
+    winner.update!(level: 17)
+    loser.update!(level: 19, max_hp: 300)
+    # The enemy restored 200 HP before defeat: 300 initial + 200 restored.
+    a.update!(metadata: {damage_dealt: 500, raw_damage_dealt: 50_000})
+    b.update!(metadata: {damage_taken: 500})
+
+    award = described_class.new(match:, winning_team: "a").call_all.find { |entry| entry.character_id == winner.id }
+
+    expect(award.experience_awarded).to eq(950)
+    expect(winner.reload.experience).to eq(950)
+  end
+
+  it "still enforces the level fight cap when restored HP increases the reward" do
+    a.update!(metadata: {damage_dealt: 2_000})
+    b.update!(metadata: {damage_taken: 2_000})
+
+    award = described_class.new(match:, winning_team: "a").call_all.find { |entry| entry.character_id == winner.id }
+
+    expect(award.experience_awarded).to eq(2_500)
+    expect(winner.reload.experience).to eq(2_500)
+  end
+
   it "gives no XP for an untouched surrender or a draw" do
     b.update!(metadata: {damage_taken: 0})
     described_class.new(match:, winning_team: "a").call_all
@@ -40,13 +78,13 @@ RSpec.describe Arena::ExperienceAwarder, "player opponents" do
   it "shares a team reward with a defeated contributing ally, excluding overkill credit" do
     ally = create(:character, level: 10)
     create(:arena_participation, arena_match: match, character: ally, user: ally.user, team: "a", result: :defeat, metadata: {damage_dealt: 250})
-    a.update!(metadata: {damage_dealt: 750})
-    b.update!(metadata: {damage_taken: 50_000})
+    a.update!(metadata: {damage_dealt: 750, raw_damage_dealt: 50_000})
+    b.update!(metadata: {damage_taken: 1_000})
     awards = described_class.new(match:, winning_team: "a").call_all
     winner_award = awards.find { |entry| entry.character_id == winner.id }
     ally_award = awards.find { |entry| entry.character_id == ally.id }
     expect(ally_award.experience_awarded).to be_positive
     expect(winner_award.experience_awarded).to be > ally_award.experience_awarded
-    expect(winner_award.experience_awarded + ally_award.experience_awarded).to be <= 990
+    expect(winner_award.experience_awarded + ally_award.experience_awarded).to be <= 2_090
   end
 end

@@ -108,6 +108,11 @@ RSpec.describe "Physical 1x1 PvP lifecycle", type: :request do
     expect(response.parsed_body.dig("data", "waiting")).to be(true)
     second_participation = match.arena_participations.find_by!(user: second_user)
     expect(second_participation.reload.metadata["pending_turn"]).to be_present
+    get arena_match_path(match)
+    waiting_page = Nokogiri::HTML(response.body)
+    expect(waiting_page.at_css(".arena-fighter--right .fighter-card")).to be_nil
+    expect(waiting_page.at_css(".arena-fighter--left .fighter-card")).to be_present
+    expect(waiting_page.text).to include("Waiting for opponent turn", first_character.name, second_character.name)
 
     sign_out second_user
     sign_in first_user
@@ -121,6 +126,8 @@ RSpec.describe "Physical 1x1 PvP lifecycle", type: :request do
     expect(match.reload).to be_live
     expect(match.current_turn_number).to eq(2)
     expect(match.arena_participations.reload.map { |entry| entry.metadata["pending_turn"] }).to all(be_blank)
+    get arena_match_path(match)
+    expect(Nokogiri::HTML(response.body).at_css(".arena-fighter--right .fighter-card")).to be_present
     expect(match.combat_log_entries.where(log_type: "action").count).to be >= 2
 
     post action_arena_match_path(match), params: {action_type: "surrender"}, as: :json

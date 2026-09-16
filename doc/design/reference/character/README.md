@@ -5,13 +5,16 @@ follow the [Character domain](../../../domains/character.md).
 
 - Document type: neverlands-source-summary
 - Domain: character
-- Updated: 2026-09-14
+- Updated: 2026-09-15
 - Evidence status: current with preserved legacy analysis
 
 ## Current observations
 
 | Flow/state | Observation | Status |
 |---|---|---|
+| Linked stat/resource/effect definitions | [September 15 definition follow-up](observations/2026-09-15_stats_guide_linked_definitions.md) | Revision map; overload, reset, low-HP and limited technique rules remain explicitly source-only |
+| Levels, primary stats, modifier meanings | [September 15 stat audit](observations/2026-09-15_levels_stats_and_modifiers.md) | Published dependencies, enforced roster ceiling, fitted accuracy/Health armor; hidden level and magic inputs remain explicit gaps |
+| Experience rules and table comparison | [September 15 wiki audit](../combat/observations/2026-09-15_wiki_experience_rules.md) | 224 stored values match; table caps distinguished from earned XP and missing bonus effects |
 | Numeric/perk catalogs and wiki descriptions | [September 14 supplied tables and public wiki](observations/2026-09-14_skills_and_perks.md) | 29 numeric rows, 15 profession counters, 42 perks; screenshot/wiki evidence, not live allocation |
 | Level grants and combat inputs recheck | [September 11 published table and input audit](observations/2026-09-11_level_grants_and_combat_inputs.md) | 28 complete rows; source formulas still bounded |
 | Profile, stats, skills, perks, Inventory adjacency | `doc/design/reference/character/observations/2026-05-11_player_profile_and_development.md` | current within captured states |
@@ -53,6 +56,9 @@ Fighter's half-probability equipment-wear effect.
 
 - Local status: Fully Implemented for the bounded progression handbook
 - Implementation handbook: `doc/features/character_progression.md`
+- Detailed primary and derived definitions: [STATS](../../../STATS.md) and
+  [MODIFIERS](../../../MODIFIERS.md), including linked published-but-absent
+  effects. These books do not promote source descriptions to shipped runtime.
 - Current catalogs, formulas, use cases and flags: [SKILLS](../../../SKILLS.md)
   and [PERKS](../../../PERKS.md). 29 numeric definitions can be allocated;
   only four of 42 source perks are selectable. The skill-bonus/profession

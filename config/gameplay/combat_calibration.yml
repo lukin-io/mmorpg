@@ -2,6 +2,15 @@
 # coefficients. Evidence, equations and tolerances: doc/design/features/combat_calibration.md.
 version: 1
 strength_damage: 1.5
+# Wiki links Accuracy to both Dexterity and Luck; the 3:2 split is a local fit
+# preserving the former total rating when those stats are equal.
+accuracy_dexterity_weight: 3.0
+accuracy_luck_weight: 2.0
+# Health wiki: approximately +5% hidden armor per 30 Health, from 30 to 150.
+# Complete 30-point steps and saturation above 150 are the local interpretation.
+health_armor_step: 30
+health_armor_maximum: 150
+health_armor_bonus_per_step: 0.05
 mastery_damage_divisor: 100.0
 mastery_ap_divisor: 15.0
 dual_weapon_ap_surcharge: 5
@@ -30,6 +39,9 @@ npc_families:
   wilderness_skeleton: {weapon_damage: 5, damage_multiplier: 1.0, armor_multiplier: 1.0}
 experience:
   hp_rate: 0.85
+  # Live 2026-09-15 Permit victory: 300 credited HP at low trauma -> 570 XP.
+  # Winning player-opponent fit only; NPC and PvP-loss anchors retain hp_rate.
+  pvp_victory_hp_rate: 1.9
   group_bonus_per_extra_npc: 0.45
   loss_multiplier: 0.1
   # Live 2026-09-14 PvP loss: 194 credited damage, no kill, 177 XP.

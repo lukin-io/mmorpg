@@ -55,7 +55,10 @@ Authored wilderness groups accept up to ten members through the shared
 model/config/selector boundary. The seeded paired-rat and captured variable
 rosters keep their observed sizes, levels, and rewards. Sampled anchors remain
 eligible after victory/Finish; fixed anchors retain their defeated/respawn
-lifecycle. The larger capacity supplies no missing region rosters or weights.
+lifecycle. New fights additionally enforce the progression-table player-level
+ceiling on whole groups, preserving eligible weights and rewards; see
+[NPC eligibility](../NPC.md#player-level-roster-eligibility). The larger content
+capacity supplies no missing region rosters or weights.
 
 The starter bootstrap adds 40 atlas-compatible Bandit placements using those
 existing complete profiles; it does not add 40 new observations or NPC types.

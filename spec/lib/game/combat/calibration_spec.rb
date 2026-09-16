@@ -40,6 +40,20 @@ RSpec.describe Game::Combat::Calibration do
     expect(described_class.opposed(100, 900)).to be < 0
   end
 
+  it "uses bounded Health steps for hidden armor without creating armor on an unarmored fighter" do
+    {0 => 100, 29 => 100, 30 => 105, 59 => 105, 60 => 110, 149 => 120, 150 => 125, 300 => 125}.each do |health, armor|
+      expect(described_class.armor(armor: 100, health:)).to be_within(0.001).of(armor)
+    end
+    expect(described_class.armor(armor: 0, health: 150)).to eq(0)
+    expect(hit(player, {armor: 340, health: 150})).to be < hit(player, {armor: 340, health: 29})
+  end
+
+  it "keeps both primary accuracy inputs useful without changing balanced builds' rating" do
+    expect(described_class.accuracy(dexterity: 40, luck: 40, accuracy: 15)).to eq(215)
+    expect(described_class.accuracy(dexterity: 40, luck: 80, accuracy: 15)).to be > 215
+    expect(described_class.accuracy(dexterity: 80, luck: 40, accuracy: 15)).to be > 215
+  end
+
   it "rejects zero recovery and loot divisors when loading authored content" do
     Tempfile.create(["combat-calibration", ".yml"]) do |file|
       values = YAML.safe_load_file(Rails.root.join("config/gameplay/combat_calibration.yml"))
@@ -47,6 +61,16 @@ RSpec.describe Game::Combat::Calibration do
       file.write(values.to_yaml)
       file.flush
       expect { described_class.load(file.path) }.to raise_error(ArgumentError, /hp_full_seconds must be positive/)
+    end
+  end
+
+  it "rejects a zero Health armor step before combat can divide by it" do
+    Tempfile.create(["combat-health-calibration", ".yml"]) do |file|
+      values = YAML.safe_load_file(Rails.root.join("config/gameplay/combat_calibration.yml"))
+      values["health_armor_step"] = 0
+      file.write(values.to_yaml)
+      file.flush
+      expect { described_class.load(file.path) }.to raise_error(ArgumentError, /health_armor_step must be positive/)
     end
   end
 

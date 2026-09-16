@@ -75,8 +75,11 @@ module Arena
         else
           level, health = @reward_inputs.fetch(enemy)
           difference = [@reward_inputs.fetch(player).first - level - 2, 0].max
-          health = [health, enemy.metadata.to_h["damage_taken"].to_i].min if enemy.player?
-          health * parameters.fetch("hp_rate") * 0.75**difference
+          # Strike credit already excludes overkill. Restored HP can be removed
+          # again, so cumulative credited damage may exceed the opponent's maxHP.
+          health = [enemy.metadata.to_h["damage_taken"].to_i, 0].max if enemy.player?
+          rate = parameters.fetch(enemy.player? && victory ? "pvp_victory_hp_rate" : "hp_rate")
+          health * rate * 0.75**difference
         end
       end
       group_bonus = 1 + [enemies.size - 1, 0].max * parameters.fetch("group_bonus_per_extra_npc")

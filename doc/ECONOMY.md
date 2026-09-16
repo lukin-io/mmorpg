@@ -364,6 +364,14 @@ Trading permission or provide an injury-cure capability.
 
 ## 9. Verification, gaps and maintenance
 
+The September 15 [Mass source follow-up](design/reference/character/observations/2026-09-15_stats_guide_linked_definitions.md)
+adds a published Merchant-qualified overload trading exception. Its
+[formula and precision boundary](FORMULAS.md#source-only-overload-and-merchant-capacity)
+are source-only; current Inventory/transfer admission still uses the hard
+capacity cap. This is separate from implemented Merchant license qualification
+and Shop resale pricing. [STATS](STATS.md#capacity-and-overload) explains the
+underlying capacity and other absent overload effects.
+
 Protecting checks include [wallet specs](../spec/services/economy/wallet_service_spec.rb),
 [trade integration](../spec/services/game/shop/trades_spec.rb),
 [sale rules](../spec/services/game/shop/sale_spec.rb),

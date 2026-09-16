@@ -54,7 +54,7 @@ For player inputs:
 ```
 raw = (1.5 × effective Strength + usable equipment damage)
       × (1 + effective weapon mastery / 100) × artifact multiplier × fatigue factor
-armor_remaining = armor × family armor multiplier × defender fatigue factor
+armor_remaining = armor × family armor multiplier × health armor factor × defender fatigue factor
                   × (1 − clamp(penetration / 200, 0, .75))
 damage = round(max(raw − armor_remaining, 0) × action multiplier × body multiplier
                × (1 − clamp(physical resistance / 200, 0, .75))
@@ -111,9 +111,9 @@ secret RNG seed or the anomalous lethal `−0` source display.
 Displayed Accuracy/Evasion/Crushing/Fortitude values above 100 are ratings,
 not probabilities. The saturating comparison is
 `scale × (left − right) / (abs(left) + abs(right) + 100)`.
-Hit compares `5Dex + Accuracy` against `2Dex + Evasion`, starting 85%, scale 15,
+Hit compares `3Dex + 2Luck + Accuracy` against `2Dex + Evasion`, starting 85%, scale 15,
 plus action/body adjustments, bounded 5–95%. Dodge compares `5Dex + Evasion`
-against `5Dex + Accuracy`, starting 5%, scale 35, bounded 0–60%.
+against `3Dex + 2Luck + Accuracy`, starting 5%, scale 35, bounded 0–60%.
 Critical compares `5Luck + Crushing` against `5Luck + Fortitude`, starting 10%,
 scale 75, aimed+10/head+5, bounded 1–85%. Block compares defender
 `Armor + 3Dex` against attacker `Accuracy + 2Penetration + 3Dex`, starting 45%,
@@ -148,8 +148,28 @@ a positive single-NPC authored XP reward remains usable. Sum gains
 participations contribute. Group shares combine 20% divided equally with 80%
 proportional to credited damage; defeated allies retain their contribution.
 Per-recipient level and trusted entitlement caps apply after sharing.
+The [September 15 wiki audit](../reference/combat/observations/2026-09-15_wiki_experience_rules.md)
+establishes additional NPC inputs: average group level, equipment quantity/value
+and strength peaks. They are absent from this generic fallback, with unpublished
+coefficients. A positive group factor is a local fit, not a guarantee that every
+larger source group earns more. XP consumable/quest effects and known +5% Satiety
+remain unimplemented; direct damage spell eligibility remains a later spell slice.
 Finalization is locked and guarded once; actual per-player awards drive
 results, public statistics and personal chat.
+
+The [September 15 Permit victory](../reference/inventory/observations/2026-09-15_successful_attack_scroll.md)
+adds a player-opponent winning rate **1.9 XP per credited HP**, before retained
+level/risk/team/cap terms: 300 credited HP at low trauma, level 17→19, yields
+the observed **570**. NPCs and PvP losses retain .85. This is a local fit,
+not a published coefficient or evidence of a special scroll reward pipeline.
+The earlier loss remains 181 versus observed 177; the earlier level-24 winner's
+566 is not reproduced. Unknown alignment/level/gear factors need more evidence;
+do not manufacture an exact formula from these samples.
+The later [Fist sample](../reference/inventory/observations/2026-09-15_successful_fist_attack.md)
+adds equal-level17 rewards93 (163 HP on defeat) and9835 (225 HP on victory).
+Current fit yields187 and577 at mapped trauma80. These samples remain
+uncalibrated; no Fist-specific coefficient or winner buff is inferred from
+incomplete opponent inputs. See [FORMULAS](../../FORMULAS.md#reward-01--shared-npc-and-player-experience).
 Persisted profile win/loss counters follow each participation's final result,
 including zero-XP defeats, under the same once-only reward guard. An entirely
 NPC opposing side uses NPC counters; an opposing side containing a player uses
@@ -231,7 +251,9 @@ unchanged across actors. New Arena matches set `physical_only: true`; this
 removes spell actions without deleting the earlier bounded magic engine.
 
 `ExperienceAwarder` applies the existing NPC XP framework to defeated players:
-use credited HP bounded by maxHP, rather than an NPC template reward. Snapshot
+use cumulative credited HP, rather than an NPC template reward. Per-strike
+credit excludes overkill; restored HP can be removed again without a fight-wide
+maxHP clamp, as the published wiki rule requires. Snapshot
 level/maxHP before awarding anyone. Preserve caps, premium cap-only multipliers,
 20% participation/80% damage shares, zero on a draw and no XP for untouched
 surrender. Trauma10/30/50/80 uses fitted multipliers1/1.1/1.2/1.35 when the
@@ -253,3 +275,21 @@ uses `pvp_loss_multiplier=1.0`; NPC defeat retains0.1. Existing HP/risk factors
 produce181 for that loser, not an exact recovery of the source equation.
 The observed566 winner XP remains an uncalibrated anchor; do not claim exact
 level/alignment/magic/Premium reward parity from a single Duel.
+
+## September 15 published stat inputs
+
+[Level/stat/modifier audit](../reference/character/observations/2026-09-15_levels_stats_and_modifiers.md)
+adds Luck to accuracy and Health to physical armor. Config owns accuracy weights
+3Dex/2Luck and Health step30, maximum150, bonus0.05. The first ratio is fitted;
+the Health magnitude/range is approximately published, with local complete-step
+rounding and saturation. Displayed armor stays the equipment sum. NPC Health is
+explicit data, never inferred from HP. See [FORMULAS](../../FORMULAS.md#september-15-stat-and-modifier-interpretation)
+for equations and examples.
+
+The previously described armor-free magic calculation is current bounded runtime,
+not source parity: the wiki gives elemental magic10% armor plus resistance.
+A hidden combat level-difference coefficient and combat healing's base-Knowledge
+qualification are now published inputs with incomplete equations; their current
+absence remains explicit. Bot XP may also vary inversely with player equipment
+stateprice, separately from NPC equipment and strength peaks; no new XP fit is
+invented from those qualitative statements.

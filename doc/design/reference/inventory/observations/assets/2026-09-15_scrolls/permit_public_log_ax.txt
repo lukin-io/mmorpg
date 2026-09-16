@@ -1,0 +1,34 @@
+Browser tab: 1495508509, Title: "Лучшая Онлайн Игра - Земли, которых нет... - Лог боя", URL: "http://www.neverlands.ru/logs.fcg?fid=771285270".
+0 AXWebArea Лучшая Онлайн Игра - Земли, которых нет... - Лог боя, URL: neverlands.ru/logs.fcg?fid=771285270
+	1 container container
+		2 container
+			3 container 15:33 Бой между sesharim[17] и ~Professional~[19] начался (нападение) (15.09.2026 15:33:33). 15:33 sesharim[17] критическим ударом (голова) поразил ~Professional~[19] на -457 [0/300]. 15:33 sesharim[17] заблокировал щитом удар (голова) от ~Professional~[19]. 15:33 ~Professional~[19] проиграл бой. 15:33 Победа за sesharim[17]. Страницы: 1 | Статистика боя
+				4 container content
+					5 container
+						6 text 15:33  Бой между  sesharim [17] и  ~Professional~ [19] начался (нападение) (15.09.2026 15:33:33).
+					7 container
+						8 text 15:33 sesharim [17] критическим ударом  (голова)  поразил  ~Professional~ [19] на  -457  [0/300].
+					9 container
+						10 text 15:33 sesharim [17] заблокировал щитом удар  (голова)  от  ~Professional~ [19].
+					11 container
+						12 text 15:33 ~Professional~ [19]  проиграл бой .
+					13 container
+						14 text 15:33 Победа за sesharim [17].
+					15 container
+						16 text Страницы: 1  |
+						17 link Description: Статистика боя, Value: neverlands.ru/logs.fcg?fid=771285270&stat=1
+			18 container Форум Банк NeverLands © Copyright 2004-2011, NeverLands LLC. Все права защищены.
+				19 container
+					20 container Форум Банк NeverLands
+						21 container
+							22 container Форум
+								23 link Description: Форум, Value: forum.neverlands.ru/
+							24 image
+							25 container Банк NeverLands
+								26 link Description: Банк NeverLands, Value: money.neverlands.ru/
+					27 container © Copyright 2004-2011, NeverLands LLC. Все права защищены.
+						28 text © Copyright 2004-2011, NeverLands LLC. Все права защищены.
+		29 link top.mail.ru/jump?from=665202
+		30 link liveinternet.ru/click
+
+The focused UI element is 0 AXWebArea Лучшая Онлайн Игра - Земли, которых нет... - Лог боя, URL: neverlands.ru/logs.fcg?fid=771285270

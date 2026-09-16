@@ -49,6 +49,8 @@ module Game
             message: "A fight starts before the action completes."
           )
         end
+      rescue StartNpcFight::UnavailableRosterError
+        Result.new(interrupted: false)
       end
 
       private

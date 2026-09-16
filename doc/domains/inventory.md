@@ -37,8 +37,12 @@ transaction, not a direct Inventory reset.
 [Attack scrolls](../design/features/scrolls.md) connect Inventory ownership,
 [FORMULAS entry rules](../FORMULAS.md#scroll-01--attack-entry) and the existing
 Combat processor. The first two variants have source forms/requirements and
-local runtime; two live 17-to-5 attempts rejected without consumption, while
-successful source entry remains pending. [ITEMS](../ITEMS.md#attack-scroll-use)
+local runtime; two live 17-to-5 attempts rejected without consumption.
+[September 15](../design/reference/inventory/observations/2026-09-15_successful_attack_scroll.md)
+adds successful Permit entry/charge/attacker aftermath. The later
+[Fist capture](../design/reference/inventory/observations/2026-09-15_successful_fist_attack.md)
+confirms gear removal, one charge, loss XP and Inventory return with gear
+still unequipped; defender public recovery is captured separately from their controls. [ITEMS](../ITEMS.md#attack-scroll-use)
 owns catalog editing and personal-use restrictions.
 
 ## Important responsible implementation files

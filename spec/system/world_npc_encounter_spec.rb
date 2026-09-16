@@ -4,7 +4,7 @@ require "rails_helper"
 
 RSpec.describe "Wilderness NPC encounter delivery", type: :system, js: true do
   let(:user) { create(:user, email: "wilderness-browser@test.com", password: "password123") }
-  let(:character) { create(:character, user:, name: "WildernessBrowser", current_hp: 200, max_hp: 200) }
+  let(:character) { create(:character, user:, level: 4, name: "WildernessBrowser", current_hp: 200, max_hp: 200) }
   let(:zone) { create(:zone, name: "Browser Encounter Woods", location_type: "outdoor") }
   let!(:position) { create(:character_position, character:, zone:, x: 5, y: 5) }
   let!(:tile_npc) do
@@ -15,6 +15,17 @@ RSpec.describe "Wilderness NPC encounter delivery", type: :system, js: true do
     login_as(user, scope: :user)
     stub_const("Game::World::PassiveEncounterCheck::MIN_DELAY_SECONDS", 0)
     stub_const("Game::World::PassiveEncounterCheck::MAX_DELAY_SECONDS", 0)
+  end
+
+  it "keeps Inventory reachable when a level-three player cannot face the fixed pair" do
+    character.update!(level: 3)
+    visit world_path
+
+    click_button "Inventory"
+
+    expect(page).to have_current_path(inventory_path)
+    expect(ArenaMatch.count).to eq(0)
+    expect(tile_npc.reload).to be_alive
   end
 
   it "replaces the wilderness surface with the shared 1xN fight when the shell check resolves" do

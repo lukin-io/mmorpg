@@ -150,7 +150,10 @@ The center action panel shows:
 Waiting, timeout, and completion states replace the action controls rather than
 navigating to a separate page:
 
-- waiting for opponent turn;
+- waiting for opponent turn: hide selectors and the opponent paper doll while
+  preserving the committed target and living roster; restore the card for the
+  next actionable round, following the
+  [Fist capture](../reference/inventory/observations/2026-09-15_successful_fist_attack.md);
 - timeout win/draw controls when eligible;
 - finish-fight or anti-autobattle completion controls;
 - completed result and full log.
@@ -730,8 +733,18 @@ The wiki/source audit closes these bounded reward/result constants:
 
 Fight finalization locks the match and records a processed marker, so a retry
 cannot grant experience/NV or roll equipment wear twice. A level-up reached by
-the award uses the source-backed grant catalog. Group PvE experience remains
-The exact multi-player distribution and unauthored multi-NPC totals remain unexposed source equations. The September12 authorized [calibration](combat_calibration.md#experience-and-loot) supplies active general/group calculations while explicit captured totals retain precedence.
+the award uses the source-backed grant catalog. The exact multi-player
+distribution and unauthored multi-NPC totals remain unexposed source equations.
+The September12 authorized [calibration](combat_calibration.md#experience-and-loot)
+supplies active general/group calculations while explicit captured totals retain precedence.
+
+The [September 15 wiki Experience audit](../reference/combat/observations/2026-09-15_wiki_experience_rules.md)
+clarifies that restored HP can be removed again for XP. The shared player reward
+now accumulates actual HP removal without a fight-wide maxHP ceiling; per-hit
+overkill and final level caps remain enforced. The wiki also names NPC average
+group level, equipment quantity/value and strength peaks; these inputs are
+absent from the generic fallback. XP bonuses and direct damage spell eligibility
+are separate slices in [FORMULAS](../../FORMULAS.md#published-inputs-outside-the-current-approximation).
 
 The stronger cycle directly captured `605` credited damage, one defeated
 opponent and `57` XP for the losing player. The bounded local loss path uses
@@ -1232,3 +1245,19 @@ The source's unarmed equipment rule allows magic: this opponent used direct
 magic damage, reflected damage/weakening and healing. Physical-only Arena is
 still the user's MVP boundary. Neither the197 damage spell nor the non-HP
 percentage is used to infer an unsupported physical formula.
+
+## September 15 level, stat and modifier integration
+
+The [published-rule audit](../reference/character/observations/2026-09-15_levels_stats_and_modifiers.md) adds three shared consumers:
+World filters complete NPC samples by the persisted player's progression-table
+ceiling; combat accuracy includes both Dexterity and Luck; physical armor gains
+an approximate hidden Health factor. Config owns the fitted3:2 accuracy weights
+and Health30-step/150-cap/0.05 bonus. Displayed armor and independent block rating
+remain unchanged. NPC Health is explicitly authored, never inferred from HP.
+
+The global [FORMULAS](../../FORMULAS.md#september-15-stat-and-modifier-interpretation)
+and [CHARACTER](../../CHARACTER.md#september-15-level-and-primary-stat-evidence)
+books own equations, examples and editing impact. The source's hidden combat
+level coefficient remains unimplemented with unknown magnitude. Combat HP
+restoration qualification and elemental magic's10%-armor rule are recorded as
+source-only dependencies beyond the physical MVP, not claims of shipped parity.

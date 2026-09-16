@@ -1,6 +1,6 @@
 # Game Formula Reference
 
-Reviewed against the working tree on **2026-09-14**. This book inventories the
+Reviewed against the working tree on **2026-09-15**. This book inventories the
 current game's numerical rules, their inputs, rounding, owners and editing
 consequences. It covers progression, skills/perks, combat, NPC rewards,
 recovery, injuries, movement, inventory, trade and configured transport. It also
@@ -9,6 +9,9 @@ identifies calculations that exist in code but are not active gameplay.
 Use [NPC.md](NPC.md) for creatures, groups, cells, equipment and drops,
 [ITEMS.md](ITEMS.md) for item definitions/effects and
 [WORLD.md](WORLD.md) for geography, routes and cell actions.
+[STATS](STATS.md) defines primary parameters and their linked resource/capacity
+systems; [MODIFIERS](MODIFIERS.md) defines the four combat ratings, units,
+player/NPC keys and active consumers. Numerical rules remain here.
 [COMBAT.md](COMBAT.md) explains how fight inputs and calculations connect through
 the complete player/NPC lifecycle; [SCROLLS.md](SCROLLS.md) explains scroll
 admission, activation and permissions. Keep their numerical summaries/examples
@@ -107,16 +110,23 @@ At level 17 the threshold is **25,000,000** and the next threshold is
 **50,000,000**. Thus total XP 29,946,496 leaves 20,053,504 to level 18; treating
 25,000,000 as the next absolute threshold would grant levels incorrectly.
 
+The [September 15 wiki audit](design/reference/combat/observations/2026-09-15_wiki_experience_rules.md)
+rechecked all eight stored fields across levels 0–27 against table revision
+21625: **224 values matched**, with no table changes. Mana-range and total-base-stat
+columns are outside those eight fields; incomplete rows 28–29 remain unsupported.
+
 ### PROG-02 — Current level table
 
 Each row's grants are received **on reaching that level**; level-zero setup is
 a separate initial seed/allocation concern. `cost` is the cost to the next
 level. `cap` is standard maximum XP per fight, not guaranteed XP. `NPC max`
-is the captured group-capacity value stored in the table: **the current
-encounter selector does not enforce it by player level**; authored rosters have
-their separate 1–10 member validation.
+is the enforced player-level wilderness ceiling. Selection excludes complete
+samples larger than this limit, then draws using the remaining authored weights.
+Fixed oversized groups are unavailable; members and captured rewards are never
+truncated. Unsupported levels allow no new NPC roster. The separate content
+validation still permits 1–10 members; Arena team capacity is independent.
 
-| Level | XP cost | Stats | Combat | Peace | Perks | NV | Fight cap | NPC max (data only) |
+| Level | XP cost | Stats | Combat | Peace | Perks | NV | Fight cap | NPC max |
 |---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | 0 | 100 | 15 | 10 | 2 | 1 | 0 | 50 | 1 |
 | 1 | 200 | 3 | 4 | 3 | 1 | 50 | 50 | 1 |
@@ -197,6 +207,11 @@ author explicit vital bonuses. Allocation recalculation clamps current vitals
 down to saved maxima; it is not a free refill. AP can exceed 100 through the
 skill. Mana availability and the fight profile's maximum magic selector are
 separate limits.
+
+Source-only capacity bonuses and overload are indexed in
+[INVENTORY-01](#source-only-overload-and-merchant-capacity); the base formula
+above does not imply those effects execute. [STATS](STATS.md#capacity-and-overload)
+describes the published bonus families and current hard-cap boundary.
 
 ### STAT-03 — Combat ratings and weapons
 
@@ -394,9 +409,9 @@ These are **calibrated** opposed-rating equations. `A` is attacker, `D` defender
 
 ```text
 opposed(a,b,scale) = scale * (a-b) / (abs(a)+abs(b)+100)
-hit% = clamp(85 + opposed(5*DexA+AccA, 2*DexD+EvaD, 15)
+hit% = clamp(85 + opposed(3*DexA+2*LuckA+AccA, 2*DexD+EvaD, 15)
                   + action hit bonus + body hit, 5, 95)
-dodge% = clamp(5 + opposed(5*DexD+EvaD, 5*DexA+AccA, 35)
+dodge% = clamp(5 + opposed(5*DexD+EvaD, 3*DexA+2*LuckA+AccA, 35)
                  + body dodge - (aimed ? 5 : 0), 0, 60)
 crit% = clamp(10 + opposed(5*LuckA+CrushA, 5*LuckD+FortD, 75)
                  + (aimed ? 10 : 0) + (head ? 5 : 0), 1, 85)
@@ -428,7 +443,7 @@ Calibrated model v1; pure numeric owner
 fatigueFactor(F) = 1 - clamp(F-50,0,50)/50 * 0.5
 attack = (1.5*Strength + W) * (1 + M/100) * damageMultiplier * fatigueFactor(A)
 penetrationFraction = clamp(PenA/200, 0, 0.75)
-armorRemaining = ArmorD * armorMultiplierD * fatigueFactor(D) * (1-penetrationFraction)
+armorRemaining = ArmorD * armorMultiplierD * healthArmorFactor(D) * fatigueFactor(D) * (1-penetrationFraction)
 resistanceFraction = clamp(physicalResistanceD/200, 0, 0.75)
 variance = 1 + (rand(1..5)-3)/2 * 0.18
 damage = round(max(attack-armorRemaining,0) * actionMultiplier * bodyMultiplier
@@ -456,7 +471,10 @@ NPCs use the following family coefficients with their exact numeric profiles:
 When an NPC has no positive Strength input, its explicit legacy `stats.attack`
 is the base attack instead of `1.5*Strength+W`. No level-based stat curve is
 silently added. Level affects player grants, equipment and reward comparisons;
-the strike equation itself has no extra universal level multiplier.
+the local strike equation currently has no extra level multiplier. The wiki
+explicitly describes a hidden level-difference coefficient, so this is a known
+missing source input, not proof that Neverlands has no such effect. Its equation
+and magnitude remain unknown; see the [stat audit](design/reference/character/observations/2026-09-15_levels_stats_and_modifiers.md).
 
 Raw rolled damage and credited HP loss are separate:
 `credited = min(raw damage, victim HP before the strike)`, then
@@ -501,6 +519,28 @@ It must fit current MP, and each individual cost must fit the persisted
 `max_mp` when no override is supplied, independently of equipment-aware maximum
 MP and current MP. Current `magic_types` is empty; it supplies no additional
 free-form magic skills beyond the injected catalog attacks/barriers.
+
+#### Source-only level-sensitive techniques
+
+The [Elemental Magic article](http://wiki.neverlands.ru/wiki/Стихийная_магия),
+revision 21052, publishes a July 2020 rule for **some techniques, clan abilities
+and spells, mainly debuffs**, across player/NPC fights. It is not the physical
+hit formula or the universal hidden level coefficient. With
+`delta = target level - actor level`:
+
+```text
+published chance percent = delta <= 0 ? 100 : max(100 - 10*delta, 25)
+```
+
+| Target level advantage | ≤0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | ≥8 |
+|---|---|---|---|---|---|---|---|---|---|
+| Published success % | 100 | 90 | 80 | 70 | 60 | 50 | 40 | 30 | 25 |
+
+**Not implemented.** Which exact action families use this gate remains an
+evidence boundary. Do not apply it to every action or duplicate it in Arena
+and Nature resolvers. [Linked-definition evidence](design/reference/character/observations/2026-09-15_stats_guide_linked_definitions.md)
+preserves provenance; [STATS](STATS.md#magic-and-level-boundaries) and
+[COMBAT](COMBAT.md) explain its relation to the current magic subset.
 
 ### COMBAT-05 — NPC decisions, teams and deadlines
 
@@ -573,7 +613,7 @@ Otherwise, for each recipient at their participant level:
 ```text
 n = count of defeated NPCs plus player opponents who were defeated or took credited damage
 NPC contribution = maxHP * 0.85 * 0.75^max(playerLevel - npcLevel - 2, 0)
-Player contribution = min(maxHP, credited damage taken) * 0.85
+Player contribution = max(credited damage taken, 0) * (victory ? 1.9 : 0.85)
                       * 0.75^max(playerLevel - enemyLevel - 2, 0)
 if n == 1 and enemy is NPC and template XP > 0: use template XP instead
 risk = 1 for NPC-only enemies; otherwise trauma 10/30/50/80 => 1/1.1/1.2/1.35
@@ -595,13 +635,56 @@ A one-player team uses gross directly. Each recipient's gross is computed at
 their level; this is not one common XP pot divided irrespective of levels.
 The credited damage field includes the team's credited combat damage, not a
 separate NPC-only contribution counter. Untouched player surrender awards no XP.
+Credit is bounded by remaining HP **per strike**, not by maxHP for the whole
+fight. Removing HP that was restored earns credit again, following the
+[published Experience rule](design/reference/combat/observations/2026-09-15_wiki_experience_rules.md).
+Example: an enemy starts with 300 HP and restores 200 before defeat; 500 actual
+HP removed gives 950 fitted XP for a level-17 winner versus level 19 at trauma
+10, before any cap. A 50,000 raw hit still cannot grant 50,000 HP credit.
 Player levels/maxHP are snapshotted before settlement grants to prevent an
 earlier recipient level-up changing a later recipient calculation. Trauma
 factors are monotonic local fits to the wiki's qualitative higher-risk/higher-XP
 rule, not measured Neverlands constants.
+The new `experience.pvp_victory_hp_rate = 1.9` fits the
+[September 15 Permit victory](design/reference/inventory/observations/2026-09-15_successful_attack_scroll.md):
+level 17→19, trauma 10, raw 457 but credited 300, hence **300 × 1.9 = 570**.
+It affects player-opponent wins in the shared Arena/scroll/mixed engine, not
+NPC rates or the retained PvP-loss fit (181 versus observed 177). Level/risk
+and team-share terms remain approximations. The prior level-24 winner's 566
+is not reproduced by this fit; one new victory cannot identify its missing
+level/alignment/equipment factors. Do not tune these from the raw overkill.
 Finalization guards against duplicate grants and uses the shared level-up
 service. Template XP is a current template read; encounter totals are match
 metadata.
+
+The later [Fist sample](design/reference/inventory/observations/2026-09-15_successful_fist_attack.md)
+exposes another limit: same-level17, high-trauma category mapped to80,163 HP
+credited on defeat and225 on victory. Current formulas give
+`round(163 * .85 * 1.35) = 187` and `round(225 * 1.9 * 1.35) = 577`;
+source results are **93** and **9835**. These remain uncalibrated cases.
+Opponent skill/perk/buff inputs are incomplete, and the source icon supplies
+a category rather than a recovered numeric coefficient. No universal Fist
+multiplier, nickname exception or premium-earned-XP multiplier follows from
+this sample. The level17 cap does not explain either result.
+
+#### Published inputs outside the current approximation
+
+The [wiki audit](design/reference/combat/observations/2026-09-15_wiki_experience_rules.md)
+names average NPC-group level, NPC equipment quantity/value and time-of-day
+strength peaks. The fallback above does not explicitly consume those inputs;
+its positive group factor must not be described as a universal Neverlands rule.
+Adding a weaker NPC can lower the source reward. Exact captured encounter
+totals remain authoritative for those samples, not a general equation.
+
+XP food/potion, fair/seasonal and quest bonuses remain separate unimplemented
+effects. Satiety's **+5% PvE/PvP XP** is published but not applied locally.
+The source excludes direct HP-removing spells from XP; it does not establish
+that every magical strike is excluded. Current physical MVP credit and bounded
+elemental strike totals remain unchanged. Adding direct spells/healing needs
+explicit eligible-damage accounting in the shared processor/awarder, tests for
+restoration versus overkill, and the spell/buff owner's own admission rules.
+Do not manufacture missing coefficients or infer stacking/rounding from the
+published +5%. These gaps differ from the implemented entitlement **cap** bonus.
 
 ### ARENA-01 — Admission and deadlines
 
@@ -921,6 +1004,45 @@ effect dispatcher. Durability decrease is `max(current - amount,0)`. Item/equipm
 compare explicit required level/stats/skills/permissions against current
 authoritative values; there is no hidden item-level scaling formula.
 
+#### Source-only overload and Merchant capacity
+
+The [Mass article](http://wiki.neverlands.ru/wiki/Масса), revision 21698,
+publishes graduated overload rules beyond the implemented acquisition hard cap.
+Let `surplus = 100*(current weight - capacity)/capacity` for positive capacity.
+The source labels adjacent bands without unambiguous exact boundary operators;
+this table preserves them rather than choosing rounding or equality rules.
+
+| Published surplus band | Movement/work time | Movement fatigue | Additional restrictions described |
+|---|---|---|---|
+| Up to 10% | +10% | No extra factor stated | None added here |
+| 10–25% | +50% | +50% | None added here |
+| 25–50% | +100% | +100% | No Arena, purchases in Shop/market, or withdrawals from storage/banks/treasury; market listing allowed |
+| Above 50% | Movement ×10; work not restated | ×10 | Additional giving/sending/selling restrictions, with Merchant/resource-sale exceptions |
+| Above 100% | Movement ×100; work not restated | ×40 | Higher tier of the preceding overload restrictions |
+
+These are published total factors for each tier, not cumulative multiplication
+of earlier tiers. They are **not active** in World timing/fatigue, Arena
+admission or Inventory. Lowered effective capacity can leave already-owned
+weight over the local limit, but acquisition still uses the hard-cap check.
+
+The same page's later Merchant rule permits trading above the recipient's
+capacity according to qualification:
+
+```text
+qualified Trading = effective Trading when the relevant Merchant qualification
+                    is present; otherwise 0
+permitted surplus percent = 0.5 * max(buyer qualified Trading, seller qualified Trading)
+recipient weight limit = recipient capacity * (1 + permitted surplus percent/100)
+```
+
+Example: skill 500 permits +250%; capacity 2,000 gives weight limit 7,000.
+At current weight 2,500 the arithmetic headroom is 4,500, but the source
+example uses 4,499.99. Exact endpoint/precision and qualification variants
+must be resolved before implementing that boundary. This is an absent trading
+exception, not the current Shop resale percentage or a general carry bonus.
+[ECONOMY](ECONOMY.md) owns qualification/payment, [ITEMS](ITEMS.md) admission,
+and [STATS](STATS.md#capacity-and-overload) the related capacity definitions.
+
 ### SCROLL-01 — Attack entry
 
 Owner: [AttackScroll](../app/services/game/inventory/attack_scroll.rb), with
@@ -963,6 +1085,14 @@ consumed only on committed entry; the ten-minute offer expires at its deadline,
 and a completed retry returns the original match without another charge.
 See [ITEMS](ITEMS.md#attack-scroll-use), [scroll design](design/features/scrolls.md)
 and [source observations](design/reference/inventory/observations/2026-09-14_attack_scrolls.md).
+The [successful Permit follow-up](design/reference/inventory/observations/2026-09-15_successful_attack_scroll.md)
+confirms one 17→19 admission at 285/1375 HP, so Permit does not share Arena's
+50%-HP threshold. It confirms one charge, retained gear and Finish to Inventory;
+the precise minimum HP and intervention remain separate gaps. The later
+[Fist capture](design/reference/inventory/observations/2026-09-15_successful_fist_attack.md)
+confirms375→225 HP after stripping, unchanged defender175 HP, one charge and
+unequipped gear after Finish. The displayed five-minute timeout permitted
+about13 minutes of exchanges; the local global300s cap is an explicit adaptation.
 
 ### ECON-01 — Shop purchase, sale and NV transfers
 
@@ -1056,7 +1186,7 @@ feature. They describe current code, not newly approved design:
 | `ActionCatalog.body_part_multiplier` and body `block_difficulty` data | Current physical resolver uses its own explicit body constants; changing unused YAML alone will not retune strikes |
 | `Character#equipped_items_resistance` | Nested-resistance helper with a 0–0.15 cap has no active shared combat caller; magic uses the flat rating path in COMBAT-04 |
 | `Character#reduced_mana_cost` | Compatibility `max(base_cost.to_i,1)`; no learned mana-discount curve. Fight actions use catalog/profile validation |
-| Progression `max_npcs_in_group` | Captured table, not an enforced player-level encounter selector limit |
+| Hidden combat level coefficient | Published by the Level article; equation and magnitude unknown, not implemented |
 | Legacy `reset_allocation` consumable effect | Clears allocated stats and learned skills; refunds sum of stat allocations but only **one point per positive skill**, not the original tier-based spend. It does not clear/refund perks despite its success text. This is a limited implementation, not a documented source-accurate full reset |
 | NPC visible `wisdom` and equipment properties | Inspection content where no explicit adapter reads it; images/properties alone add no damage/armor |
 | Profession skill-up, herb/fish yield, crafting quality, gathering success, quest reward curves, dungeon scaling | No general active formulas; their owning handbooks describe absent/bounded runtime |
@@ -1158,3 +1288,38 @@ The winner566 is preserved evidence, not a claimed match to this general fit.
 Level, alignment, premium and spell-dependent reward coefficients remain
 unknown. NPC explicit loss totals, NPC kill eligibility, caps, team sharing and
 once-only finalization keep their existing contracts.
+
+### September 15 stat and modifier interpretation
+
+The [wiki audit](design/reference/character/observations/2026-09-15_levels_stats_and_modifiers.md) distinguishes published dependencies
+from fitted coefficients. Accuracy now uses `3*Dex + 2*Luck + item Accuracy`;
+3:2 is a local fit, preserving the former rating for equal Dex/Luck builds.
+Crushing/Evasion/Fortitude are modifier ratings, not final percentages. Their
+respective Luck/Dex/Luck dependencies are published; the wiki leaves Fortitude's
+possible additional primary stat uncertain.
+
+Physical damage uses:
+
+```text
+healthArmorFactor = 1 + 0.05 * floor(clamp(effective Health, 0, 150) / 30)
+```
+
+The Health page gives approximately 5% per 30 Health in the 30–150 range.
+Complete steps and saturation above150 are local interpretations. This factor
+multiplies the armor used for physical damage before fatigue/penetration;
+displayed armor and the separate block rating remain unchanged. Armor100 at
+Health29/30/150 becomes effective armor100/105/125. Zero armor stays zero.
+Player effective Health includes applicable injury penalties. NPC Health must
+be explicitly authored in `stats.health`; HP alone
+never supplies it. The shared adapter/resolver applies this to every physical
+Arena, scroll and wilderness match.
+
+Known source-only rules: Knowledge's combat HP-restoration threshold is
+`base Knowledge >= 2*(level+3)` (level17 requires40); perks/buffs are excluded,
+gear treatment is uncertain. The source describes automatic mana spending to
+restore HP, limited by fatigue, but gives no mana-to-HP coefficient. This is not
+Doctor injury treatment. Full combat healing remains outside physical MVP.
+The Armor page additionally says elemental magic uses10% armor plus elemental
+resistance. The bounded legacy magic resolver currently ignores armor: this is
+an explicit implementation gap, not a Neverlands rule. General magic armor
+interaction/order and the hidden level coefficient need further calibration.

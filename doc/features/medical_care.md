@@ -239,6 +239,11 @@ paid acceptance is covered by the focused regression and earlier manual record.
 
 ## 8. Gaps and version history
 
+Traumatologist is an explicit **TODO under the [Quest owner](quests.md#traumatologist-quest-todo)**,
+deferred from this primary-list medical slice on September 16. Its complete
+Neverlands quest must be captured before implementing the earned qualification;
+this does not relax existing Doctor-license prerequisites.
+
 The September 12 content-book audit found then-unenforced Doctor proficiency
 requirements on medical bags. Section 1 records the current code evidence;
 the September 15 implementation repairs it with below/at-threshold and
@@ -249,3 +254,12 @@ approximations; published combat 24 h/+6 h and treatment price ceilings retain t
 source provenance. Existing gathering/production remains under
 [Professions](professions.md). These limits are not claims of full Doctor crafting
 or a captured authenticated Neverlands treatment transaction.
+
+## September 15 shared Health consumer
+
+Injury penalties already change effective primary stats. Combat now reads that
+effective Health for its hidden physical armor factor; a penalty or cure may
+cross a30-point threshold without changing displayed equipment armor.
+[MEDICAL](../MEDICAL.md#injury-penalties-and-the-hidden-health-armor-input) and
+[FORMULAS](../FORMULAS.md#september-15-stat-and-modifier-interpretation) explain
+the effect. This adds no separate treatment or combat-HP-healing workflow.

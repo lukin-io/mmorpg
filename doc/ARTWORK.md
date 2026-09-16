@@ -1,5 +1,9 @@
 # Project Artwork Guide
 
+Current category contract: [ART-CATEGORY-001](#category-artwork-standard).
+It consolidates dimensions, background/color profiles, composition, original-art
+prompts and acceptance. See the [September 16 audit](#september-16-category-audit-and-corrections) for delivery status.
+
 ## September 14 public fight-log decoration
 
 Source layout: [first human Duel](design/reference/combat/observations/2026-09-14_arena_fist_duel.md).
@@ -50,6 +54,13 @@ integration/visual acceptance together. Content identity, stats and availability
 remain with those owners; dimensions and exact prompts remain here.
 
 ## September 15 integration recheck
+
+The later [successful Permit capture](design/reference/inventory/observations/2026-09-15_successful_attack_scroll.md)
+uses the same paper dolls, equipment rails, scroll icon and public-log layout.
+The attack-start wording, XP and Finish timing changes require semantic text
+and shared UI integration, not new raster artwork. Existing original item,
+portrait and log-header specifications/prompts above remain applicable; the
+new source PNGs live only with the observation and are not runtime assets.
 
 The [Arena/Medical acceptance](features/arena_combat.md#september-15-verification-and-manual-acceptance)
 reused the existing original Dummy/player portraits, 16px application icons,
@@ -127,6 +138,13 @@ The later [zMey rejection capture](design/reference/inventory/observations/2026-
 adds an Inventory failure state: bold 12px #c00 text above the category strip,
 rendered as accessible HTML/CSS. Both existing scroll illustrations are reused;
 no new raster asset or generation prompt is needed for this text-only state.
+
+The [September15 successful Fist capture](design/reference/inventory/observations/2026-09-15_successful_fist_attack.md)
+confirms reuse of the empty-slot paper dolls, AP controls, waiting/result UI
+and public-log/statistics composition. The local opening-marker correction is
+HTML text; waiting now hides the right paper doll without removing its roster
+member or changing the grid. Original384×384 Fist art and existing combat/log assets remain in
+use. Research images are not runtime replacements; no new generation is needed.
 
 Exact generation prompt:
 
@@ -567,6 +585,194 @@ visible and the pose fits the narrow consumer. Robber club, hands and boots
 remain complete after crop. Final local browser evidence belongs in the
 [combat handbook](features/arena_combat.md).
 
+## Category artwork standard
+
+**ART-CATEGORY-001** is the mandatory category contract for new/reworked media.
+Read it together with the [September 16 source measurements](design/reference/inventory/observations/2026-09-16_artwork_categories.md).
+Earlier dated prompts remain historical provenance; they do not override this
+current standard. A passing geometry check is not a claim of visual acceptance.
+
+### Provenance and shared rules
+
+- **Measured Neverlands:** category display sizes, separate row/image backgrounds,
+  full player figure and the license/permit compositions in the observation.
+- **Observed convention:** subdued materials, compact legible silhouettes,
+  complete objects, category-specific orientation and monster backdrops.
+- **Local production specification:** exact export density, background RGB,
+  padding and lighting below. These make original artwork consistent; they are
+  not presented as source code or an official Neverlands art manual.
+- Keep original generated masters and their exact prompts. Produce a separate
+  delivery PNG; never stretch a figure or crop an object to force its ratio.
+  Uniform scale plus padding is permitted after visual review. Recompose art
+  whose pose cannot fill the narrow consumer clearly. A larger bitmap alone
+  does not fix tiny subject scale.
+- One painted style: matte, detailed, weathered cloth/leather/wood/stone/metal,
+  restrained earth colors, natural anatomy, soft diffuse upper-left illumination.
+  No glossy plastic, neon edge lights, photographic cutouts or inconsistent
+  perspective. Palette accents describe material/identity, never invented rarity.
+- UI labels, tiers, quantities, durability, frames, selection/focus and actions
+  remain semantic HTML/CSS. No source artwork, logos or copied emblems in runtime.
+
+### Adding a new artwork category
+
+**Every new artwork category must adopt the corresponding Neverlands
+specifications before local production and integration.** Capture the reference
+in a source observation first; do not derive the category contract from a
+generated image or substitute generic RPG conventions.
+
+1. Record the Neverlands surface and reference images, native bitmap and
+   displayed dimensions, image versus surrounding-cell backgrounds, proportions,
+   framing, padding, orientation, lighting, rendering behavior and relevant
+   variants. Record only what the evidence establishes.
+2. Translate that evidence into a local category specification. Keep measured
+   source facts separate from local export density, palette values and other
+   production adaptations; explain any necessary difference.
+3. Add the category to the matrix below, or link its dedicated specification
+   from the matrix. Define its prompt requirements, delivery dimensions,
+   background, composition, fit behavior and visual acceptance criteria.
+4. Generate original local artwork using that specification, preserve masters
+   and exact prompts, and verify it in each affected consumer at its actual
+   display size. Borrow the source specification, never source-owned artwork,
+   logos or emblems.
+5. Update this guide, the source observation and directly affected game guides
+   or runtime handbooks in the same task, following the
+   [documentation update rules](DOCUMENTATION.md#22-change-triggered-documentation-updates).
+
+If the corresponding Neverlands specification cannot yet be established, record
+an explicit `[EVIDENCE]` gap and any provisional local fallback. Do not present
+that fallback as a measured source standard or mark the category's source
+alignment complete.
+
+### Category matrix
+
+`W×H` below is the **CSS/native composition**, not the generator's native size.
+Equipment display geometry has one owner, [EquipmentSlots](../app/models/equipment_slots.rb),
+shared by player/NPC dolls and Inventory/Shop goods through
+`InventoriesHelper#item_artwork_dimensions`. Slot aliases resolve through
+ItemTemplate. A new item must use its category, not the shape of a supplied file.
+
+| Category | Native / display | New delivery PNG | Composition, background and acceptance |
+|---|---|---|---|
+| Weapon, staff, spear, shield; either hand | 62×91 | 248×364 (4×) | Full object; long axis generally vertical or a modest diagonal, blade/head up when compatible with the design; never rotate a shield sideways merely to fill the slot |
+| Helmet | 62×65 | 248×260 | Complete dome, crest and straps; front/three-quarter view |
+| Necklace/amulet | 62×35 | 248×140 | Chain spread horizontally with pendant; avoid a tall hanging chain shrunk to invisibility |
+| Chest armor | 62×83 | 248×332 | Upright complete garment, collar/shoulders/hem visible |
+| Leg armor | 62×81 | 248×324 | Complete paired legs, upright, no wearer |
+| Boots | 62×63 | 248×252 | Complete matched pair, soles and shafts visible |
+| Gloves / bracers | 62×40 | 248×160 | Paired pieces arranged horizontally, same material scale |
+| Belt | 62×30 | 248×120 | Horizontal belt with buckle, complete ends or an intentionally looped whole belt |
+| Relic | 62×31 | 248×124 | Compact horizontal object/composition; no invented activation state |
+| Ring | 31×31 | 124×124 | Single centered ring, readable opening and setting |
+| Pocket / pocket content | 20×20 / 42×20 | 80×80 / 168×80 | Small complete object; this is a doll footprint, not the 42×21 loose-permit image |
+| Belt contents | 20×20 | 80×80 | Dedicated compact silhouette; do not invent an equipped-content item to fill an empty slot |
+| Duel Permit I–IV | 42×21 | 168×84 | Horizontal document/scroll with small original emblem; source reuses one icon, tier comes from HTML |
+| Other loose goods, potions, healer bags, consumables/materials | 60×60 default | 240×240 | One complete object or justified pair; source exceptions require a measured key/category override. Fist Attack remains the default until its own bitmap dimensions are established |
+| Professional license | 60×60 | 240×240 | Horizontal certificate about 90% canvas width and 45–55% height, emblem left; seal/ribbon distinctions allowed, tier text stays in HTML |
+| Player and humanoid NPC doll portrait | 115×255 | 690×1530 (6×) | Complete narrow full figure, head/hands/feet and props inside frame; player backdrop white; NPC backdrop follows declared profile below |
+| Beast/monster portrait | 115×255 consumer | 690×1530 (6×), or explicitly retained composition | Preserve species proportions and full essential silhouette. A quadruped is not stretched into human proportions; any retained wide composition is a named exception, not an accidental square crop |
+| Small avatar badges | Existing 32/48/64/96 square consumers | Reuse approved portrait | Deliberate badge crop may use cover; never transfer that crop to the full combat doll |
+| Shop category controls | 41×53; Knives/Belts44×53 | Existing 1402×1122 atlas | Coherent grayscale object-on-stone family, stable atlas offsets; keyboard/name/tooltips in HTML |
+| City / building scenes | 1250×600 coordinate plane | 1250×600 | [ART-SCENE-001](#shared-scene-image-standard): complete scene, adaptive full composition, shared camera/lighting, no UI baked in |
+| World cells and neighborhoods | 100×100 logical cell | 1×/2× slices or declared atlas | [World density contract](#world-cell-raster-density-specifications): continuous terrain joins, fixed overhead scale, no portrait/item gray canvas |
+| City arrows / walking decoration | Declared existing consumer | Per respective profile | [Arrows](#city-route-arrow-decoration-specifications), [walking](#world-walking-decoration-specifications): genuine alpha, fixed registration, no new directions or gameplay |
+| Arena emblems / log ornament / UI decorations | Existing named consumer | Per dated production record | Original matte stone/iron/cloth vocabulary; transparent or explicitly matched page canvas. Keep type/time/controls out of bitmaps; semantic geometric borders remain CSS |
+
+For equipment and ordinary loose goods, target the limiting dimension of the
+subject at **88–94%** of the canvas, with at least **3% clear padding** on each
+edge. The other dimension follows the object's real shape; do not inflate a
+thin spear into a broad sword. License proportions are the explicit exception
+above. Shadows count toward clearance and must not touch the canvas border.
+Portraits target 90–96% height, at least 2% top/bottom and 3% side clearance;
+pose/anatomy wins over a numeric fill target for beasts. Check at native CSS
+size, not only enlarged in an image viewer.
+
+### Background and color profiles
+
+| Profile | Exact local specification | Applies to |
+|---|---|---|
+| Item canvas | Opaque sRGB `#B7B7B7`; flat perimeter, no vignette or baked frame; restrained contact shadow close to object | Wearables, NPC equipment, permits, licenses and loose item illustrations |
+| Inventory row cell | CSS `#F5F5F5` | Space surrounding the image; do not recolor the artwork to this shade |
+| Shop goods row cell | CSS `#F9F9F9` | Space surrounding Shop goods |
+| License row | CSS `#FFFFFF` | Space surrounding the square certificate image |
+| Player portrait | Opaque white `#FFFFFF`, subtle contact shadow under feet | The active adventurer and future player doll deliveries |
+| Humanoid NPC neutral portrait | Pale neutral `#F5F5F5`, no decorative frame | Goblin, Orc, Bandit, Robber, Ogre, Skeleton, Zombie unless a recorded source composition requires another backdrop |
+| Retained dark monster composition | Declared existing dark gray/brown backdrop, preserved as a complete composition | Wolf, Boar and Training Dummy; exception must remain listed in audit, not copied onto ordinary player/item artwork |
+| Scene / world | Full painted environment, no uniform object backdrop | Existing scene/world profiles; muted palette comes from adjacent approved art |
+| Transparent decoration | Actual alpha, clean edge pixels, no painted checkerboard/white fringe | Only consumers explicitly requiring alpha |
+
+Exact item gray is a **local standard** selected from the rendered source sample.
+Rendered screenshots do not prove that every source image uses one encoded RGB.
+Lighting and non-background material colors remain artistic, but a batch must
+share the same light direction, contrast and finish. Do not recolor armor or
+skin just to force the background specification. Material accents may differ.
+
+### Required audit and acceptance
+
+1. Inventory assets by allowlisted runtime key, consumer, encoded size, ratio,
+   background profile and original master/prompt; separate unused references.
+2. Check file format, exact delivery dimensions, alpha policy and stable mapping.
+   Files created before this standard require explicit audit dispositions; they
+   do not pass merely because `object-fit: contain` prevents stretching.
+3. Inspect a category contact sheet at native size, including object scale,
+   complete edges, orientation, shadows, visual consistency and portrait anatomy.
+4. Verify shared consumers: Shop Buy/Sell → Inventory → Wear → player doll →
+   Remove; NPC equipment/portrait in the shared fight doll; licenses, scrolls
+   and empty/unknown-item fallback. Art changes must not change stats/actions.
+5. Run affected asset/helper/rendering/system checks and the required completion
+   profile, then perform the final manual browser flow at desktop, narrow width,
+   keyboard and zoom. Record viewport, steps, results and remaining exceptions.
+6. Update this guide's production/audit record and directly affected
+   [ITEMS](ITEMS.md), [NPC](NPC.md), [CHARACTER](CHARACTER.md),
+   [Inventory](features/player_inventory.md), [Shop](features/shop_economy.md) or
+   [Combat](features/arena_combat.md) owner. Unverified assets stay explicitly open.
+
+### Reusable item correction prompt
+
+```text
+Edit the supplied original project [item], preserving its identity and complete
+geometry. Recompose for [category W×H] with [category orientation]. Show the
+whole object, fill 88–94% of the limiting canvas dimension, leave at least 3%
+clear border, and preserve physical proportions. Use detailed matte weathered
+[materials], subdued earth colors, soft diffuse upper-left lighting and a small
+contact shadow. Flat opaque neutral-gray #B7B7B7 canvas; no gradient, vignette,
+frame, text, UI, watermark, extra objects, cropped tips or source-game imagery.
+The result must remain readable at [W×H] CSS pixels. Delivery is [4W×4H] PNG;
+keep the unmodified generated master and record any approved packaging separately.
+```
+
+Use the portrait templates below with the chosen profile and 23:51 composition.
+These instructions define future production and correction, not a claim that a
+historical prompt requested dimensions it did not request.
+
+## September 16 category audit and corrections
+
+[Source capture](design/reference/inventory/observations/2026-09-16_artwork_categories.md)
+confirmed category shapes and exposed the universal Inventory square / Shop
+weapon-box mismatch. The shared helper now selects EquipmentSlots dimensions,
+42×21 for captured Permit keys and 60×60 for other loose goods. Buy, Sell and
+Inventory use the same rule; CSS preserves those dimensions with containment.
+
+The [before audit](artwork/2026-09-16/before-audit.json) lists **136 PNGs** with
+hashes, dimensions, consumers and corner samples: 88 item images,31 NPC equipment
+images,10 NPC portraits and7 player illustrations. Six player images are style
+references, not selectable runtime avatars. **20/136** initially matched their
+consumer aspect ratio. This number measures geometry only; neither a ratio
+match nor a corner sample proves acceptable artwork.
+
+License corrections use built-in imagegen, original project license inputs,
+and the literal [base prompts](artwork/2026-09-16/license-prompts.md) and
+[tier prompts](artwork/2026-09-16/license-tier-prompts.md). All six1254×1254
+[candidates and original master paths](artwork/2026-09-16/license-candidates.json)
+are preserved for review. Composition is horizontal with complete edges and
+distinct seals. Generated gray still has slight variation; deterministic
+background normalization and240×240 delivery packaging remain pending.
+These candidates are not yet installed as runtime replacements.
+The [local acceptance record](features/acceptance/2026-09-16_artwork/README.md)
+separates verified category geometry from pending bitmap correction.
+Packaging, selected output paths and final visual acceptance are recorded below
+when complete. The existing equipment/background audit remains open until the
+actual delivered files are reviewed; these standards alone do not close it.
+
 ## Authority and boundaries
 
 Neverlands evidence owns game subjects, geography, location boundaries and
@@ -919,22 +1125,18 @@ separates rejected prompts, selected poses, packaging and current acceptance.
 
 ## Shop item and category image specifications
 
-These are the current consumer sizes after the September 10 source-layout
-correction. Earlier production prompts and their 60px thumbnail reviews remain
-unchanged as historical records; CSS changes do not generate new artwork.
+Follow [ART-CATEGORY-001](#category-artwork-standard) and its current audit.
+Shop Buy/Sell and Inventory use the same **category-native** image dimensions:
+equipment follows EquipmentSlots, captured Permit I–IV42×21, other loose goods
+60×60. Professional licenses are60×60. Images use containment without stretching.
+The Shop icon column remains69px including padding/separator; changing image
+height does not change table width or the server's commerce rules.
 
-| Image use | Runtime asset | Display and fit |
-|---|---|---|
-| Ordinary Shop goods | Original 384 × 384px PNG per explicit stable item key | 62 × 91px box with `object-fit: contain`; 68px content/padding contract (62 + 3 + 3), measuring 69px including the collapsed 1px table separator |
-| Same item in Inventory | The same original PNG | 60 × 60px; equipment slots retain their separately documented geometry |
-| Professional licenses | Original 384 × 384px PNG per license key | 60 × 60px, following description/duration and durability/mass, before cost/stock |
-| Category controls | Existing 1402 × 1122px five-column/four-row atlas | Icon-only 41 × 53px boxes, 44 × 53px for Knives and Belts; title tooltips and accessible names belong to HTML |
-
-All 19 category icons share one surrounding cell with 3px padding and 1px
-spacing, producing the 61px strip. Do not apply this padding independently to
-each category. No item file, atlas or license image was regenerated, cropped or
-resized for this layout correction. Source item/license/category bitmaps remain
-prohibited; their measured footprints inform the local consumer only.
+Category controls retain the original1402×1122 atlas,41×53 boxes (Knives and
+Belts44×53), one surrounding cell with3px padding and1px spacing, producing the
+61px strip. Labels, tooltips and keyboard controls remain HTML. Earlier384px
+square delivery records and60px thumbnail reviews below are historical; the
+current category matrix owns new/corrected delivery dimensions.
 
 ## Prompt templates
 

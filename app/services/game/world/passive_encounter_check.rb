@@ -50,6 +50,9 @@ module Game
           match:,
           message: "A fight starts while you wait."
         )
+      rescue StartNpcFight::UnavailableRosterError
+        clear_schedule!
+        waiting_result(EMPTY_RECHECK_SECONDS)
       rescue StartNpcFight::FightViolationError
         clear_schedule!
         raise
