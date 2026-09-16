@@ -28,7 +28,7 @@ RSpec.describe "Players", type: :request do
       location = Nokogiri::HTML(response.body).at_css(".nl-character-page-aside .nl-profile-location")
       expect(location.text).to eq("Outpost Surroundings")
       expect(location.text).not_to include("[7, 9]")
-      expect(response.body).to include("nl-doll-figure")
+      expect(response.body).to include("nl-doll-character-portrait", "adventurer")
       expect(response.body).not_to include("assets/neverlands")
       expect(response.body).not_to include("Neverlands administration")
       expect(response.body).to include("Knife")
@@ -50,6 +50,24 @@ RSpec.describe "Players", type: :request do
       expect(response.body).to include('class="nl-profile-tabs"')
       expect(response.body).to include("Character sections")
       expect(Nokogiri::HTML(response.body).css(".nl-profile-location").size).to eq(1)
+    end
+
+    it "shows cumulative XP remaining consistently in the owner's profile and JSON" do
+      character = create(:character, user:, level: 17, experience: 29_946_496)
+      sign_in user, scope: :user
+
+      get player_path(name: character.name)
+
+      expect(response).to have_http_status(:ok)
+      remaining_row = Nokogiri::HTML(response.body).css("tr").find { |row| row.at_css("th")&.text == "To level:" }
+      expect(remaining_row.at_css("td").text).to eq("20,053,504")
+
+      get player_path(name: character.name, format: :json)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body.fetch("character")).to include(
+        "level" => 17, "experience" => 29_946_496, "experience_to_next_level" => 20_053_504
+      )
     end
 
     it "returns location, equipment, and public player path in JSON" do
@@ -107,7 +125,7 @@ RSpec.describe "Players", type: :request do
       room = create(:arena_room, name: "Training Hall", slug: "training")
       character = create(:character, user: user, name: "max_kerby")
       create(:character_position, character: character, zone: zone, x: 3, y: 4)
-      match = create(:arena_match, :live, arena_room: room)
+      match = create(:arena_match, :live, arena_room: room, metadata: {physical_only: true})
       create(:arena_participation, arena_match: match, character: character, user: user, team: "a")
 
       get player_path(name: character.name)
@@ -117,6 +135,23 @@ RSpec.describe "Players", type: :request do
       expect(response.body).to include("in combat")
       expect(response.body).to include("Training Hall")
       expect(response.body).to include(public_fight_log_path(match))
+      character.update!(stat_points_available: 1)
+      sign_in user
+      get player_path(name: character.name)
+      expect(response.body).to include("in combat")
+      expect(response.body).not_to include("data-game-layout-encounter-url-value")
+      expect(response.body).not_to include('id="stat-allocation"')
+      match.update!(status: :completed)
+      get player_path(name: character.name)
+      expect(response.body).to include(public_fight_log_path(match), "in combat")
+      expect(response.body).not_to include("data-game-layout-encounter-url-value")
+      expect(response.body).not_to include('id="stat-allocation"')
+      participation = match.arena_participations.find_by!(character:)
+      participation.update!(metadata: {finished_at: Time.current.iso8601})
+      get player_path(name: character.name)
+      expect(response.body).not_to include("nl-profile-fight-link")
+      expect(response.body).to include('id="stat-allocation"')
+      expect(response.body).to include('data-game-layout-encounter-url-value="/combat_status"')
     end
 
     it "shows the same current pond label to its owner, visitors, and the public JSON reader" do

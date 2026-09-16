@@ -20,6 +20,7 @@
 <% interactive = local_assigns.fetch(:interactive, false) %>
 <% slot_locals = {
      equipment: equipment,
+     npc_equipment: local_assigns.fetch(:npc_equipment, {}),
      interactive: interactive,
      category: local_assigns[:category],
      subcategory: local_assigns[:subcategory],
@@ -38,14 +39,7 @@
       <% if local_assigns[:portrait_html].present? %>
         <%= local_assigns[:portrait_html] %>
       <% elsif character %>
-        <span class="nl-doll-figure" role="img" aria-label="<%= character.name %>">
-          <span class="nl-doll-figure-head" aria-hidden="true"></span>
-          <span class="nl-doll-figure-body" aria-hidden="true"></span>
-          <span class="nl-doll-figure-arm nl-doll-figure-arm--left" aria-hidden="true"></span>
-          <span class="nl-doll-figure-arm nl-doll-figure-arm--right" aria-hidden="true"></span>
-          <span class="nl-doll-figure-leg nl-doll-figure-leg--left" aria-hidden="true"></span>
-          <span class="nl-doll-figure-leg nl-doll-figure-leg--right" aria-hidden="true"></span>
-        </span>
+        <%= image_tag "avatars/adventurer.png", width: 115, height: 255, alt: character.name, class: "nl-doll-character-portrait" %>
       <% end %>
     </div>
 

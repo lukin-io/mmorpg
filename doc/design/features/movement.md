@@ -1,6 +1,11 @@
 # Movement
 
-Domain navigation: `doc/domains/world.md`.
+Domain navigation: [World](../../domains/world.md).
+
+[WORLD](../../WORLD.md#5-travel-context-and-return-behavior) describes routes,
+entry/return and saved context; [FORMULAS](../../FORMULAS.md#8-world-movement-and-encounter-timing)
+records timing and fatigue. The [World handbook](../../features/world.md)
+owns current offers, authoritative movement and encounter handoffs.
 
 ## Purpose
 

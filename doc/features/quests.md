@@ -3,7 +3,7 @@
 title: Quests Feature
 description: NOT_IMPLEMENTED placeholder for source-backed Quest dialogue, journal, task, and resolution behavior.
 status: NOT_IMPLEMENTED
-updated: 2026-08-26
+updated: 2026-09-12
 owners: NPCs and Quests domain
 template: feature-gap-v2
 ---
@@ -11,6 +11,12 @@ template: feature-gap-v2
 # Quests
 
 ## 1. Evidence and design
+
+For future implementation, read [NPC](../NPC.md) for existing NPC identities,
+[ITEMS](../ITEMS.md) for possible authored item references and
+[WORLD](../WORLD.md) for locations. Current catalog entries do not establish
+Quest dialogue, tasks or rewards. Connect new verified behavior and update its
+references under the [context/update map](../DOCUMENTATION.md#21-required-context-and-update-map).
 
 Neverlands is the sole game-design authority.
 
@@ -39,6 +45,17 @@ persisted flow unlocks trading-license purchases; its temporary garment reward
 and original quest presentation remain incomplete. The September 9 economy
 observation owns its official-wiki evidence. This handoff does not supply a
 general NPC quest system or other profession quests.
+
+### Traumatologist quest TODO
+
+**TODO (September 16 user scope):** implement Traumatologist as a complete
+Neverlands-backed quest when its eligibility, dialogue/tasks, progress,
+completion and qualification reward have been captured. It is deferred from
+the current primary-list medical work. Do not auto-grant qualification or
+remove Doctor-license prerequisites to substitute for the missing quest.
+[MEDICAL](../MEDICAL.md#permissions-are-separate-from-proficiency) describes the current
+qualification handoff; the [MVP scope](../design/launch_mvp_plan.md#september-16-primary-list-scope)
+records this explicit deferral.
 
 ## 4. Prerequisites for implementation
 

@@ -1,0 +1,266 @@
+[
+  {
+    "alt": "",
+    "cell": null,
+    "height": 600,
+    "rendered": [
+      842,
+      404
+    ],
+    "src": "http://image.neverlands.ru/shops/shop_1.jpg",
+    "width": 1250
+  },
+  {
+    "alt": "Ножи",
+    "cell": "#F9f9f9",
+    "height": 53,
+    "rendered": [
+      44,
+      53
+    ],
+    "src": "http://image.neverlands.ru/gameplay/invent/cat/0.gif",
+    "width": 44
+  },
+  {
+    "alt": "Мечи",
+    "cell": "#F9f9f9",
+    "height": 53,
+    "rendered": [
+      41,
+      53
+    ],
+    "src": "http://image.neverlands.ru/gameplay/invent/cat/1.gif",
+    "width": 41
+  },
+  {
+    "alt": "Топоры",
+    "cell": "#F9f9f9",
+    "height": 53,
+    "rendered": [
+      41,
+      53
+    ],
+    "src": "http://image.neverlands.ru/gameplay/invent/cat/2.gif",
+    "width": 41
+  },
+  {
+    "alt": "Дробящие",
+    "cell": "#F9f9f9",
+    "height": 53,
+    "rendered": [
+      41,
+      53
+    ],
+    "src": "http://image.neverlands.ru/gameplay/invent/cat/3.gif",
+    "width": 41
+  },
+  {
+    "alt": "Алебарды и копья",
+    "cell": "#F9f9f9",
+    "height": 53,
+    "rendered": [
+      41,
+      53
+    ],
+    "src": "http://image.neverlands.ru/gameplay/invent/cat/4.gif",
+    "width": 41
+  },
+  {
+    "alt": "Посохи",
+    "cell": "#F9f9f9",
+    "height": 53,
+    "rendered": [
+      41,
+      53
+    ],
+    "src": "http://image.neverlands.ru/gameplay/invent/cat/6.gif",
+    "width": 41
+  },
+  {
+    "alt": "Щиты",
+    "cell": "#F9f9f9",
+    "height": 53,
+    "rendered": [
+      41,
+      53
+    ],
+    "src": "http://image.neverlands.ru/gameplay/invent/cat/7.gif",
+    "width": 41
+  },
+  {
+    "alt": "Доспехи",
+    "cell": "#F9f9f9",
+    "height": 53,
+    "rendered": [
+      41,
+      53
+    ],
+    "src": "http://image.neverlands.ru/gameplay/invent/cat/11.gif",
+    "width": 41
+  },
+  {
+    "alt": "Шлемы",
+    "cell": "#F9f9f9",
+    "height": 53,
+    "rendered": [
+      41,
+      53
+    ],
+    "src": "http://image.neverlands.ru/gameplay/invent/cat/8.gif",
+    "width": 41
+  },
+  {
+    "alt": "Сапоги",
+    "cell": "#F9f9f9",
+    "height": 53,
+    "rendered": [
+      41,
+      53
+    ],
+    "src": "http://image.neverlands.ru/gameplay/invent/cat/14.gif",
+    "width": 41
+  },
+  {
+    "alt": "Штаны",
+    "cell": "#F9f9f9",
+    "height": 53,
+    "rendered": [
+      41,
+      53
+    ],
+    "src": "http://image.neverlands.ru/gameplay/invent/cat/24.gif",
+    "width": 41
+  },
+  {
+    "alt": "Пояса",
+    "cell": "#F9f9f9",
+    "height": 53,
+    "rendered": [
+      44,
+      53
+    ],
+    "src": "http://image.neverlands.ru/gameplay/invent/cat/9.gif",
+    "width": 44
+  },
+  {
+    "alt": "Перчатки",
+    "cell": "#F9f9f9",
+    "height": 53,
+    "rendered": [
+      41,
+      53
+    ],
+    "src": "http://image.neverlands.ru/gameplay/invent/cat/12.gif",
+    "width": 41
+  },
+  {
+    "alt": "Наручи",
+    "cell": "#F9f9f9",
+    "height": 53,
+    "rendered": [
+      41,
+      53
+    ],
+    "src": "http://image.neverlands.ru/gameplay/invent/cat/13.gif",
+    "width": 41
+  },
+  {
+    "alt": "Ювелирные украшения",
+    "cell": "#F9f9f9",
+    "height": 53,
+    "rendered": [
+      41,
+      53
+    ],
+    "src": "http://image.neverlands.ru/gameplay/invent/cat/16.gif",
+    "width": 41
+  },
+  {
+    "alt": "Реликвии",
+    "cell": "#F9f9f9",
+    "height": 53,
+    "rendered": [
+      41,
+      53
+    ],
+    "src": "http://image.neverlands.ru/gameplay/invent/cat/25.gif",
+    "width": 41
+  },
+  {
+    "alt": "Свитки и зелья",
+    "cell": "#F9f9f9",
+    "height": 53,
+    "rendered": [
+      41,
+      53
+    ],
+    "src": "http://image.neverlands.ru/gameplay/invent/cat/17n21.gif",
+    "width": 41
+  },
+  {
+    "alt": "Свитки и зелья",
+    "cell": "#F9f9f9",
+    "height": 53,
+    "rendered": [
+      41,
+      53
+    ],
+    "src": "http://image.neverlands.ru/gameplay/invent/cat/29.gif",
+    "width": 41
+  },
+  {
+    "alt": "Другое",
+    "cell": "#F9f9f9",
+    "height": 53,
+    "rendered": [
+      41,
+      53
+    ],
+    "src": "http://image.neverlands.ru/gameplay/invent/cat/23.gif",
+    "width": 41
+  },
+  {
+    "alt": "",
+    "cell": "#f9f9f9",
+    "height": 21,
+    "rendered": [
+      42,
+      21
+    ],
+    "src": "http://image.neverlands.ru/weapon/i_svi_001.gif",
+    "width": 42
+  },
+  {
+    "alt": "",
+    "cell": "#f9f9f9",
+    "height": 21,
+    "rendered": [
+      42,
+      21
+    ],
+    "src": "http://image.neverlands.ru/weapon/i_svi_001.gif",
+    "width": 42
+  },
+  {
+    "alt": "",
+    "cell": "#f9f9f9",
+    "height": 21,
+    "rendered": [
+      42,
+      21
+    ],
+    "src": "http://image.neverlands.ru/weapon/i_svi_001.gif",
+    "width": 42
+  },
+  {
+    "alt": "",
+    "cell": "#f9f9f9",
+    "height": 21,
+    "rendered": [
+      42,
+      21
+    ],
+    "src": "http://image.neverlands.ru/weapon/i_svi_001.gif",
+    "width": 42
+  }
+]

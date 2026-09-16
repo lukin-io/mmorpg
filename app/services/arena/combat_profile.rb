@@ -14,6 +14,12 @@ module Arena
     AIMED_ATTACK_SURCHARGE = 20
 
     class << self
+      # Current equipment preview for Profile/Inventory, without creating or
+      # persisting a participation. The next fight uses these same rules.
+      def for_character(character)
+        new(nil, character:).to_h
+      end
+
       def for_participation(participation, persist: false)
         profile = new(participation).to_h
         persist!(participation, profile) if persist
@@ -49,8 +55,9 @@ module Arena
       end
     end
 
-    def initialize(participation)
+    def initialize(participation, character: nil)
       @participation = participation
+      @participant_character = character
     end
 
     def to_h
@@ -66,22 +73,34 @@ module Arena
       block_table = Game::Combat::ActionCatalog.normalize_block_table(
         explicit_profile_value("block_table") || derived_block_table
       )
+      # An unarmed admission has removed/rejected every equipped item. Old
+      # character preview overrides cannot retain a shield or weapon's costs.
+      # Once captured, keep the admission budget stable just like armed fights.
+      if participation&.arena_match&.metadata.to_h["fight_kind"] == "no_weapons"
+        seed = integer_value(stored_profile["physical_attack_cost_seed"]) || derived_physical_attack_seed
+        ap_limit = integer_value(stored_profile["ap_limit"]) || derived_ap_limit
+        block_table = "normal"
+      end
 
       {
         "ap_limit" => ap_limit,
         "physical_attack_cost_seed" => seed,
         "simple_attack_cost" => seed,
         "aimed_attack_cost" => seed + AIMED_ATTACK_SURCHARGE,
-        "max_magic_mana" => magic_limit,
+        "max_magic_mana" => physical_only? ? 0 : magic_limit,
         "block_table" => block_table,
-        "injected_attack_keys" => injected_attack_keys,
-        "injected_block_keys" => injected_block_keys
+        "injected_attack_keys" => physical_only? ? [] : injected_attack_keys,
+        "injected_block_keys" => physical_only? ? [] : injected_block_keys
       }
     end
 
     private
 
     attr_reader :participation
+
+    def physical_only?
+      participation&.arena_match&.metadata.to_h["physical_only"] == true
+    end
 
     def stored_profile
       @stored_profile ||= (participation&.metadata || {}).fetch(METADATA_KEY, {})
@@ -92,18 +111,34 @@ module Arena
     end
 
     def explicit_integer(key)
-      value = explicit_profile_value(key, include_match: match_profile_applies_to_key?(key))
-      integer_value(value)
+      integer_value(explicit_profile_value(key))
     end
 
-    def explicit_profile_value(key, include_match: true)
+    def explicit_profile_value(key)
       string_key = key.to_s
-      value = stored_profile[string_key]
-      value = participation&.metadata&.dig(string_key) if value.blank?
-      value = match_profile[string_key] if value.blank? && include_match
-      value = participant_character&.metadata&.dig(METADATA_KEY, string_key) if value.blank?
-      value = participant_character&.metadata&.dig(string_key) if value.blank?
-      value
+      # Presence selects the authoritative layer: an explicit empty action list
+      # disables inherited actions, including after a fight profile is persisted.
+      return stored_profile[string_key] if stored_profile&.key?(string_key)
+
+      participation_metadata = participation&.metadata.to_h
+      return participation_metadata[string_key] if participation_metadata.key?(string_key)
+
+      if participation&.npc?
+        npc_profile = participation.npc_combat_data[METADATA_KEY]
+        return npc_profile[string_key] if npc_profile&.key?(string_key)
+      end
+      if match_profile_applies_to_key?(string_key) && match_profile&.key?(string_key)
+        return match_profile[string_key]
+      end
+
+      character_metadata = participant_character&.metadata.to_h
+      character_profile = character_metadata[METADATA_KEY]
+      return character_profile[string_key] if character_profile&.key?(string_key)
+
+      # The character's root block_table describes its last defensive stance,
+      # not the equipment profile for a new fight. Explicit profile overrides
+      # remain in combat_profile; otherwise current equipment selects the tier.
+      character_metadata[string_key] unless string_key == "block_table"
     end
 
     def match_profile_applies_to_key?(key)
@@ -130,12 +165,25 @@ module Arena
 
     def derived_physical_attack_seed
       if participant_character
-        explicit_item_seed || [DEFAULT_PHYSICAL_ATTACK_SEED + equipment_attack_cost_bonus, 1].max
+        explicit_item_seed || derived_weapon_cost
       elsif participation&.npc?
         DEFAULT_PHYSICAL_ATTACK_SEED
       else
         DEFAULT_PHYSICAL_ATTACK_SEED
       end
+    end
+
+    def derived_weapon_cost
+      weapons = participant_character.combat_weapons
+      config = Game::Combat::Calibration.config
+      costs = weapons.map do |weapon|
+        base = integer_value(weapon.item_template.requirements["ap"]) || DEFAULT_PHYSICAL_ATTACK_SEED
+        base - (participant_character.weapon_mastery_for(weapon) / config.fetch("mastery_ap_divisor")).floor
+      end
+      costs = [DEFAULT_PHYSICAL_ATTACK_SEED - (participant_character.weapon_mastery / config.fetch("mastery_ap_divisor")).floor] if costs.empty?
+      combined = (costs.sum.to_f / costs.size).round
+      combined += config.fetch("dual_weapon_ap_surcharge") if weapons.size > 1
+      [combined + equipment_attack_cost_bonus, 1].max
     end
 
     def derived_magic_mana_limit
@@ -150,15 +198,8 @@ module Arena
 
     def explicit_item_seed
       equipped_items.filter_map do |item|
-        stats = item.item_template&.stat_modifiers.to_h
-        item_value(
-          stats["physical_attack_cost_seed"] ||
-          stats[:physical_attack_cost_seed] ||
-          stats["attack_cost_seed"] ||
-          stats[:attack_cost_seed] ||
-          item.properties&.dig("physical_attack_cost_seed") ||
-          item.properties&.dig("attack_cost_seed")
-        )
+        value = explicit_item_value(item, "physical_attack_cost_seed", "attack_cost_seed")
+        integer_value(value)&.clamp(1, 250)
       end.max
     end
 
@@ -168,10 +209,7 @@ module Arena
     end
 
     def explicit_item_block_table(item)
-      stats = item.item_template&.stat_modifiers.to_h
-      value = stats["block_table"] || stats[:block_table] ||
-        stats["shield_block_table"] || stats[:shield_block_table] ||
-        item.properties&.dig("block_table") || item.properties&.dig("shield_block_table")
+      value = explicit_item_value(item, "block_table", "shield_block_table")
       table = Game::Combat::ActionCatalog.normalize_block_table(value)
 
       table unless table == "normal"
@@ -192,26 +230,25 @@ module Arena
 
     def equipment_attack_cost_bonus
       equipped_items.sum do |item|
-        stats = item.item_template&.stat_modifiers.to_h
-        item_value(
-          stats["physical_attack_cost_bonus"] ||
-          stats[:physical_attack_cost_bonus] ||
-          stats["attack_cost_bonus"] ||
-          stats[:attack_cost_bonus] ||
-          item.properties&.dig("physical_attack_cost_bonus") ||
-          item.properties&.dig("attack_cost_bonus")
-        ).to_i
+        # Bonuses are signed adjustments, not positive absolute attack seeds.
+        integer_value(explicit_item_value(item, "physical_attack_cost_bonus", "attack_cost_bonus")).to_i
       end
     end
 
-    def item_value(value)
-      integer_value(value)&.clamp(1, 250)
+    def explicit_item_value(item, *keys)
+      [item.effect_modifiers, item.properties.to_h].each do |source|
+        keys.each do |key|
+          return source[key] if source.key?(key)
+          return source[key.to_sym] if source.key?(key.to_sym)
+        end
+      end
+      nil
     end
 
     def equipped_items
       return [] unless participant_character&.inventory
 
-      participant_character.inventory.inventory_items.equipped.includes(:item_template)
+      participant_character.inventory.inventory_items.equipped.includes(:item_template).select(&:usable_equipment?)
     end
   end
 end

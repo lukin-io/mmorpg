@@ -30,6 +30,7 @@ class ArenaMatchChannel < ApplicationCable::Channel
   #   - attacks [Array<Hash>] complete attack selections
   #   - blocks [Array<Hash>] complete block selection
   #   - skills [Array<Hash>] complete skill selections
+  #   - turn_number [Integer, String] submitted turn; the processor validates it
   def submit_action(data)
     return unless @match&.reload&.live?
     return unless current_user_is_participant?
@@ -41,6 +42,7 @@ class ArenaMatchChannel < ApplicationCable::Channel
 
     # Build params hash for the action
     action_params = {}
+    action_params[:expected_turn_number] = data["turn_number"] if data["action_type"].to_s == "turn"
     action_params[:target] = find_target(data["target_id"]) if data["target_id"].present?
     action_params[:attacks] = data["attacks"] if data["attacks"].present?
     action_params[:blocks] = data["blocks"] if data["blocks"].present?
@@ -124,14 +126,14 @@ class ArenaMatchChannel < ApplicationCable::Channel
           character_id: "npc-participation-#{p.id}",
           name: npc.name,
           character_name: npc.name,
-          level: npc.level,
+          level: p.participant_level,
           team: p.team,
-          current_hp: p.current_hp,
+          current_hp: p.defeat? ? 0 : p.current_hp,
           max_hp: p.max_hp,
-          current_mp: 0,
-          max_mp: 0,
+          current_mp: p.current_mp,
+          max_mp: p.max_mp,
           is_npc: true,
-          is_dead: p.current_hp <= 0
+          is_dead: !p.combat_alive?
         }
       else
         char = p.character
@@ -140,12 +142,12 @@ class ArenaMatchChannel < ApplicationCable::Channel
           character_name: char.name,
           team: p.team,
           level: char.level,
-          current_hp: char.current_hp,
-          max_hp: char.max_hp,
+          current_hp: p.defeat? ? 0 : char.current_hp,
+          max_hp: char.effective_max_hp,
           current_mp: char.current_mp,
-          max_mp: char.max_mp,
+          max_mp: char.effective_max_mp,
           is_npc: false,
-          is_dead: char.current_hp <= 0
+          is_dead: !p.combat_alive?
         }
       end
     end
@@ -153,6 +155,8 @@ class ArenaMatchChannel < ApplicationCable::Channel
 
   def current_user_waiting?
     participation = current_user_participation
+    return false unless participation&.combat_alive?
+
     pending_turn = participation&.metadata.to_h["pending_turn"]
 
     pending_turn.present? &&

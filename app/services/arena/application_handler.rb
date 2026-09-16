@@ -16,8 +16,6 @@ module Arena
   #   handler.accept(application: app, acceptor: character)
   #
   class ApplicationHandler
-    MATCH_COUNTDOWN_SECONDS = 10
-
     Result = Struct.new(:success?, :application, :match, :errors, keyword_init: true)
 
     def initialize(publisher: Arena::RealtimePublisher.new, logger: Rails.logger)
@@ -55,7 +53,19 @@ module Arena
             wait_minutes: params[:wait_minutes] || 10
           )
 
-          if application.save
+          # The captured Group form normalizes a requested 1x1 to 1x2.
+          if application.team_battle? && [application.team_count_before_type_cast, application.enemy_count_before_type_cast].all? { |value| value.to_s == "1" }
+            application.enemy_count = 2
+          end
+
+          equipment_error = EquipmentRule.new(application.fight_kind).rejection_reason(character)
+          if equipment_error
+            Result.new(success?: false, errors: [equipment_error])
+          elsif application.save
+            if application.team_battle?
+              application.arena_application_memberships.create!(character:, team: "a")
+              ActiveRecord.after_all_transactions_commit { enqueue_application_deadline(application) }
+            end
             Result.new(success?: true, application: application)
           else
             Result.new(success?: false, errors: application.errors.full_messages)
@@ -63,16 +73,19 @@ module Arena
         end
       end
 
-      broadcast_new_application(result.application) if result.success?
+      ActiveRecord.after_all_transactions_commit { broadcast_new_application(result.application) } if result.success?
       result
+    rescue ArgumentError, ActiveRecord::RecordInvalid => error
+      Result.new(success?: false, errors: [error.message])
     end
 
-    # Accept an existing application (start the fight)
+    # Reserve a human Duel; its applicant must explicitly confirm the start.
     #
     # @param application [ArenaApplication] the application to accept
     # @param acceptor [Character] the character accepting
     # @return [Result] result with match or errors
-    def accept(application:, acceptor:)
+    def accept(application:, acceptor:, team: nil)
+      return GroupAssembly.new(publisher:).join(application:, character: acceptor, team:) if application.team_battle?
       # NPC applications have different acceptance rules
       if application.npc_application?
         return accept_npc_application(application: application, acceptor: acceptor)
@@ -88,7 +101,7 @@ module Arena
           Result.new(success?: false, errors: [error])
         else
           matched_at = Time.current
-          starts_at = matched_at + MATCH_COUNTDOWN_SECONDS.seconds
+          starts_at = nil
           match = create_match_from_applications(application, acceptor)
 
           application.update!(
@@ -113,10 +126,7 @@ module Arena
           )
 
           application.update!(matched_with: acceptor_app)
-          persist_match_start_schedule(match, starts_at)
-
           ActiveRecord.after_all_transactions_commit do
-            enqueue_match_start(match)
             broadcast_match_created(match, application)
           end
 
@@ -125,6 +135,56 @@ module Arena
       end
     rescue ActiveRecord::RecordInvalid => e
       Result.new(success?: false, errors: [e.message])
+    end
+
+    # Confirm or refuse a reserved human Duel. Locks the reservation, match and
+    # both players; start rechecks admission before entering the shared engine.
+    # Refusal reopens the original offer and cancels only its unused match.
+    # Returns Result; no combat/reward state is created by refusal or retries.
+    def confirm_duel(match:, character:, refuse: false)
+      return Result.new(success?: false, errors: ["This is not an Arena Duel reservation"]) unless match.arena_room && match.metadata.to_h["duel_applicant_id"].present?
+
+      ActiveRecord::Base.transaction do
+        match.arena_room.lock!
+        match.lock!
+        applications = match.arena_applications.order(:id).lock.to_a
+        original = applications.find { |entry| entry.applicant_id == match.metadata["duel_applicant_id"] }
+        opponent = applications.find { |entry| entry != original }
+        next Result.new(success?: false, errors: ["This Duel is no longer awaiting confirmation"]) unless match.awaiting_duel_confirmation? && original && opponent
+        next Result.new(success?: false, errors: ["Only the applicant can start this Duel"]) unless refuse || original.applicant_id == character.id
+        next Result.new(success?: false, errors: ["You are not part of this Duel"]) unless applications.any? { |entry| entry.applicant_id == character.id }
+
+        lock_characters!(*applications.map(&:applicant))
+        if refuse
+          opponent.update!(status: :cancelled, matched_with: nil)
+          original.update!(status: original.deadline_passed? ? :expired : :open, matched_with: nil,
+            matched_at: nil, starts_at: nil, arena_match: nil)
+          match.update!(status: :cancelled)
+          ActiveRecord.after_all_transactions_commit do
+            broadcast_new_application(original)
+            CombatBroadcaster.new(match).broadcast_state_refresh(reason: :duel_refused)
+          end
+        else
+          next Result.new(success?: false, errors: ["Application has expired; refuse the Duel to leave"]) if original.deadline_passed?
+          error = applications.filter_map do |entry|
+            player = entry.applicant
+            if !match.arena_room.accessible_by?(player)
+              "Arena room is unavailable"
+            elsif player.in_combat? || player.arena_participations.joins(:arena_match).merge(ArenaMatch.active).where.not(arena_match: match).exists?
+              "Player is already in another fight"
+            elsif !entry.character_hp_sufficient?(player)
+              "Recover before fighting: minimum 50% HP"
+            else
+              EquipmentRule.new(original.fight_kind).rejection_reason(player)
+            end
+          end.first
+          next Result.new(success?: false, errors: [error]) if error
+
+          match.update!(metadata: match.metadata.merge("duel_start_confirmed" => true))
+          CombatProcessor.new(match).start_match
+        end
+        Result.new(success?: true, application: original, match: match)
+      end
     end
 
     # Accept an NPC application (player vs bot)
@@ -144,13 +204,20 @@ module Arena
           next Result.new(success?: false, errors: ["This arena room is unavailable"])
         end
 
+        unless application.arena_room.has_capacity?
+          next Result.new(success?: false, errors: ["Arena room is full"])
+        end
+
         unless application.acceptable_by?(acceptor)
           next Result.new(success?: false, errors: [application.rejection_reason_for(acceptor) || "You cannot accept this application"])
         end
 
         # Check if player already in combat
-        if acceptor.in_combat?
+        if character_has_active_match?(acceptor)
           next Result.new(success?: false, errors: ["You are already in combat"])
+        end
+        if character_has_active_application?(acceptor)
+          next Result.new(success?: false, errors: ["You already have an active fight application"])
         end
 
         # Create the match
@@ -183,6 +250,7 @@ module Arena
     # @param character [Character] the character cancelling (must be applicant)
     # @return [Result] result with success status
     def cancel(application:, character:)
+      return GroupAssembly.new(publisher:).withdraw(application:, character:) if application.team_battle?
       ActiveRecord::Base.transaction do
         application.lock!
 
@@ -210,6 +278,7 @@ module Arena
       return "You are already in an active fight" if character_has_active_match?(character)
       return "You already have an active fight application" if character_has_active_application?(character)
       return "Arena room is full" unless room.has_capacity?
+      return "Recover before fighting: minimum 50% HP" unless ArenaApplication.new.character_hp_sufficient?(character)
 
       nil
     end
@@ -220,17 +289,20 @@ module Arena
       return "You are already in an active fight" if character_has_active_match?(acceptor)
       return "You already have an active fight application" if character_has_active_application?(acceptor)
       return "Applicant is already in an active fight" if character_has_active_match?(application.applicant)
+      return "Applicant must recover before fighting" unless application.character_hp_sufficient?(application.applicant)
+      equipment_error = EquipmentRule.new(application.fight_kind).rejection_reason(application.applicant)
+      return equipment_error if equipment_error
       return "Arena room is full" unless room.has_capacity?
 
       nil
     end
 
     def character_has_active_application?(character)
-      ArenaApplication.active.exists?(applicant: character)
+      character.waiting_arena_application.present? || ArenaApplication.active.exists?(applicant: character)
     end
 
     def character_has_active_match?(character)
-      character.in_combat? || character.arena_participations
+      character.in_combat? || character.unfinished_arena_result.present? || character.arena_participations
         .joins(:arena_match)
         .merge(ArenaMatch.active)
         .exists?
@@ -250,7 +322,10 @@ module Arena
         turn_timeout_seconds: application.timeout_seconds,
         trauma_percent: application.trauma_percent,
         metadata: {
-          fight_kind: application.fight_kind
+          fight_kind: application.fight_kind,
+          duel_applicant_id: application.applicant_id,
+          fight_timeout_seconds: 300,
+          physical_only: true
         }
       )
 
@@ -278,6 +353,8 @@ module Arena
       npc = application.npc_template
       match_metadata = {
         fight_kind: application.fight_kind,
+        physical_only: true,
+        fight_timeout_seconds: 300,
         is_npc_fight: true,
         npc_template_id: npc.id,
         npc_name: npc.name,
@@ -321,17 +398,10 @@ module Arena
       match
     end
 
-    def persist_match_start_schedule(match, starts_at)
-      match.update!(metadata: match.metadata.merge(starts_at: starts_at.iso8601))
-    end
-
-    def enqueue_match_start(match)
-      Arena::MatchStarterJob.set(wait: MATCH_COUNTDOWN_SECONDS.seconds).perform_later(match.id)
+    def enqueue_application_deadline(application)
+      ApplicationDeadlineJob.set(wait_until: application.expires_at).perform_later(application.id)
     rescue StandardError => error
-      logger.error(
-        "[Arena::ApplicationHandler] match_start_enqueue_failed " \
-        "match_id=#{match.id} error=#{error.class}"
-      )
+      logger.error("[Arena::ApplicationHandler] application_deadline_enqueue_failed application_id=#{application.id} error=#{error.class}")
     end
 
     def broadcast_new_application(application)
@@ -358,7 +428,7 @@ module Arena
           application_id: application.id,
           acceptor_application_id: acceptor_application_id,
           participant_ids: participant_character_ids,
-          countdown: 10,
+          countdown: 0,
           redirect_url: "/arena_matches/#{match.id}"
         }
       )

@@ -1,5 +1,8 @@
 # Neverlands NPCs and Quests Source Summary
 
+For the design, delivery status and current implementation using this evidence,
+follow the [NPCs and Quests domain](../../../domains/npcs_quests.md).
+
 - Document type: neverlands-source-summary
 - Domain: npcs_quests
 - Updated: 2026-09-09

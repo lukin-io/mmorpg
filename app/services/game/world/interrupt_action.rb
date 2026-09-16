@@ -46,9 +46,11 @@ module Game
             interrupted: true,
             match:,
             npc:,
-            message: "#{npc.display_name} attacks before the action completes."
+            message: "A fight starts before the action completes."
           )
         end
+      rescue StartNpcFight::UnavailableRosterError
+        Result.new(interrupted: false)
       end
 
       private

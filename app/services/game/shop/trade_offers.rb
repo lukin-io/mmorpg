@@ -34,7 +34,7 @@ module Game
               next unless account
               next if action == :buy && !target.available_in_shop?
               next if action == :buy && license_rules.purchase_block_reason(target)
-              next if action == :sell && (target.protected_from_discard? || target.broken? || !target.valid_sale_durability? || !Catalog.sale_price_for_item(target, trading_skill: LicenseRules.trading_skill(character)).positive?)
+              next if action == :sell && (!target.tradable? || target.broken? || !target.valid_sale_durability? || !Catalog.sale_price_for_item(target, trading_skill: LicenseRules.trading_skill(character)).positive?)
 
               metadata = {"shop_location" => location, "shop_account_id" => account.id, "target_state" => target_state(target)}
               action_type = "shop_#{action}"

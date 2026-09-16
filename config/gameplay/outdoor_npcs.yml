@@ -12,11 +12,14 @@ outpost_surroundings:
       plague_rat: "Крысы"
       wilderness_bandit: "Разбойники"
       wilderness_robber: "Грабители"
+      wilderness_ogre: "Огры"
     profiles:
       - key: forpost_captured_rat_pair
         source_npc_key: plague_rat
       - key: forpost_captured_bandit_groups
         source_npc_key: wilderness_bandit
+      - key: forpost_captured_ogre_groups
+        source_npc_key: wilderness_ogre
     # User-reported September 9 cadence; uniform sampling within this interval
     # is a local calibration, not a measured Neverlands distribution.
     passive_delay_source: "user_reported_2026-09-09"
@@ -24,7 +27,116 @@ outpost_surroundings:
       - key: user_reported_five_to_six_minutes
         min_seconds: 300
         max_seconds: 360
+  # Local placement policy for the ten stronger captures: source coordinates
+  # were not observed. Both cells are passable, remote, and unannotated for NPCs.
+  calibrated_habitats:
+    - {x: 19, y: 9, preset_keys: ["2026-09-11-2050", "2026-09-11-2103", "2026-09-11-2108", "2026-09-11-2120", "2026-09-11-2126"]}
+    - {x: 19, y: 10, preset_keys: ["2026-09-11-2131", "2026-09-11-2139", "2026-09-11-2144", "2026-09-11-2150", "2026-09-11-2203"]}
   npc_templates:
+    # Complete observed groups are reused only at the two surveyed Ogre16–18
+    # cells. Activation uses the September12 authorized calibrated model;
+    # source Strength/Crushing must not be relabeled as a guessed base attack.
+    - key: wilderness_ogre
+      name: Ogre
+      role: hostile
+      level: 16
+      hp: 1455
+      metadata:
+        active: true
+        combat_readiness: calibrated_v1
+        calibrated_loot: true
+        source_name: "Огр"
+        source_location: "Болото Зыбкая Муть"
+        source_observation: "2026-09-11_ogre_combat_cycle"
+        avatar_image: "ogre.png"
+        max_mp: 7
+        response_attack_counts: [1, 2]
+        encounter_selection_mode: observed_sample_replay
+        encounter_rosters:
+          - key: ogres_20260911_2316
+            trauma_percent: 30
+            encounter_defeat_experience_reward: 0
+            members:
+              - {npc_key: wilderness_ogre, level: 16, hp: 1455}
+              - {npc_key: wilderness_ogre, level: 16, hp: 1455}
+              - {npc_key: wilderness_ogre, level: 17, hp: 1570}
+          - key: ogres_20260911_2321
+            trauma_percent: 30
+            encounter_defeat_experience_reward: 0
+            members:
+              - {npc_key: wilderness_ogre, level: 16, hp: 1455}
+              - {npc_key: wilderness_ogre, level: 16, hp: 1455}
+              - {npc_key: wilderness_ogre, level: 16, hp: 1455}
+              - {npc_key: wilderness_ogre, level: 18, hp: 1685}
+        level_profiles:
+          "16":
+            display_stats: {strength: 120, dexterity: 55, luck: 121, knowledge: 1, wisdom: 1, armor_class: 470, evasion: 0, accuracy: 440, crushing: 750, endurance: 630, armor_penetration: 75}
+            stats: {defense: 470, dexterity: 55, luck: 121, evasion: 0, accuracy: 440, armor_penetration: 75}
+            equipment:
+              head: {name: "Ogre Helmet", artwork: ogre_helmet}
+              amulet: {name: "Ogre Amulet", artwork: ogre_amulet}
+              main_hand: {name: "Ogre Club", artwork: ogre_club}
+              feet: {name: "Ogre Boots", artwork: ogre_boots}
+              ring_1: {name: "Ogre Ring", artwork: ogre_ring}
+              ring_2: {name: "Ogre Ring", artwork: ogre_ring}
+              bracers: {name: "Ogre Bracers", artwork: ogre_bracers}
+              hands: {name: "Ogre Gloves", artwork: ogre_gloves}
+              chest: {name: "Ogre Armor", artwork: ogre_armor}
+              belt: {name: "Ogre Belt", artwork: ogre_belt}
+          "17":
+            display_stats: {strength: 137, dexterity: 60, luck: 139, knowledge: 1, wisdom: 1, armor_class: 505, evasion: 0, accuracy: 475, crushing: 810, endurance: 680, armor_penetration: 80}
+            stats: {defense: 505, dexterity: 60, luck: 139, evasion: 0, accuracy: 475, armor_penetration: 80}
+            equipment:
+              head: {name: "Ogre Helmet", artwork: ogre_helmet}
+              amulet: {name: "Ogre Amulet", artwork: ogre_amulet}
+              main_hand: {name: "Ogre Club", artwork: ogre_club}
+              feet: {name: "Ogre Boots", artwork: ogre_boots}
+              ring_1: {name: "Ogre Ring", artwork: ogre_ring}
+              ring_2: {name: "Ogre Ring", artwork: ogre_ring}
+              bracers: {name: "Ogre Bracers", artwork: ogre_bracers}
+              hands: {name: "Ogre Gloves", artwork: ogre_gloves}
+              chest: {name: "Ogre Armor", artwork: ogre_armor}
+              belt: {name: "Ogre Belt", artwork: ogre_belt}
+          "18":
+            display_stats: {strength: 151, dexterity: 60, luck: 155, knowledge: 1, wisdom: 1, armor_class: 535, evasion: 0, accuracy: 495, crushing: 870, endurance: 730, armor_penetration: 85}
+            stats: {defense: 535, dexterity: 60, luck: 155, evasion: 0, accuracy: 495, armor_penetration: 85}
+            equipment:
+              head: {name: "Ogre Helmet", artwork: ogre_helmet}
+              amulet: {name: "Ogre Amulet", artwork: ogre_amulet}
+              main_hand: {name: "Ogre Club", artwork: ogre_club}
+              feet: {name: "Ogre Boots", artwork: ogre_boots}
+              ring_1: {name: "Ogre Ring", artwork: ogre_ring}
+              ring_2: {name: "Ogre Ring", artwork: ogre_ring}
+              bracers: {name: "Ogre Bracers", artwork: ogre_bracers}
+              hands: {name: "Ogre Gloves", artwork: ogre_gloves}
+              chest: {name: "Ogre Armor", artwork: ogre_armor}
+              belt: {name: "Ogre Belt", artwork: ogre_belt}
+    - key: wilderness_goblin
+      name: Goblin
+      role: hostile
+      level: 3
+      hp: 55
+      xp: 0
+      metadata:
+        calibrated_loot: true
+        source_name: "Гоблин"
+        source_observation: "2026-09-11_low_level_two_cell_combat_cycle"
+        avatar_image: "goblin.png"
+        max_mp: 7
+        search_max_level_difference: 2
+        response_attack_counts: [1, 2]
+        equipment:
+          main_hand: {name: "Goblin Stick", artwork: goblin_stick}
+          feet: {name: "Goblin Sandals", artwork: goblin_sandals}
+          hands: {name: "Goblin Gloves", artwork: goblin_gloves}
+          chest: {name: "Goblin Chainmail", artwork: goblin_chainmail}
+        level_profiles:
+          "3":
+            display_stats: {strength: 11, dexterity: 13, luck: 12, knowledge: 1, wisdom: 1, armor_class: 11, evasion: 30, crushing: 10, endurance: 25}
+            stats: {defense: 11, dexterity: 13, luck: 12, evasion: 30}
+          "4":
+            display_stats: {strength: 14, dexterity: 18, luck: 15, knowledge: 1, wisdom: 1, armor_class: 14, evasion: 35, crushing: 20, endurance: 35}
+            stats: {defense: 14, dexterity: 18, luck: 15, evasion: 35}
     - key: wilderness_robber
       name: Robber
       role: hostile
@@ -32,10 +144,60 @@ outpost_surroundings:
       hp: 270
       xp: 0
       metadata:
+        calibrated_loot: true
         source_name: "Грабитель"
         source_observation: "2026-09-01_wilderness_bandit_group_variation_and_magic"
         source_map: "m_1008_1007"
         max_attacks_per_turn: 2
+        avatar_image: "robber.png"
+        max_mp: 7
+        response_attack_counts: [1, 2]
+        level_profiles:
+          "13":
+            source_observation: "2026-09-11_stronger_npc_loot_combat_cycle"
+            display_stats: {strength: 74, dexterity: 50, luck: 74, knowledge: 1, wisdom: 1, armor_class: 388, evasion: 70, accuracy: 280, crushing: 390, endurance: 310, armor_penetration: 60}
+            stats: {defense: 388, dexterity: 50, luck: 74, evasion: 70, accuracy: 280}
+            equipment:
+              head: {name: "Robber Helmet", artwork: robber_helmet}
+              amulet: {name: "Robber Talisman", artwork: robber_talisman}
+              main_hand: {name: "Robber Club", artwork: robber_club}
+              feet: {name: "Robber Boots", artwork: bandit_boots}
+              ring_1: {name: "Robber Ring", artwork: bandit_ring}
+              ring_2: {name: "Robber Ring", artwork: bandit_ring}
+              bracers: {name: "Robber Bracers", artwork: bandit_bracers}
+              hands: {name: "Robber Gloves", artwork: bandit_gloves}
+              belt: {name: "Robber Belt", artwork: bandit_belt}
+              chest: {name: "Robber Armor", artwork: robber_armor}
+          "14":
+            source_observation: "2026-09-11_stronger_npc_loot_combat_cycle"
+            display_stats: {strength: 82, dexterity: 52, luck: 81, knowledge: 1, wisdom: 1, armor_class: 424, evasion: 90, accuracy: 290, crushing: 425, endurance: 355, armor_penetration: 65}
+            stats: {defense: 424, dexterity: 52, luck: 81, evasion: 90, accuracy: 290}
+            equipment:
+              head: {name: "Robber Helmet", artwork: robber_helmet}
+              amulet: {name: "Robber Talisman", artwork: robber_talisman}
+              main_hand: {name: "Robber Club", artwork: robber_club}
+              feet: {name: "Robber Boots", artwork: bandit_boots}
+              ring_1: {name: "Robber Ring", artwork: bandit_ring}
+              ring_2: {name: "Robber Ring", artwork: bandit_ring}
+              bracers: {name: "Robber Bracers", artwork: bandit_bracers}
+              hands: {name: "Robber Gloves", artwork: bandit_gloves}
+              belt: {name: "Robber Belt", artwork: bandit_belt}
+              chest: {name: "Robber Armor", artwork: robber_armor}
+          "15":
+            source_observation: "2026-09-11_stronger_npc_loot_combat_cycle"
+            display_stats: {strength: 91, dexterity: 53, luck: 98, knowledge: 1, wisdom: 1, armor_class: 485, evasion: 110, accuracy: 425, crushing: 540, endurance: 415, armor_penetration: 70}
+            stats: {defense: 485, dexterity: 53, luck: 98, evasion: 110, accuracy: 425}
+            equipment:
+              head: {name: "Robber Helmet", artwork: robber_helmet}
+              amulet: {name: "Robber Talisman", artwork: robber_talisman}
+              main_hand: {name: "Robber Club", artwork: robber_club}
+              feet: {name: "Robber Boots", artwork: bandit_boots}
+              ring_1: {name: "Robber Ring", artwork: bandit_ring}
+              ring_2: {name: "Robber Ring", artwork: bandit_ring}
+              bracers: {name: "Robber Bracers", artwork: bandit_bracers}
+              hands: {name: "Robber Gloves", artwork: bandit_gloves}
+              belt: {name: "Robber Belt", artwork: bandit_belt}
+              chest: {name: "Robber Armor", artwork: robber_armor}
   npcs:
     - key: plague_rat
       name: Plague Rat
@@ -67,9 +229,8 @@ outpost_surroundings:
         - kind: item
           item: rat_tail
           source_name: "Rat Tail"
-          # Exact Neverlands probability is not captured. Preserve the prior
-          # no-drop behavior until source evidence supplies a value.
-          chance: 0.0
+          # User-authorized calibrated probability; source rate remains unknown.
+          chance: 0.03
 
     # Source [1008,1007] maps to local [14,15] with the zone's [994,992]
     # coordinate offset. This independent capture is not beside the west gate.
@@ -85,6 +246,7 @@ outpost_surroundings:
       hp: 155
       xp: 0
       metadata:
+        calibrated_loot: true
         source_name: "Разбойник"
         source_location: "Captured wilderness cell"
         source_observation: "2026-09-01_wilderness_bandit_group_variation_and_magic"
@@ -93,6 +255,57 @@ outpost_surroundings:
         source_capture_scope: "independent_encounter_sample"
         source_coordinate_offset: [994, 992]
         max_attacks_per_turn: 2
+        avatar_image: "bandit.png"
+        response_attack_counts: [1, 2]
+        level_profiles:
+          "13":
+            source_observation: "2026-09-11_stronger_npc_loot_combat_cycle"
+            display_stats: {strength: 51, dexterity: 73, luck: 52, knowledge: 1, wisdom: 1, armor_class: 290, evasion: 375, accuracy: 345, crushing: 275, endurance: 140, armor_penetration: 120}
+            stats: {defense: 290, dexterity: 73, luck: 52, evasion: 375, accuracy: 345}
+            equipment:
+              head: {name: "Bandit Headband", artwork: bandit_headband}
+              amulet: {name: "Bandit Amulet", artwork: bandit_amulet}
+              main_hand: {name: "Bandit Sword", artwork: bandit_sword}
+              feet: {name: "Bandit Boots", artwork: bandit_boots}
+              ring_1: {name: "Bandit Ring", artwork: bandit_ring}
+              ring_2: {name: "Bandit Ring", artwork: bandit_ring}
+              bracers: {name: "Bandit Bracers", artwork: bandit_bracers}
+              hands: {name: "Bandit Gloves", artwork: bandit_gloves}
+              belt: {name: "Bandit Belt", artwork: bandit_belt}
+              off_hand: {name: "Bandit Dagger", artwork: bandit_dagger}
+              chest: {name: "Bandit Jacket", artwork: bandit_jacket}
+          "14":
+            source_observation: "2026-09-11_stronger_npc_loot_combat_cycle"
+            display_stats: {strength: 59, dexterity: 82, luck: 56, knowledge: 1, wisdom: 1, armor_class: 340, evasion: 470, accuracy: 355, crushing: 295, endurance: 145, armor_penetration: 130}
+            stats: {defense: 340, dexterity: 82, luck: 56, evasion: 470, accuracy: 355}
+            equipment:
+              head: {name: "Bandit Headband", artwork: bandit_headband}
+              amulet: {name: "Bandit Amulet", artwork: bandit_amulet}
+              main_hand: {name: "Bandit Sword", artwork: bandit_sword}
+              feet: {name: "Bandit Boots", artwork: bandit_boots}
+              ring_1: {name: "Bandit Ring", artwork: bandit_ring}
+              ring_2: {name: "Bandit Ring", artwork: bandit_ring}
+              bracers: {name: "Bandit Bracers", artwork: bandit_bracers}
+              hands: {name: "Bandit Gloves", artwork: bandit_gloves}
+              belt: {name: "Bandit Belt", artwork: bandit_belt}
+              off_hand: {name: "Bandit Dagger", artwork: bandit_dagger}
+              chest: {name: "Bandit Jacket", artwork: bandit_jacket}
+          "15":
+            source_observation: "2026-09-11_stronger_npc_loot_combat_cycle"
+            display_stats: {strength: 69, dexterity: 93, luck: 62, knowledge: 1, wisdom: 1, armor_class: 375, evasion: 650, accuracy: 505, crushing: 310, endurance: 180, armor_penetration: 140}
+            stats: {defense: 375, dexterity: 93, luck: 62, evasion: 650, accuracy: 505}
+            equipment:
+              head: {name: "Bandit Headband", artwork: bandit_headband}
+              amulet: {name: "Bandit Amulet", artwork: bandit_amulet}
+              main_hand: {name: "Bandit Sword", artwork: bandit_sword}
+              feet: {name: "Bandit Boots", artwork: bandit_boots}
+              ring_1: {name: "Bandit Ring", artwork: bandit_ring}
+              ring_2: {name: "Bandit Ring", artwork: bandit_ring}
+              bracers: {name: "Bandit Bracers", artwork: bandit_bracers}
+              hands: {name: "Bandit Gloves", artwork: bandit_gloves}
+              belt: {name: "Bandit Belt", artwork: bandit_belt}
+              off_hand: {name: "Bandit Dagger", artwork: bandit_dagger}
+              chest: {name: "Bandit Jacket", artwork: bandit_jacket}
         encounter_selection_mode: "observed_sample_replay"
         passive_delay_windows:
           - key: "2026-09-01-interval-1"
@@ -139,3 +352,263 @@ outpost_surroundings:
               - npc_key: wilderness_robber
                 level: 9
                 hp: 310
+
+    # September 11 exact two-cell survey. Complete observed roster/XP outputs
+    # are replay samples, not inferred spawn weights or a level-based XP curve.
+    # NPC response sizes are captured; their hidden AP/choice weights are not.
+    # Uncaptured coefficients/loot probabilities use the separate calibrated model.
+    - key: wilderness_orc
+      name: Orc
+      role: hostile
+      level: 3
+      x: 4
+      y: 12
+      hp: 65
+      xp: 0
+      metadata:
+        calibrated_loot: true
+        source_name: "Орк"
+        source_observation: "2026-09-11_low_level_two_cell_combat_cycle"
+        source_map: "m_998_1004"
+        source_coordinates: [998, 1004]
+        source_coordinate_offset: [994, 992]
+        avatar_image: "orc.png"
+        max_mp: 7
+        search_max_level_difference: 2
+        response_attack_counts: [1]
+        # Source block coverage is only partially exposed by the log.
+        response_block_keys: [torso_block]
+        equipment:
+          main_hand: {name: "Orc Dagger", artwork: orc_dagger}
+          feet: {name: "Orc Boots", artwork: orc_boots}
+          bracers: {name: "Orc Bracers", artwork: orc_bracers}
+          belt: {name: "Orc Belt", artwork: orc_belt}
+        level_profiles:
+          "3":
+            display_stats: {strength: 17, dexterity: 11, luck: 15, knowledge: 1, wisdom: 1, armor_class: 7, evasion: 20, accuracy: 10, crushing: 50, armor_penetration: 10}
+            stats: {defense: 7, dexterity: 11, luck: 15, evasion: 20, accuracy: 10, armor_penetration: 10}
+          "4":
+            display_stats: {strength: 20, dexterity: 14, luck: 18, knowledge: 1, wisdom: 1, armor_class: 10, evasion: 20, accuracy: 20, crushing: 60, armor_penetration: 20}
+            stats: {defense: 10, dexterity: 14, luck: 18, evasion: 20, accuracy: 20, armor_penetration: 20}
+        encounter_selection_mode: "observed_sample_replay"
+        passive_delay_windows:
+          - {key: "user_reported_five_to_six_minutes", min_seconds: 300, max_seconds: 360}
+        encounter_rosters:
+          - key: "2026-09-11-1450"
+            encounter_experience_reward: 0
+            members:
+              - {npc_key: wilderness_orc, level: 3, hp: 65}
+          - key: "2026-09-11-1528"
+            encounter_experience_reward: 0
+            members:
+              - {npc_key: wilderness_goblin, level: 3, hp: 55}
+          - key: "2026-09-11-1533"
+            encounter_experience_reward: 1
+            members:
+              - {npc_key: wilderness_orc, level: 4, hp: 110}
+              - {npc_key: wilderness_orc, level: 3, hp: 65}
+          - key: "2026-09-11-1539"
+            encounter_experience_reward: 1
+            members:
+              - {npc_key: wilderness_goblin, level: 4, hp: 95}
+              - {npc_key: wilderness_goblin, level: 4, hp: 95}
+          - key: "2026-09-11-1544"
+            encounter_experience_reward: 1
+            members:
+              - {npc_key: wilderness_orc, level: 3, hp: 65}
+              - {npc_key: wilderness_orc, level: 3, hp: 65}
+              - {npc_key: wilderness_goblin, level: 3, hp: 55}
+
+    - key: wilderness_skeleton
+      name: Skeleton
+      role: hostile
+      level: 7
+      x: 4
+      y: 11
+      hp: 70
+      xp: 0
+      metadata:
+        calibrated_loot: true
+        source_name: "Скелет"
+        source_observation: "2026-09-11_low_level_two_cell_combat_cycle"
+        source_map: "m_998_1003"
+        source_coordinates: [998, 1003]
+        source_coordinate_offset: [994, 992]
+        avatar_image: "skeleton.png"
+        max_mp: 7
+        search_enabled: false
+        response_attack_counts: [2]
+        response_block_keys: [torso_block, legs_block]
+        equipment: {}
+        level_profiles:
+          "7":
+            display_stats: {strength: 20, dexterity: 25, luck: 17, knowledge: 1, armor_class: 10, evasion: 50, accuracy: 50, crushing: 30}
+            stats: {defense: 10, dexterity: 25, luck: 17, evasion: 50, accuracy: 50}
+          "8":
+            display_stats: {strength: 22, dexterity: 27, luck: 18, knowledge: 1, armor_class: 15, evasion: 70, accuracy: 70, crushing: 40}
+            stats: {defense: 15, dexterity: 27, luck: 18, evasion: 70, accuracy: 70}
+          "9":
+            display_stats: {strength: 24, dexterity: 30, luck: 20, knowledge: 1, armor_class: 20, evasion: 90, accuracy: 90, crushing: 50}
+            stats: {defense: 20, dexterity: 30, luck: 20, evasion: 90, accuracy: 90}
+        encounter_selection_mode: "observed_sample_replay"
+        passive_delay_windows:
+          - {key: "user_reported_five_to_six_minutes", min_seconds: 300, max_seconds: 360}
+        encounter_rosters:
+          - key: "2026-09-11-1503"
+            encounter_experience_reward: 10
+            members:
+              - {npc_key: wilderness_skeleton, level: 9, hp: 90}
+              - {npc_key: wilderness_skeleton, level: 9, hp: 90}
+          - key: "2026-09-11-1508"
+            encounter_experience_reward: 14
+            members:
+              - {npc_key: wilderness_skeleton, level: 9, hp: 90}
+              - {npc_key: wilderness_skeleton, level: 9, hp: 90}
+          - key: "2026-09-11-1514"
+            encounter_experience_reward: 5
+            members:
+              - {npc_key: wilderness_skeleton, level: 8, hp: 80}
+              - {npc_key: wilderness_skeleton, level: 7, hp: 70}
+          - key: "2026-09-11-1516"
+            encounter_experience_reward: 42
+            members:
+              - {npc_key: wilderness_skeleton, level: 7, hp: 70}
+              - {npc_key: wilderness_skeleton, level: 8, hp: 80}
+              - {npc_key: wilderness_skeleton, level: 9, hp: 90}
+              - {npc_key: wilderness_skeleton, level: 9, hp: 90}
+          - key: "2026-09-11-1522"
+            encounter_experience_reward: 2
+            members:
+              - {npc_key: wilderness_skeleton, level: 7, hp: 70}
+
+# Complete September 11 stage-2 observations, catalogued by the observed region
+# label only. Exact source cells are unknown; calibrated_habitats above now
+# assigns local remote placements. Explicit reuse follows the existing
+# TileNpc metadata -> EncounterRosterSelector -> StartNpcFight path.
+# XP belongs to each whole level-17 capture, not a universal NPC/level formula.
+# Exact trauma percentages and drop chances are unknown; calibrated defaults
+# remain separate from the preserved observed preset values.
+# If explicitly reused, the selector's existing trauma fallback still applies;
+# that default is not an observed value for these ten fights.
+oktal_surroundings:
+  zone_name: "Oktal Surroundings"
+  encounter_presets:
+    - key: "2026-09-11-2050"
+      metadata:
+        source_observation: "2026-09-11_stronger_npc_loot_combat_cycle"
+        source_fight_number: 1
+        source_player_level: 17
+        encounter_selection_mode: "observed_sample_replay"
+        encounter_rosters:
+          - key: "2026-09-11-2050"
+            encounter_experience_reward: 0
+            encounter_defeat_experience_reward: 57
+            members:
+              - {npc_key: wilderness_bandit, level: 13, hp: 605}
+              - {npc_key: wilderness_bandit, level: 14, hp: 835}
+              - {npc_key: wilderness_bandit, level: 14, hp: 835}
+    - key: "2026-09-11-2103"
+      metadata:
+        source_observation: "2026-09-11_stronger_npc_loot_combat_cycle"
+        source_fight_number: 2
+        source_player_level: 17
+        encounter_selection_mode: "observed_sample_replay"
+        encounter_rosters:
+          - key: "2026-09-11-2103"
+            encounter_experience_reward: 631
+            members:
+              - {npc_key: wilderness_bandit, level: 14, hp: 835}
+    - key: "2026-09-11-2108"
+      metadata:
+        source_observation: "2026-09-11_stronger_npc_loot_combat_cycle"
+        source_fight_number: 3
+        source_player_level: 17
+        encounter_selection_mode: "observed_sample_replay"
+        encounter_rosters:
+          - key: "2026-09-11-2108"
+            encounter_experience_reward: 13183
+            members:
+              - {npc_key: wilderness_bandit, level: 13, hp: 605}
+              - {npc_key: wilderness_bandit, level: 13, hp: 605}
+              - {npc_key: wilderness_robber, level: 13, hp: 695}
+              - {npc_key: wilderness_robber, level: 14, hp: 815}
+              - {npc_key: wilderness_robber, level: 15, hp: 1005}
+              - {npc_key: wilderness_robber, level: 15, hp: 1005}
+    - key: "2026-09-11-2120"
+      metadata:
+        source_observation: "2026-09-11_stronger_npc_loot_combat_cycle"
+        source_fight_number: 4
+        source_player_level: 17
+        encounter_selection_mode: "observed_sample_replay"
+        encounter_rosters:
+          - key: "2026-09-11-2120"
+            encounter_experience_reward: 764
+            members:
+              - {npc_key: wilderness_bandit, level: 15, hp: 945}
+    - key: "2026-09-11-2126"
+      metadata:
+        source_observation: "2026-09-11_stronger_npc_loot_combat_cycle"
+        source_fight_number: 5
+        source_player_level: 17
+        encounter_selection_mode: "observed_sample_replay"
+        encounter_rosters:
+          - key: "2026-09-11-2126"
+            encounter_experience_reward: 494
+            members:
+              - {npc_key: wilderness_robber, level: 14, hp: 815}
+    - key: "2026-09-11-2131"
+      metadata:
+        source_observation: "2026-09-11_stronger_npc_loot_combat_cycle"
+        source_fight_number: 6
+        source_player_level: 17
+        encounter_selection_mode: "observed_sample_replay"
+        encounter_rosters:
+          - key: "2026-09-11-2131"
+            encounter_experience_reward: 778
+            members:
+              - {npc_key: wilderness_bandit, level: 14, hp: 835}
+    - key: "2026-09-11-2139"
+      metadata:
+        source_observation: "2026-09-11_stronger_npc_loot_combat_cycle"
+        source_fight_number: 7
+        source_player_level: 17
+        encounter_selection_mode: "observed_sample_replay"
+        encounter_rosters:
+          - key: "2026-09-11-2139"
+            encounter_experience_reward: 820
+            members:
+              - {npc_key: wilderness_bandit, level: 14, hp: 835}
+              - {npc_key: wilderness_bandit, level: 14, hp: 835}
+    - key: "2026-09-11-2144"
+      metadata:
+        source_observation: "2026-09-11_stronger_npc_loot_combat_cycle"
+        source_fight_number: 8
+        source_player_level: 17
+        encounter_selection_mode: "observed_sample_replay"
+        encounter_rosters:
+          - key: "2026-09-11-2144"
+            encounter_experience_reward: 381
+            members:
+              - {npc_key: wilderness_bandit, level: 13, hp: 605}
+    - key: "2026-09-11-2150"
+      metadata:
+        source_observation: "2026-09-11_stronger_npc_loot_combat_cycle"
+        source_fight_number: 9
+        source_player_level: 17
+        encounter_selection_mode: "observed_sample_replay"
+        encounter_rosters:
+          - key: "2026-09-11-2150"
+            encounter_experience_reward: 631
+            members:
+              - {npc_key: wilderness_bandit, level: 14, hp: 835}
+    - key: "2026-09-11-2203"
+      metadata:
+        source_observation: "2026-09-11_stronger_npc_loot_combat_cycle"
+        source_fight_number: 10
+        source_player_level: 17
+        encounter_selection_mode: "observed_sample_replay"
+        encounter_rosters:
+          - key: "2026-09-11-2203"
+            encounter_experience_reward: 493
+            members:
+              - {npc_key: wilderness_robber, level: 14, hp: 815}

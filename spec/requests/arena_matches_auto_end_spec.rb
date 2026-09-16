@@ -25,6 +25,7 @@ RSpec.describe "ArenaMatches Auto-End on View", type: :request do
   let(:turn_params) do
     {
       action_type: "turn",
+      turn_number: 1,
       target_id: character2.id,
       attacks: [{action_key: "simple", body_part: "torso"}],
       blocks: [{action_key: "torso_block", body_parts: ["torso"]}]

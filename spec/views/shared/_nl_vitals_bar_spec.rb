@@ -58,11 +58,11 @@ RSpec.describe "shared/_nl_vitals_bar.html.erb", type: :view do
       expect(rendered).to have_css("[data-nl-vitals-max-mp-value='80']")
     end
 
-    it "includes regen rate data attributes" do
+    it "uses the authenticated server vitals endpoint" do
       render partial: "shared/nl_vitals_bar", locals: {character: character}
 
-      expect(rendered).to have_css("[data-nl-vitals-hp-regen-rate-value='300']")
-      expect(rendered).to have_css("[data-nl-vitals-mp-regen-rate-value='600']")
+      expect(rendered).to have_css("[data-nl-vitals-sync-url-value='/character_vitals']")
+      expect(rendered).not_to include("regen-rate-value")
     end
   end
 
@@ -114,6 +114,59 @@ RSpec.describe "shared/_nl_vitals_bar.html.erb", type: :view do
 
       expect(rendered).to have_css("[data-nl-vitals-target='hpText']")
       expect(rendered).to have_css("[data-nl-vitals-target='mpText']")
+    end
+  end
+
+  context "with equipment HP and MP bonuses" do
+    let(:character) { create(:character, current_hp: 1500, max_hp: 1500, current_mp: 7, max_mp: 7) }
+    let(:knife_template) { create(:item_template, :durable, stat_modifiers: {"hp" => 30, "mp" => 7}) }
+    let!(:knife) do
+      create(:inventory_item, :equipped, inventory: character.inventory, item_template: knife_template,
+        properties: {"current_durability" => 10})
+    end
+
+    it "uses each effective maximum once for text, data attributes and percentages without healing or base writes" do
+      expect(character).to receive(:effective_max_hp).once.and_call_original
+      expect(character).to receive(:effective_max_mp).once.and_call_original
+
+      render partial: "shared/nl_vitals_bar", locals: {character: character}
+
+      expect(rendered).to have_css(".nl-vitals-hp", exact_text: "1500/1530")
+      expect(rendered).to have_css(".nl-vitals-mp", exact_text: "7/14")
+      expect(rendered).to have_css("[data-nl-vitals-max-hp-value='1530'][data-nl-vitals-max-mp-value='14']")
+      expect(rendered).to have_css("[data-nl-vitals-current-hp-value='1500'][data-nl-vitals-current-mp-value='7']")
+      expect(rendered).to have_css("[data-nl-vitals-target='hpFill'][style='width: 98%;']")
+      expect(rendered).to have_css("[data-nl-vitals-target='mpFill'][style='width: 50%;']")
+      expect(character.reload.attributes).to include("current_hp" => 1500, "max_hp" => 1500, "current_mp" => 7, "max_mp" => 7)
+    end
+
+    ["broken", "unequipped"].each do |state|
+      it "returns to base maxima when the bonus item is #{state}" do
+        if state == "broken"
+          knife.update!(properties: {"current_durability" => 0})
+        else
+          knife.update!(equipped: false)
+        end
+
+        render partial: "shared/nl_vitals_bar", locals: {character: character}
+
+        expect(rendered).to have_css(".nl-vitals-hp", exact_text: "1500/1500")
+        expect(rendered).to have_css(".nl-vitals-mp", exact_text: "7/7")
+        expect(rendered).to have_css("[data-nl-vitals-max-hp-value='1500'][data-nl-vitals-max-mp-value='7']")
+        expect(rendered).to have_css(".nl-bar-fill[style='width: 100%;']", count: 2)
+        expect(character.reload.attributes).to include("current_hp" => 1500, "max_hp" => 1500, "current_mp" => 7, "max_mp" => 7)
+      end
+    end
+  end
+
+  context "when effective maxima are zero" do
+    let(:character) { create(:character, current_hp: 0, max_hp: 0, current_mp: 0, max_mp: 0) }
+
+    it "renders zero percentages without division errors" do
+      render partial: "shared/nl_vitals_bar", locals: {character: character}
+
+      expect(rendered).to have_css(".nl-bar-fill[style='width: 0%;']", count: 2)
+      expect(rendered).to have_css("[data-nl-vitals-max-hp-value='0'][data-nl-vitals-max-mp-value='0']")
     end
   end
 

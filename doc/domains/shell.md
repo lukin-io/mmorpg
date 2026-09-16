@@ -8,23 +8,26 @@ composition, and presentation shared by gameplay surfaces.
 
 ## Documentation chain
 
-- Neverlands source summary: `doc/design/reference/shell/README.md`
-- Current observations: `doc/design/reference/shell/observations/`
+- [Required working context and update rules](../DOCUMENTATION.md#21-required-context-and-update-map)
+- Shared references: [location/context](../WORLD.md#5-travel-context-and-return-behavior),
+  [event catalog](../features/game_shell.md#gameplay-event-catalog), [ARTWORK](../ARTWORK.md)
+- Neverlands source summary: [doc/design/reference/shell/README.md](../design/reference/shell/README.md)
+- Current observations: [doc/design/reference/shell/observations/](../design/reference/shell/observations)
 - Mixed-timeline evidence and source summary:
-  `doc/design/reference/social/observations/2026-08-23_chat_game_event_timeline.md`
-  and `doc/design/reference/social/README.md`
+  [doc/design/reference/social/observations/2026-08-23_chat_game_event_timeline.md](../design/reference/social/observations/2026-08-23_chat_game_event_timeline.md)
+  and [doc/design/reference/social/README.md](../design/reference/social/README.md)
 - Cell/room audiences, browser history, and header-plus-main frame evidence:
-  `doc/design/reference/social/observations/2026-09-07_cell_chat_and_presence_boundaries.md`
-- Normalized design: `doc/design/areas/game_client_layout.md`
+  [doc/design/reference/social/observations/2026-09-07_cell_chat_and_presence_boundaries.md](../design/reference/social/observations/2026-09-07_cell_chat_and_presence_boundaries.md)
+- Normalized design: [doc/design/areas/game_client_layout.md](../design/areas/game_client_layout.md)
 - Shared adaptive UI requirements and acceptance:
   [Game Client Layout](../design/areas/game_client_layout.md#adaptive-ui-requirements)
 - Shared City/entrance image standard, composition and dimensions:
   [ARTWORK.md](../ARTWORK.md#shared-scene-image-standard)
-- Supporting designs: `doc/design/features/character_vitals.md` and
-  `doc/design/features/social_chat_presence.md`
+- Supporting designs: [doc/design/features/character_vitals.md](../design/features/character_vitals.md) and
+  [doc/design/features/social_chat_presence.md](../design/features/social_chat_presence.md)
 - Delivery IDs: `SHELL-UI-001`, `SHELL-CHAT-001`, `SOCIAL-CHAT-001`, and
-  `RESPONSIVE-001` in `doc/design/launch_mvp_plan.md`
-- Current implementation: `doc/features/game_shell.md`
+  `RESPONSIVE-001` in [doc/design/launch_mvp_plan.md](../design/launch_mvp_plan.md)
+- Current implementation: `doc/features/game_shell.md` ([handbook](../features/game_shell.md))
 
 ## Current RPG status
 

@@ -1,6 +1,12 @@
 # Economy, Trading, And Shops
 
-Domain navigation: `doc/domains/economy.md`.
+Domain navigation: [Economy](../../domains/economy.md).
+
+[ITEMS](../../ITEMS.md#2-current-item-catalog) catalogs goods and licenses,
+[FORMULAS](../../FORMULAS.md#9-inventory-and-economy) records pricing/capacity
+calculations, and [WORLD](../../WORLD.md#2-forpost-city-and-services) identifies
+service locations. The [Shop handbook](../../features/shop_economy.md) owns
+current stock, settlement and eligibility behavior.
 
 ## Purpose
 
@@ -156,10 +162,17 @@ the user excluded its sole Wood Chips quest-waste row. Licenses contain the six
 observed Trading I–III and Doctor I–III definitions. Do not invent extra tiers
 or generic goods to reach five in an empty section.
 
+The [September 14 scroll capture](../reference/inventory/observations/2026-09-14_attack_scrolls.md)
+adds the observed 250 NV single-use Fist Attack, bringing the ordinary local
+catalog to 80. Its 500-unit initial Shop stock is authored starter availability,
+not a live stock observation. [Scroll design](scrolls.md) enables Duel Permit I
+and Fist Attack; the latter permits Use/Delete but no resale or player transfer.
+
 Fresh stock uses each captured current/maximum quantity, including zero.
 Reseeding preserves existing local stock and funds. Captured requirement and
 bonus keys map to existing character rules; display-only shield block points
-and duel-permit descriptions do not imply new combat or consumable behavior.
+and descriptions alone do not imply combat or consumable behavior. The first
+two attack scrolls use the explicit shared-combat entry adapter above.
 Each starter good and license uses an original bitmap, recorded in
 `doc/ARTWORK.md`, with original license art replacing the 60px source cards
 confirmed in the September 10 layout capture. Original goods art follows the same item through Shop, Inventory

@@ -1,9 +1,780 @@
 # Project Artwork Guide
 
-- Updated: 2026-09-11.
+Current category contract: [ART-CATEGORY-001](#category-artwork-standard).
+It consolidates dimensions, background/color profiles, composition, original-art
+prompts and acceptance. See the [September 16 audit](#september-16-category-audit-and-corrections) for delivery status.
+
+## September 14 public fight-log decoration
+
+Source layout: [first human Duel](design/reference/combat/observations/2026-09-14_arena_fist_duel.md).
+Runtime consumer: [public history](features/arena_combat.md#september-14-live-human-duel-parity),
+with [COMBAT](COMBAT.md#september-14-live-human-duel) and [ARENA](ARENA.md#september-14-live-human-duel).
+The source public page has a wide ornamental heading, gray/white paper, side
+decoration, compact paragraphs and footer pagination/statistics. Its Neverlands
+logo, clan badges and original bitmaps remain evidence only.
+
+One built-in generation, no bitmap input, produced original iron/pewter scrollwork,
+dark crimson cloth and a blank shield. Native generated filename:
+`exec-3fda39b3-ad3a-479d-8590-90da94e0150b.png`.
+Requested 1600×240; native output 1983×793.
+Final [arena/fight_log_header.png](../app/assets/images/arena/fight_log_header.png)
+is **1600×640 PNG**, uniformly downscaled using `sips -Z 1600`, no stretch.
+An initial 530px crop cut the top ornament and was rejected; the final asset
+was restored from the complete native output before downscaling. Every tip,
+shield edge and cloth tail remains visible. CSS uses contain fit in a 130px
+desktop header, 86px below 900px and 62px below 520px. Blank background is retained.
+Typography, source-like emphasis, accessible links, responsive wrapping and
+border treatment remain HTML/CSS. No text or control is baked into the image.
+Final in-context acceptance is recorded with the consuming handbook.
+
+Portrait rule confirmed by the same capture: the unarmed participants have
+empty equipment rails while their cosmetic portraits still depict clothing,
+armor or a shield. Do not generate an undressed portrait merely because the
+fight is unarmed, or derive equipped items from the painted avatar. The
+existing original player portraits remain appropriate; actual inventory slots
+and the [Arena equipment rule](ARENA.md#september-14-live-human-duel) govern admission.
+
+Exact submitted prompt:
+
+```text
+Use case: stylized-concept. Asset type: original decorative header for a classic early-2000s fantasy browser RPG public fight log. Wide horizontal composition, requested 1600x240 pixels, pale neutral gray-white background #f7f7f7. A symmetrical wrought dark iron and engraved pewter ornament with a restrained dark crimson cloth ribbon behind it. A small central blank steel shield, geometric original shape, no lettering, no initials or monogram, no identifiable game logo; fine curling acanthus and short metal flourishes spread horizontally, tapering to open space near both ends. Decoration occupies upper three quarters, bottom fades into clean pale background. Entire complete ornament within canvas, modest clear margins, realistic matte painted metal and cloth, dark silver and burgundy, restrained highlights, crisp silhouette readable at 900x135 CSS pixels. No characters, weapons, skulls, neon, glow, UI text, buttons, labels, words, watermarks, existing brand emblem or copied game assets. Original artwork only, no reference bitmap inputs.
+```
+
+For implementation context, use the [documentation read/update map](DOCUMENTATION.md#21-required-context-and-update-map),
+[NPC equipment/portraits](NPC.md#5-equipment-and-artwork),
+[item artwork mappings](ITEMS.md#5-artwork-and-presentation) and
+[world scenes/cells](WORLD.md#6-map-and-location-artwork). For scroll/fight
+flows and image consumers, use the [SCROLLS UI/art guide](SCROLLS.md#9-ui-and-artwork)
+and [COMBAT UI/art guide](COMBAT.md#9-ui-realtime-delivery-logs-and-artwork).
+[ARENA's UI/art guide](ARENA.md#7-ui-logs-and-artwork) maps hall/application
+presentation, icon dimensions and Dummy portrait consumers. Read the consuming
+feature's evidence/design and handbook before editing an illustration. Update
+the exact production record here, affected catalog links and that handbook's
+integration/visual acceptance together. Content identity, stats and availability
+remain with those owners; dimensions and exact prompts remain here.
+
+## September 15 integration recheck
+
+The later [successful Permit capture](design/reference/inventory/observations/2026-09-15_successful_attack_scroll.md)
+uses the same paper dolls, equipment rails, scroll icon and public-log layout.
+The attack-start wording, XP and Finish timing changes require semantic text
+and shared UI integration, not new raster artwork. Existing original item,
+portrait and log-header specifications/prompts above remain applicable; the
+new source PNGs live only with the observation and are not runtime assets.
+
+The [Arena/Medical acceptance](features/arena_combat.md#september-15-verification-and-manual-acceptance)
+reused the existing original Dummy/player portraits, 16px application icons,
+1600×640 public-log header and 1254×1254 healer-bag illustration. No new image
+or prompt was needed for capacity/worker recovery or Doctor qualification.
+Native Chrome **200%** showed the recovered offer, shared composer, result,
+public log and statistics; Medical care also passed **320/390px** layouts.
+The bag retains **60×60 CSS px**, contain fit and full-object padding. Doctor
+points/requirements and remaining uses stay accessible text. Native zoom and
+viewport overrides were restored. These are local integration checks, not new
+Neverlands artwork or inferred equipment on painted portraits.
+
+## Skills and Perks presentation reference
+
+The [Skills guide](SKILLS.md#7-ui-ux-and-artwork) and
+[Perks guide](PERKS.md#7-ui-ux-and-artwork) own the profile's current controls,
+catalog/consumer distinctions and presentation gaps. Their
+[September14 source record](design/reference/character/observations/2026-09-14_skills_and_perks.md)
+preserves original supplied PNGs: numeric table1380×946 and boolean table1380×910.
+Those are evidence-crop dimensions, **not new runtime image dimensions**.
+
+The numeric source separates learned `/100`, red bonuses, available pools and
+profession counters; the boolean source groups42 Yes/No rows into six sections.
+Local forms now render29 allocatable numeric definitions with separate red
+bonuses, 15 read-only profession counters and all42 perk rows in six categories.
+Only four perks are selectable; the other38 are visibly unavailable. The
+[September16 source/UI audit](design/reference/character/observations/2026-09-16_primary_list_audit.md)
+records the current presentation and acceptance boundary. Tables, labels, controls and
+help affordances belong in semantic HTML/CSS. No rasterized text table or
+copied Neverlands question-mark bitmap is authorized for runtime.
+
+This HTML/CSS implementation generates no bitmap and adds no invented prompt
+record. If a later task needs an original help/category illustration, use the
+existing [brief](#prepare-the-asset-brief), [prompt templates](#prompt-templates)
+and [integration requirements](#generation-and-integration), record its exact
+prompt and final asset mapping here, and verify the final profile flow.
+
+## Use cases and cross-feature effects
+
+Artwork affects recognizability, layout and reachable controls. It supplies no
+gameplay coefficients; the consuming guide owns every behavioral rule.
+
+For the illustrated systems, [CHARACTER](CHARACTER.md#5-profile-ui-and-artwork)
+explains player/equipment presentation, [MEDICAL](MEDICAL.md#5-ui-notifications-and-artwork)
+maps bag/elixir art to treatment, and [ECONOMY](ECONOMY.md#5-ui-events-and-artwork)
+connects Shop images to purchase/Inventory flows. Exact prompts and dimensions
+remain here; those guides do not introduce new image variants or production claims.
+
+| Preconditions / use case | Production/integration action and result | Related effect and boundary |
+|---|---|---|
+| NPC portrait fails required combat dimensions | Produce/package to the documented portrait specification; verify paper doll | [NPC](NPC.md#5-equipment-and-artwork)/[COMBAT](COMBAT.md#9-ui-realtime-delivery-logs-and-artwork) presentation improves; HP, armor and loot stay data-owned |
+| Remote Ogre habitat needs a darker cell | Generate scene/atlas asset and map it to the authored cell | [WORLD](WORLD.md#6-map-and-location-artwork) governs coordinates/hotspots. Darkness alone does not create a high-level encounter |
+| New weapon or scroll needs an inventory image | Follow item specification and record exact prompt/mapping | [ITEMS](ITEMS.md)/[SCROLLS](SCROLLS.md) own slot, stats, charge and use rules; a depicted shield is not a block-table definition |
+| Arena application icon changes | Integrate original icon within the documented application layout | [ARENA](ARENA.md#7-ui-logs-and-artwork) owns terms and controls; verify clicking/navigation, not merely an isolated image |
+| Skills/Perks source table is supplied | Preserve evidence; implement any authorized later UI changes with HTML/CSS | [SKILLS](SKILLS.md)/[PERKS](PERKS.md) keep learned values, bonuses and ownership distinct. Source dimensions do not mandate a screenshot-sized player UI |
+| Asset looks correct but covers a hotspot at another viewport | Treat browser acceptance as failed and correct integration | Artwork completion includes usable affected flows; [adaptive acceptance](design/areas/game_client_layout.md#adaptive-ui-acceptance) owns viewport/input checks |
+
+## September 14 attack-scroll artwork
+
+Consumer: [Inventory attack scrolls](features/player_inventory.md#september-14-attack-scrolls)
+and [Shop](features/shop_economy.md). Content/source variants live in
+[ITEMS](ITEMS.md#attack-scroll-use) and [the live capture](design/reference/inventory/observations/2026-09-14_attack_scrolls.md).
+Duel Permit I reuses [its original image](../app/assets/images/items/duel_permit_i.png).
+The new [Fist Attack image](../app/assets/images/items/fist_attack.png) is original
+painted parchment with a fist wax/ink motif, generated without source bitmap input.
+
+Selected output: `exec-6653adca-826b-4179-8277-512fb6ebb184.png`, from
+`/Users/sesharim/.codex/generated_images/01a09048-8cf7-7d32-8832-36d18025f07c/`.
+Requested 600 × 600 composition; actual native output **1254 × 1254 PNG**.
+Delivery is **384 × 384 PNG**, full-canvas uniform downscale with
+`sips -z 384 384 SOURCE --out app/assets/images/items/fist_attack.png`.
+No crop/stretch or readable labels. It uses the ordinary goods contract below:
+Shop 62 × 91 CSS box with containment; Inventory contains it in its existing item
+image box. The cream bordered target form is HTML/CSS, not text baked into art.
+Final visual/interaction acceptance passed in [Chrome acceptance](features/player_inventory.md#september-14-local-acceptance), including the original image in Shop/Inventory, autofocus, keyboard order, narrow wrapping and the shared unarmed fight UI.
+
+The later [zMey rejection capture](design/reference/inventory/observations/2026-09-14_attack_scrolls.md#live-17-to-5-attempts--zmey)
+adds an Inventory failure state: bold 12px #c00 text above the category strip,
+rendered as accessible HTML/CSS. Both existing scroll illustrations are reused;
+no new raster asset or generation prompt is needed for this text-only state.
+
+The [September15 successful Fist capture](design/reference/inventory/observations/2026-09-15_successful_fist_attack.md)
+confirms reuse of the empty-slot paper dolls, AP controls, waiting/result UI
+and public-log/statistics composition. The local opening-marker correction is
+HTML text; waiting now hides the right paper doll without removing its roster
+member or changing the grid. Original384×384 Fist art and existing combat/log assets remain in
+use. Research images are not runtime replacements; no new generation is needed.
+
+Exact generation prompt:
+
+```text
+Use case: stylized-concept. Asset type: original individual Fist Attack scroll illustration for a classic early-2000s painted fantasy browser RPG Shop and Inventory, readable at 60 by 60 CSS pixels. One complete aged parchment sheet with softly curled upper edge and two lower corners, a small dark russet wax seal bearing an indistinct raised clenched-fist motif. Only faint illegible ink marks, no readable text. Square canvas, entire object centered with clear padding on every side, near-overhead three-quarter catalog view. Detailed matte painted parchment fibers, restrained warm earth colors, uniform pale warm gray off-white background and small soft contact shadow. No weapons, people, detached actual hands, extra objects, scenery, border, frame, labels, words, numbers, UI, watermark, logo, neon or glossy 3D. Original project artwork; do not copy Neverlands bitmaps. Requested final composition 600x600.
+```
+
+## September 12 Arena application icons
+
+Area context and editing impact: [ARENA](ARENA.md#7-ui-logs-and-artwork).
+
+Consumer: [Arena application rows](features/arena_combat.md#september-12-physical-arena-applications),
+from [live lobby evidence](design/reference/combat/observations/2026-09-12_arena_duels_and_groups.md).
+The source uses tiny rule, time and trauma symbols in dense white rows. Three
+original painted images were generated with the built-in image tool, without
+Neverlands bitmap input. No large lobby banner is appropriate to this evidence.
+
+| Category | Runtime file under `app/assets/images/arena/` | Selected generator output |
+|---|---|---|
+| Equipment rule | `rule.png` | `exec-4a1b7eb3-55fa-41fe-a87b-8f924725e317.png` |
+| Turn timeout | `timeout.png` | `exec-b4763b5f-3f57-48c2-9378-3fa20bdcee0d.png` |
+| Injury probability | `trauma.png` | `exec-d1391f87-0162-49f8-9b53-b5134ba143c2.png` |
+
+Requested1024×1024, returned native1254×1254 PNG. Selected originals remain in
+`/Users/sesharim/.codex/generated_images/01a09048-8cf7-7d32-8832-36d18025f07c/`.
+Delivery is a uniform full-canvas downscale to **64×64**, rendered at **16×16
+CSS px**, `object-fit: contain`, four-times density. No cropping, stretching,
+source logos or text baked into art. Packaging: `sips -z 64 64 <runtime-file>`.
+All three whole objects/padding were visually inspected; the asset spec checks
+delivery dimensions. Final in-context acceptance belongs to the runtime
+handbook. One initial clock generation was interrupted without a selected
+output; the same prompt was repeated and the output above selected. Rule and
+trauma each had one selected generation.
+
+Exact equipment-rule prompt:
+
+```text
+Use case: stylized-concept. Create one original tiny painted fantasy browser-RPG lobby icon showing two short crossed steel swords with plain worn leather grips. Square composition; all tips and handles visible, generous 15 percent padding. Muted steel, dark brown, small brass accents, crisp simple silhouette legible at 16x16 CSS pixels. Early-2000s hand-painted inventory-icon materials, restrained highlights. Uniform pure white background. No lettering, numerals, border, UI, glow, scenery, people, logo or watermark. Original design, no Neverlands bitmap input. Requested 1024x1024.
+```
+
+Exact timeout prompt, including the repeated request:
+
+```text
+Use case: stylized-concept. Create one original tiny painted fantasy browser-RPG lobby icon: a simple round timepiece with dull blue-green metal rim, pale ivory face, two dark clock hands, no numbers or lettering. Square composition, entire circle within generous 15 percent padding. Restrained early-2000s painted game-icon materials, clear dark silhouette legible at16x16 CSS pixels. Uniform pure white background. No chain, stand, extra objects, border, UI, glow, scenery, logo or watermark. Original design, no Neverlands bitmap input. Requested1024x1024.
+```
+
+Exact trauma prompt:
+
+```text
+Use case: stylized-concept. Create one original tiny painted fantasy browser-RPG injury-probability icon: a single upright dark ruby-red droplet, rounded at bottom with a narrow point above and a restrained small pale reflection. Complete centered droplet, generous 15 percent padding, square canvas, simple crisp silhouette readable at16x16 CSS pixels. Early-2000s painted RPG icon, muted red with a dark edge. Uniform pure white background. No wounds, splatter, people, letters, numbers, border, UI, glow, scenery, logo or watermark. Original design, no Neverlands bitmap input. Requested1024x1024.
+```
+
+## September 12 Training Dummy portrait correction
+
+The Arena browser pass found the existing `npc/scarecrow.png` at1024×1536,
+shrinking its wide stance inside the115×255 portrait rails. This correction
+uses that original project image as the sole edit target, preserving its
+identity/materials while redrawing a narrow complete pose. No source-game
+bitmap or new NPC equipment/stat data was introduced. The original asset's
+earlier generation prompt was not preserved; none is invented here.
+
+One built-in edit produced `exec-274ee6f6-6592-4a65-aa39-27178256c882.png` under
+the generated-image directory recorded above, native889×1770. A uniform
+`sips -Z 1530` downscale followed by centered `sips -c 1530 690` removed only
+side background, delivering **690×1530**, exactly6× the115×255 consumer.
+The complete hat, head, hands, feet and straw remain inside the image; no
+stretching or clipped anatomy. Runtime path remains
+[`app/assets/images/npc/scarecrow.png`](../app/assets/images/npc/scarecrow.png).
+The asset spec checks encoded dimensions; [Arena Combat](features/arena_combat.md#september-12-physical-arena-applications)
+records the final in-context inspection. [NPC](NPC.md#5-equipment-and-artwork)
+owns the unchanged creature mapping.
+
+Exact submitted edit prompt:
+
+```text
+Use case: precise-object-edit. Edit the attached ORIGINAL PROJECT scarecrow portrait used by the Arena Training Dummy. Preserve its recognizable carved wooden face, warm amber eye accents, battered pointed cloth hat, ragged dark blue-gray tunic, rope ties, straw and twig limbs, matte painted wood and cloth, and quiet dark charcoal-brown backdrop. Recompose the figure for a very tall narrow combat paper-doll canvas, EXACT aspect ratio 23:51 (115:255), requested 920 by 2040 pixels. Bring both arms close alongside the body and both feet closer together into a natural narrow standing stance; narrow the hat brim through the pose/perspective without cutting it. Entire hat, head, both hands, both feet and all straw extremities must fit inside the canvas with a small clear margin. Figure fills about 90 percent of canvas height, large and readable at 115 by 255 CSS pixels. Redraw the stance and composition, never squeeze or stretch anatomy. Keep detailed early-2000s painted fantasy material treatment and restrained earthy highlights. Replace excess ground and empty space with a quiet neutral dark background and a small contact shadow. Do not add equipment, weapons, shields, figures, scenery, magical haze, text, numbers, nameplates, UI, frames, logos or watermarks. No existing-game bitmap inputs; the attached project image is the sole edit target. Output one complete narrow full-body portrait, not a wide image letterboxed into a tall canvas.
+```
+
+## September 12 medical category illustrations
+
+The built-in imagegen tool generated two original images, with no Neverlands
+bitmap inputs. Both are native **1254×1254 PNG**, rendered at **60×60 CSS px**
+with contain fit. The complete object and padding were visually inspected.
+Four healer grades share the bag category illustration; names, requirements,
+remaining uses and prices stay text/data, not baked into artwork.
+
+- `app/assets/images/items/healer_bag.png`: Hospital and Medical care; generator
+  output `exec-209ed20a-991c-4846-b885-e6e5142da194.png`.
+- `app/assets/images/items/minor_health_potion.png`: Inventory/loot elixir;
+  output `exec-afd26dcd-366d-4240-8c37-34247f646b39.png`.
+
+Both originals remain under the Codex generated-images session directory;
+selected bytes were copied into the repository without stretching or cropping.
+The requested600px size was not the returned encoding; native1254px dimensions
+are recorded here and the consumer explicitly sets60px.
+
+Exact healer-bag prompt:
+
+```text
+Use case: stylized-concept. Create one original classic early-2000s painted fantasy browser RPG inventory icon: a beginner healer's small weathered brown leather satchel, short handle, simple brass buckle, visible roll of clean linen and one small corked ceramic medicine bottle tucked beneath flap. Exactly one complete bag centered with generous padding, square composition, requested 600x600, readable at 60x60 CSS pixels. Matte leather and cloth, muted warm earth tones, detailed hand-painted materials, gentle neutral daylight, uniform pale warm gray background, subtle contact shadow. No medical cross or emblem, no letters numbers text UI frame watermark logos, no hands characters scenery glowing effects or glossy 3D. Original artwork, do not copy Neverlands bitmaps.
+```
+
+Exact healing-elixir prompt:
+
+```text
+Use case: stylized-concept. One original small healing-elixir inventory icon for a classic painted browser RPG. A complete squat round glass bottle containing muted ruby-red liquid, a plain natural cork, narrow aged leather tie around neck, tiny restrained reflections. Detailed hand-painted matte fantasy materials and subtle contact shadow, uniform pale warm-gray background. Centered square composition with generous padding, readable at 60x60 pixels, requested 600x600. No label, words, numbers, magical glow, UI frame, symbols, medical cross, people, logo or watermark. Do not copy existing game artwork.
+```
+
+The September12 user authorization also enables the two Ogre habitats using
+the [calibrated model](design/features/combat_calibration.md). The earlier
+inactive-artwork production note below is historical; it is not current
+runtime activation policy.
+
+Final local visual acceptance is recorded in
+[Arena Combat](features/arena_combat.md#september-12-final-calibrated-acceptance)
+and [Medical Care](features/medical_care.md#6-acceptance-and-tests). It includes
+the complete Ogre paper doll and independently filled equipment slots,
+same-cell dark habitat return, 320/390px layouts, native image/contain checks,
+and the Hospital → Inventory → treatment path. Automated asset checks also
+validate the corrected Skeleton portrait and the two atlas slice densities.
+
+- Updated: 2026-09-12.
 - Purpose: keep original game illustrations visually consistent and make new
   assets repeatable, reviewable, and safe to integrate into the existing UI.
 - Applies to NPCs, player illustrations, equipment/items, buildings/interiors, and outdoor maps.
+
+## September 11 Ogre habitat and equipment production
+
+Evidence: [two controlled Ogre fights](design/reference/combat/observations/2026-09-11_ogre_combat_cycle.md).
+The existing starter atlas supplies local **[20,6] / [20,7]**, source
+[1014,998] / [1014,999], for Ogres 16–18. The user requires strong enemies
+in darker remote areas, with weaker encounters near Forpost. Artwork never
+sets encounter level, damage, activation, loot, passability or cell actions.
+
+Generation used the built-in image tool, without source-game bitmap inputs.
+Ogre portrait: `app/assets/images/npc/ogre.png`, encoded **690×1530**,
+rendered 115×255 with contain fit. The first wide pose was rejected. The
+selected revision was center-cropped from 1026×1533, removing neutral
+background only; head, hands, feet and club remain complete. Selected output:
+`exec-ab62bb5e-24a2-451a-a3da-0f9afb7fb9b0.png`.
+
+The habitat is one continuous two-cell illustration, generated at 887×1774
+(exact 1:2). Its 100×200 authoring sheet is
+`app/assets/images/world/forpost-ogre-habitat.png`; mandatory 100px slices
+live under `app/assets/images/world/cells/forpost-ogre-habitat/`, matching
+200px variants under `app/assets/images/world/cells/forpost-ogre-habitat-2x/`.
+Both densities derive directly from the same larger generated composition.
+Slice names are `0_0.png` / `0_1.png`. ImageMagick performs exact rectangular slicing;
+an initial sips bottom-edge crop retained the full height and was rejected by
+the dimension spec. No stretching or independently generated adjacent cells.
+Selected output: `exec-d43b0a21-45ef-4c4d-a1d6-335d1349ab38.png`.
+
+The validated catalog key is `forpost_ogre_habitat`. Seed artwork upgrades
+only the two cells' unchanged default starter references and preserves
+operator-selected references. No Ogre marker, entrance or water action is
+painted into the map. Initial Ogre encounter declarations remain inactive
+while the source's damage coefficients are unresolved; this does not hide the
+new terrain art.
+
+### Ogre portrait prompts
+
+Original generation:
+
+```text
+Use case: stylized-concept. Create one original full-body Ogre combat portrait for a traditional painted browser RPG paper doll. Required final composition 115:255, requested canvas 690 x 1530 pixels. One huge muscular gray-olive ogre with heavy brow, small lower tusks, rugged original face. Dark weathered iron helmet, layered crude iron chest armor, dark fur waist wrap, iron forearm guards, leather gloves, heavy boots, broad belt. Holds one complete blunt wooden war club vertically close to body, empty other hand, no shield. Narrow upright three-quarter ready pose. Entire head, both hands, both feet and whole club must fit within the central 60 percent of canvas width with clear padding; complete figure large and upright. Detailed early-2000s painted fantasy illustration, matte iron leather fur wood, muted earth colors, restrained highlights, uniform pale warm-gray background and small ground shadow. No scenery, extra figures, UI, text, frame, watermark, neon, glowing eyes, comic outlines, glossy 3D. All equipment pictured is decorative; actual equipment slots are separate. Do not copy any existing game likeness or bitmap.
+```
+
+Selected pose correction, using only the original generated portrait as input:
+
+```text
+Edit this original Ogre portrait for a narrow equipment paper-doll crop. Keep identity, painted materials, costume and full-body framing. Make the stance and silhouette MUCH NARROWER: feet close together pointing forward, forearms resting close along torso, empty hand against hip, club substantially slimmer and upright against shoulder, visible complete head/hands/boots/club. The entire figure including club must fit inside a centered 580-pixel-wide strip of a 1026x1533 image, with the top and bottom figure at y60 and y1460. Maintain natural muscular anatomy, no stretching; redraw the pose to achieve it. Widen uniform pale warm-gray background margins on both sides. No text UI border new props or extra figures.
+```
+
+### Ogre equipment prompt set
+
+Each final image is in `app/assets/images/npc/equipment/`. Each request
+concatenated the shared prompt below with its category prompt, in that order.
+All nine categories are original assets. Ten occupied slots use these nine
+images because both occupied ring slots use the same ring artwork.
+
+Shared prompt:
+
+```text
+Use case: stylized-concept. One original early-2000s painted fantasy RPG inventory item, weathered matte iron/leather/wood, muted earth colors, fine brush detail, crisp silhouette readable at small equipment-slot size, uniform pale warm-gray background, subtle contact shadow. Entire object contained with padding. No character, body parts, mannequin, UI, text, symbol, logo, watermark, border, neon or glossy 3D. Do not copy Neverlands artwork.
+```
+
+#### ogre_helmet
+
+```text
+Composition square 60:60. A heavy battered dark iron helmet for an Ogre, reinforced high brow, broad riveted crown and short cheek guards, empty helmet without face. Massive but plain practical construction.
+```
+
+#### ogre_amulet
+
+```text
+Composition horizontal 60:30. An Ogre amulet: thick worn leather cord arranged in shallow loop, one large dull silver oval pendant and two small brass beads, unmarked plain metal, complete necklace.
+```
+
+#### ogre_club
+
+```text
+Composition vertical 60:90. An Ogre war club: one heavy long dark wooden shaft, blunt slightly flared striking head reinforced with two matte iron bands, leather grip. Whole club visible, upright at slight diagonal, no sharp spikes.
+```
+
+#### ogre_boots
+
+```text
+Composition square 60:60. Pair of heavy Ogre boots: dark leather with dull iron shin plates, broad rounded toes, rough fur cuffs, side by side at a slight angle. Empty boots, both complete.
+```
+
+#### ogre_ring
+
+```text
+Composition square 30:30. One thick worn Ogre finger ring in dull iron with a plain broad oval brass bezel, complete round band shown in three-quarter view, no inscription or gem.
+```
+
+#### ogre_bracers
+
+```text
+Composition horizontal 60:40. Pair of broad Ogre forearm guards in dark weathered leather and overlapping dull iron plates, worn rivets and buckle straps. Empty matching bracers side by side.
+```
+
+#### ogre_gloves
+
+```text
+Composition horizontal 60:40. Pair of Ogre gauntlets: worn dark brown leather full-finger gloves with blunt dull iron knuckle plates and short fur cuffs, five complete fingers per glove. Empty gloves placed side by side.
+```
+
+#### ogre_armor
+
+```text
+Composition vertical 60:90. One empty Ogre cuirass: overlapping dark battered iron plates fixed to broad leather straps, rough fur edging at the hem, simple rivets, broad shoulder straps, front view. Entire armor garment without arms or mannequin.
+```
+
+#### ogre_belt
+
+```text
+Composition WIDE HORIZONTAL EXACT 2:1 aspect ratio, canvas1536 by768. One broad Ogre waist belt of worn dark leather, heavy plain oval dull iron buckle, rough stitching, complete belt arranged in low horizontal oval with tail alongside. Keep complete object well inside the frame.
+```
+
+The amulet's initial3:2 composition did not match its2:1 slot. Its final
+revision used the original generated amulet as input with this exact prompt:
+
+```text
+Recompose this same original Ogre amulet in an EXACT wide horizontal 2:1 canvas,1536x768. Preserve the leather cord, two brass beads, plain oval silver pendant and painted materials. Arrange the cord in a shallow horizontal oval; shorten and reduce pendant enough that the whole necklace fits comfortably in the wide canvas. All edges visible with padding. Uniform pale warm-gray background, no other changes, no text or UI.
+```
+
+| Runtime filename | Encoded dimensions | Selected generated output |
+|---|---|---|
+| ogre_helmet.png | 1254×1254 | exec-766f41d9-4feb-43e4-818f-c961933aa08c.png |
+| ogre_amulet.png | 1774×887 | exec-aba4b0f3-a168-43ea-ae3d-791311bedec1.png |
+| ogre_club.png | 1024×1536 | exec-9f82e17d-b56d-4109-9ff5-2f5765afac28.png |
+| ogre_boots.png | 1254×1254 | exec-71503058-4b78-44ec-b49b-a2710b155f26.png |
+| ogre_ring.png | 1254×1254 | exec-0173e242-5a3e-45dd-bb3c-cbb5a8cdf7c0.png |
+| ogre_bracers.png | 1536×1024 | exec-cbe9e9c4-5caa-4609-bf06-9132f046b387.png |
+| ogre_gloves.png | 1536×1024 | exec-29142af1-cd90-4f15-bc37-7104d49f3e65.png |
+| ogre_armor.png | 1024×1536 | exec-c3477f6b-5068-489c-8aa4-fcdbb60995e0.png |
+| ogre_belt.png | 1774×887 | exec-f5a4ed53-562a-4325-86be-94e8ce8bafe4.png |
+
+### Ogre habitat prompt
+
+Input: the project-owned starter landscape's two corresponding cells,
+used for composition and adjoining terrain colors.
+
+```text
+Use case: stylized-concept. Edit this project-owned overhead outdoor map strip into the two adjacent Ogre habitat cells. Final logical footprint is one column by two rows, 100 by 200 pixels; author a detailed 1:2 vertical composition at 768 by 1536 pixels. Preserve the overhead scale and general composition: grouped conifers in upper half, clustered broadleaf trees around center, subtle narrow earth path crossing middle/lower portion, grass edge at bottom. Make the interior a dark remote woodland with gray mossy rocks, deep olive conifers, dense shadowy undergrowth and damp earth, using restrained painterly early-2000s fantasy game style. Gradually fade darkness toward all outer edges, preserving the reference's moss/olive grass colors and path meeting left and right edges at the same heights, so it joins neighboring countryside. Both future 100x100 cells are ONE continuous painting with vegetation crossing their invisible join. No grid, dividing line, cell border, vignette edge, UI, labels, text, characters, Ogre marker, settlement, tower, building, cave entrance, water action or new landmark. Preserve source terrain geometry, never add gameplay symbols. This is original project artwork, do not use or copy any Neverlands bitmap.
+```
+
+Asset verification: `spec/assets/ogre_artwork_spec.rb` checks portrait
+dimensions, each equipment ratio, both slice densities and bounds. Final
+browser acceptance is recorded in the World and Arena handbooks.
+
+## September 11 stronger-NPC production (accepted)
+
+### Robber portrait generation
+
+Source: stronger-NPC cycle, Robber13–15. Target original full figure in the
+same 115 × 255 shared paper doll; packaging and bounded browser acceptance passed.
+No source bitmap input. Exact built-in prompt:
+
+```text
+Create one original full-body human Robber portrait for a traditional browser RPG equipment paper doll. Required final aspect ratio 115:255, requested canvas 690 by 1530 pixels. Full standing muscular adult man from head to boots, complete wooden club and all limbs inside with clear padding. Narrow upright ready stance. Original rugged face with short dark beard and dark hair, weathered brown-green sleeveless tunic with a rough fur-edged collar, leather chest protection, brown belt, forearm guards and worn boots. A heavy simple wooden club held upright close beside his body, no shield. Costume and club are decorative; separate equipment slots provide actual gear. Detailed early-2000s painted fantasy illustration, realistic anatomy, weathered cloth leather and wood, restrained earthy highlights, crisp readable silhouette at 115 by 255 pixels, uniform pale warm-gray background and small ground shadow. No scenery, extra people, loose objects, cropped limbs or weapon, neon, glowing eyes, anime, comic outlines, photographic cutout, glossy 3D, text, UI, border, logo or watermark. Do not copy any Neverlands likeness or bitmap.
+```
+
+Source brief: `design/reference/combat/observations/2026-09-11_stronger_npc_loot_combat_cycle.md`,
+Bandit level14. New original portrait for the existing shared NPC paper doll;
+target `app/assets/images/npc/bandit.png`, encoded **690 × 1530**, rendered
+**115 × 255**, uniform contain fit, complete figure and sword. Costume is
+decorative; NPC stats and filled equipment slots remain separately authored.
+No source bitmap is a generation input. Bandit and Robber portraits were
+center-cropped from 1026 ×1533 outputs to 690 ×1530, removing only neutral
+background; full figure/weapon visual inspection passed. Actual browser
+acceptance passed for both portraits in the shared combat paper doll; see the
+[Arena acceptance record](features/arena_combat.md#manual-stronger-cycle-acceptance).
+
+Exact built-in imagegen prompt:
+
+```text
+Create one original full-body human Bandit portrait for a traditional browser RPG equipment paper doll. Required final composition aspect ratio 115:255, requested canvas 690 by 1530 pixels. Full standing adult figure from hood to boots, complete sword and all limbs contained with a little clear padding. Narrow relaxed ready stance, not a wide action pose. A weathered dark-haired human outlaw with an original face, muted moss-green knee-length leather jacket, russet hood and short cloak, brown leather forearm guards, belt and worn boots. A straight modest steel sword held upright close beside the body. No shield. Portrait costume and sword are decorative; independent UI equipment slots provide the actual gear. Detailed early-2000s painted fantasy illustration with realistic anatomy and weathered cloth, leather and iron, crisp readable silhouette at 115 by 255 pixels, restrained earthy highlights, pale warm-gray neutral backdrop and a small grounded shadow. No scenery, extra characters or loose objects. No cropped feet, cropped sword, neon, glowing eyes, anime, comic outlines, photographic cutouts, glossy 3D, text, letters, numbers, UI, frames, watermark or logos. Do not copy any Neverlands character likeness or bitmap.
+```
+
+### Robber equipment generation prompts
+
+Four distinct original items below complement the existing original leather
+boots, ring, bracers, gloves and belt illustrations reused from the Bandit set.
+Reuse is a local artwork choice for the same observed item categories; names,
+occupied slots and numeric profiles remain independent per NPC level.
+No source bitmap input. Integration and browser acceptance passed in the
+shared combat paper doll; occupied/empty slots remain authored per exact level.
+
+#### robber_helmet
+
+```text
+Original early-2000s painted fantasy RPG inventory illustration. Realistic weathered materials, fine brush detail, restrained earthy colors, crisp silhouette readable in a small equipment slot. One isolated item on a uniform pale warm-gray background with a subtle contact shadow. Entire item within frame with generous padding. No character, hands, mannequin, text, logo, border, UI, watermark, neon, anime or glossy 3D. Do not copy Neverlands artwork. Composition aspect ratio 60:60. A battered dark iron skullcap helmet with a simple reinforced brow, small leather cheek guards and a worn brown padded rim. Empty helmet, no face inside.
+```
+
+#### robber_talisman
+
+```text
+Original early-2000s painted fantasy RPG inventory illustration. Realistic weathered materials, fine brush detail, restrained earthy colors, crisp silhouette readable in a small equipment slot. One isolated item on a uniform pale warm-gray background with a subtle contact shadow. Entire item within frame with generous padding. No character, hands, mannequin, text, logo, border, UI, watermark, neon, anime or glossy 3D. Do not copy Neverlands artwork. Composition aspect ratio 60:30. A rough dark leather necklace cord with a small dull iron tooth-shaped pendant and two carved wooden beads, arranged in a shallow loop. No inscription or magic symbol.
+```
+
+#### robber_club
+
+```text
+Original early-2000s painted fantasy RPG inventory illustration. Realistic weathered materials, fine brush detail, restrained earthy colors, crisp silhouette readable in a small equipment slot. One isolated item on a uniform pale warm-gray background with a subtle contact shadow. Entire item within frame with generous padding. No character, hands, mannequin, text, logo, border, UI, watermark, neon, anime or glossy 3D. Do not copy Neverlands artwork. Composition aspect ratio 60:90. A single heavy knotted wooden club with a thick weathered striking head, tapered leather-wrapped grip and two narrow dull iron reinforcement bands. Complete club angled slightly, no spikes.
+```
+
+#### robber_armor
+
+```text
+Original early-2000s painted fantasy RPG inventory illustration. Realistic weathered materials, fine brush detail, restrained earthy colors, crisp silhouette readable in a small equipment slot. One isolated item on a uniform pale warm-gray background with a subtle contact shadow. Entire item within frame with generous padding. No character, hands, mannequin, text, logo, border, UI, watermark, neon, anime or glossy 3D. Do not copy Neverlands artwork. Composition aspect ratio 60:90. A worn dark brown leather cuirass over a short moss-green tunic with a rough fur-edged collar, plain straps and modest iron buckles. Empty garment laid flat, no person or mannequin.
+```
+
+### Bandit equipment generation prompts
+
+Source: the second stronger-NPC fight's visible filled equipment slots. These
+are decorative slot illustrations, not player-owned loot or invented stats.
+Consumer: shared NPC equipment paper doll, contain fit in the slot ratio
+stated in each prompt. Outputs belong in `app/assets/images/npc/equipment/`.
+Generation, workspace packaging and browser acceptance are complete. At desktop
+and phone widths, the figure and weapon remain contained and the independently
+authored slot art is visible; Arena owns the exact viewport/input record.
+
+#### bandit_headband
+
+```text
+Original early-2000s painted fantasy RPG inventory illustration. Realistic weathered materials, fine brush detail, restrained earthy colors, crisp silhouette readable in a small equipment slot. One isolated item on a uniform pale warm-gray background with a subtle contact shadow. Entire item within frame with generous padding. No character, hands, mannequin, text, logo, border, UI, watermark, neon, anime or glossy 3D. Do not copy Neverlands artwork. Composition aspect ratio 60:60. A narrow brown leather headband in a horizontal oval loop with a braided olive cloth band and a short tied tail; no head inside.
+```
+
+#### bandit_amulet
+
+```text
+Original early-2000s painted fantasy RPG inventory illustration. Realistic weathered materials, fine brush detail, restrained earthy colors, crisp silhouette readable in a small equipment slot. One isolated item on a uniform pale warm-gray background with a subtle contact shadow. Entire item within frame with generous padding. No character, hands, mannequin, text, logo, border, UI, watermark, neon, anime or glossy 3D. Do not copy Neverlands artwork. Composition aspect ratio 60:30. A plain worn brown cord necklace with a modest carved bone talisman and two small dull metal beads, arranged in a compact shallow curve; no magic or symbol.
+```
+
+#### bandit_sword
+
+```text
+Original early-2000s painted fantasy RPG inventory illustration. Realistic weathered materials, fine brush detail, restrained earthy colors, crisp silhouette readable in a small equipment slot. One isolated item on a uniform pale warm-gray background with a subtle contact shadow. Entire item within frame with generous padding. No character, hands, mannequin, text, logo, border, UI, watermark, neon, anime or glossy 3D. Do not copy Neverlands artwork. Composition aspect ratio 60:90. A single straight steel arming sword with a simple crossguard, dark leather grip and plain round pommel, angled slightly from upper left to lower right. Complete blade and hilt.
+```
+
+#### bandit_boots
+
+```text
+Original early-2000s painted fantasy RPG inventory illustration. Realistic weathered materials, fine brush detail, restrained earthy colors, crisp silhouette readable in a small equipment slot. One isolated item on a uniform pale warm-gray background with a subtle contact shadow. Entire item within frame with generous padding. No character, hands, mannequin, text, logo, border, UI, watermark, neon, anime or glossy 3D. Do not copy Neverlands artwork. Composition aspect ratio 60:60. One matching pair of knee-high russet-brown leather boots, folded soft cuffs, plain ankle straps, worn soles, three-quarter view. Empty boots, no feet inside.
+```
+
+#### bandit_ring
+
+```text
+Original early-2000s painted fantasy RPG inventory illustration. Realistic weathered materials, fine brush detail, restrained earthy colors, crisp silhouette readable in a small equipment slot. One isolated item on a uniform pale warm-gray background with a subtle contact shadow. Entire item within frame with generous padding. No character, hands, mannequin, text, logo, border, UI, watermark, neon, anime or glossy 3D. Do not copy Neverlands artwork. Composition aspect ratio 30:30. One thick worn pewter finger ring with a small unmarked raised oval bezel, gently tilted to show the complete round band. No gemstone or inscription.
+```
+
+#### bandit_bracers
+
+```text
+Original early-2000s painted fantasy RPG inventory illustration. Realistic weathered materials, fine brush detail, restrained earthy colors, crisp silhouette readable in a small equipment slot. One isolated item on a uniform pale warm-gray background with a subtle contact shadow. Entire item within frame with generous padding. No character, hands, mannequin, text, logo, border, UI, watermark, neon, anime or glossy 3D. Do not copy Neverlands artwork. Composition aspect ratio 60:40. One matching pair of russet leather forearm bracers with stitched edges and modest dull bronze buckles, laid beside each other at a gentle opposing angle. Empty bracers.
+```
+
+#### bandit_gloves
+
+```text
+Original early-2000s painted fantasy RPG inventory illustration. Realistic weathered materials, fine brush detail, restrained earthy colors, crisp silhouette readable in a small equipment slot. One isolated item on a uniform pale warm-gray background with a subtle contact shadow. Entire item within frame with generous padding. No character, hands, mannequin, text, logo, border, UI, watermark, neon, anime or glossy 3D. Do not copy Neverlands artwork. Composition aspect ratio 60:40. One matching pair of worn brown leather full-finger gloves with layered knuckle leather, short cuffs and five complete fingers on each glove, lying beside each other. Empty gloves.
+```
+
+#### bandit_dagger
+
+```text
+Original early-2000s painted fantasy RPG inventory illustration. Realistic weathered materials, fine brush detail, restrained earthy colors, crisp silhouette readable in a small equipment slot. One isolated item on a uniform pale warm-gray background with a subtle contact shadow. Entire item within frame with generous padding. No character, hands, mannequin, text, logo, border, UI, watermark, neon, anime or glossy 3D. Do not copy Neverlands artwork. Composition aspect ratio 60:90. A single short broad leaf-shaped steel dagger with a simple small crossguard, brown leather grip and plain iron pommel, angled from upper left to lower right. Complete blade and grip, no magical ornament.
+```
+
+#### bandit_jacket
+
+```text
+Original early-2000s painted fantasy RPG inventory illustration. Realistic weathered materials, fine brush detail, restrained earthy colors, crisp silhouette readable in a small equipment slot. One isolated item on a uniform pale warm-gray background with a subtle contact shadow. Entire item within frame with generous padding. No character, hands, mannequin, text, logo, border, UI, watermark, neon, anime or glossy 3D. Do not copy Neverlands artwork. Composition aspect ratio 60:90. One sleeveless moss-green leather long jacket with russet hood and brown reinforced edging, plain front buckles, worn knee-length split hem. Front three-quarter inventory view, empty garment without head, arms or mannequin.
+```
+
+#### bandit_belt
+
+```text
+Original early-2000s painted fantasy RPG inventory illustration. Realistic weathered materials, fine brush detail, restrained earthy colors, crisp silhouette readable in a small equipment slot. One isolated item on a uniform pale warm-gray background with a subtle contact shadow. Entire item within frame with generous padding. No character, hands, mannequin, text, logo, border, UI, watermark, neon, anime or glossy 3D. Do not copy Neverlands artwork. Composition aspect ratio 60:30. One narrow dark russet leather waist belt in a low horizontal oval coil, a plain small square iron buckle and two spare punched holes, complete tail visible.
+```
+
+
+### Stronger-NPC packaging register
+
+All originals remain in the built-in generation directory for this task;
+runtime copies are in `app/assets/images/npc/` and its `equipment/` directory.
+Generated imagery is decorative. Displayed names, empty slots and numeric
+profiles come from separately authored level13–15 data in `outdoor_npcs.yml`.
+No equipment stats are inferred from an illustration.
+
+| Asset | Generated output filename | Runtime pixels |
+|---|---|---|
+| bandit.png | exec-0c2c04ee-7a1e-4fee-94b6-98481eaf7ca7.png | 690×1530 after background crop |
+| robber.png | exec-6f7aaf59-1c79-47c8-a102-439208cc8aa1.png | 690×1530 after background crop |
+| bandit_headband | exec-76151541-8313-4e9c-ba2e-7af92d16a6fd.png |1254×1254|
+| bandit_amulet | exec-62c0865f-4be8-4ab2-b629-65437e6c0174.png |1774×887|
+| bandit_sword | exec-7b9575bb-8875-4c90-b86d-90b06da62b0c.png |1024×1536|
+| bandit_boots | exec-80fb0d20-a960-4e0e-bc39-08f7e6080d34.png |1254×1254|
+| bandit_ring | exec-453520a9-61ce-47e4-b9cc-bd3da3e378ff.png |1254×1254|
+| bandit_bracers | exec-57d9c6c3-8f1b-4f2c-b419-adfb432e1e09.png |1536×1024|
+| bandit_gloves | exec-cfb202ad-95d2-40c9-add5-81812d0c60ce.png |1536×1024|
+| bandit_dagger | exec-9fbd0804-7a6d-490f-8b6d-327ca642d645.png |1024×1536|
+| bandit_jacket | exec-09363f80-dee1-48a5-be8f-67eb56105c56.png |1024×1536|
+| bandit_belt | exec-78821c4a-8098-4eb6-8f73-7b940da9d116.png |1774×887|
+| robber_helmet | exec-5a6312de-6c0a-4582-82d4-b8a27d0ba10f.png |1254×1254|
+| robber_talisman | exec-d44d9b55-b2aa-4c9b-b780-1f4262ae33d7.png |1774×887|
+| robber_club | exec-0db32e25-b34c-4ae5-a950-7d5b9a4cd554.png |1024×1536|
+| robber_armor | exec-c04042c5-c120-4803-8944-48bae3652094.png |1024×1536|
+
+Equipment files keep their generated pixels and use uniform contain fit in
+`EquipmentSlots`' existing consumers; no stretching or destructive item crop.
+Portraits render115×255. Bandit sword is pointed downward in the accepted
+output despite the prompt requesting upright; the complete blade remains
+visible and the pose fits the narrow consumer. Robber club, hands and boots
+remain complete after crop. Final local browser evidence belongs in the
+[combat handbook](features/arena_combat.md).
+
+## Category artwork standard
+
+**ART-CATEGORY-001** is the mandatory category contract for new/reworked media.
+Read it together with the [September 16 source measurements](design/reference/inventory/observations/2026-09-16_artwork_categories.md).
+Earlier dated prompts remain historical provenance; they do not override this
+current standard. A passing geometry check is not a claim of visual acceptance.
+
+### Provenance and shared rules
+
+- **Measured Neverlands:** category display sizes, separate row/image backgrounds,
+  full player figure and the license/permit compositions in the observation.
+- **Observed convention:** subdued materials, compact legible silhouettes,
+  complete objects, category-specific orientation and monster backdrops.
+- **Local production specification:** exact export density, background RGB,
+  padding and lighting below. These make original artwork consistent; they are
+  not presented as source code or an official Neverlands art manual.
+- Keep original generated masters and their exact prompts. Produce a separate
+  delivery PNG; never stretch a figure or crop an object to force its ratio.
+  Uniform scale plus padding is permitted after visual review. Recompose art
+  whose pose cannot fill the narrow consumer clearly. A larger bitmap alone
+  does not fix tiny subject scale.
+- One painted style: matte, detailed, weathered cloth/leather/wood/stone/metal,
+  restrained earth colors, natural anatomy, soft diffuse upper-left illumination.
+  No glossy plastic, neon edge lights, photographic cutouts or inconsistent
+  perspective. Palette accents describe material/identity, never invented rarity.
+- UI labels, tiers, quantities, durability, frames, selection/focus and actions
+  remain semantic HTML/CSS. No source artwork, logos or copied emblems in runtime.
+
+### Adding a new artwork category
+
+**Every new artwork category must adopt the corresponding Neverlands
+specifications before local production and integration.** Capture the reference
+in a source observation first; do not derive the category contract from a
+generated image or substitute generic RPG conventions.
+
+1. Record the Neverlands surface and reference images, native bitmap and
+   displayed dimensions, image versus surrounding-cell backgrounds, proportions,
+   framing, padding, orientation, lighting, rendering behavior and relevant
+   variants. Record only what the evidence establishes.
+2. Translate that evidence into a local category specification. Keep measured
+   source facts separate from local export density, palette values and other
+   production adaptations; explain any necessary difference.
+3. Add the category to the matrix below, or link its dedicated specification
+   from the matrix. Define its prompt requirements, delivery dimensions,
+   background, composition, fit behavior and visual acceptance criteria.
+4. Generate original local artwork using that specification, preserve masters
+   and exact prompts, and verify it in each affected consumer at its actual
+   display size. Borrow the source specification, never source-owned artwork,
+   logos or emblems.
+5. Update this guide, the source observation and directly affected game guides
+   or runtime handbooks in the same task, following the
+   [documentation update rules](DOCUMENTATION.md#22-change-triggered-documentation-updates).
+
+If the corresponding Neverlands specification cannot yet be established, record
+an explicit `[EVIDENCE]` gap and any provisional local fallback. Do not present
+that fallback as a measured source standard or mark the category's source
+alignment complete.
+
+### Category matrix
+
+`W×H` below is the **CSS/native composition**, not the generator's native size.
+Equipment display geometry has one owner, [EquipmentSlots](../app/models/equipment_slots.rb),
+shared by player/NPC dolls and Inventory/Shop goods through
+`InventoriesHelper#item_artwork_dimensions`. Slot aliases resolve through
+ItemTemplate. A new item must use its category, not the shape of a supplied file.
+
+| Category | Native / display | New delivery PNG | Composition, background and acceptance |
+|---|---|---|---|
+| Weapon, staff, spear, shield; either hand | 62×91 | 248×364 (4×) | Full object; long axis generally vertical or a modest diagonal, blade/head up when compatible with the design; never rotate a shield sideways merely to fill the slot |
+| Helmet | 62×65 | 248×260 | Complete dome, crest and straps; front/three-quarter view |
+| Necklace/amulet | 62×35 | 248×140 | Chain spread horizontally with pendant; avoid a tall hanging chain shrunk to invisibility |
+| Chest armor | 62×83 | 248×332 | Upright complete garment, collar/shoulders/hem visible |
+| Leg armor | 62×81 | 248×324 | Complete paired legs, upright, no wearer |
+| Boots | 62×63 | 248×252 | Complete matched pair, soles and shafts visible |
+| Gloves / bracers | 62×40 | 248×160 | Paired pieces arranged horizontally, same material scale |
+| Belt | 62×30 | 248×120 | Horizontal belt with buckle, complete ends or an intentionally looped whole belt |
+| Relic | 62×31 | 248×124 | Compact horizontal object/composition; no invented activation state |
+| Ring | 31×31 | 124×124 | Single centered ring, readable opening and setting |
+| Pocket / pocket content | 20×20 / 42×20 | 80×80 / 168×80 | Small complete object; this is a doll footprint, not the 42×21 loose-permit image |
+| Belt contents | 20×20 | 80×80 | Dedicated compact silhouette; do not invent an equipped-content item to fill an empty slot |
+| Duel Permit I–IV | 42×21 | 168×84 | Horizontal document/scroll with small original emblem; source reuses one icon, tier comes from HTML |
+| Other loose goods, potions, healer bags, consumables/materials | 60×60 default | 240×240 | One complete object or justified pair; source exceptions require a measured key/category override. Fist Attack remains the default until its own bitmap dimensions are established |
+| Professional license | 60×60 | 240×240 | Horizontal certificate about 90% canvas width and 45–55% height, emblem left; seal/ribbon distinctions allowed, tier text stays in HTML |
+| Player and humanoid NPC doll portrait | 115×255 | 690×1530 (6×) | Complete narrow full figure, head/hands/feet and props inside frame; player backdrop white; NPC backdrop follows declared profile below |
+| Beast/monster portrait | 115×255 consumer | 690×1530 (6×), or explicitly retained composition | Preserve species proportions and full essential silhouette. A quadruped is not stretched into human proportions; any retained wide composition is a named exception, not an accidental square crop |
+| Small avatar badges | Existing 32/48/64/96 square consumers | Reuse approved portrait | Deliberate badge crop may use cover; never transfer that crop to the full combat doll |
+| Shop category controls | 41×53; Knives/Belts44×53 | Existing 1402×1122 atlas | Coherent grayscale object-on-stone family, stable atlas offsets; keyboard/name/tooltips in HTML |
+| City / building scenes | 1250×600 coordinate plane | 1250×600 | [ART-SCENE-001](#shared-scene-image-standard): complete scene, adaptive full composition, shared camera/lighting, no UI baked in |
+| World cells and neighborhoods | 100×100 logical cell | 1×/2× slices or declared atlas | [World density contract](#world-cell-raster-density-specifications): continuous terrain joins, fixed overhead scale, no portrait/item gray canvas |
+| City arrows / walking decoration | Declared existing consumer | Per respective profile | [Arrows](#city-route-arrow-decoration-specifications), [walking](#world-walking-decoration-specifications): genuine alpha, fixed registration, no new directions or gameplay |
+| Arena emblems / log ornament / UI decorations | Existing named consumer | Per dated production record | Original matte stone/iron/cloth vocabulary; transparent or explicitly matched page canvas. Keep type/time/controls out of bitmaps; semantic geometric borders remain CSS |
+
+For equipment and ordinary loose goods, target the limiting dimension of the
+subject at **88–94%** of the canvas, with at least **3% clear padding** on each
+edge. The other dimension follows the object's real shape; do not inflate a
+thin spear into a broad sword. License proportions are the explicit exception
+above. Shadows count toward clearance and must not touch the canvas border.
+Portraits target 90–96% height, at least 2% top/bottom and 3% side clearance;
+pose/anatomy wins over a numeric fill target for beasts. Check at native CSS
+size, not only enlarged in an image viewer.
+
+### Background and color profiles
+
+| Profile | Exact local specification | Applies to |
+|---|---|---|
+| Item canvas | Opaque sRGB `#B7B7B7`; flat perimeter, no vignette or baked frame; restrained contact shadow close to object | Wearables, NPC equipment, permits, licenses and loose item illustrations |
+| Inventory row cell | CSS `#F5F5F5` | Space surrounding the image; do not recolor the artwork to this shade |
+| Shop goods row cell | CSS `#F9F9F9` | Space surrounding Shop goods |
+| License row | CSS `#FFFFFF` | Space surrounding the square certificate image |
+| Player portrait | Opaque white `#FFFFFF`, subtle contact shadow under feet | The active adventurer and future player doll deliveries |
+| Humanoid NPC neutral portrait | Pale neutral `#F5F5F5`, no decorative frame | Goblin, Orc, Bandit, Robber, Ogre, Skeleton, Zombie unless a recorded source composition requires another backdrop |
+| Retained dark monster composition | Declared existing dark gray/brown backdrop, preserved as a complete composition | Wolf, Boar and Training Dummy; exception must remain listed in audit, not copied onto ordinary player/item artwork |
+| Scene / world | Full painted environment, no uniform object backdrop | Existing scene/world profiles; muted palette comes from adjacent approved art |
+| Transparent decoration | Actual alpha, clean edge pixels, no painted checkerboard/white fringe | Only consumers explicitly requiring alpha |
+
+Exact item gray is a **local standard** selected from the rendered source sample.
+Rendered screenshots do not prove that every source image uses one encoded RGB.
+Lighting and non-background material colors remain artistic, but a batch must
+share the same light direction, contrast and finish. Do not recolor armor or
+skin just to force the background specification. Material accents may differ.
+
+### Required audit and acceptance
+
+1. Inventory assets by allowlisted runtime key, consumer, encoded size, ratio,
+   background profile and original master/prompt; separate unused references.
+2. Check file format, exact delivery dimensions, alpha policy and stable mapping.
+   Files created before this standard require explicit audit dispositions; they
+   do not pass merely because `object-fit: contain` prevents stretching.
+3. Inspect a category contact sheet at native size, including object scale,
+   complete edges, orientation, shadows, visual consistency and portrait anatomy.
+4. Verify shared consumers: Shop Buy/Sell → Inventory → Wear → player doll →
+   Remove; NPC equipment/portrait in the shared fight doll; licenses, scrolls
+   and empty/unknown-item fallback. Art changes must not change stats/actions.
+5. Run affected asset/helper/rendering/system checks and the required completion
+   profile, then perform the final manual browser flow at desktop, narrow width,
+   keyboard and zoom. Record viewport, steps, results and remaining exceptions.
+6. Update this guide's production/audit record and directly affected
+   [ITEMS](ITEMS.md), [NPC](NPC.md), [CHARACTER](CHARACTER.md),
+   [Inventory](features/player_inventory.md), [Shop](features/shop_economy.md) or
+   [Combat](features/arena_combat.md) owner. Unverified assets stay explicitly open.
+
+### Reusable item correction prompt
+
+```text
+Edit the supplied original project [item], preserving its identity and complete
+geometry. Recompose for [category W×H] with [category orientation]. Show the
+whole object, fill 88–94% of the limiting canvas dimension, leave at least 3%
+clear border, and preserve physical proportions. Use detailed matte weathered
+[materials], subdued earth colors, soft diffuse upper-left lighting and a small
+contact shadow. Flat opaque neutral-gray #B7B7B7 canvas; no gradient, vignette,
+frame, text, UI, watermark, extra objects, cropped tips or source-game imagery.
+The result must remain readable at [W×H] CSS pixels. Delivery is [4W×4H] PNG;
+keep the unmodified generated master and record any approved packaging separately.
+```
+
+Use the portrait templates below with the chosen profile and 23:51 composition.
+These instructions define future production and correction, not a claim that a
+historical prompt requested dimensions it did not request.
+
+## September 16 category audit and corrections
+
+[Source capture](design/reference/inventory/observations/2026-09-16_artwork_categories.md)
+confirmed category shapes and exposed the universal Inventory square / Shop
+weapon-box mismatch. The shared helper now selects EquipmentSlots dimensions,
+42×21 for captured Permit keys and 60×60 for other loose goods. Buy, Sell and
+Inventory use the same rule; CSS preserves those dimensions with containment.
+
+The [before audit](artwork/2026-09-16/before-audit.json) lists **136 PNGs** with
+hashes, dimensions, consumers and corner samples: 88 item images,31 NPC equipment
+images,10 NPC portraits and7 player illustrations. Six player images are style
+references, not selectable runtime avatars. **20/136** initially matched their
+consumer aspect ratio. This number measures geometry only; neither a ratio
+match nor a corner sample proves acceptable artwork.
+
+License corrections use built-in imagegen, original project license inputs,
+and the literal [base prompts](artwork/2026-09-16/license-prompts.md) and
+[tier prompts](artwork/2026-09-16/license-tier-prompts.md). All six1254×1254
+[candidates and original master paths](artwork/2026-09-16/license-candidates.json)
+are preserved for review. Composition is horizontal with complete edges and
+distinct seals. Generated gray still has slight variation; deterministic
+background normalization and240×240 delivery packaging remain pending.
+These candidates are not yet installed as runtime replacements.
+The [local acceptance record](features/acceptance/2026-09-16_artwork/README.md)
+separates verified category geometry from pending bitmap correction.
+Packaging, selected output paths and final visual acceptance are recorded below
+when complete. The existing equipment/background audit remains open until the
+actual delivered files are reviewed; these standards alone do not close it.
 
 ## Authority and boundaries
 
@@ -357,22 +1128,18 @@ separates rejected prompts, selected poses, packaging and current acceptance.
 
 ## Shop item and category image specifications
 
-These are the current consumer sizes after the September 10 source-layout
-correction. Earlier production prompts and their 60px thumbnail reviews remain
-unchanged as historical records; CSS changes do not generate new artwork.
+Follow [ART-CATEGORY-001](#category-artwork-standard) and its current audit.
+Shop Buy/Sell and Inventory use the same **category-native** image dimensions:
+equipment follows EquipmentSlots, captured Permit I–IV42×21, other loose goods
+60×60. Professional licenses are60×60. Images use containment without stretching.
+The Shop icon column remains69px including padding/separator; changing image
+height does not change table width or the server's commerce rules.
 
-| Image use | Runtime asset | Display and fit |
-|---|---|---|
-| Ordinary Shop goods | Original 384 × 384px PNG per explicit stable item key | 62 × 91px box with `object-fit: contain`; 68px content/padding contract (62 + 3 + 3), measuring 69px including the collapsed 1px table separator |
-| Same item in Inventory | The same original PNG | 60 × 60px; equipment slots retain their separately documented geometry |
-| Professional licenses | Original 384 × 384px PNG per license key | 60 × 60px, following description/duration and durability/mass, before cost/stock |
-| Category controls | Existing 1402 × 1122px five-column/four-row atlas | Icon-only 41 × 53px boxes, 44 × 53px for Knives and Belts; title tooltips and accessible names belong to HTML |
-
-All 19 category icons share one surrounding cell with 3px padding and 1px
-spacing, producing the 61px strip. Do not apply this padding independently to
-each category. No item file, atlas or license image was regenerated, cropped or
-resized for this layout correction. Source item/license/category bitmaps remain
-prohibited; their measured footprints inform the local consumer only.
+Category controls retain the original1402×1122 atlas,41×53 boxes (Knives and
+Belts44×53), one surrounding cell with3px padding and1px spacing, producing the
+61px strip. Labels, tooltips and keyboard controls remain HTML. Earlier384px
+square delivery records and60px thumbnail reviews below are historical; the
+current category matrix owns new/corrected delivery dimensions.
 
 ## Prompt templates
 
@@ -404,6 +1171,15 @@ An NPC picture is selected by an explicit approved asset reference. Do not
 infer a monster image from its name, level, role or a generic RPG category.
 Outdoor NPCs remain hidden where that is the captured behavior; adding their
 combat portrait does not add a marker to the map.
+
+The combat paper-doll portrait consumer is **115 × 255 CSS pixels (23:51)**,
+inside the shared equipment rails, with `object-fit: contain`. Author a narrow
+full-body pose for that footprint; a wide illustration shrunk to fit its width
+is insufficient. Keep the skull/head, hands, feet and all decorative props
+inside the composition. Verify encoded dimensions separately from CSS size.
+The corrected Skeleton delivery is **690 × 1530 pixels**, exactly 6× this
+footprint, with no stretching or clipped anatomy. Portrait props never
+populate the NPC's equipment slots or grant combat stats.
 
 ### Player illustration
 
@@ -546,6 +1322,68 @@ behavior. Never retain credentials, private session HTML or Neverlands source
 bitmaps as runtime inputs.
 
 ## Production prompt records
+
+### 2026-09-11 — Low-level combat portraits and Orc equipment
+
+Status: generated, visually reviewed and integrated. Runtime acceptance is
+recorded in the Arena Combat handbook.
+Evidence: `doc/design/reference/combat/observations/2026-09-11_low_level_two_cell_combat_cycle.md`.
+Tool: built-in `image_gen`; no source-game bitmap was supplied as an input.
+The existing project Skeleton and Ironbound illustrations were inspected for
+style. The prompts below describe original compositions; they are not
+retrospective prompts for those older files.
+
+Consumer: the shared combat paper doll. Portraits retain their full figure
+with `object-fit: contain`; equipment uses the existing `EquipmentSlots`
+geometry and semantic HTML. NPC equipment labels and optional captured
+properties are separate from portrait decoration, combat stats and loot.
+Images do not create inventory items or grant attributes.
+
+Selected output paths: `app/assets/images/npc/orc.png` and
+`app/assets/images/npc/equipment/orc_dagger.png`,
+`app/assets/images/npc/equipment/orc_boots.png`,
+`app/assets/images/npc/equipment/orc_bracers.png`,
+`app/assets/images/npc/equipment/orc_belt.png`.
+Packaging: copy the generated PNGs without replacing any older image.
+Encoded PNG dimensions: Orc `852 × 1846`, dagger `1036 × 1519`, boots
+`1241 × 1268`, bracers `1561 × 1007`, belt `1802 × 873`. Final consumer
+acceptance is recorded in the Arena Combat handbook.
+
+#### Orc portrait — exact submitted prompt
+
+```text
+Create one original full-body painted fantasy combat portrait for an Orc NPC in a compact browser RPG paper doll. Tall portrait composition, aspect ratio 6:13. A single green-gray orc with a heavy brow and small tusks, in weathered dark segmented iron armor, a muted reddish-brown waist cloth, bracers and sturdy boots. A short rough iron dagger hangs low in one hand; the other hand is empty. Frontal three-quarter combat-ready standing pose. Show the entire head, both hands and both feet with clear margins; keep the silhouette narrow enough to remain complete in a 120 by 260 pixel portrait. Detailed painted fantasy illustration, believable matte iron, leather and fabric, earthy gray and brown palette, restrained warm highlights, crisp readable edges, subtle dark charcoal-brown portrait background. Treat the armor as portrait decoration; do not illustrate interface equipment slots. Original face, armor shapes and pose, no reproduction of an existing game character or image. No text, labels, numbers, health bars, frame, logo, watermark, extra figures, neon light or magical effects.
+```
+
+#### orc_dagger — exact submitted prompt
+
+```text
+Create one original painted fantasy equipment icon for a compact browser RPG paper-doll slot. Isolated object centered on a pale warm gray background. Detailed believable weathered iron and brown leather, matte materials, muted earth palette, crisp silhouette readable at 62 pixels wide. No hands, person, scene, labels, text, numbers, frame, logo, watermark, glow or copied game artwork. Keep the whole object inside the image with a small clear margin. Subject: a short Orc dagger, broad tapering dark iron blade, a slight hooked curve near its tip, rough leather-wrapped grip and small simple guard. Single dagger held vertically by composition only, point downward. Portrait aspect ratio 62:91.
+```
+
+#### orc_boots — exact submitted prompt
+
+```text
+Create one original painted fantasy equipment icon for a compact browser RPG paper-doll slot. Isolated object centered on a pale warm gray background. Detailed believable weathered iron and brown leather, matte materials, muted earth palette, crisp silhouette readable at 62 pixels wide. No hands, person, scene, labels, text, numbers, frame, logo, watermark, glow or copied game artwork. Keep the whole object inside the image with a small clear margin. Subject: one matching pair of rugged Orc boots, dark leather reinforced with dull iron strips, modest pointed toe shape, side-by-side three-quarter view. Square aspect ratio 62:63.
+```
+
+#### orc_bracers — exact submitted prompt
+
+```text
+Create one original painted fantasy equipment icon for a compact browser RPG paper-doll slot. Isolated object centered on a pale warm gray background. Detailed believable weathered iron and brown leather, matte materials, muted earth palette, crisp silhouette readable at 62 pixels wide. No hands, person, scene, labels, text, numbers, frame, logo, watermark, glow or copied game artwork. Keep the whole object inside the image with a small clear margin. Subject: one matching pair of Orc forearm bracers, dark worn leather and overlapping dull iron plates, laid side-by-side at a slight diagonal. Wide aspect ratio 62:40.
+```
+
+#### orc_belt — exact submitted prompt
+
+```text
+Create one original painted fantasy equipment icon for a compact browser RPG paper-doll slot. Isolated object centered on a pale warm gray background. Detailed believable weathered iron and brown leather, matte materials, muted earth palette, crisp silhouette readable at 62 pixels wide. No hands, person, scene, labels, text, numbers, frame, logo, watermark, glow or copied game artwork. Keep the whole object inside the image with a small clear margin. Subject: a broad plain brown leather Orc belt with a simple weathered iron buckle, arranged in a low horizontal oval showing its full circumference and buckle. Wide aspect ratio 62:30.
+```
+
+UI category: selectors, AP feedback, bars, roster names, result controls and
+empty slots remain semantic HTML/CSS; no raster control skin is generated.
+The player and Goblin category prompts are recorded below in the September 11
+player portrait and Goblin equipment entry.
+
 
 ### 2026-09-10 — Individual Shop goods
 
@@ -2958,3 +3796,122 @@ Generated-source directory: `/Users/sesharim/.codex/generated_images/01a08a92-e8
 - Inspected individual 60 × 60 thumbnails created using `sips -z 60 60` in `tmp/starter-license-art-qa/`. The parchment silhouettes remain complete, and profession seal color, plain/curled/finished paper treatment and zero/one/two ribbon silhouettes remain distinguishable. Fine pictorial insignia detail is intentionally subordinate at 60 pixels; the UI's text label owns exact license identification.
 - All document corners, seals and ribbon ends are within the images; no clipping, hands, environment, extra loose objects, legible words, letters, tier numerals, UI, watermarks or borrowed source marks were found. Ink is abstract and unreadable. Requested 15% padding varied in generation; accepted outputs preserve the entire object and clear ground around it, without claiming an exact percentage.
 - These checks validate the artwork files. All six images are integrated into the Shop license cards; application tests and browser verification are recorded in [Shop and Economy](features/shop_economy.md#september-10-starter-expansion--local-browser-verification). These images do not establish new Neverlands requirements, prices, durations, items or mechanics.
+
+### September 11: player portrait and Goblin equipment
+
+See also the Skeleton framing correction below for the exact 115 × 255
+paper-doll delivery contract.
+
+Original generated images for the captured compact paper-doll composition. Portrait props are decorative and never determine equipped slots or stats. No source artwork was copied. The generated originals were inspected at full size before integration; final UI verification is recorded in the Arena Combat handoff.
+
+Encoded PNG dimensions: adventurer `842 × 1867`, Goblin `843 × 1866`,
+stick `1024 × 1536`, sandals `1254 × 1254`, gloves `1536 × 1024`,
+chainmail `1024 × 1536`. These runtime files retain the generated PNGs unchanged.
+
+#### adventurer
+
+Runtime asset: `app/assets/images/avatars/adventurer.png`.
+
+Exact generation prompt:
+
+```text
+Create an original full-body player portrait for a browser RPG equipment paper doll, 115:255 aspect ratio, standing figure fully visible from crown to boots with generous internal padding. A mature androgynous human adventurer with shoulder-length ash-blond hair, restrained silver-gray plate pieces over dark leather and a faded ivory cloak, no helmet, calm ready stance, one modest steel mace lowered at the left side and a plain rounded metal shield at the right. These are decorative portrait props, not a diagram of equipped items. Early-2000s painted dark fantasy inventory illustration, realistic anatomy, finely brushed steel and worn leather, muted warm-gray palette, light parchment-gray studio background, subtle grounded shadow, crisp silhouette legible at 115 by 255 pixels. Face original and understated, no copied character likeness or Neverlands identity. Match traditional compact RPG item illustration, not anime, comic, pixel art, photorealism, neon, glossy 3D or cinematic action. No text, no logo, no letters, no numbers, no border, no UI, no watermark. Keep both feet and every prop fully within the canvas.
+```
+
+#### goblin
+
+Runtime asset: `app/assets/images/npc/goblin.png`.
+
+Exact generation prompt:
+
+```text
+Original early-2000s painted dark fantasy RPG inventory artwork; realistic worn materials, fine brush detail, subdued earthy colors, crisp readable silhouette at small UI size. Plain pale warm-gray background. Entire object inside frame with padding. No words, logo, border, frame, watermark, neon, anime, pixel art or glossy 3D. Do not copy Neverlands artwork or identity. Full-body portrait, narrow 115:255 aspect ratio. Short wiry olive-skinned goblin adult, original stern face, small pointed ears, worn dark chain shirt over brown leather, bandaged forearms and sturdy strapped footwear. A crude short broad blade lowered in one hand, a modest battered wooden round shield resting at the side as decorative portrait props. Standing on rough earth against a dim natural stone alcove, full figure from crown to feet visible. Compact static equipment-paper-doll composition. Painterly illustration rather than a cinematic scene.
+```
+
+#### goblin_stick
+
+Runtime asset: `app/assets/images/npc/equipment/goblin_stick.png`.
+
+Exact generation prompt:
+
+```text
+Original early-2000s painted dark fantasy RPG inventory artwork; realistic worn materials, fine brush detail, subdued earthy colors, crisp readable silhouette at small UI size. Plain pale warm-gray background. Entire object inside frame with padding. No words, logo, border, frame, watermark, neon, anime, pixel art or glossy 3D. Do not copy Neverlands artwork or identity. Single crude goblin fighting stick, 60:90 aspect ratio, a dark dense wooden cudgel with a short cloth-wrapped grip and blunt rough striking end, diagonal from upper left to lower right. Utilitarian low-level weapon, no magic, no gems, no metal blade. No hands or character.
+```
+
+#### goblin_sandals
+
+Runtime asset: `app/assets/images/npc/equipment/goblin_sandals.png`.
+
+Exact generation prompt:
+
+```text
+Original early-2000s painted dark fantasy RPG inventory artwork; realistic worn materials, fine brush detail, subdued earthy colors, crisp readable silhouette at small UI size. Plain pale warm-gray background. Entire object inside frame with padding. No words, logo, border, frame, watermark, neon, anime, pixel art or glossy 3D. Do not copy Neverlands artwork or identity. Pair of goblin sandals with thick dark leather soles, heavy crossed leather straps and short ankle guards, 60:60 aspect ratio, three-quarter view. Worn practical low-level footwear, a few dull buckles, no magical ornament. No body or feet inside.
+```
+
+#### goblin_gloves
+
+Runtime asset: `app/assets/images/npc/equipment/goblin_gloves.png`.
+
+Exact generation prompt:
+
+```text
+Original early-2000s painted dark fantasy RPG inventory artwork; realistic worn materials, fine brush detail, subdued earthy colors, crisp readable silhouette at small UI size. Plain pale warm-gray background. Entire object inside frame with padding. No words, logo, border, frame, watermark, neon, anime, pixel art or glossy 3D. Do not copy Neverlands artwork or identity. Pair of dark leather goblin fighting gloves with rough stitched seams, a few dull metal knuckle reinforcements and short cuffs, wide 60:40 aspect ratio, three-quarter view. Practical worn low-level equipment, no spikes or jewels, no arms or character.
+```
+
+#### goblin_chainmail
+
+Runtime asset: `app/assets/images/npc/equipment/goblin_chainmail.png`.
+
+Exact generation prompt:
+
+```text
+Original early-2000s painted dark fantasy RPG inventory artwork; realistic worn materials, fine brush detail, subdued earthy colors, crisp readable silhouette at small UI size. Plain pale warm-gray background. Entire object inside frame with padding. No words, logo, border, frame, watermark, neon, anime, pixel art or glossy 3D. Do not copy Neverlands artwork or identity. A single small coarse iron chainmail shirt for a goblin, short sleeves, dark leather edging at neck and hem, worn uneven iron rings, 60:90 aspect ratio. Front three-quarter inventory view, clearly readable garment silhouette. No body, head, mannequin or character, no magical decoration.
+```
+
+### September 11: Skeleton paper-doll framing correction
+
+The user identified the old `1024 × 1536` Skeleton portrait as incompatible
+with the tall combat paper doll. Its wide sword/stance reduced the figure's
+height under `object-fit: contain`. The replacement preserves the project's
+original skeleton identity, red cloth, belt and decorative sword, with a
+narrow pose and naturally dark eye sockets. Source Skeletons still have
+empty equipment slots; the painted sword does not grant an item or stats.
+
+Tool: built-in `image_gen`, editing the existing original project
+`app/assets/images/npc/skeleton.png`; no Neverlands bitmap was supplied.
+Runtime replacement: `app/assets/images/npc/skeleton.png`, **690 × 1530 PNG**,
+displayed at **115 × 255 CSS pixels**. The whole head, hands, feet and sword
+remain visible. Final local consumer acceptance belongs to
+[the Arena Combat handbook](features/arena_combat.md).
+
+#### Exact initial edit prompt
+
+```text
+Edit the attached ORIGINAL PROJECT Skeleton combat portrait to meet its actual browser RPG paper-doll consumer. Preserve the skeleton's recognizable skull and exposed bones, tattered muted red cloth, worn leather belt, old iron sword, detailed hand-painted matte materials and dark neutral charcoal-brown background. Recompose the whole image into a VERY TALL NARROW canvas with exact aspect ratio 23:51 (115:255), ideally 920 by 2040 pixels. This is a full-body equipment-paper-doll portrait, not a wide battle scene. Bring the feet closer together into a natural narrow standing stance, arms close to the body, and lower the sword vertically alongside the leg with its entire blade and tip visible. Do not squeeze or stretch the skeleton anatomy. The complete head, hands, feet and sword must fit inside the narrow canvas with a small clear margin; figure occupies roughly 90 percent of the canvas height and stays readable when displayed at 115 by 255 pixels. Preserve the original subject, outfit and restrained painted detail, but remove the unexplained orange glowing eye and smoky magical haze. Both eye sockets are naturally dark. A quiet dark neutral background without scenery; gentle grounded shadow only. Do not add armor, weapons, shields, people, text, numbers, labels, nameplates, UI, borders, watermarks, logos, magical effects or copied game artwork. Output one finished tall narrow portrait with complete uncut anatomy and sword, not a broad image with empty side margins.
+```
+
+Selected generated output:
+`exec-07d71c94-b52f-44f5-82e0-3c03408291b1.png`, **889 × 1770**.
+A second framing attempt was inspected but rejected because its canvas was
+wider, despite the requested narrow ratio:
+
+#### Exact unused correction prompt
+
+```text
+Precise framing correction to the attached project Skeleton portrait. Keep the skeleton, anatomy, red cloth, belt, sword, pose, paint style and lighting exactly unchanged. The current canvas is too wide for its UI slot. Output a 115:255 aspect ratio canvas (23:51; about 0.45098 width divided by height). Trim only the empty dark background at the left and right edges until this tall narrow ratio is achieved. Preserve the complete head, fingers, feet and sword tip with their existing top and bottom margin. Do not crop any part of the figure, stretch anatomy, add content, redesign the portrait or add a border. The intended display is exactly 115 pixels wide by 255 pixels high, so this output must have that same tall narrow ratio; prefer 828 by 1836 pixels or another exact multiple of 23 by 51. Return one corrected tall portrait only.
+```
+
+Unused output: `exec-d5fe4f18-b243-4380-ac82-51a32cb1d6c2.png`, **937 × 1679**.
+Both generated originals remain under
+`/Users/sesharim/.codex/generated_images/01a09048-8cf7-7d32-8832-36d18025f07c/`.
+
+Packaging of the selected output uses a centered **782 × 1734** crop,
+removing only excess background (no figure or sword), followed by uniform
+downscaling to **690 × 1530**. Both delivery dimensions are exact multiples
+of the slot; no anisotropic resize was used. The final file was inspected
+after packaging.
+
+```sh
+sips -c 1734 782 SELECTED_SOURCE --out app/assets/images/npc/skeleton.png
+sips -z 1530 690 app/assets/images/npc/skeleton.png
+```

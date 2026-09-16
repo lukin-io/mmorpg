@@ -1,5 +1,8 @@
 # Neverlands Dungeons Source Summary
 
+For the design, delivery status and current implementation using this evidence,
+follow the [Dungeons domain](../../../domains/dungeons.md).
+
 - Document type: neverlands-source-summary
 - Domain: dungeons
 - Updated: 2026-09-09

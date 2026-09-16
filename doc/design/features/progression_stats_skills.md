@@ -1,6 +1,40 @@
 # Progression, Stats, And Skills
 
-Domain navigation: `doc/domains/character.md`.
+Domain navigation: [Character](../../domains/character.md).
+
+[STATS](../../STATS.md) and [MODIFIERS](../../MODIFIERS.md) expand parameter
+definitions, linked resources and current opposed-rating consumers. Their
+[source coverage record](../reference/character/observations/2026-09-15_stats_guide_linked_definitions.md)
+separates published but absent overload/reset/buff/low-HP rules from active
+calibration; adding these references does not change the current MVP boundary.
+
+The complete [SKILLS](../../SKILLS.md) and [PERKS](../../PERKS.md) guides map
+current catalogs, implemented/missing effects, allocation rules, formulas and
+cross-feature use cases. [September14 screenshots/wiki](../reference/character/observations/2026-09-14_skills_and_perks.md)
+add source descriptions; published-but-unimplemented effects remain separate
+from current runtime and do not change MVP delivery status.
+
+[FORMULAS](../../FORMULAS.md#2-experience-levels-and-grants) records level
+tables and links the current stat/skill calculations;
+[ITEMS](../../ITEMS.md#3-fields-slots-and-effective-properties) identifies
+equipment requirements and modifiers. The
+[Character Progression handbook](../../features/character_progression.md)
+owns allocation, persistence and consumer handoffs.
+
+The [September 15 Experience audit](../reference/combat/observations/2026-09-15_wiki_experience_rules.md)
+compares every supported table row with the current wiki: 224 stored values
+match. No grants or cumulative thresholds changed. Reward eligibility,
+restored-HP credit and missing XP buffs belong to the shared Combat owner.
+
+## September12 authorized calibration
+
+The user authorized the best evidence-grounded approximation after22 controlled
+fights. [Calibration v1](combat_calibration.md) owns the fitted combat, mastery,
+fatigue, magic, XP/drop, injury/recovery and remote-placement rules. It
+supersedes earlier implementation holds for hidden coefficients; historical
+source observations and uncertainty remain unchanged. Medical Care supplies
+the bounded healer/patient transaction and Hospital bag purchase handoff.
+
 
 ## Purpose
 
@@ -88,7 +122,8 @@ The 2026-07-27 wiki audit confirms that a new character is level `0` and that
 progression is table-driven. `config/gameplay/character_progression.yml`
 contains only complete source rows `0..27`. Each row defines:
 
-- the cumulative combat-experience threshold to the next level;
+- the additional combat XP needed for that level; the cumulative threshold
+  to reach levelN is the sum of cost rows0 throughN−1;
 - stat, combat-skill, peace-skill, perk, and NV grants;
 - maximum experience awarded by one fight at that current level;
 - the source maximum NPC group size for that level.
@@ -99,18 +134,44 @@ grants `3` stats, `4` combat points, `3` peace points, `1` perk point, and
 `50` NV. Later grants must be read from the catalog rather than derived by a
 generic formula.
 
+The [September11 live profile and wiki recheck](../reference/character/observations/2026-09-11_level_grants_and_combat_inputs.md)
+corrects the earlier interpretation of those costs as cumulative thresholds.
+For example, level17 begins at25,000,000 accumulated XP and level18 at
+50,000,000. These sums do not change the stat/skill/NV grant rows.
+
 Rows beyond level `27` are not implemented because the audited wiki rows are
 incomplete. A character at the highest complete row can keep experience, but
 the server does not invent a threshold or rewards for level `28`.
 
-Configured solo NPC experience is awarded at shared fight completion and
-capped by the winner's current table row. Neverlands group experience uses a
-more complex distribution that is not completely captured, so a winning side
-with multiple player participants currently receives no invented PvE XP split.
+Shared player/NPC experience is awarded at fight completion and capped by the
+recipient's current table row and active entitlement. Explicit observed solo
+NPC victory/defeat totals retain precedence. The user-authorized calibrated
+fallback handles defeated player/NPC opponents and contributing group members;
+these coefficients are local fits, not recovered source equations. Read
+[FORMULAS](../../FORMULAS.md#reward-01--shared-npc-and-player-experience) for
+credited HP, level discount, risk, team shares, caps and edit impact. Progression
+still owns applying XP and the same per-level grants to every recipient.
 The persistent chat timeline may display the exact awarded amount in a concise
 fight-completion row after finalization. Character progression remains the XP,
 threshold, and grant authority; that feedback row cannot award or recalculate
 experience.
+
+### Per-level grants and combat handoff
+
+The [September11 table recheck](../reference/character/observations/2026-09-11_level_grants_and_combat_inputs.md)
+records every supported level's stat grant and cumulative total. Reaching13
+adds10 free stat points,14 adds12, and15–19 each add15. These become effective
+only after allocation. Never multiply every stat by the level or use a fixed
+points-per-level constant. Keep the complete threshold/reward catalog in
+`config/gameplay/character_progression.yml` and its persistence contract in the
+[progression handbook](../../features/character_progression.md#level-grants-and-the-combat-handoff).
+
+Primary allocation, weapon mastery, item damage/armor, supported perks and
+source-backed temporary effects remain distinct inputs. [Combat](combat.md)
+owns their downstream calculations for both players and NPCs through the same
+resolution pipeline. A displayed NPC stat total is an authored observation,
+not evidence that NPCs receive the player's allocation grants. Unpublished
+chance/mitigation coefficients remain evidence gaps.
 
 ## Public Player Info
 
@@ -358,3 +419,31 @@ Perk allocation rules:
 - Unlimited free respec.
 - Skills that only exist as UI decoration.
 - Extrapolated level rows, invented group-XP distribution, or generic classes.
+
+## September 15 level, stat and modifier integration
+
+The [published-rule audit](../reference/character/observations/2026-09-15_levels_stats_and_modifiers.md) adds three shared consumers:
+World filters complete NPC samples by the persisted player's progression-table
+ceiling; combat accuracy includes both Dexterity and Luck; physical armor gains
+an approximate hidden Health factor. Config owns the fitted3:2 accuracy weights
+and Health30-step/150-cap/0.05 bonus. Displayed armor and independent block rating
+remain unchanged. NPC Health is explicitly authored, never inferred from HP.
+
+The global [FORMULAS](../../FORMULAS.md#september-15-stat-and-modifier-interpretation)
+and [CHARACTER](../../CHARACTER.md#september-15-level-and-primary-stat-evidence)
+books own equations, examples and editing impact. The source's hidden combat
+level coefficient remains unimplemented with unknown magnitude. Combat HP
+restoration qualification and elemental magic's10%-armor rule are recorded as
+source-only dependencies beyond the physical MVP, not claims of shipped parity.
+
+### September 16 profile and combat-state alignment
+
+The [live source table audit](../reference/character/observations/2026-09-16_primary_list_audit.md)
+confirms separate numeric learned/bonus values,15 profession counters and42
+Yes/No perk rows. Local HTML/CSS follows that structure; only four supported
+perks are selectable. Every active match reserves owner allocation, including
+older matches without physical-only metadata. Both armed and unarmed action
+budgets persist at admission; live numeric gear/injury effects expire without
+healing or changing saved allocations. Exact source mid-fight expiry remains
+unobserved. [Runtime progression](../../features/character_progression.md) and
+[Character](../../CHARACTER.md) own current behavior and acceptance.

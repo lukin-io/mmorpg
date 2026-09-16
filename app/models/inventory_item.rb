@@ -54,9 +54,15 @@ class InventoryItem < ApplicationRecord
     return false if expires_at.blank?
 
     parsed = Time.zone.parse(expires_at.to_s)
-    parsed.present? && parsed.past?
-  rescue ArgumentError
-    false
+    parsed.nil? || parsed <= Time.current
+  rescue ArgumentError, TypeError
+    true
+  end
+
+  # One current-state rule for every worn stat, skill, rating and AP preview.
+  # Expiry removes effects without deleting inventory history or refilling HP.
+  def usable_equipment?
+    equipped? && !broken? && !expired?
   end
 
   def protected_from_discard?
@@ -64,6 +70,12 @@ class InventoryItem < ApplicationRecord
       bound? ||
       truthy_property?("protected") ||
       truthy_property?("locked")
+  end
+
+  # Some source consumables expose Use/Delete but no Transfer/Gift/Sell. Keep
+  # this restriction separate from binding, which also prevents discarding.
+  def tradable?
+    !protected_from_discard? && item_template.enhancement_rules.to_h["personal_only"] != true
   end
 
   def decrement_durability!(amount = 1)

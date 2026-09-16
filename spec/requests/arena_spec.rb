@@ -77,8 +77,8 @@ RSpec.describe "Arena", type: :request do
         get arena_index_path
 
         expect(response.body).to include("Duels")
-        expect(response.body).to include("Team Battles")
-        expect(response.body).to include("Sacrifice")
+        expect(response.body).to include("Groups")
+        expect(response.body).not_to include("Sacrifice")
       end
     end
 
@@ -128,12 +128,15 @@ RSpec.describe "Arena", type: :request do
       it "displays current application status" do
         get arena_index_path
 
-        expect(response.body).to include("Your application")
+        expect(response).to redirect_to(arena_room_path(arena_room, ft: 1))
+        follow_redirect!
+        expect(response.body).to include("Waiting for the fight to begin!")
       end
 
       it "shows cancel button for active application" do
         get arena_index_path
 
+        follow_redirect!
         expect(response.body).to include("Cancel Application")
       end
     end

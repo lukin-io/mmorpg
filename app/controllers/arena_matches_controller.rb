@@ -2,11 +2,16 @@
 
 class ArenaMatchesController < ApplicationController
   before_action :authenticate_user!
-  before_action :set_arena_match, only: [:show, :action, :claim_timeout, :finish, :log]
-  before_action :require_character, only: [:action, :claim_timeout, :finish]
+  before_action :set_arena_match, only: [:show, :action, :switch_opponent, :claim_timeout, :finish, :log, :confirm_duel, :refuse_duel]
+  before_action :require_character, only: [:action, :switch_opponent, :claim_timeout, :finish, :confirm_duel, :refuse_duel]
 
   def show
     authorize @arena_match
+
+    if @arena_match.cancelled? && @arena_match.metadata.to_h["duel_applicant_id"].present?
+      redirect_to arena_room_path(@arena_match.arena_room)
+      return
+    end
 
     # The delayed job is the normal start path. A due pending match also starts
     # when either participant reconnects, providing a bounded recovery path if
@@ -24,12 +29,32 @@ class ArenaMatchesController < ApplicationController
     @participations = @arena_match.arena_participations.includes(
       :npc_template,
       character: {inventory: {inventory_items: :item_template}}
-    )
+    ).order(:id)
     @broadcaster = Arena::CombatBroadcaster.new(@arena_match)
 
     respond_to do |format|
-      format.html
+      format.html do
+        render :confirmation if @arena_match.awaiting_duel_confirmation?
+      end
       format.json { render json: match_payload }
+    end
+  end
+
+  def confirm_duel
+    authorize @arena_match
+    result = Arena::ApplicationHandler.new.confirm_duel(match: @arena_match, character: current_character)
+    respond_to do |format|
+      format.html { redirect_to @arena_match, alert: result.errors&.join(", "), status: :see_other }
+      format.json { render json: {success: result.success?, errors: result.errors}, status: result.success? ? :ok : :unprocessable_entity }
+    end
+  end
+
+  def refuse_duel
+    authorize @arena_match
+    result = Arena::ApplicationHandler.new.confirm_duel(match: @arena_match, character: current_character, refuse: true)
+    respond_to do |format|
+      format.html { redirect_to arena_room_path(@arena_match.arena_room), alert: result.errors&.join(", "), status: :see_other }
+      format.json { render json: {success: result.success?, errors: result.errors}, status: result.success? ? :ok : :unprocessable_entity }
     end
   end
 
@@ -81,6 +106,22 @@ class ArenaMatchesController < ApplicationController
     end
   end
 
+  # POST /arena_matches/:id/switch_opponent
+  def switch_opponent
+    authorize @arena_match
+    @arena_match.auto_end_if_needed!
+    result = Arena::CombatProcessor.new(@arena_match).switch_opponent(
+      current_character, expected_switches_used: params[:switches_used]
+    )
+    respond_to do |format|
+      format.html { redirect_to @arena_match, alert: result.error, status: :see_other }
+      format.json do
+        render json: {success: result.success?, error: result.error, data: result.data},
+          status: result.success? ? :ok : :unprocessable_entity
+      end
+    end
+  end
+
   # POST /arena_matches/:id/claim_timeout
   def claim_timeout
     authorize @arena_match
@@ -124,8 +165,14 @@ class ArenaMatchesController < ApplicationController
       participation.metadata ||= {}
       participation.metadata["finished_at"] ||= Time.current.iso8601
       participation.save!
+      Arena::CombatProcessor.new(@arena_match).publish_finish_notice!(participation)
     end
-    current_character.exit_combat! if current_character.in_combat?
+    current_character.with_lock do
+      # Replaying an old Finish must never clear a newer fight's state.
+      unless current_character.arena_participations.joins(:arena_match).merge(ArenaMatch.active).exists?
+        current_character.exit_combat! if current_character.in_combat?
+      end
+    end
 
     redirect_to finish_destination_path, notice: "Fight finished.", status: :see_other
   end
@@ -188,11 +235,11 @@ class ArenaMatchesController < ApplicationController
           team: p.team,
           result: p.result,
           is_npc: p.npc?,
-          current_hp: p.current_hp,
+          current_hp: p.defeat? ? 0 : p.current_hp,
           max_hp: p.max_hp,
-          current_mp: p.npc? ? 0 : p.character.current_mp,
-          max_mp: p.npc? ? 0 : p.character.max_mp,
-          is_dead: p.current_hp <= 0
+          current_mp: p.current_mp,
+          max_mp: p.max_mp,
+          is_dead: !p.combat_alive?
         }
       end
     }
@@ -213,6 +260,8 @@ class ArenaMatchesController < ApplicationController
 
   def current_user_waiting?
     participation = @arena_match.arena_participations.find_by(user: current_user)
+    return false unless participation&.combat_alive?
+
     pending_turn = participation&.metadata.to_h["pending_turn"]
 
     pending_turn.present? &&
@@ -244,6 +293,16 @@ class ArenaMatchesController < ApplicationController
   end
 
   def finish_destination_path
+    participation = @arena_match.arena_participations.find_by(character: current_character)
+    return inventory_path if participation&.metadata.to_h["scroll_entry"]
+    if @arena_match.metadata.to_h["source"] == "scroll_pvp"
+      return Game::World::ResumeContext.new(character: current_character).resume_path
+    end
+    if @arena_match.metadata.to_h["physical_only"]
+      room = @arena_match.arena_room
+      context = Game::World::ResumeContext.new(character: current_character)
+      return arena_room_path(room, ft: @arena_match.team_battle? ? 2 : 1) if context.remember_arena_room!(room:)
+    end
     return arena_index_path unless @arena_match.metadata.to_h["source"] == "world_npc"
 
     Game::World::CombatReturnContext.new(character: current_character).path_for(

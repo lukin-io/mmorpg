@@ -1,12 +1,76 @@
 # Arena Area
 
-Domain navigation: `doc/domains/combat.md`.
+Domain navigation: [Combat](../../domains/combat.md).
+General area guide: [ARENA](../../ARENA.md), including halls, applications,
+training supply, admission/assembly, UI/artwork and editing consequences.
+[COMBAT](../../COMBAT.md) explains shared player/NPC resolution and formulas.
+
+[Combat design](../features/combat.md) owns the shared fight rules;
+[FORMULAS](../../FORMULAS.md#5-combat) and [NPC lifecycle](../../NPC.md#7-encounter-and-fight-lifecycle)
+describe their current calculations and roster inputs. The
+[Arena Combat handbook](../../features/arena_combat.md) owns rooms,
+applications, runtime transitions and acceptance.
 
 ## Purpose
 
 The arena is the structured fight hub. It provides room-based fight
-applications, duel/group/special modes, optional NPC training opponents, and a
+applications, Duel/Group modes, optional NPC training opponents, and a
 route into the shared turn-based combat system.
+
+## September 12 physical Arena contract
+
+[Fresh lobby observations](../reference/combat/observations/2026-09-12_arena_duels_and_groups.md)
+extend the historical captures below. Only **Duels / Groups** are offered.
+The shared resolver retains earlier bounded magic capability, but new Arena
+matches are physical-only; spell controls and server submission are disabled.
+
+Applications persist equipment kind, turn timeout2/3/4/5 minutes and trauma
+10/30/50/80. Group sides independently declare capacity1–30 and ordered levels
+0–33; closed sides cap at10. Wait is5/10/15/30/45/60 minutes. A submitted1×1
+Group becomes1×2, matching the observed source normalization. The applicant
+occupies sideA and must fit its range. Every additional player chooses a side.
+
+Unarmed requires empty equipment slots, including clothing. Artifact limits
+use authored grades, as specified in [ITEMS](../../ITEMS.md), never price/name
+heuristics. Alignment groups enforce side affinities; clan modes and later
+intervention are outside this basic PvP stage. Closed means a capped roster
+with no late entry; normal matches also have no late-entry surface in this MVP.
+
+Joining rechecks current hall/level/HP/equipment/alignment, capacity, expiry and
+existing fight/application. A waiting player cannot change equipment or leave
+through Character/Inventory/City requests. Members can withdraw; owner
+withdrawal cancels the whole offer. Login/reload restores the reserved room.
+At the deadline a valid roster with at least one person on each side starts;
+empty or invalid opposition expires safely. Starting underfilled sides and
+waiting even when full are explicit local inferences, not completed source
+multiplayer evidence. Delayed jobs and lobby reads recover the same transition.
+
+The September14 live human Duel supersedes the earlier countdown inference:
+acceptance reserves both people; the applicant explicitly starts and either
+participant can refuse before combat. Refusal reopens the original offer. Every new Arena fight has the
+user-selected **300-second global deadline**, independently of the turn timer.
+Shared cards, turns, live-player readiness, defeat, credited damage, XP,
+injury, wear, logs, chat events and Finish use the existing combat pipeline.
+Defeated participants disappear from active play, remaining in history/rewards.
+Each participant acknowledges the result with Finish. The local asynchronous
+PvP contract restores an unacknowledged result after login, then returns to the
+original accessible hall/tab on Finish. This recovery detail is a local
+adaptation. September14 now supplies a completed human Duel and confirms
+manual Finish, lobby return and the weak-player recovery state.
+A future same-cell outdoor attack should create participations in that same
+engine; this stage does not add an outdoor attack endpoint.
+
+The source hall scheme is two rows of five: Help0–5, Training5–10, Trial5–33,
+Initiation9–33, Patrons16–33, then Law/Light/Balance/Chaos/Dark0–33 with matching
+alignment restrictions. The level-1 Dummy is available to the authored Help
+and Training halls through the same NPC configuration and application path.
+
+The later [September 14 scroll contract](../features/scrolls.md) supplies
+targeted PvP entry and Permit intervention into eligible non-closed fights;
+earlier statements below about absent outdoor entry/late intervention describe
+the September 12 stage. Lobby applications still do not expose late join.
+The current complete entry map is maintained in [ARENA](../../ARENA.md) and
+[SCROLLS](../../SCROLLS.md).
 
 ## Neverlands Reference
 
@@ -69,7 +133,7 @@ The arena main frame should read in this order:
   exit controls;
 - filter/status row showing application filter, application count, refresh, and
   room-scheme toggle;
-- compact horizontal tabs for duels, groups, sacrifice, and statistics;
+- compact horizontal Duels/Groups tabs (the source's excluded tabs are not local modes);
 - current tab form or state message;
 - pending application list;
 - footer/status time.
@@ -99,8 +163,7 @@ Arena may offer these actions when the character is eligible:
 - create group/team application;
 - join an open side of an application;
 - withdraw own application;
-- decline a matched application before start;
-- start a matched duel or group fight;
+- enter a matched duel or group fight when the server starts it;
 - resolve timeout when the opponent fails to act;
 - view fight statistics or logs;
 - return to the parent city node/building context.
@@ -270,7 +333,7 @@ Arena combat uses the shared combat contract from `features/combat.md`:
 - per-participant AP and physical attack profile;
 - captured `140` AP with `67/87` costs and `114` AP with `45/65` costs as
   profile variants;
-- body-part attacks, one active block, magic/action slots, participant HP/MP,
+- body-part physical attacks, one active block, participant HP/MP,
   attack/defense totals, and live log entries;
 - simultaneous waiting when live player-controlled participants exist on more
   than one side;
@@ -325,7 +388,7 @@ Core:
 - duel;
 - group/team fight;
 - training against NPC;
-- sacrifice/free-for-all.
+- Sacrifice, Tactical and Tote are excluded from launch.
 
 ## Feature Hooks
 
@@ -344,3 +407,9 @@ Specifically non-core until the room/application/turn-combat loop is stable:
 
 - global arena entry as the primary path instead of city-building entry;
 - separate arena combat rules that drift from `features/combat.md`.
+
+The Dummy's authored `arena_acceptor_level_min/max` is **0/5**, separately
+from hall access. Both gates apply: Help allows0–5; Training5–10 therefore
+admits only level5 against this Dummy. These optional integer bounds are
+validated when `config/gameplay/arena_npcs.yml` loads and copied to each new
+application. Other NPCs without explicit bounds retain their hall range.

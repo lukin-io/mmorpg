@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Purpose: Provides neutral player avatar rendering and explicit NPC images.
+# Purpose: Renders original player artwork and explicit NPC images.
 #
 # NPC avatars use explicit captured config metadata. Monster images such as
 # wolf/boar/skeleton/zombie remain available assets, not gameplay selectors.
@@ -12,10 +12,10 @@
 #   <%= avatar_image_tag(participation) %>  # handles both character and NPC
 #
 module AvatarHelper
-  NPC_IMAGE_ASSETS = %w[scarecrow wolf boar skeleton zombie].freeze
+  NPC_IMAGE_ASSETS = %w[scarecrow wolf boar skeleton zombie orc goblin bandit robber ogre].freeze
 
-  # Renders a neutral fallback avatar for a character until a source-backed
-  # player portrait system exists.
+  # Renders an original static portrait. Its decorative props do not select
+  # equipment or imply a race/class system.
   #
   # @param character [Character] the character to render avatar for
   # @param size [Symbol] :small (32px), :medium (48px), :large (64px), :xlarge (96px)
@@ -24,7 +24,7 @@ module AvatarHelper
   def character_avatar_tag(character, size: :medium, **options)
     return fallback_avatar_tag(size:, **options) unless character
 
-    fallback_avatar_tag(size:, **options)
+    build_avatar_tag("avatars/adventurer.png", character.name, size:, css_class: "player-avatar", **options)
   end
 
   # Renders an avatar image tag for an NPC
@@ -54,12 +54,19 @@ module AvatarHelper
     return fallback_avatar_tag(size:, **options) unless participation
 
     if participation.npc_template.present?
-      npc_avatar_tag(participation.npc_template, size:, **options)
+      npc_participation_avatar_tag(participation, size:, **options)
     elsif participation.character.present?
       character_avatar_tag(participation.character, size:, **options)
     else
       fallback_avatar_tag(size:, **options)
     end
+  end
+
+  def npc_participation_avatar_tag(participation, size: :medium, **options)
+    name = participation.npc_combat_data["avatar_image"].to_s.sub(/\.png\z/, "")
+    return fallback_avatar_tag(size:, **options) unless NPC_IMAGE_ASSETS.include?(name)
+
+    build_avatar_tag("npc/#{name}.png", participation.participant_name, size:, css_class: "npc-avatar", **options)
   end
 
   private

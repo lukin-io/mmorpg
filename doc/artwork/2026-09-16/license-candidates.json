@@ -1,0 +1,44 @@
+[
+  {
+    "key": "doctor_license_i",
+    "tool": "built-in imagegen",
+    "source_master": "/Users/sesharim/.codex/generated_images/01a09048-8cf7-7d32-8832-36d18025f07c/exec-24f7bc30-6e4f-4435-9563-7b8118c4674e.png",
+    "candidate": "doc/artwork/2026-09-16/license-candidates/doctor_license_i.png",
+    "status": "composition reviewed; background normalization and delivery packaging pending"
+  },
+  {
+    "key": "doctor_license_ii",
+    "tool": "built-in imagegen",
+    "source_master": "/Users/sesharim/.codex/generated_images/01a09048-8cf7-7d32-8832-36d18025f07c/exec-278b75d2-304a-4eb0-822c-7f6db226109a.png",
+    "candidate": "doc/artwork/2026-09-16/license-candidates/doctor_license_ii.png",
+    "status": "composition reviewed; background normalization and delivery packaging pending"
+  },
+  {
+    "key": "doctor_license_iii",
+    "tool": "built-in imagegen",
+    "source_master": "/Users/sesharim/.codex/generated_images/01a09048-8cf7-7d32-8832-36d18025f07c/exec-2f5fc0ad-ed9b-4b26-a5cd-fba76de0fa2c.png",
+    "candidate": "doc/artwork/2026-09-16/license-candidates/doctor_license_iii.png",
+    "status": "composition reviewed; background normalization and delivery packaging pending"
+  },
+  {
+    "key": "trading_license_i",
+    "tool": "built-in imagegen",
+    "source_master": "/Users/sesharim/.codex/generated_images/01a09048-8cf7-7d32-8832-36d18025f07c/exec-b5d12f37-25a6-4b23-87ef-dd1abf15dfd3.png",
+    "candidate": "doc/artwork/2026-09-16/license-candidates/trading_license_i.png",
+    "status": "composition reviewed; background normalization and delivery packaging pending"
+  },
+  {
+    "key": "trading_license_ii",
+    "tool": "built-in imagegen",
+    "source_master": "/Users/sesharim/.codex/generated_images/01a09048-8cf7-7d32-8832-36d18025f07c/exec-29598c26-d5ec-42c3-bec4-92baac4b3973.png",
+    "candidate": "doc/artwork/2026-09-16/license-candidates/trading_license_ii.png",
+    "status": "composition reviewed; background normalization and delivery packaging pending"
+  },
+  {
+    "key": "trading_license_iii",
+    "tool": "built-in imagegen",
+    "source_master": "/Users/sesharim/.codex/generated_images/01a09048-8cf7-7d32-8832-36d18025f07c/exec-bc2cb8b8-155b-477f-b4c6-a0368d4aa98e.png",
+    "candidate": "doc/artwork/2026-09-16/license-candidates/trading_license_iii.png",
+    "status": "composition reviewed; background normalization and delivery packaging pending"
+  }
+]

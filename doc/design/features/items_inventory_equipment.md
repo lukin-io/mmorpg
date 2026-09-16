@@ -1,6 +1,12 @@
 # Items, Inventory, And Equipment
 
-Domain navigation: `doc/domains/inventory.md`.
+Domain navigation: [Inventory](../../domains/inventory.md).
+
+[ITEMS](../../ITEMS.md) catalogs definitions, acquisition and artwork;
+[FORMULAS](../../FORMULAS.md#3-character-stats-and-equipment) explains effective
+equipment inputs. The [Inventory handbook](../../features/player_inventory.md)
+owns carried/equipped state, with [Shop](../../features/shop_economy.md) and
+[NPC loot](../../NPC.md#6-loot-and-experience) supplying acquisition context.
 
 ## Purpose
 
@@ -339,9 +345,10 @@ Remaining design detail before launch:
   zero durability beyond the current safe broken-item handling;
 - server-issued inventory action keys when normal Rails form protection is not
   enough for the final gameplay action model;
-- direct trade settlement edge cases, dealer transfers, targeted scroll/doctor
-  effects, and combat item-use slots need dedicated source capture before they
-  go beyond the basic inventory forms.
+- direct trade settlement edge cases, dealer transfers, remaining targeted
+  scroll/doctor effects, and combat item-use slots need dedicated source capture.
+  The first two [attack scrolls](scrolls.md) have captured requirements/forms
+  and a shared combat-entry adapter; live execution remains a separate check.
 
 ## State Concepts
 
@@ -368,3 +375,12 @@ Remaining design detail before launch:
   after Combat confirms a successful inventory award; it never grants the item.
 - `features/professions.md`: future tools and gathered materials reuse the same
   capacity and item-instance rules.
+
+## Artwork category contract
+
+The [September16 measurements](../reference/inventory/observations/2026-09-16_artwork_categories.md)
+confirm category-native images in both Shop and Inventory. Wearables share
+EquipmentSlots dimensions with the player/NPC doll; captured permits are42×21,
+other loose goods default to60×60. [ART-CATEGORY-001](../../ARTWORK.md#category-artwork-standard)
+owns original artwork, canvas colors, proportions, delivery density and acceptance.
+These are presentation rules; they grant no item effects or equipment.

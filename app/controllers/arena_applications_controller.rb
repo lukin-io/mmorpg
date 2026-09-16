@@ -13,8 +13,9 @@ class ArenaApplicationsController < ApplicationController
   def index
     @applications = @room.arena_applications
       .open
-      .includes(:applicant, :npc_template)
-      .order(created_at: :asc)
+      .where(fight_type: ArenaApplication::AVAILABLE_FIGHT_TYPES)
+      .includes(:applicant, :npc_template, arena_application_memberships: :character)
+      .order(created_at: :asc).limit(100)
 
     respond_to do |format|
       format.html { render partial: "arena_applications/list", locals: {applications: @applications} }
@@ -33,10 +34,10 @@ class ArenaApplicationsController < ApplicationController
 
     respond_to do |format|
       if result.success?
-        format.html { redirect_to arena_room_path(@room), notice: "Application submitted." }
+        format.html { redirect_to arena_room_path(@room, ft: result.application.team_battle? ? 2 : 1), notice: "Application submitted." }
         format.json { render json: {success: true, application: result.application}, status: :created }
       else
-        format.html { redirect_to arena_room_path(@room), alert: result.errors.join(", ") }
+        format.html { redirect_to arena_room_path(@room, ft: application_params[:fight_type] == "team_battle" ? 2 : 1), alert: result.errors.join(", ") }
         format.json { render json: {success: false, errors: result.errors}, status: :unprocessable_entity }
       end
     end
@@ -48,18 +49,20 @@ class ArenaApplicationsController < ApplicationController
     handler = Arena::ApplicationHandler.new
     result = handler.accept(
       application: @application,
-      acceptor: current_character
+      acceptor: current_character,
+      team: params[:team]
     )
 
     respond_to do |format|
       if result.success?
-        format.html { redirect_to arena_match_path(result.match), notice: "Application accepted." }
+        destination = result.match ? arena_match_path(result.match) : arena_room_path(@application.arena_room, ft: 2)
+        format.html { redirect_to destination, notice: "Application accepted." }
         format.json do
           render json: {
             success: true,
-            match_id: result.match.id,
-            countdown: result.match.live? ? 0 : 10,
-            redirect_url: arena_match_path(result.match)
+            match_id: result.match&.id,
+            countdown: result.match ? 0 : nil,
+            redirect_url: destination
           }
         end
       else
@@ -84,7 +87,7 @@ class ArenaApplicationsController < ApplicationController
 
     respond_to do |format|
       if result.success?
-        format.html { redirect_to arena_room_path(@application.arena_room), notice: "Application canceled." }
+        format.html { redirect_to arena_room_path(@application.arena_room, ft: @application.team_battle? ? 2 : 1), notice: "Application canceled." }
         format.json { render json: {success: true} }
       else
         format.html { redirect_back fallback_location: arena_index_path, alert: result.errors.join(", ") }
@@ -111,7 +114,8 @@ class ArenaApplicationsController < ApplicationController
   end
 
   def set_application
-    @application = ArenaApplication.find(params[:id])
+    scope = params[:arena_room_id] ? ArenaApplication.where(arena_room_id: params[:arena_room_id]) : ArenaApplication.all
+    @application = scope.find(params[:id])
   end
 
   def require_character

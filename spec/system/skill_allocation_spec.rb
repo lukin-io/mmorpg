@@ -329,6 +329,45 @@ RSpec.describe "Skill Allocation", type: :system, js: true do
     end
   end
 
+  describe "equipment and allocation separation" do
+    it "previews, undoes, resets and saves base allocation while displaying learned levels and separate equipment bonuses" do
+      character.update!(passive_skills: {"knife_mastery" => 98}, combat_skill_points: 2)
+      template = create(:item_template, stat_modifiers: {"knife_skill" => 30})
+      create(:inventory_item, :equipped, inventory: character.inventory, item_template: template)
+
+      visit skills_character_path(character)
+
+      within_skill_row(:knife_mastery) do
+        expect(page).to have_css(".nl-skill-equipment-bonus", text: "+30")
+        expect(page).to have_content("[098/100]")
+        expect(page).to have_css(".nl-skill-gain", text: "+2")
+        click_button "+"
+        expect(page).to have_content("[100/100]")
+        expect(page).to have_content("MAX")
+        click_button "-"
+        expect(page).to have_content("[098/100]")
+        click_button "+"
+      end
+      click_button "Reset"
+      within_skill_row(:knife_mastery) { expect(page).to have_content("[098/100]") }
+      within(".nl-allocation-pool--combat") { expect(page).to have_content("2") }
+
+      within_skill_row(:knife_mastery) { click_button "+" }
+      click_button "Save"
+      expect(page).to have_content("Skills saved")
+      expect(character.reload.base_passive_skill_level(:knife_mastery)).to eq(100)
+      expect(character.passive_skill_level(:knife_mastery)).to eq(130)
+      expect(character.combat_skill_points).to eq(1)
+
+      visit skills_character_path(character)
+      within_skill_row(:knife_mastery) do
+        expect(page).to have_content("[100/100]")
+        expect(page).to have_content("MAX")
+        expect(page).to have_button("+", disabled: true)
+      end
+    end
+  end
+
   describe "Turbo integration" do
     before { visit skills_character_path(character) }
 

@@ -1,5 +1,8 @@
 # Neverlands Professions Source Summary
 
+For the design, delivery status and current implementation using this evidence,
+follow the [Professions domain](../../../domains/professions.md).
+
 - Document type: neverlands-source-summary
 - Domain: professions
 - Updated: 2026-09-10

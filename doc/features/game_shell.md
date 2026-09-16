@@ -3,7 +3,7 @@
 title: Game Shell Feature
 description: Implementation handbook for the Neverlands-based persistent game frame, compact vitals, location presence, mixed chat/game-event timeline, and shell preferences.
 status: Partially Implemented
-updated: 2026-09-11
+updated: 2026-09-14
 owners: Game Shell and Social Presence
 template: feature-v1
 ---
@@ -14,7 +14,43 @@ This document is the implementation contract for the current Game Shell feature.
 
 It describes what exists now. It does not turn every visible Neverlands toolbar control, chat mode, presence action, or familiar browser-game shell convention into shipped behavior.
 
+### September 12 authoritative vitals and medical events
+
+The `nl-vitals` controller now polls authenticated `/character_vitals` every
+five seconds while visible, aborting on disconnect and retaining displayed
+state after failures. It never adds HP/MP locally. The endpoint recovers elapsed
+server ticks, returns only the current player's values, disables caching and
+keeps a defeated active participant at zero combat HP. Shell reads/session pings
+share the same recovery owner. An active injury links to Medical care. Injury,
+paid-treatment request and successful-healing events join existing durable
+personal fight/XP/item/NV rows. See [Medical Care](medical_care.md) and
+[calibration](../design/features/combat_calibration.md). Final validation is recorded in [Arena acceptance](arena_combat.md#september-12-final-calibrated-acceptance).
+
+### September 14 incoming player combat
+
+Ground pages outside the fight render `/combat_status` as the existing shell
+poller's five-second endpoint. This authenticated POST only reads the current
+character's active fight/unacknowledged physical result, returns its local URL,
+and never rolls an NPC encounter or accepts another character id. Outdoor World
+keeps the encounter endpoint. The ordinary persisted combat screen recovers on
+reload/login; polling is presentation, never authority for admission.
+
+[Inventory attack scrolls](player_inventory.md#september-14-attack-scrolls) own
+admission. A committed use publishes one personal system-information event to
+each player with a unique `scroll:<offer-id>:entry:<character-id>` key, plus a
+shared combat log entry. Rollback/replay cannot duplicate those events. Existing
+combat owns the following hits, blocks, injuries, XP and result logs. See
+[scroll design](../design/features/scrolls.md), [WORLD context](../WORLD.md) and
+[shared Arena Combat](arena_combat.md#september-14-scroll-entry).
+
 ## 1. Design authority and related documents
+
+Read [WORLD](../WORLD.md#5-travel-context-and-return-behavior) for location and
+audience context, the [event catalog](#gameplay-event-catalog) for producer,
+wording and delivery rules, and [ARTWORK](../ARTWORK.md) for illustrated surfaces.
+Follow each event's actual producer handbook before changing its trigger or
+meaning. Read and update affected references under the
+[context/update map](../DOCUMENTATION.md#21-required-context-and-update-map).
 
 Domain navigation: `doc/domains/shell.md` and `doc/domains/social.md`.
 
@@ -143,8 +179,11 @@ At `<=940px` the shell removes its desktop minimum width, compacts presence to
 260px, and keeps the bottom control strip usable. At `<=720px` the header uses
 two rows with horizontally scrollable context navigation, chat and presence
 stack in the social region, and the bottom controls use two rows. The flexible
-main region remains the owning feature's scroll container. At `<=420px` only
-the compact vitals geometry changes further.
+main region remains the owning feature's scroll container. The mobile header
+uses compact HP/MP bars (`clamp(40px, 12vw, 120px)`) and keeps the complete
+bracketed vitals text and level visible. Long player links truncate visually
+with an ellipsis while retaining their accessible name and profile destination.
+At `<=420px` the vitals text uses 10px type.
 
 World fits odd numbers of complete 100px cells inside the frame, up to the
 server-rendered buffer's thirteen visible columns and seven rows: eleven columns
@@ -280,7 +319,9 @@ server state, including after a rejected movement offer. A failed movement
 request restores retry controls without changing the server-owned deadline or
 location. Closing the World-owned Look result does not unlock those controls.
 
-The vitals partial calculates clamped display percentages from authoritative character values and renders current/max HP and MP. It supplies the same values to `nl-vitals`, whose targets update both strips and the compact text between server renders. This interpolation remains presentation only and never persists vitals.
+The vitals partial reads current HP/MP and equipment-aware effective maxima
+from Character; its presentation does not rewrite stored base maxima or refill
+resources. It renders the current/max values and percentage bars. It supplies the same values to `nl-vitals`, whose targets update both strips and the compact text between server renders. This interpolation remains presentation only and never persists vitals.
 
 ### 6.3 Presence and layout preferences
 
@@ -437,10 +478,10 @@ clear-input controls use the same form; refresh reloads the compact frame.
 The first integrated producers are Arena/World shared combat completion and
 successful NPC item/NV loot awards. Item rows are published only after
 `InventoryItem` persistence; NV rows are published only after the Economy-owned
-wallet and ledger transaction are persisted. `system_information` and
-`world_announcement` are
-narrow server-side extension points; no player/admin endpoint, schedule, link
-model, or invented global content is shipped. There is no separate toast
+wallet and ledger transaction are persisted. Injuries and medical treatment
+also publish personal `system_information` events. `world_announcement` remains
+a narrow server-side extension point with no integrated gameplay producer,
+player/admin endpoint or schedule. There is no separate toast
 notification path, command execution, transliteration, smile picker, formatting
 palette, chat-mode cycle, or refresh-speed cycle. Existing username helpers do
 not constitute a completed source-matched player-action menu or private-message flow.
@@ -449,6 +490,103 @@ not constitute a completed source-matched player-action menu or private-message 
 presentation after commit, and explicitly refuses local/global ordinary
 broadcasts. It owns event stream names, the stable DOM
 target, and partial selection; persistence models do not know view identities.
+
+#### Gameplay event catalog
+
+This is the general reference for **what produces a message, who sees it and
+where it belongs**. It complements [NPC](../NPC.md), [ITEMS](../ITEMS.md),
+[WORLD](../WORLD.md) and [FORMULAS](../FORMULAS.md). Update it in the same task
+when adding/removing a producer, changing its audience, trigger, wording,
+emphasis or delivery contract, under the
+[reference maintenance rule](../DOCUMENTATION.md#410-game-reference-books).
+The examples below illustrate current local rendering; they are not additional
+Neverlands observations or claims that every source event is implemented.
+
+The shared chronology combines ordinary `ChatMessage` rows with durable
+`GameEvent` rows. Individual blows and detailed combat outcomes instead belong
+to `CombatLogEntry` and the live/public fight log. These records have separate
+ownership and retention; displaying them near chat does not merge their rules.
+
+##### Durable personal and world events
+
+There are five allowlisted types in [GameEvent](../../app/models/game_event.rb).
+Several producers intentionally share the generic `system_information` type.
+
+| Trigger / type | Current producer and timing | Audience | Example visible wording |
+|---|---|---|---|
+| Fight completion — `fight_finished` | [CombatProcessor](../../app/services/arena/combat_processor.rb): group/Arena PvP finalization; newly initiated `scroll_pvp` matches publish on each player's explicit Finish; solo NPC Finish requires positive recorded XP | Each participating player has a stable per-match/participation event key, including zero XP for PvP; solo NPC uses the positive-XP guard. Rewards are already durable before Finish. [Scroll source timing](../design/reference/inventory/observations/2026-09-15_successful_attack_scroll.md) | **System information.** Fight finished. Combat experience gained: **631**. |
+| NPC item award — `item_found` | [NpcLootAwarder](../../app/services/arena/npc_loot_awarder.rb), after an eligible defeated NPC's grant is persisted; final victory is not required | Recipient of that NPC reward | **Attention! System information.** Search result: Item «**Small health elixir**». Quantity greater than one adds `×N` |
+| NPC NV award — `money_found` | Same awarder, after wallet/ledger mutation in the award transaction | Recipient of that NPC reward | **Attention! System information.** Search result: Funds «**23 NV**». |
+| Combat injury — `system_information` | CombatProcessor finalization, after InjuryAwarder persists the injury and the detailed injury log | Injured character's user | **System information.** Light injury «Chest muscle hematoma». |
+| Paid treatment offered — `system_information` | [TreatInjury](../../app/services/characters/treat_injury.rb), after saving a pending request | Patient's user | **System information.** Doctor offers treatment for 50 NV. Open Medical care to accept. |
+| Treatment completed — `system_information` | TreatInjury completion, in the transaction that heals, spends a bag use and transfers any agreed NV | Patient and healer, deduplicated for self-treatment | **System information.** Doctor healed Patient's light injury «Chest muscle hematoma». |
+| World announcement — `world_announcement` | [EventPublisher](../../app/services/chat/event_publisher.rb) supports a server-owned global fact; no gameplay producer, schedule or authoring UI is currently integrated | Global, with no personal recipient | World **Attention!** followed by escaped server-authored text |
+
+The [event partial](../../app/views/game_events/_game_event.html.erb) owns this
+format. Personal rows show `HH:MM:SS`, a bold system label and, for loot, bold
+Attention, item name or NV amount. XP is bold. A generic system body's names
+and injury phrase are ordinary escaped text; they do not inherit fight-log
+styling. World rows show World/Attention and retain a screen-reader timestamp.
+Bodies are not arbitrary HTML or a Markdown formatting interface.
+
+Personal events require a recipient; global events forbid one. Timeline reads
+authorize the viewer before combining their personal events with world events.
+`Chat::TimelineBroadcaster` delivers only after commit, and reload recovers
+persisted history even if a realtime delivery was missed. See the ordinary
+chat visit/login and buffer rules above for their different retention boundary.
+
+Deterministic event keys are unique and limited to 255 characters. Examples
+include `arena-match:<match>:participation:<participant>:finished`,
+`injury:<injury>:received`, `treatment:<request>:requested` and
+`treatment:<request>:completed:<character>`. NPC awards derive keys from their
+match, defeated participation, loot row and recipient. Retrying identical
+type/recipient/body/payload returns the existing event; conflicting content
+under an existing key raises an error. Valuable reward/treatment replay guards
+belong to their domain transaction, not merely to this presentation key.
+
+##### Detailed fight-history catalog
+
+[CombatLogEntry](../../app/models/combat_log_entry.rb),
+[CombatLogPresenter](../../app/services/arena/combat_log_presenter.rb) and the
+[shared rich-text helper](../../app/helpers/public_fight_logs_helper.rb) own
+these messages. They appear in the live fight and its public history, rather
+than publishing one personal chat event for every attack.
+
+| Fact | Examples / meaning | Presentation |
+|---|---|---|
+| Start and system state | The fight begins; timeout/result explanations | Timestamped ordered fight entries |
+| Physical/magical hit and critical | Fighter hit Orc (head) for -1042 [0/65] | Known participant names and negative damage values bold; critical damage emphasized red |
+| Miss, dodge, avoided critical | Defender evades an attack or critical attempt | Participant names keep their historical side color; body part remains secondary |
+| Defensive stance, block, shield penetration | Chosen zones; shield block; a blow penetrates a shield, including zero damage | Explicit action wording; `(head/torso/stomach/legs)` in gray |
+| Defeat and surrender | Orc has been defeated! | Name and defeat/surrender phrase bold; the fighter leaves active roster/target controls but remains in history |
+| Search and awards | Item/NV reward, or nothing found | Names/quoted item labels and the nothing-found phrase emphasized; successful item/NV awards also produce the personal events above |
+| Injury | Named light/medium/heavy/combat injury | Name and quoted injury emphasized; injury phrase red |
+| XP and wear | Awarded experience and equipment wear where emitted | Persisted result detail, separate from the concise completion event |
+| Final result | Winner/side, draw, timeout or forfeit | Participant names and recognized victory/finish phrases emphasized; result statistics retain defeated participants |
+
+The helper escapes dynamic text, wraps known historical participant names in
+`strong.nl-log-name`, negative integers in `strong.nl-log-damage`, and body
+zones in `span.nl-log-body-part`. Current side colors are blue `#1768ac` and
+green `#18852e`; critical/injury emphasis is red `#b30000`, body zones gray
+`#888`. Exact CSS remains in
+[fight_logs.css](../../app/assets/stylesheets/fight_logs.css). Timestamps and
+stored round/sequence order establish chronology. This catalog does not own
+damage, XP, wear or injury equations; those remain linked from FORMULAS.
+
+##### Other feedback that is not a GameEvent producer
+
+| Area | Current destination / boundary |
+|---|---|
+| Ordinary player chat | ChatMessage, limited to the authorized cell/room/aboard audience and current ordinary-chat buffer rules |
+| Shop buy/sell and license purchase | Action response, updated Inventory/license state and wallet/receipt records; no automatic typed chat purchase event |
+| Equip/unequip, saved sets, consumable use and ordinary inventory grants | Inventory/action feedback; granting an item does not itself publish `item_found` |
+| Travel, enter/leave, Look, Drink and Fish | World state, timers and inline action result; no automatic personal chat event for each step |
+| Declined/expired treatment, natural injury expiry | Medical/injury state and ordinary request feedback; no separate decline/expiry event producer |
+| HP/MP regeneration | Updated vitals presentation; no recurring personal chat event |
+
+Adding a producer is a deliberate gameplay decision with an explicit audience
+and atomic source transition. Do not infer a new global announcement, reward
+or chat message from an existing flash, ledger row, fight entry or atlas label.
 
 #### Adding a gameplay-event producer or type
 
@@ -477,8 +615,9 @@ A genuinely new semantic/rendering family requires one coordinated change:
 3. render the type explicitly in `_game_event.html.erb` and its domain CSS;
 4. add factory, model, publisher, renderer, timeline/delivery, producer retry,
    failure/rollback, and audience-isolation coverage as applicable;
-5. update the Neverlands observation/design chain, this handbook's responsible
-   files and acceptance contract, the launch matrix, and the session changelog.
+5. update the Neverlands observation/design chain, this handbook's event
+   catalog, responsible files and acceptance contract, and any affected launch
+   matrix row. A change note is optional under AGENTS.md.
 
 Do not add a generic event endpoint, command bus, unrestricted type string,
 random event key, or Pub/Sub layer merely to avoid this allowlisted boundary.
@@ -1223,6 +1362,14 @@ Before extending Game Shell:
 
 ## 18. Version history
 
+September 14 combat-profile navigation: the shell omits its incoming-fight
+poller when `PlayersController` identifies a profile intentionally opened by
+a viewer who already has an active match or unfinished physical result.
+The profile and its `_top` public-log link remain usable during combat.
+Profiles opened without an existing fight retain incoming scroll-attack
+recovery. See [Combat profile acceptance](arena_combat.md#september-14-live-human-duel-parity)
+and [Character Progression](character_progression.md#september-14-profile-battle-location-evidence).
+
 | Date | Change |
 |---|---|
 | 2026-07-21 | Created the implementation handbook for the persistent game frame, exact-cell presence, compact global chat, browser preferences, and resume integration. |
@@ -1237,3 +1384,15 @@ Before extending Game Shell:
 | 2026-08-23 | Extended the source-backed search-result projection with typed NV awards: committed item loot remains Inventory-owned, committed NV enters the Economy wallet ledger, and both publish one retry-safe recipient row only after their authoritative mutation succeeds. |
 | 2026-08-23 | Added the maintainer workflow for introducing a producer versus a genuinely new event type, including transaction ordering, deterministic keys, migration/rendering/coverage requirements, and the explicit no-generic-endpoint/PubSub boundary. |
 | 2026-08-25 | Made account retention behavior explicit: the cancellation UI is removed, direct Devise destroy requests preserve the user/session with an unavailable alert, and the immutable `money_found` event-type migration is documented as forward-only instead of falsely reversible. |
+
+### September 11 combat-header acceptance
+
+The shared effective-maxima projection and mobile long-name correction passed
+`bin/verify full` (2,929 non-system / 298 system examples, zero failures). After
+that gate, Chrome at 390 × 844 and 320 × 740 kept complete 1530/1530 and 14/14
+readouts visible through World → Profile/Skills → Return and active combat.
+The level and profile link stayed reachable; long names use an ellipsis without
+changing accessible text. Actual 200% browser zoom supported Finish → Profile
+→ Return, then zoom/viewport settings were reset. The
+[Arena record](arena_combat.md#final-chrome-acceptance-and-cleanup) owns detailed
+fixtures, screenshots inspected in the task, and the successful affected flows.

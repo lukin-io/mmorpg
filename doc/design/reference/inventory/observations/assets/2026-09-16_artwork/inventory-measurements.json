@@ -1,0 +1,327 @@
+[
+  {
+    "alt": "sesharim",
+    "bg": null,
+    "display": [
+      115,
+      255
+    ],
+    "natural": [
+      115,
+      255
+    ],
+    "src": "http://image.neverlands.ru/obrazy/male_1.gif"
+  },
+  {
+    "alt": "Вещи",
+    "bg": null,
+    "display": [
+      44,
+      53
+    ],
+    "natural": [
+      44,
+      53
+    ],
+    "src": "http://image.neverlands.ru/gameplay/invent/0.gif"
+  },
+  {
+    "alt": "Эликсиры",
+    "bg": null,
+    "display": [
+      41,
+      53
+    ],
+    "natural": [
+      41,
+      53
+    ],
+    "src": "http://image.neverlands.ru/gameplay/invent/6.gif"
+  },
+  {
+    "alt": "Алхимия",
+    "bg": null,
+    "display": [
+      41,
+      53
+    ],
+    "natural": [
+      41,
+      53
+    ],
+    "src": "http://image.neverlands.ru/gameplay/invent/1.gif"
+  },
+  {
+    "alt": "Рыбалка",
+    "bg": null,
+    "display": [
+      41,
+      53
+    ],
+    "natural": [
+      41,
+      53
+    ],
+    "src": "http://image.neverlands.ru/gameplay/invent/2.gif"
+  },
+  {
+    "alt": "Охота и продукты",
+    "bg": null,
+    "display": [
+      41,
+      53
+    ],
+    "natural": [
+      41,
+      53
+    ],
+    "src": "http://image.neverlands.ru/gameplay/invent/5.gif"
+  },
+  {
+    "alt": "Ресурсы",
+    "bg": null,
+    "display": [
+      41,
+      53
+    ],
+    "natural": [
+      41,
+      53
+    ],
+    "src": "http://image.neverlands.ru/gameplay/invent/3.gif"
+  },
+  {
+    "alt": "Дерево",
+    "bg": null,
+    "display": [
+      41,
+      53
+    ],
+    "natural": [
+      41,
+      53
+    ],
+    "src": "http://image.neverlands.ru/gameplay/invent/4.gif"
+  },
+  {
+    "alt": "Журнал заданий",
+    "bg": null,
+    "display": [
+      41,
+      53
+    ],
+    "natural": [
+      41,
+      53
+    ],
+    "src": "http://image.neverlands.ru/gameplay/invent/7.gif"
+  },
+  {
+    "alt": "Полная / сокращенная информация",
+    "bg": null,
+    "display": [
+      41,
+      53
+    ],
+    "natural": [
+      41,
+      53
+    ],
+    "src": "http://image.neverlands.ru/gameplay/invent/cat/b1.gif"
+  },
+  {
+    "alt": "Сбросить фильтр",
+    "bg": null,
+    "display": [
+      41,
+      53
+    ],
+    "natural": [
+      41,
+      53
+    ],
+    "src": "http://image.neverlands.ru/gameplay/invent/cat/b3.gif"
+  },
+  {
+    "alt": "",
+    "bg": "#F5F5F5",
+    "display": [
+      60,
+      60
+    ],
+    "natural": [
+      60,
+      60
+    ],
+    "src": "http://image.neverlands.ru/weapon/qw438.gif"
+  },
+  {
+    "alt": "",
+    "bg": "#F5F5F5",
+    "display": [
+      60,
+      60
+    ],
+    "natural": [
+      60,
+      60
+    ],
+    "src": "http://image.neverlands.ru/weapon/qw452.gif"
+  },
+  {
+    "alt": "",
+    "bg": "#F5F5F5",
+    "display": [
+      60,
+      60
+    ],
+    "natural": [
+      60,
+      60
+    ],
+    "src": "http://image.neverlands.ru/weapon/qw452.gif"
+  },
+  {
+    "alt": "",
+    "bg": "#F5F5F5",
+    "display": [
+      60,
+      60
+    ],
+    "natural": [
+      60,
+      60
+    ],
+    "src": "http://image.neverlands.ru/weapon/qw452.gif"
+  },
+  {
+    "alt": "",
+    "bg": "#F5F5F5",
+    "display": [
+      62,
+      83
+    ],
+    "natural": [
+      62,
+      83
+    ],
+    "src": "http://image.neverlands.ru/weapon/awtp4g80.gif"
+  },
+  {
+    "alt": "",
+    "bg": "#F5F5F5",
+    "display": [
+      62,
+      63
+    ],
+    "natural": [
+      62,
+      63
+    ],
+    "src": "http://image.neverlands.ru/weapon/d6ushtk9.gif"
+  },
+  {
+    "alt": "",
+    "bg": "#F5F5F5",
+    "display": [
+      62,
+      65
+    ],
+    "natural": [
+      62,
+      65
+    ],
+    "src": "http://image.neverlands.ru/weapon/tnsx4hoq.gif"
+  },
+  {
+    "alt": "",
+    "bg": "#F5F5F5",
+    "display": [
+      62,
+      40
+    ],
+    "natural": [
+      62,
+      40
+    ],
+    "src": "http://image.neverlands.ru/weapon/yvmqa2cg.gif"
+  },
+  {
+    "alt": "",
+    "bg": "#F5F5F5",
+    "display": [
+      62,
+      35
+    ],
+    "natural": [
+      62,
+      35
+    ],
+    "src": "http://image.neverlands.ru/weapon/abz4cs8n.gif"
+  },
+  {
+    "alt": "",
+    "bg": "#F5F5F5",
+    "display": [
+      62,
+      30
+    ],
+    "natural": [
+      62,
+      30
+    ],
+    "src": "http://image.neverlands.ru/weapon/u09ops6g.gif"
+  },
+  {
+    "alt": "",
+    "bg": "#F5F5F5",
+    "display": [
+      42,
+      21
+    ],
+    "natural": [
+      42,
+      21
+    ],
+    "src": "http://image.neverlands.ru/weapon/i_svi_001.gif"
+  },
+  {
+    "alt": "",
+    "bg": "#F5F5F5",
+    "display": [
+      62,
+      91
+    ],
+    "natural": [
+      62,
+      91
+    ],
+    "src": "http://image.neverlands.ru/weapon/v52ga617.gif"
+  },
+  {
+    "alt": "",
+    "bg": "#F5F5F5",
+    "display": [
+      62,
+      91
+    ],
+    "natural": [
+      62,
+      91
+    ],
+    "src": "http://image.neverlands.ru/weapon/md4urg8z.gif"
+  },
+  {
+    "alt": "",
+    "bg": "#F5F5F5",
+    "display": [
+      62,
+      40
+    ],
+    "natural": [
+      62,
+      40
+    ],
+    "src": "http://image.neverlands.ru/weapon/kf704b5i.gif"
+  }
+]

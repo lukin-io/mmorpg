@@ -1,6 +1,6 @@
 <% content_for :title, "Arena" %>
 
-<% active_tab = (params[:ft].presence || "1").to_s %>
+<% active_tab = params[:ft].to_s == "2" ? "2" : "1" %>
 <% total_applications = @rooms.sum(&:open_application_count) %>
 
 <div class="nl-arena-frame"
@@ -23,14 +23,12 @@
     <span>Applications: <%= link_to "your level", arena_index_path(ft: active_tab, level: current_character.level), class: "nl-arena-filter" %> | <%= link_to "all", arena_index_path(ft: active_tab), class: "nl-arena-filter" %></span>
     <span>Total: <b><%= total_applications %></b></span>
     <%= link_to "Refresh", arena_index_path(ft: active_tab), class: "nl-arena-link" %>
-    <button type="button" class="nl-arena-link nl-arena-link--button" data-action="click->arena#showRooms">Room Map</button>
+    <button type="button" class="nl-arena-link nl-arena-link--button" data-action="click->arena#showRooms" aria-expanded="false">Room Map</button>
   </div>
 
   <div class="nl-arena-tabs">
     <%= link_to "Duels", arena_index_path(ft: 1), class: "nl-arena-tab #{'nl-arena-tab--active' if active_tab == '1'}" %>
-    <%= link_to "Team Battles", arena_index_path(ft: 2), class: "nl-arena-tab #{'nl-arena-tab--active' if active_tab == '2'}" %>
-    <%= link_to "Sacrifice", arena_index_path(ft: 3), class: "nl-arena-tab #{'nl-arena-tab--active' if active_tab == '3'}" %>
-    <%= link_to "Statistics", arena_index_path(ft: 4), class: "nl-arena-tab #{'nl-arena-tab--active' if active_tab == '4'}" %>
+    <%= link_to "Groups", arena_index_path(ft: 2), class: "nl-arena-tab #{'nl-arena-tab--active' if active_tab == '2'}" %>
   </div>
 
   <% if @current_application %>
@@ -49,7 +47,7 @@
     </div>
   <% end %>
 
-  <div class="nl-arena-room-scheme" data-arena-target="roomGrid">
+  <div class="nl-arena-room-scheme" data-arena-target="roomGrid" hidden>
     <table class="nl-arena-table nl-arena-rooms-table">
       <% @rooms.each_slice(5) do |row| %>
         <tr>
@@ -59,7 +57,7 @@
               <b><%= room_type_badge(room.room_type) %></b> [ <%= room.open_application_count %> ]<br>
               <span><%= room.level_min %>-<%= room.level_max %></span><br>
               <% if accessible %>
-                <%= link_to "Enter", arena_room_path(room), class: "nl-arena-small-button", data: {turbo_frame: "_top"} %>
+                <%= link_to "Enter", arena_room_path(room, ft: active_tab), class: "nl-arena-small-button", data: {turbo_frame: "_top"} %>
               <% else %>
                 <span class="nl-arena-muted">Unavailable</span>
               <% end %>
@@ -70,12 +68,6 @@
     </table>
   </div>
 
-  <% if active_tab == "4" %>
-    <div class="nl-arena-search">
-      <b>Fight Statistics</b>
-      <span class="nl-arena-muted">Search for current and finished fights stays in this frame.</span>
-    </div>
-  <% else %>
     <table class="nl-arena-table nl-arena-summary-table">
       <thead>
         <tr>
@@ -96,16 +88,15 @@
             <td><%= room.current_match_count %></td>
             <td>
               <% if accessible %>
-                <%= link_to "Enter", arena_room_path(room), class: "nl-arena-small-button", data: {turbo_frame: "_top"} %>
+                <%= link_to "Enter", arena_room_path(room, ft: active_tab), class: "nl-arena-small-button", data: {turbo_frame: "_top"} %>
               <% else %>
-                <span class="nl-arena-muted">level mismatch</span>
+                <span class="nl-arena-muted"><%= room.access_requirement_text(current_character) %></span>
               <% end %>
             </td>
           </tr>
         <% end %>
       </tbody>
     </table>
-  <% end %>
 
   <% if @recent_matches.any? %>
     <div class="nl-arena-recent">
@@ -113,10 +104,10 @@
       <% @recent_matches.each do |participation| %>
         <% match = participation.arena_match %>
         <div class="nl-arena-recent-row">
-          <%= match.match_type.humanize %> -
+          <%= match.team_battle? ? "Groups" : match.match_type.humanize %> -
           <%= participation.result.humanize %>,
           <%= time_ago_in_words(match.created_at) %> ago.
-          <%= link_to "log", public_fight_log_path(match), class: "nl-arena-filter" %>
+          <%= link_to "log", public_fight_log_path(match), class: "nl-arena-filter", data: {turbo_frame: "_top"} %>
         </div>
       <% end %>
     </div>

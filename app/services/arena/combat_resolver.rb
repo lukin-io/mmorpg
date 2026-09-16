@@ -52,14 +52,25 @@ module Arena
     end
 
     def resolve_physical_attack(attacker_participation:, defender_participation:, action_key:, body_part:, block: nil)
+      @attributes = {}
       action_key = action_key.to_s
       body_part = body_part.to_s
+
+      element = Game::Combat::ActionCatalog.attack_config(action_key)["element"]
+      if element.present?
+        return resolve_magic_attack(attacker_participation, defender_participation, action_key, body_part, block, element)
+      end
 
       hit = hit_result(attacker_participation, defender_participation, action_key, body_part)
       return outcome(:miss, action_key:, body_part:, hit:) unless hit[:hit]
 
       dodge = dodge_result(attacker_participation, defender_participation, action_key, body_part)
-      return outcome(:dodge, action_key:, body_part:, hit:, dodge:) if dodge[:dodged]
+      if dodge[:dodged]
+        # A critical attempt can be dodged without dealing damage. The source
+        # establishes that outcome, not its private random-roll ordering.
+        critical = critical_result(attacker_participation, defender_participation, action_key, body_part)
+        return outcome(:dodge, action_key:, body_part:, hit:, dodge:, critical:)
+      end
 
       block_result_data = {}
       if block_covers?(block, body_part)
@@ -96,19 +107,11 @@ module Arena
     end
 
     def attack_power(participation)
-      if participation.npc?
-        npc_stats(participation)[:attack].to_i
-      else
-        participation.character&.attack_power.to_i
-      end
+      Game::Combat::Calibration.attack(attributes(participation)).round
     end
 
     def defense_power(participation)
-      if participation.npc?
-        npc_stats(participation)[:defense].to_i
-      else
-        participation.character&.defense.to_i
-      end
+      attributes(participation).fetch(:armor, 0)
     end
 
     private
@@ -140,44 +143,31 @@ module Arena
     end
 
     def hit_result(attacker, defender, action_key, body_part)
-      chance = BASE_HIT_CHANCE
-      chance += stat(attacker, :dexterity) * 0.3
-      chance += stat(attacker, :accuracy) * 0.5
-      chance += Game::Combat::ActionCatalog.attack_hit_bonus(action_key)
-      chance += BODY_PART_HIT_MODIFIERS.fetch(body_part, 0)
-      chance -= stat(defender, :agility) * 0.2
-      chance -= stat(defender, :evasion) * 0.4
-      chance = chance.clamp(5.0, 95.0)
+      offense = Game::Combat::Calibration.accuracy(attributes(attacker))
+      defense = stat(defender, :dexterity) * 2 + stat(defender, :evasion)
+      chance = (BASE_HIT_CHANCE + opposed(offense, defense, scale: 15) +
+        Game::Combat::ActionCatalog.attack_hit_bonus(action_key) +
+        BODY_PART_HIT_MODIFIERS.fetch(body_part, 0)).clamp(5.0, 95.0)
 
       roll = rng.rand(100)
       {hit: roll < chance, roll:, chance: chance.round(1)}
     end
 
     def dodge_result(attacker, defender, action_key, body_part)
-      chance = BASE_DODGE_CHANCE
-      chance += stat(defender, :agility) * 0.4
-      chance += stat(defender, :evasion) * 0.3
-      chance += stat(defender, :luck) * 0.1
-      chance += BODY_PART_DODGE_MODIFIERS.fetch(body_part, 0)
-      chance -= stat(attacker, :dexterity) * 0.15
-      chance -= stat(attacker, :accuracy) * 0.25
-      chance -= 10 if action_key == "aimed"
-      chance = chance.clamp(0.0, 40.0)
+      offense = Game::Combat::Calibration.accuracy(attributes(attacker))
+      defense = stat(defender, :dexterity) * 5 + stat(defender, :evasion)
+      chance = (BASE_DODGE_CHANCE + opposed(defense, offense) +
+        BODY_PART_DODGE_MODIFIERS.fetch(body_part, 0) - (action_key == "aimed" ? 5 : 0)).clamp(0.0, 60.0)
 
       roll = rng.rand(100)
       {dodged: roll < chance, roll:, chance: chance.round(1)}
     end
 
     def critical_result(attacker, defender, action_key, body_part)
-      chance = BASE_CRIT_CHANCE
-      chance += stat(attacker, :luck) * 0.3
-      chance += stat(attacker, :critical_chance)
-      chance += 10 if action_key == "aimed"
-      chance += 5 if body_part == "head"
-      chance += 2 if body_part == "stomach"
-      chance -= 3 if body_part == "legs"
-      chance -= stat(defender, :luck) * 0.15
-      chance = chance.clamp(1.0, 50.0)
+      offense = stat(attacker, :luck) * 5 + stat(attacker, :crushing)
+      defense = stat(defender, :luck) * 5 + stat(defender, :fortitude)
+      chance = (BASE_CRIT_CHANCE + opposed(offense, defense, scale: 75) +
+        (action_key == "aimed" ? 10 : 0) + (body_part == "head" ? 5 : 0)).clamp(1.0, 85.0)
 
       roll = rng.rand(100)
       {critical: roll < chance, roll:, chance: chance.round(1)}
@@ -185,28 +175,45 @@ module Arena
 
     def block_result(attacker, defender, block, body_part)
       covered_parts = Array(block["body_parts"]).map(&:to_s)
-      chance = BASE_BLOCK_CHANCE
-      chance += defense_power(defender) * 0.4
-      chance += stat(defender, :agility) * 0.2
-      chance += stat(defender, :dexterity) * 0.15
-      chance += BODY_PART_BLOCK_MODIFIERS.fetch(body_part, 0)
-      chance -= stat(attacker, :accuracy) * 0.2
-      chance -= stat(attacker, :dexterity) * 0.1
-      chance -= [covered_parts.size - 1, 0].max * 4
-      chance = chance.clamp(5.0, 95.0)
+      offense = stat(attacker, :accuracy) + stat(attacker, :penetration) * 2 + stat(attacker, :dexterity) * 3
+      defense = defense_power(defender) + stat(defender, :dexterity) * 3
+      chance = (BASE_BLOCK_CHANCE + opposed(defense, offense) +
+        BODY_PART_BLOCK_MODIFIERS.fetch(body_part, 0) - [covered_parts.size - 1, 0].max * 4).clamp(5.0, 95.0)
 
       roll = rng.rand(100)
       {blocked: roll < chance, roll:, chance: chance.round(1)}
     end
 
     def damage_amount(attacker, defender, action_key, body_part, critical:)
-      attack = attack_power(attacker) + rng.rand(1..5)
-      attack *= Game::Combat::ActionCatalog.attack_damage_multiplier(action_key)
-      attack *= BODY_PART_DAMAGE_MULTIPLIERS.fetch(body_part, 1.0)
+      variation = Game::Combat::Calibration.config.fetch("damage_variance")
+      variance = 1 + (rng.rand(1..5) - 3) / 2.0 * variation
+      Game::Combat::Calibration.damage(
+        attacker: attributes(attacker), defender: attributes(defender),
+        action_multiplier: Game::Combat::ActionCatalog.attack_damage_multiplier(action_key),
+        body_multiplier: BODY_PART_DAMAGE_MULTIPLIERS.fetch(body_part, 1.0),
+        critical: critical[:critical], variance:
+      )
+    end
 
-      damage = attack.round - (defense_power(defender) / DEFENSE_DIVISOR)
-      damage = (damage * CRITICAL_MULTIPLIER).round if critical[:critical]
-      [damage, MIN_DAMAGE].max
+    # The captured Spirit Arrow opener spends 5 MP and can crit for 10.
+    # Magic ignores physical armor; Knowledge, elemental skill/resistance and
+    # a committed magic barrier govern the same persisted strike pipeline.
+    def resolve_magic_attack(attacker, defender, action_key, body_part, block, element)
+      hit = hit_result(attacker, defender, action_key, body_part)
+      return outcome(:miss, action_key:, body_part:, hit:).merge(element:) unless hit[:hit]
+
+      critical = critical_result(attacker, defender, action_key, body_part)
+      mana = Game::Combat::ActionCatalog.attack_mana_cost(action_key)
+      knowledge = [stat(attacker, :knowledge), 1].max
+      skill = attacker.character&.passive_skill_level("#{element}_magic").to_i
+      resistance = defender.character&.passive_skill_level("#{element}_magic_resistance").to_i +
+        defender.character&.elemental_resistance_percent(element).to_f
+      base = mana * (1 + (knowledge - 1) / 20.0) * (1 + skill / 100.0)
+      base *= action_key == "mind_blast" ? 1.35 : 1.0
+      base *= 1 - (resistance / 200.0).clamp(0, 0.75)
+      reduction = block && block["block_table"] == "magic" ? {"magic_shield" => 0.2, "rainbow_barrier" => 0.45, "crystal_sphere" => 0.65}.fetch(block["action_key"], 0) : 0
+      damage = (base * (1 - reduction) * (critical[:critical] ? CRITICAL_MULTIPLIER : 1)).round
+      outcome(:hit, action_key:, body_part:, hit:, critical:, damage:).merge(element:, barrier_reduction: reduction)
     end
 
     def block_covers?(block, body_part)
@@ -216,34 +223,16 @@ module Arena
     end
 
     def stat(participation, stat_name)
-      if participation.npc?
-        npc_stats(participation)[stat_name].to_i
-      else
-        character_stat(participation.character, stat_name)
-      end
+      attributes(participation).fetch(stat_name, 0).to_f
     end
 
-    def character_stat(character, stat_name)
-      return 0 unless character
-      return character.critical_chance if stat_name == :critical_chance
-      return character.agility if stat_name == :agility
-
-      direct = character.public_send(stat_name) if character.respond_to?(stat_name)
-      return direct.to_i if direct.present?
-
-      character.stats.get(stat_name).to_i
+    def attributes(participation)
+      @attributes ||= {}
+      @attributes[participation.id] ||= CombatAttributes.for(participation)
     end
 
-    def npc_stats(participation)
-      npc = participation.npc_template
-      config = Game::World::ArenaNpcConfig.find_npc(npc&.npc_key)
-      stats = if config
-        Game::World::ArenaNpcConfig.extract_stats(config)
-      else
-        npc&.combat_stats || {}
-      end
-
-      stats.with_indifferent_access
+    def opposed(left, right, scale: 35.0)
+      Game::Combat::Calibration.opposed(left, right, scale:)
     end
   end
 end

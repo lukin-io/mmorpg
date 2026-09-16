@@ -101,6 +101,7 @@ module Game
 
       def current_value_for(key)
         normalized = normalize_key(key)
+        return character.doctor_proficiency if normalized == "doctor"
         return character.level.to_i if normalized == "level"
         return character.max_action_points.to_i if %w[ap action_points].include?(normalized)
 

@@ -45,7 +45,7 @@
             <td class="nl-sheet-stat-total"><%= stat[:total] %></td>
             <td class="nl-sheet-stat-breakdown">
               <% if stat[:equipment] != 0 %>
-                (<%= stat[:base] %>+<span class="nl-sheet-bonus"><%= stat[:equipment] %></span>)
+                (<%= stat[:base] %><span class="nl-sheet-bonus"><%= format("%+d", stat[:equipment]) %></span>)
               <% end %>
             </td>
           </tr>

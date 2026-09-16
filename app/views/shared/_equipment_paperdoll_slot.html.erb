@@ -13,10 +13,12 @@
 %>
 <% interactive = local_assigns.fetch(:interactive, false) %>
 <% item = equipment[slot.key] || equipment[slot.key.to_sym] %>
+<% npc_item = local_assigns.fetch(:npc_equipment, {})[slot.key] %>
 <% artwork = item_artwork_path(item.item_template) if item&.item_template %>
 <%
   classes = ["nl-doll-slot", "nl-doll-slot--#{slot.key}"]
   classes << "nl-doll-slot--filled" if item
+  classes << "nl-doll-slot--filled" if npc_item
   if interactive
     classes << "equipment-slot" << "equipment-slot--#{slot.key}"
     classes << "filled" if item
@@ -55,6 +57,15 @@
       <span class="nl-doll-slot-name"><%= item.item_template&.name %></span>
     <% end %>
     <span class="nl-doll-slot-wear" style="width: <%= inventory_item_durability_percent(item) %>%" aria-hidden="true"></span>
+  </span>
+<% elsif npc_item %>
+  <span class="<%= classes.join(" ") %>" style="<%= size %>"
+        title="<%= ([npc_item.fetch("name")] + Array(npc_item["properties"])).join("\n") %>">
+    <% if NpcTemplate::EQUIPMENT_ARTWORK_KEYS.include?(npc_item["artwork"]) %>
+      <%= image_tag "npc/equipment/#{npc_item['artwork']}.png", width: slot.width, height: slot.height, alt: npc_item.fetch("name"), class: "nl-doll-slot-artwork" %>
+    <% else %>
+      <span class="nl-doll-slot-name"><%= npc_item.fetch("name") %></span>
+    <% end %>
   </span>
 <% else %>
   <span class="<%= classes.join(" ") %>" style="<%= size %>" title="<%= slot.label %>">

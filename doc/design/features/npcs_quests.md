@@ -1,6 +1,23 @@
 # NPCs And Quests
 
-Domain navigation: `doc/domains/npcs_quests.md`.
+Domain navigation: [NPCs and Quests](../../domains/npcs_quests.md).
+
+[NPC](../../NPC.md) catalogs authored creatures, groups and drops;
+[WORLD](../../WORLD.md#4-npc-habitats-and-resources) owns habitat context and
+[ITEMS](../../ITEMS.md#4-acquisition-and-item-lifecycle) distinguishes loot from
+decorative equipment. [Arena Combat](../../features/arena_combat.md) describes
+current NPC fights; [Quests](../../features/quests.md) retains the separate
+unimplemented quest boundary.
+
+## September12 authorized calibration
+
+The user authorized the best evidence-grounded approximation after22 controlled
+fights. [Calibration v1](combat_calibration.md) owns the fitted combat, mastery,
+fatigue, magic, XP/drop, injury/recovery and remote-placement rules. It
+supersedes earlier implementation holds for hidden coefficients; historical
+source observations and uncertainty remain unchanged. Medical Care supplies
+the bounded healer/patient transaction and Hospital bag purchase handoff.
+
 
 ## Purpose
 
@@ -42,6 +59,20 @@ economy observation; this does not establish a generic quest system.
 
 ## NPC Roles
 
+The final [Ogre cycle](../reference/combat/observations/2026-09-11_ogre_combat_cycle.md)
+adds complete groups[16,16,17] and[16,16,16,18], with independent per-level
+HP, displayed attributes and ten occupied equipment slots. Do not interpolate
+the user's reported19–24 range. The single launch zone already has compatible
+atlas habitats at local [20,6]/[20,7], remote from both Forpost gates. They use
+one continuous darker woodland illustration under `doc/ARTWORK.md` and the
+same editable TileNpc/encounter pipeline. These two placements are active with the September12 user-authorized
+calibrated damage and fallback reward model.
+The existing40 Bandit bootstrap placements remain unchanged.
+
+Reusable starter profiles may now reference a template with complete captured
+rosters without inventing a standalone source-coordinate anchor. Reseeding
+preserves disabled/moved placements and operator-selected cell artwork.
+
 Core:
 
 - hostile monster;
@@ -81,8 +112,8 @@ Design rules:
 - every authored loot entry declares its chance explicitly as either a `0..1`
   fraction or `0..100` percent; an omitted chance is invalid rather than a
   silent guaranteed award;
-- loot is rolled after combat victory and before or during the result-finish
-  step;
+- an eligible newly defeated NPC is searched after its committed exchange,
+  including during an ongoing fight or one the player ultimately loses;
 - the canonical combat log/result should show whether the NPC was searched and
   whether anything was found;
 - dropped items enter the same inventory/capacity rules as loot and shop
@@ -102,11 +133,32 @@ Design rules:
   override it when a source-backed capture proves that behavior.
 - an NPC template can provide an explicit XP reward independently from its
   loot table;
-- a solo winning player receives the sum of configured defeated-enemy NPC XP,
-  capped by the current level's source table; multi-player distribution is not
-  implemented until the Neverlands group formula is captured;
-- Observation is known to affect drop probability, but its nonlinear formula
-  is not captured, so explicit loot-table rolls currently remain unchanged.
+- a solo victory uses one configured NPC reward or an explicit encounter total;
+  an uncaptured multi-NPC total uses the authorized calibration rather than claiming a source-verified sum.
+  An explicit positive integer `encounter_defeat_experience_reward` supports
+  the captured `57` XP loss only for a sole player with a defeated enemy NPC
+  and an NPC winning side. It does not reuse victory XP or grant a victory
+  counter. Both paths apply the recipient's level/entitlement cap; multi-player distribution and general XP now use [calibration v1](combat_calibration.md#experience-and-loot);
+- Observation modifies drop probability through the documented fitted saturating curve; its exact Neverlands equation remains unexposed.
+
+Search eligibility uses the actual participant level and the recipient's
+active trusted combat entitlement: total windows are standard/Worker ±2,
+Premium ±2, Gold ±4 and VIP ±6. Corresponding maximum fight-XP multipliers are
+×1.0, ×1.5, ×2.0 and ×2.5; they change the cap, not earned XP or drop chance.
+Authored limits only narrow these windows, and `search_enabled: false` always
+disables search. The [Arena handbook](../../features/arena_combat.md#63-turn-combat-and-completion)
+owns server metadata, expiry, mutation guards and reward persistence. The
+[stronger-NPC observation](../reference/combat/observations/2026-09-11_stronger_npc_loot_combat_cycle.md)
+owns the direct loss/loot/premium evidence. No purchase flow is implemented by
+these combat benefits.
+
+Higher-level NPCs and larger NPC groups should yield more XP per fight. This
+is a normalized content direction: observed rewards depend strongly on roster
+composition and level, with combat contribution and the recipient's cap also
+relevant. Keep actual captured XP and source player level with each encounter;
+do not invent an additive or scaling formula. The completed ten-fight stronger
+cycle includes Robber 14 solo awards of 494 and 493 XP despite the same 815
+credited HP and one defeated opponent.
 
 The mannequin/wood-chips case belongs here: `Манекен` is an arena training NPC,
 and wood chips are a low-value material drop from that NPC role. The May 19
@@ -126,10 +178,9 @@ the second rat was defeated, proving that per-NPC loot checks can happen during
 a multi-NPC fight and not only after the fight-level victory line.
 
 The capture proves that Plague Rats can drop Rat Tails but does not establish
-their exact probability. The local production entry therefore retains the
-pre-existing no-drop behavior through an explicit `0.0` evidence hold. That
-value is not a Neverlands balance claim; replace it only after the probability
-is observed, then cover and document the source-backed value.
+their exact probability. The September12 user-authorized local entry uses provisional 3%. This is
+calibration, not a measured Neverlands probability; typed pools and Observation
+also use explicitly documented fitted values.
 
 ## Outdoor Hostile NPCs
 
@@ -146,7 +197,9 @@ Design rules:
 - a bot attack creates a normal fight with side/team membership, not a special
   wild-combat shortcut;
 - a fight can include multiple NPCs on one side, up to the official article's
-  stated ten-member maximum; this is capacity, not an uncaptured roster;
+  stated ten-member content maximum, additionally bounded by the player's
+  [progression ceiling](../../FORMULAS.md#prog-02--current-level-table). Select
+  complete eligible samples, never truncate a captured group or its rewards;
 - when one NPC in a multi-NPC fight loses, the fight can continue against the
   remaining NPCs;
 - each defeated loot-bearing NPC can run its own bot-specific random loot-table
@@ -156,7 +209,8 @@ Implemented MVP boundary:
 
 - the captured Plague Rat cell is represented by one persistent `TileNpc` encounter anchor with explicit `encounter_count: 2` source metadata;
 - starting the encounter creates two separate `ArenaParticipation` rows on the NPC side, even though both use the same `NpcTemplate`;
-- each living NPC acts and each defeated NPC is searched/logged separately;
+- in solo PvE, only the selected NPC returns its committed package; each
+  defeated NPC is logged and independently considered for eligible search;
   the fixed paired-rat anchor is marked defeated only after its entire side
   falls;
 - the mapped variable encounter cell selects one complete captured roster,
@@ -166,8 +220,9 @@ Implemented MVP boundary:
   fight-start checks reject eleven without a partial fight, and the config
   loader rejects oversized samples. Existing seeded groups are not expanded
   to fill the capacity;
-- solo victory awards configured NPC experience through the shared idempotent
-  fight-finalization path and respects the level-specific per-fight cap;
+- solo victory or explicitly configured defeat XP uses the shared idempotent
+  finalization path and recipient level/entitlement cap; positive solo-NPC
+  completion chat is published once on Finish, not by rerunning the award;
 - offered movement, entrance, local observation, Character, and Inventory wilderness actions use one hostile-interruption query before their intended transition completes;
 - no outdoor NPC action offer, marker, name, or manual attack endpoint is
   rendered;
@@ -183,6 +238,37 @@ Only complete captured samples are replayed. Additional group sizes, members,
 levels, and mixed templates require their own Neverlands evidence; the complete
 eligible pool, selection weights, population/strength equations, probabilities,
 and timing distribution remain unresolved.
+
+### Per-level combat and equipment sets
+
+`NpcTemplate` metadata separates engine `stats`, visible `display_stats`, mana,
+`combat_profile`, response inputs, avatar and equipment. Template defaults,
+exact `level_profiles` and per-participation overrides are snapshotted at fight
+start. Equipment is a complete slot map: the highest-priority authored map
+replaces the lower map, including when empty or smaller. It is not merged slot
+by slot. Omitted visible stats stay unknown rather than borrowing attack/HP
+or a portrait's props.
+
+The stronger cycle independently records Bandit and Robber level 13–15 sets,
+including Robber 14 in fight 5 and Bandit 13 in fight 8. Store each new loadout in
+its exact level profile. Do not put high-level gear at the template root where
+unknown low levels would inherit it, or infer further levels from the player's
+stat-grant table. Preserve an existing root set only where its shared scope is
+itself evidenced. New spawned fights read updated content; started fights keep
+their captured snapshots. Repeated NPCs retain separate identities and state.
+
+Named filled slots and empty slots are content, independent of original
+portrait/equipment art registered in [ARTWORK.md](../../ARTWORK.md). Descriptive
+NPC equipment creates neither player inventory nor additional loot outcomes.
+Per-level management must keep all slots and the independently observed numeric
+profile together; changing an item name or image must not invent numeric stats.
+The source origin of the stronger capture remains unknown. September12
+authorizes provisional local remote habitats at [19,9]/[19,10], using all ten
+complete `encounter_presets`. Exact roster profiles and explicit rewards retain
+their evidence; local placement and delay bands are marked as calibration.
+
+Mixed player/NPC commitment examples do not verify independent NPC-versus-NPC
+AI, target selection or progression. Stage2 source capture is complete; the [Combat Completion Matrix](../launch_mvp_plan.md#combat-completion-matrix) links the current calibration and final local acceptance separately from that historical source evidence.
 
 ### Bounded starter profile reuse
 

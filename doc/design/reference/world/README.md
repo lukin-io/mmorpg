@@ -1,5 +1,8 @@
 # Neverlands Open World and Movement Source Summary
 
+For the design, delivery status and current implementation using this evidence,
+follow the [World domain](../../../domains/world.md).
+
 - Document type: neverlands-source-summary
 - Domain: world
 - Updated: 2026-09-10

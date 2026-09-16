@@ -149,7 +149,8 @@ class ItemTemplate < ApplicationRecord
 
     case shop_catalog_entry.fetch("mode", "buy")
     when "buy"
-      Game::Shop::Catalog::VALID_CATEGORIES.include?(enhancement_rules.to_h["subcategory"]) &&
+      (Game::Shop::Catalog::VALID_CATEGORIES.include?(enhancement_rules.to_h["subcategory"]) ||
+        (enhancement_rules.to_h["subcategory"] == "aid_kits" && CharacterInjury::SEVERITIES.include?(stat_modifiers.to_h["heals_injury"]))) &&
         enhancement_rules.to_h["license"].blank?
     when "licenses"
       license = Game::Shop::LicenseRules.definition(self)

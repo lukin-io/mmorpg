@@ -1,0 +1,32 @@
+0 AXWebArea URL: neverlands.ru/pinfo.cgi?~Professional~, ~Professional~ - информация персонажа бесплатной браузерной онлайн игры NeverLands: Земли, которых нет...
+							7 text Характеристики
+								9 text ~Professional~ [19] Питомец Ездовое животное
+								11 text Сила: 65
+								13 text Ловкость: 40
+								15 text Удача: 64
+								17 text Знания: 1
+								19 text Здоровье: 60
+								21 text Мудрость: 1
+								23 text Класс брони: 0
+								25 text Уловка: 0
+								27 text Точность: 0
+								29 text Сокрушение: 0
+								31 text Стойкость: 0
+								33 text Пробой брони: 0
+						36 text ~Professional~ [19]  60%
+						60 text 0000/0300
+						61 text 0007/0007
+						63 text Окрестности Форпоста  [
+						64 link Description: в бою, Value: neverlands.ru/logs.fcg?fid=771285270
+						65 text  ]
+						66 text Окрестность Форпоста, Озеро
+							70 text Информация
+								72 text Место рождения:  Форпост
+								74 text Дата рождения:  23.04.2009
+							77 text Достижения
+							80 text Награды
+							81 text нет наград
+					84 text Информация
+						87 text Имя:
+						88 text -
+						89 text Страна:

@@ -9,14 +9,17 @@ inherit dungeon party, floor, oil or reward rules by analogy.
 
 ## Documentation chain
 
-- Neverlands source summary: `doc/design/reference/dungeons/README.md`
+- [Required working context and update rules](../DOCUMENTATION.md#21-required-context-and-update-map)
+- Existing adjacent context: [World locations](../WORLD.md#3-outdoor-cells-and-locations),
+  [NPC identities](../NPC.md), [shared formulas](../FORMULAS.md)
+- Neverlands source summary: [doc/design/reference/dungeons/README.md](../design/reference/dungeons/README.md)
 - Evidence gap:
-  `doc/design/reference/dungeons/observations/evidence_needed_dungeon_flow.md`
+  [doc/design/reference/dungeons/observations/evidence_needed_dungeon_flow.md](../design/reference/dungeons/observations/evidence_needed_dungeon_flow.md)
 - Mine underground travel gap:
   [separate capture backlog](../design/reference/dungeons/observations/evidence_needed_mine_underground_travel.md)
-- Normalized design: `doc/design/features/dungeons.md`
-- Delivery ID: `DUNGEON-FLOW-001` in `doc/design/launch_mvp_plan.md`
-- Implementation placeholder: `doc/features/dungeons.md`
+- Normalized design: [doc/design/features/dungeons.md](../design/features/dungeons.md)
+- Delivery ID: `DUNGEON-FLOW-001` in [doc/design/launch_mvp_plan.md](../design/launch_mvp_plan.md)
+- Implementation placeholder: `doc/features/dungeons.md` ([handbook](../features/dungeons.md))
 
 ## Current RPG status
 

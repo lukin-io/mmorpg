@@ -65,6 +65,18 @@ if defined?(MapTileTemplate)
   end
 
   if outpost_surroundings
+    # The atlas's two Ogre cells receive one continuous darker habitat painting.
+    # Upgrade only their unchanged starter reference; operator-selected artwork
+    # remains authoritative. This changes no passability, actions or NPC state.
+    MapTileTemplate.where(zone: outpost_surroundings.name, x: 20, y: 6..7).find_each do |tile|
+      previous_reference = {"key" => "forpost_starter", "column" => 20, "row" => tile.y - 2}
+      next unless tile.metadata.to_h["cell_art"] == previous_reference
+
+      tile.update!(metadata: tile.metadata.to_h.merge(
+        "cell_art" => Seeds::WorldContentSupport.starter_cell_art(tile.x, tile.y)
+      ))
+    end
+
     current_gate_cells = Game::World::CityCatalog::GATES.values.map { |gate| gate["local_coordinates"] }
     MapTileTemplate.where(zone: outpost_surroundings.name).find_each do |authored_tile|
       next unless authored_tile.metadata.to_h["city_gate"].present?

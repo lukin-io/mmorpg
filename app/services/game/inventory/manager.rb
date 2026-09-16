@@ -49,6 +49,8 @@ module Game
         {success: true, message: "Item discarded."}
       end
 
+      # The caller owns the transaction and inventory/item locks. Shared by
+      # ordinary consumables and atomic targeted scroll/combat entry.
       def self.consume_item_unit!(inventory_item)
         if inventory_item.durable?
           remaining_durability = inventory_item.decrement_durability!
@@ -64,8 +66,6 @@ module Game
           inventory_item.destroy!
         end
       end
-
-      private_class_method :consume_item_unit!
 
       # Sort inventory items by specified criteria
       #

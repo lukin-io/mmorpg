@@ -226,7 +226,7 @@ RSpec.describe Arena::MatchStarterJob, type: :job do
       create(:character_position, character: other_character)
     end
 
-    it "schedules MatchStarterJob when application is accepted" do
+    it "does not schedule an unconfirmed human Duel" do
       application = create(:arena_application,
         applicant: available_applicant,
         arena_room: arena_room,
@@ -236,23 +236,16 @@ RSpec.describe Arena::MatchStarterJob, type: :job do
 
       expect {
         handler.accept(application: application, acceptor: other_character)
-      }.to have_enqueued_job(Arena::MatchStarterJob).on_queue("arena")
+      }.not_to have_enqueued_job(Arena::MatchStarterJob)
     end
 
-    it "schedules job with fixed 10 second countdown (not based on turn timeout)" do
-      # Turn timeout (240s) is separate from match start countdown (10s)
-      application = create(:arena_application,
-        applicant: available_applicant,
-        arena_room: arena_room,
-        status: :open,
-        fight_type: :duel,
-        timeout_seconds: 240)
-
-      expect(Arena::MatchStarterJob).to receive(:set)
-        .with(wait: 10.seconds) # Fixed countdown, not turn timeout
-        .and_return(double(perform_later: true))
-
-      handler.accept(application: application, acceptor: other_character)
+    it "cannot start an accepted Duel without the applicant" do
+      application = create(:arena_application, applicant: available_applicant, arena_room:,
+        status: :open, fight_type: :duel, timeout_seconds: 240)
+      result = handler.accept(application:, acceptor: other_character)
+      described_class.perform_now(result.match.id)
+      expect(result.match.reload).to be_awaiting_duel_confirmation
+      expect(result.match.started_at).to be_nil
     end
   end
 

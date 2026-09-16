@@ -7,7 +7,7 @@ RSpec.describe Game::World::PassiveEncounterCheck do
   let(:clock) { -> { now } }
   let(:rng) { instance_double(Random, rand: 17) }
   let(:zone) { create(:zone, name: "Passive Encounter Woods", location_type: "outdoor") }
-  let(:character) { create(:character) }
+  let(:character) { create(:character, level: 4) }
   let!(:position) { create(:character_position, character:, zone:, x: 5, y: 5) }
   let!(:npc) { create(:tile_npc, :multi_npc_encounter, zone: zone.name, x: 5, y: 5) }
 
@@ -81,6 +81,7 @@ RSpec.describe Game::World::PassiveEncounterCheck do
     expect(selection_rng).to receive(:rand).with(2).once.and_return(0)
     due = described_class.new(character:, clock: -> { now + 300.seconds }, rng: selection_rng).call
     expect(due).to be_interrupted
+    expect(due.message).to eq("A fight starts while you wait.")
     expect(due.match.metadata).to include("repeatable_encounter_source" => true, "encounter_roster_sample" => "2026-09-01-2340")
     expect(due.match.arena_participations.npcs.sole).to have_attributes(max_hp: 155, participant_level: 7)
 
@@ -110,6 +111,7 @@ RSpec.describe Game::World::PassiveEncounterCheck do
     ).call
 
     expect(due).to be_interrupted
+    expect(due.message).to eq("A fight starts while you wait.")
     expect(due.match).to be_live
     expect(due.match.arena_participations.npcs.count).to eq(2)
     expect(character.reload.metadata).not_to have_key(described_class::SCHEDULE_METADATA_KEY)

@@ -12,7 +12,7 @@
          data-action="click->inventory#selectItem">
       <div class="nl-inventory-item-icon">
         <% if artwork = item_artwork_path(item.item_template) %>
-          <%= image_tag artwork, width: 60, height: 60, alt: "", class: "nl-inventory-item-artwork" %>
+          <%= image_tag artwork, **item_artwork_dimensions(item.item_template), alt: "", class: "nl-inventory-item-artwork" %>
         <% else %>
           <span><%= item_slot_icon(item.item_template) %></span>
         <% end %>
@@ -33,10 +33,14 @@
           <% end %>
           <% if item.item_template.consumable? %>
             <% if requirements_allowed %>
-              <%= button_to "Use", use_inventory_path(item_id: item.id, category: category, subcategory: subcategory, info: info_mode), method: :post, class: "invbut", data: {turbo: true} %>
+              <% if Game::Inventory::AttackScroll.definition(item.item_template) %>
+                <%= link_to "Use", inventory_path(scroll_item_id: item.id, category: category, subcategory: subcategory, info: info_mode), class: "invbut" %>
+              <% else %>
+                <%= button_to "Use", use_inventory_path(item_id: item.id, category: category, subcategory: subcategory, info: info_mode), method: :post, class: "invbut", data: {turbo: true} %>
+              <% end %>
             <% end %>
           <% end %>
-          <% unless item.equipped? || item.protected_from_discard? %>
+          <% if item.tradable? %>
             <details class="nl-inline-action">
               <summary class="invbut">Transfer</summary>
               <%= form_with url: transfer_item_inventory_path, method: :post, class: "nl-inline-action-form" do |f| %>

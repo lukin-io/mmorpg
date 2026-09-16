@@ -36,7 +36,7 @@ export default class extends Controller {
   static values = {
     combatFree: { type: Number, default: 0 },    // Available combat skill points
     peaceFree: { type: Number, default: 0 },     // Available peace skill points
-    skills: { type: Object, default: {} },       // Current skill levels { wanderer: 50, ... }
+    skills: { type: Object, default: {} },       // Learned levels for allocation, excluding equipment
     baseSkills: { type: Object, default: {} },   // Base levels at page load (for undo)
     spends: { type: Object, default: {} },       // Spends per skill { wanderer: 2, ... }
     rates: { type: Object, default: {} },        // Progression rates { wanderer: "10:8:6:4", ... }

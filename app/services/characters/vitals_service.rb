@@ -17,8 +17,9 @@ module Characters
 
     attr_reader :character
 
-    def initialize(character)
+    def initialize(character, clock: -> { Time.current })
       @character = character
+      @clock = clock
     end
 
     # Apply damage to character
@@ -58,9 +59,10 @@ module Characters
     # @param amount [Integer] mana cost
     # @return [Boolean] true if mana was consumed, false if insufficient
     def consume_mana(amount)
-      return false if character.current_mp < amount
+      return false unless amount.is_a?(Numeric) && amount >= 0
 
       character.with_lock do
+        return false if character.current_mp < amount
         character.current_mp -= amount
         character.save!
       end
@@ -87,33 +89,30 @@ module Characters
     #
     # @return [Boolean] true if regeneration was applied
     def tick_regeneration
-      return false unless out_of_combat? && needs_regen?
+      character.with_lock do
+        now = @clock.call
+        return false unless out_of_combat? && needs_regen?
 
-        character.with_lock do
-          hp_gain = hp_per_tick
-          mp_gain = mp_per_tick
+        anchor = [character.last_regen_tick_at || character.created_at, character.last_combat_at].compact.max || now
+        elapsed = [now - anchor, 0].max
+        return false if elapsed < 1
 
-          character.current_hp = [character.current_hp + hp_gain, effective_max_hp].min
-          character.current_mp = [character.current_mp + mp_gain, effective_max_mp].min
-          character.last_regen_tick_at = Time.current
-          character.save!
-        end
-
-      true
+        remainder = character.metadata.to_h.fetch("vital_remainders", {})
+        hp = hp_per_tick * elapsed + remainder.fetch("hp", 0).to_f
+        mp = mp_per_tick * elapsed + remainder.fetch("mp", 0).to_f
+        character.update!(
+          current_hp: [character.current_hp + hp.floor, effective_max_hp].min,
+          current_mp: [character.current_mp + mp.floor, effective_max_mp].min,
+          in_combat: false, last_regen_tick_at: now,
+          metadata: character.metadata.to_h.merge("vital_remainders" => {"hp" => hp % 1, "mp" => mp % 1})
+        )
+        true
+      end
     end
 
-    # Check if character is out of combat
-    #
-    # @return [Boolean] true if not in combat or combat lockout expired
     def out_of_combat?
-      return true unless character.in_combat
-
-      if character.last_combat_at.nil? || character.last_combat_at < COMBAT_LOCKOUT.ago
-        character.update!(in_combat: false)
-        true
-      else
-        false
-      end
+      !character.arena_participations.joins(:arena_match).merge(ArenaMatch.active).exists? &&
+        (!character.in_combat || character.last_combat_at.nil? || character.last_combat_at <= @clock.call - COMBAT_LOCKOUT)
     end
 
     # Check if character needs regeneration
@@ -127,17 +126,20 @@ module Characters
     #
     # @return [Float] HP to regenerate per tick
     def hp_per_tick
-      return 0 if character.hp_regen_interval.nil? || character.hp_regen_interval.zero?
-      (effective_max_hp.to_f / character.hp_regen_interval).round(2)
+      recovery_rate(:self_healing, "hp_full_seconds", effective_max_hp)
     end
 
-    # Calculate MP regen per tick
-    #
-    # @return [Float] MP to regenerate per tick
     def mp_per_tick
-      return 0 if character.mp_regen_interval.nil? || character.mp_regen_interval.zero?
-      (effective_max_mp.to_f / character.mp_regen_interval).round(2)
+      recovery_rate(:fast_mana_regeneration, "mp_full_seconds", effective_max_mp)
     end
+
+    def recovery_rate(skill, interval_key, maximum)
+      config = Game::Combat::Calibration.config.fetch("recovery")
+      factor = 1 + character.passive_skill_level(skill) / config.fetch("skill_divisor")
+      fatigue = Characters::FatigueService.new(character:).current_percent(at: @clock.call)
+      maximum.to_f / config.fetch(interval_key) * factor * Game::Combat::Calibration.fatigue_factor(fatigue)
+    end
+    private :recovery_rate
 
     # Calculate HP percentage
     #

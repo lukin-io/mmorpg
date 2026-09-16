@@ -1,0 +1,68 @@
+Browser tab: 1495508509, Title: "Лучшая Онлайн Игра - Земли, которых нет... - Лог боя", URL: "http://www.neverlands.ru/logs.fcg?fid=771285270&stat=1".
+1 AXWebArea Лучшая Онлайн Игра - Земли, которых нет... - Лог боя, URL: neverlands.ru/logs.fcg?fid=771285270&stat=1
+	2 container container
+		3 container
+			4 container  Лог боя
+				5 container
+					6 table
+						7 row
+							8 cell
+								9 text Статистика боя
+						10 row
+							11 cell
+								12 text Персонаж
+							13 cell
+								14 text Обычный
+							15 cell
+								16 image Дети Тьмы
+							17 cell
+								18 image Дети Света
+							19 cell
+								20 image Дети Хаоса
+							21 cell
+								22 image Дети Сумерек
+							23 cell
+								24 text Всего
+							25 cell
+								26 text Опыт
+						27 row
+							28 cell
+								29 text sesharim [17]
+								30 link neverlands.ru/pinfo.cgi?sesharim
+							31 cell
+								32 text 300
+								33 text (1)
+							34 cell
+								35 text 0
+								36 text (0)
+							37 cell
+								38 text 0
+								39 text (0)
+							40 cell
+								41 text 0
+								42 text (0)
+							43 cell
+								44 text 0
+								45 text (0)
+							46 cell
+								47 text 300
+								48 text (1)
+							49 cell
+								50 text 570
+					51 container  Лог боя
+						52 link Description: Лог боя, Value: neverlands.ru/logs.fcg?fid=771285270&p=1
+			53 container Форум Банк NeverLands © Copyright 2004-2011, NeverLands LLC. Все права защищены.
+				54 container
+					55 container Форум Банк NeverLands
+						56 container
+							57 container Форум
+								58 link Description: Форум, Value: forum.neverlands.ru/
+							59 image
+							60 container Банк NeverLands
+								61 link Description: Банк NeverLands, Value: money.neverlands.ru/
+					62 container © Copyright 2004-2011, NeverLands LLC. Все права защищены.
+						63 text © Copyright 2004-2011, NeverLands LLC. Все права защищены.
+		64 link top.mail.ru/jump?from=665202
+		65 link liveinternet.ru/click
+
+The focused UI element is 1 AXWebArea Лучшая Онлайн Игра - Земли, которых нет... - Лог боя, URL: neverlands.ru/logs.fcg?fid=771285270&stat=1

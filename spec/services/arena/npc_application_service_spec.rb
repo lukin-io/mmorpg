@@ -7,6 +7,63 @@ RSpec.describe Arena::NpcApplicationService do
   let(:arena_room) { create(:arena_room, slug: "training", level_min: 0, level_max: 5) }
 
   describe "#create_for_room" do
+    it "retires an expired offer and recovers exactly once after delayed jobs" do
+      old = service.create_for_room(room: arena_room).application
+      old.update!(expires_at: Time.current)
+      replacement = service.create_for_room(room: arena_room)
+      expect(replacement.success?).to be(true)
+      expect(old.reload).to be_expired
+      expect(service.create_for_room(room: arena_room).success?).to be(false)
+      expect(arena_room.arena_applications.open.count).to eq(1)
+    end
+
+    it "does not announce an offer rolled back by its caller" do
+      expect(ActionCable.server).not_to receive(:broadcast)
+      ArenaRoom.transaction do
+        expect(service.create_for_room(room: arena_room).success?).to be(true)
+        raise ActiveRecord::Rollback
+      end
+      expect(ArenaApplication.from_npcs).to be_empty
+    end
+
+    it "rejects disabled or full rooms" do
+      arena_room.update!(active: false)
+      expect(service.create_for_room(room: arena_room).success?).to be(false)
+      arena_room.update!(active: true, max_concurrent_matches: 1)
+      create(:arena_match, arena_room:, status: :live)
+      expect(service.create_for_room(room: arena_room).errors).to include("Arena room is full")
+      expect(arena_room.arena_applications).to be_empty
+    end
+
+    it "serializes independent concurrent replenishment calls", js: true do
+      room_id = arena_room.id
+      ready = Queue.new
+      start = Queue.new
+      workers = 2.times.map do
+        Thread.new do
+          ActiveRecord::Base.connection_pool.with_connection do
+            ready << true
+            start.pop
+            described_class.new.create_for_room(room: ArenaRoom.find(room_id))
+          end
+        end
+      end
+      2.times { ready.pop }
+      2.times { start << true }
+      results = workers.map(&:value)
+      expect(results.count(&:success?)).to eq(1)
+      expect(ArenaApplication.open.where(arena_room_id: room_id).count).to eq(1)
+      expect(NpcTemplate.where(npc_key: "arena_training_dummy").count).to eq(1)
+    end
+
+    it "rejects a direct duplicate insert at the database boundary" do
+      application = service.create_for_room(room: arena_room).application
+      expect do
+        ArenaApplication.transaction(requires_new: true) { application.dup.save!(validate: false) }
+      end.to raise_error(ActiveRecord::RecordNotUnique)
+      expect(arena_room.arena_applications.open.count).to eq(1)
+    end
+
     context "with valid room" do
       it "creates an NPC application" do
         result = service.create_for_room(room: arena_room)
@@ -15,6 +72,14 @@ RSpec.describe Arena::NpcApplicationService do
         expect(result.application).to be_persisted
         expect(result.application.npc_application?).to be true
         expect(result.application.status).to eq("open")
+      end
+
+      it "keeps the Dummy open-side gate independent of a higher hall range" do
+        arena_room.update!(level_min: 5, level_max: 10)
+        application = service.create_for_room(room: arena_room).application
+        expect(application).to have_attributes(team_level_min: 0, team_level_max: 5)
+        expect(application.acceptable_by?(create(:character, level: 5))).to be(true)
+        expect(application.acceptable_by?(create(:character, level: 6))).to be(false)
       end
 
       it "uses the captured mannequin application contract in the training room" do

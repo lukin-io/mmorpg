@@ -26,6 +26,7 @@ RSpec.describe "Physical 1x1 PvP lifecycle", type: :request do
   let(:turn_params) do
     {
       action_type: "turn",
+      turn_number: 1,
       attacks: [{action_key: "simple", body_part: "torso"}],
       blocks: [{action_key: "torso_block", body_parts: ["torso"]}]
     }
@@ -67,15 +68,37 @@ RSpec.describe "Physical 1x1 PvP lifecycle", type: :request do
     expect(response).to have_http_status(:ok)
     match = ArenaMatch.find(response.parsed_body.fetch("match_id"))
     expect(match).to be_pending
+    expect(match.metadata).to include("physical_only" => true, "fight_timeout_seconds" => 300)
     expect(match.arena_applications.count).to eq(2)
     expect(match.arena_applications).to all(be_matched)
 
     Arena::MatchStarterJob.perform_now(match.id)
+    expect(match.reload).to be_pending
+    sign_out second_user
+    sign_in first_user
+    post confirm_duel_arena_match_path(match), as: :json
+    expect(response).to have_http_status(:ok)
+    sign_out first_user
+    sign_in second_user
 
     expect(match.reload).to be_live
     expect(match.current_turn_number).to eq(1)
     expect(match.arena_applications.reload).to all(be_started)
     expect([first_character.reload.in_combat?, second_character.reload.in_combat?]).to all(be(true))
+
+    get arena_match_path(match)
+    expect(response.body).not_to include('data-skill-key=')
+    [
+      {attacks: [{action_key: "spirit_arrow", body_part: "torso"}]},
+      {blocks: [{action_key: "magic_shield", body_parts: ["torso"]}]},
+      {skills: [{key: "heal"}]}
+    ].each do |forged|
+      hp = [first_character.reload.current_hp, second_character.reload.current_hp]
+      post action_arena_match_path(match), params: turn_params.merge(target_id: first_character.id).merge(forged), as: :json
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect([first_character.reload.current_hp, second_character.reload.current_hp]).to eq(hp)
+      expect(match.reload.current_turn_number).to eq(1)
+    end
 
     post action_arena_match_path(match),
       params: turn_params.merge(target_id: first_character.id),
@@ -85,6 +108,11 @@ RSpec.describe "Physical 1x1 PvP lifecycle", type: :request do
     expect(response.parsed_body.dig("data", "waiting")).to be(true)
     second_participation = match.arena_participations.find_by!(user: second_user)
     expect(second_participation.reload.metadata["pending_turn"]).to be_present
+    get arena_match_path(match)
+    waiting_page = Nokogiri::HTML(response.body)
+    expect(waiting_page.at_css(".arena-fighter--right .fighter-card")).to be_nil
+    expect(waiting_page.at_css(".arena-fighter--left .fighter-card")).to be_present
+    expect(waiting_page.text).to include("Waiting for opponent turn", first_character.name, second_character.name)
 
     sign_out second_user
     sign_in first_user
@@ -98,6 +126,8 @@ RSpec.describe "Physical 1x1 PvP lifecycle", type: :request do
     expect(match.reload).to be_live
     expect(match.current_turn_number).to eq(2)
     expect(match.arena_participations.reload.map { |entry| entry.metadata["pending_turn"] }).to all(be_blank)
+    get arena_match_path(match)
+    expect(Nokogiri::HTML(response.body).at_css(".arena-fighter--right .fighter-card")).to be_present
     expect(match.combat_log_entries.where(log_type: "action").count).to be >= 2
 
     post action_arena_match_path(match), params: {action_type: "surrender"}, as: :json

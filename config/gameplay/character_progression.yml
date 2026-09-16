@@ -4,10 +4,14 @@
 # Retrieved: 2026-07-27 over plain HTTP.
 #
 # Each row describes the character's current level. `experience_to_next_level`
-# is the cumulative combat-experience threshold for reaching the next level.
+# is the additional combat-XP cost to advance from that level to the next.
+# Reaching level N requires the sum of costs from rows 0 through N-1.
+# September 11 live level-17 proof: 29,946,496 XP + 20,053,504 remaining
+# = 50,000,000 to reach level 18 (sum of rows 0 through 17).
 # Point and currency values are granted when that row's level is reached. The
 # fight-experience and NPC columns are current-level caps; level 0 defines the
-# source-backed starter state.
+# source-backed starter state. Level 28 remains unsupported without a complete
+# grant row; the cost in row 27 does not supply those missing grants.
 
 levels:
   "0":  { experience_to_next_level: 100,         stat_points: 15, nv: 0,      perk_points: 1, peace_skill_points: 2,  combat_skill_points: 10, fight_experience_cap: 50,     max_npcs_in_group: 1 }

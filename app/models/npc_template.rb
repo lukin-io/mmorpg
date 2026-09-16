@@ -21,6 +21,16 @@ class NpcTemplate < ApplicationRecord
   include Npc::Combatable
 
   ROLES = %w[hostile arena_bot].freeze
+  DISPLAY_STAT_KEYS = %w[strength dexterity luck knowledge wisdom armor_class evasion accuracy crushing endurance armor_penetration].freeze
+  EQUIPMENT_ARTWORK_KEYS = %w[
+    orc_dagger orc_boots orc_bracers orc_belt
+    goblin_stick goblin_sandals goblin_gloves goblin_chainmail
+    bandit_headband bandit_amulet bandit_sword bandit_boots bandit_ring
+    bandit_bracers bandit_gloves bandit_dagger bandit_jacket bandit_belt
+    robber_helmet robber_talisman robber_club robber_armor
+    ogre_helmet ogre_amulet ogre_club ogre_boots ogre_ring
+    ogre_bracers ogre_gloves ogre_armor ogre_belt
+  ].freeze
 
   has_many :tile_npcs, dependent: :restrict_with_error
   has_many :arena_applications, dependent: :restrict_with_error
@@ -32,6 +42,7 @@ class NpcTemplate < ApplicationRecord
   validates :role, presence: true, inclusion: {in: ROLES}
   validates :dialogue, presence: true
   validate :referenced_key_must_remain_stable
+  validate :combat_content_validity
   before_destroy :restrict_roster_reference_deletion, prepend: true
 
   # Scope to find NPCs by role
@@ -102,6 +113,88 @@ class NpcTemplate < ApplicationRecord
 
   def avatar_emoji
     metadata&.dig("avatar").presence
+  end
+
+  private
+
+  def combat_content_validity
+    self.class.combat_content_errors(metadata).each { |message| errors.add(:metadata, message) }
+  end
+
+  public
+
+  # Content validation is reused for per-roster overrides at participation
+  # creation. Visible totals remain explicit: an item name or portrait never
+  # supplies an invented stat, damage range, drop or inventory grant.
+  def self.combat_content_errors(data, allow_levels: true)
+    return ["must be an object"] unless data.is_a?(Hash)
+
+    messages = []
+    if data.key?("search_enabled") && ![true, false].include?(data["search_enabled"])
+      messages << "search_enabled must be boolean"
+    end
+    if data.key?("search_max_level_difference") && !(data["search_max_level_difference"].is_a?(Integer) && data["search_max_level_difference"].between?(0, 100))
+      messages << "search_max_level_difference must be a bounded non-negative integer"
+    end
+    if data.key?("response_attack_counts")
+      counts = data["response_attack_counts"]
+      unless counts.is_a?(Array) && counts.any? && counts.size <= 4 && counts.all? { |count| count.is_a?(Integer) && count.between?(1, 4) }
+        messages << "response_attack_counts must contain one to four bounded attack counts"
+      end
+    end
+    if data.key?("response_block_keys")
+      keys = data["response_block_keys"]
+      unless keys.is_a?(Array) && keys.size <= 10 && (keys - Game::Combat::ActionCatalog::STANDARD_BLOCKS.values.pluck(:key)).empty?
+        messages << "response_block_keys must contain known physical blocks"
+      end
+    end
+    if data.key?("level_profiles")
+      profiles = data["level_profiles"]
+      if !allow_levels || !profiles.is_a?(Hash) || profiles.size > 100 || profiles.keys.any? { |level| !level.to_s.match?(/\A\d{1,3}\z/) }
+        messages << "level_profiles must use explicit numeric levels"
+      else
+        profiles.each_value do |profile|
+          messages.concat(combat_content_errors(profile, allow_levels: false))
+        end
+      end
+    end
+    %w[stats display_stats].each do |key|
+      next unless data.key?(key)
+
+      values = data[key]
+      unless values.is_a?(Hash) && values.values.all? { |value| value.is_a?(Integer) && value.abs <= 1_000_000 }
+        messages << "#{key} must contain bounded integer values"
+      end
+      if key == "display_stats" && values.is_a?(Hash) && (values.keys - DISPLAY_STAT_KEYS).any?
+        messages << "display_stats contains an unsupported attribute"
+      end
+    end
+    if data.key?("max_mp") && !(data["max_mp"].is_a?(Integer) && data["max_mp"].between?(0, 1_000_000))
+      messages << "max_mp must be a non-negative integer"
+    end
+    if data.key?("avatar_image") && !data["avatar_image"].to_s.match?(/\A[a-z0-9_-]+\.png\z/)
+      messages << "avatar_image must be a local NPC image filename"
+    end
+    if data.key?("equipment")
+      equipment = data["equipment"]
+      if !equipment.is_a?(Hash) || (equipment.keys - EquipmentSlots::KEYS).any?
+        messages << "equipment must use known paper-doll slots"
+      else
+        equipment.each_value do |item|
+          unless item.is_a?(Hash) && item["name"].is_a?(String) && item["name"].strip.length.between?(1, 120)
+            messages << "equipment must name each item"
+            next
+          end
+          if item.key?("artwork") && !EQUIPMENT_ARTWORK_KEYS.include?(item["artwork"])
+            messages << "equipment artwork is unavailable"
+          end
+          if item.key?("properties") && !(item["properties"].is_a?(Array) && item["properties"].size <= 20 && item["properties"].all? { |value| value.is_a?(String) && value.length <= 120 })
+            messages << "equipment properties must be a bounded list of text"
+          end
+        end
+      end
+    end
+    messages
   end
 
   private

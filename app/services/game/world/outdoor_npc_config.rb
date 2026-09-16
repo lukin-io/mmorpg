@@ -14,7 +14,9 @@ module Game
             parsed = YAML.load_file(CONFIG_PATH).deep_symbolize_keys
             validate_loot_entries!(parsed)
             validate_template_levels!(parsed)
+            validate_combat_content!(parsed)
             validate_encounter_entries!(parsed)
+            validate_encounter_presets!(parsed)
             expand_starter_encounters!(parsed)
             parsed
           end
@@ -55,6 +57,18 @@ module Game
           nil
         end
 
+        # Returns an independent copy of a globally keyed observed encounter,
+        # or nil when absent. Its :metadata can be explicitly applied to an
+        # authorized TileNpc through the existing content editor/persistence
+        # path. Lookup does not place NPCs, select a roster, or start a fight.
+        def find_encounter_preset(key)
+          config.each_value do |zone_config|
+            preset = Array(zone_config[:encounter_presets]).find { |entry| entry[:key].to_s == key.to_s }
+            return preset.deep_dup if preset
+          end
+          nil
+        end
+
         def all_npcs
           config.flat_map { |_, zone_config| zone_config[:npcs] || [] }.uniq { |entry| entry[:key] }
         end
@@ -75,9 +89,38 @@ module Game
               raise InvalidConfigurationError, "Starter encounters must use the surveyed zone"
             end
             zone_config[:starter_npcs] = StarterEncounterDistribution.new(zone_config:, cells: catalog.cells).call
+            zone_config[:starter_npcs].concat(calibrated_habitats(zone_config, parsed, catalog))
           end
         rescue StarterEncounterDistribution::InvalidConfigurationError => error
           raise InvalidConfigurationError, error.message
+        end
+
+        # These are local MVP placements of captured stronger rosters, not
+        # claims about missing Neverlands coordinates. Existing managed cells
+        # remain protected by StarterEncounterBootstrap.
+        def calibrated_habitats(zone_config, parsed, catalog)
+          presets = parsed.values.flat_map { |zone| Array(zone[:encounter_presets]) }.index_by { |preset| preset[:key] }
+          Array(zone_config[:calibrated_habitats]).map do |habitat|
+            cell = catalog.at(habitat.fetch(:x), habitat.fetch(:y))
+            raise InvalidConfigurationError, "Calibrated habitat must be passable and remote" unless cell&.passable &&
+              [[6, 8], [11, 9]].all? { |x, y| (cell.x - x).abs + (cell.y - y).abs >= 8 }
+
+            samples = habitat.fetch(:preset_keys).flat_map do |key|
+              presets.fetch(key).fetch(:metadata).fetch(:encounter_rosters)
+            end
+            source = template_entries(zone_config).find { |npc| npc[:key].to_s == samples.first.fetch(:members).first.fetch(:npc_key).to_s }
+            raise InvalidConfigurationError, "Unknown habitat template" unless source
+
+            source.deep_dup.merge(x: cell.x, y: cell.y, metadata: source.fetch(:metadata, {}).merge(
+              active: true, combat_readiness: "calibrated_v1", calibrated_loot: true,
+              source_map: cell.metadata.fetch("source_map"), source_coordinates: cell.metadata.fetch("source_coordinates"),
+              seed_scope: "starter_encounter_bootstrap", encounter_profile: "stronger_calibrated_v1",
+              encounter_rosters: samples, encounter_selection_mode: "observed_sample_replay",
+              passive_delay_windows: [{min_seconds: 60, max_seconds: 360}],
+              passive_delay_source: "calibrated_2026-09-12"))
+          end
+        rescue KeyError => error
+          raise InvalidConfigurationError, "Invalid calibrated habitat: #{error.message}"
         end
 
         def validate_template_levels!(parsed)
@@ -88,6 +131,17 @@ module Game
 
               raise InvalidConfigurationError,
                 "#{CONFIG_PATH}: NPC #{npc[:key] || 'unknown'} level must be a non-negative integer"
+            end
+          end
+        end
+
+        def validate_combat_content!(parsed)
+          parsed.each_value do |zone_config|
+            template_entries(zone_config).each do |npc|
+              errors = NpcTemplate.combat_content_errors(npc.fetch(:metadata, {}).deep_stringify_keys)
+              next if errors.empty?
+
+              raise InvalidConfigurationError, "#{CONFIG_PATH}: NPC #{npc[:key]} #{errors.join('; ')}"
             end
           end
         end
@@ -107,12 +161,10 @@ module Game
         end
 
         def validate_encounter_entries!(parsed)
-          template_keys = parsed.values.flat_map do |zone_config|
-            template_entries(zone_config).map { |entry| entry[:key].to_s }
-          end.to_set
+          template_keys = configured_template_keys(parsed)
 
           parsed.each_value do |zone_config|
-            Array(zone_config[:npcs]).each do |npc|
+            template_entries(zone_config).each do |npc|
               metadata = npc.fetch(:metadata, {}).to_h
               policy_errors = TileNpc.encounter_policy_errors(metadata.deep_stringify_keys)
               if policy_errors.any?
@@ -122,6 +174,69 @@ module Game
               validate_roster_references!(npc, metadata, template_keys)
             end
           end
+        end
+
+        def validate_encounter_presets!(parsed)
+          template_keys = configured_template_keys(parsed)
+          seen_keys = Set.new
+          parsed.each_value do |zone_config|
+            next unless zone_config.key?(:encounter_presets)
+
+            presets = zone_config[:encounter_presets]
+            unless presets.is_a?(Array)
+              raise InvalidConfigurationError, "#{CONFIG_PATH}: encounter presets must be an array"
+            end
+
+            presets.each do |preset|
+              unless preset.is_a?(Hash) && preset[:key].is_a?(String) && preset[:key].present?
+                raise InvalidConfigurationError, "#{CONFIG_PATH}: encounter preset key must be a non-empty string"
+              end
+              unless seen_keys.add?(preset[:key])
+                raise InvalidConfigurationError, "#{CONFIG_PATH}: duplicate encounter preset key #{preset[:key]}"
+              end
+              metadata = preset[:metadata]
+              unless metadata.is_a?(Hash) && metadata.key?(:encounter_rosters)
+                raise InvalidConfigurationError, "#{CONFIG_PATH}: encounter preset #{preset[:key]} requires encounter_rosters metadata"
+              end
+
+              errors = TileNpc.encounter_policy_errors(metadata.deep_stringify_keys)
+              if errors.any?
+                raise InvalidConfigurationError, "#{CONFIG_PATH}: encounter preset #{preset[:key]} #{errors.join('; ')}"
+              end
+              validate_roster_references!(preset, metadata, template_keys)
+              validate_preset_samples!(preset)
+            end
+          end
+        end
+
+        # The shared TileNpc policy covers ranges/weights/levels. Presets also
+        # require complete captures and integer totals before templates exist
+        # in the database, so validation cannot depend on persisted TileNpc rows.
+        def validate_preset_samples!(preset)
+          sample_keys = Set.new
+          preset.fetch(:metadata).fetch(:encounter_rosters).each do |sample|
+            key = sample[:key]
+            unless key.is_a?(String) && key.present? && sample_keys.add?(key)
+              raise InvalidConfigurationError, "#{CONFIG_PATH}: encounter preset #{preset[:key]} roster keys must be present and unique"
+            end
+            %i[encounter_experience_reward encounter_defeat_experience_reward].each do |field|
+              next unless sample.key?(field)
+              next if sample[field].is_a?(Integer) && sample[field] >= 0
+
+              raise InvalidConfigurationError, "#{CONFIG_PATH}: encounter preset #{preset[:key]} #{field} must be a non-negative integer"
+            end
+            sample.fetch(:members).each do |member|
+              unless member[:level].is_a?(Integer) && member[:level] >= 0 && member[:hp].is_a?(Integer) && member[:hp].positive?
+                raise InvalidConfigurationError, "#{CONFIG_PATH}: encounter preset #{preset[:key]} members require exact non-negative levels and positive HP"
+              end
+            end
+          end
+        end
+
+        def configured_template_keys(parsed)
+          parsed.values.flat_map do |zone_config|
+            template_entries(zone_config).map { |entry| entry[:key].to_s }
+          end.to_set
         end
 
         def validate_roster_references!(npc, metadata, template_keys)

@@ -96,7 +96,7 @@ module Game
         raise OwnershipError, "Invalid quantity." unless quantity.positive?
         raise OwnershipError, "Not enough items in stack." if quantity > item.quantity.to_i
         raise OwnershipError, "Equipped items cannot be transferred." if item.equipped?
-        raise OwnershipError, "Protected items cannot be transferred." if item.protected_from_discard?
+        raise OwnershipError, "Protected items cannot be transferred." unless item.tradable?
 
         delta_weight = item.weight.to_i * quantity
 

@@ -821,6 +821,7 @@
 
 .fighter-card--npc { border-left: 1px solid #d8cdaf; }
 .fighter-card--defeated { opacity: 0.7; }
+.fighter-card[hidden], [data-arena-match-target="rosterParticipant"][hidden] { display: none; }
 .fighter-card--selected-target {
   box-shadow: inset 0 0 0 2px #1768ac;
 }
@@ -1266,7 +1267,7 @@ select.nl-fight-select,
   font: 12px/16px Verdana, Tahoma, Arial, sans-serif;
 }
 
-.combat-log-entry { min-height: 16px; padding: 0 3px; border: 0; background: #ffffff; line-height: 16px; }
+.combat-log-entry { min-height: 16px; padding: 0 3px; border: 0; background: #ffffff; color: #222222; font-weight: 400; font-style: normal; line-height: 16px; }
 .combat-time { color: #888888; font: 12px Tahoma, Verdana, Arial, sans-serif; }
 
 .arena-participant {
@@ -1617,4 +1618,78 @@ select.nl-fight-select,
     flex-basis: 42px;
     width: 42px;
   }
+}
+
+/* The completed result replaces the composer above the persisted log. */
+.nl-fight-result .arena-result-content {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  text-align: center;
+  font-size: 11px;
+}
+
+.nl-fight-result .arena-result-title {
+  margin: 4px 0;
+  padding: 0;
+  background: transparent;
+  font-size: 12px;
+}
+
+.nl-fight-result .arena-result-details p {
+  margin: 3px 0;
+}
+
+.nl-fight-result .nl-fight-result-table {
+  width: 100%;
+  table-layout: fixed;
+  overflow-wrap: anywhere;
+}
+
+.nl-fight-result form {
+  margin: 5px 0;
+}
+
+/* September 12 Arena lobby capture: dense white list, restrained native rows. */
+.nl-arena-frame { background: #fff; font: 11px Verdana, Arial, sans-serif; }
+.nl-arena-frame > :not(.nl-arena-topline):not(.arena-countdown) { width: 90%; margin-inline: auto; box-sizing: border-box; }
+.nl-arena-frame .nl-arena-topline,
+.nl-arena-frame .nl-arena-room-heading,
+.nl-arena-frame .nl-arena-status-row { background: #fff; border: 0; }
+.nl-arena-frame .nl-arena-status-row { justify-content: flex-start; padding-block: 12px; }
+.nl-arena-status-row > :last-child { margin-left: auto; }
+.nl-arena-frame .nl-arena-tabs { gap: 0; padding: 0; border-top: 3px solid #4a6795; background: #ededed; }
+.nl-arena-frame .nl-arena-tab { flex: 1; padding: 4px; text-align: center; color: #42617e; text-decoration: underline; font-weight: bold; }
+.nl-arena-frame .nl-arena-tab--active { background: #e6e6e6; box-shadow: none; border: 0; }
+.nl-arena-frame .nl-arena-application-form { background: #faf9f3; border-bottom: 1px solid #ccc; padding: 6px 3px; }
+.nl-arena-inline-form { justify-content: center; }
+.nl-arena-frame .nl-arena-select,
+.nl-arena-frame .nl-arena-mini-input { font: 10px Verdana, Arial, sans-serif; min-height: 20px; padding: 1px 3px; border: 1px solid #999; background: #fff; border-radius: 2px; max-width: 100%; }
+.nl-arena-mini-input { width: 42px; }
+.nl-arena-team-limits { display: flex; align-items: center; gap: 3px; flex-wrap: wrap; }
+.nl-arena-frame .nl-arena-small-button { font: bold 10px Verdana, Arial, sans-serif; min-height: 20px; padding: 2px 6px; border: 1px solid #ccc; color: #444; background: #e6e6e6; border-radius: 0; box-shadow: none; }
+.nl-arena-frame .nl-arena-current-row { justify-content: center; color: #a82620; background: #faf9f3; }
+.nl-arena-application-row { padding: 5px 3px; background: #fff; }
+.nl-arena-application-line { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; min-height: 20px; }
+.nl-arena-application-side { display: inline-flex; align-items: center; gap: 3px; }
+.nl-arena-rule-icons { display: inline-flex; align-items: center; gap: 2px; }
+.nl-arena-rule-icons img { width: 16px; height: 16px; object-fit: contain; vertical-align: middle; }
+.nl-arena-rule-icons > span { display: inline-flex; align-items: center; }
+.nl-arena-rule-icons > span > span { font-size: 9px; }
+.nl-arena-room-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.nl-arena-room-grid .nl-arena-room-cell { min-width: 0; display: grid; gap: 4px; justify-items: center; }
+.nl-arena-frame .nl-arena-empty { background: #fff; border: 0; padding: 4px; }
+.nl-arena-feedback:empty { display: none; }
+.nl-arena-feedback { color: #a82620; }
+.nl-arena-frame [hidden] { display: none !important; }
+.nl-arena-frame input:focus-visible,
+.nl-arena-frame select:focus-visible,
+.nl-arena-frame button:focus-visible,
+.nl-arena-frame a:focus-visible { outline: 2px solid #486b98; outline-offset: 2px; }
+@media (max-width: 600px) {
+  .nl-arena-frame > :not(.nl-arena-topline):not(.arena-countdown) { width: 98%; }
+  .nl-arena-room-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .nl-arena-frame .nl-arena-small-button { min-height: 30px; }
+  .nl-arena-frame .nl-arena-select, .nl-arena-frame .nl-arena-mini-input { min-height: 28px; }
+  .nl-arena-application-side label { overflow-wrap: anywhere; }
 }

@@ -6,7 +6,7 @@ RSpec.describe AvatarHelper, type: :helper do
   describe "NPC_IMAGE_ASSETS" do
     it "keeps monster images available as assets only" do
       expect(AvatarHelper::NPC_IMAGE_ASSETS).to contain_exactly(
-        "scarecrow", "wolf", "boar", "skeleton", "zombie"
+        "scarecrow", "wolf", "boar", "skeleton", "zombie", "orc", "goblin", "bandit", "robber", "ogre"
       )
     end
   end
@@ -14,11 +14,11 @@ RSpec.describe AvatarHelper, type: :helper do
   describe "#character_avatar_tag" do
     let(:character) { create(:character) }
 
-    it "returns neutral fallback for characters" do
+    it "renders the original player portrait without inferring equipment" do
       result = helper.character_avatar_tag(character)
 
-      expect(result).to include("avatar--fallback")
-      expect(result).not_to match(/avatars\//)
+      expect(result).to include("player-avatar")
+      expect(result).to match(/avatars\/adventurer/)
     end
 
     it "applies size class" do
@@ -96,9 +96,9 @@ RSpec.describe AvatarHelper, type: :helper do
       let(:character) { create(:character) }
       let(:participation) { create(:arena_participation, character: character) }
 
-      it "renders neutral character fallback" do
+      it "renders the original character portrait" do
         result = helper.participation_avatar_tag(participation)
-        expect(result).to include("avatar--fallback")
+        expect(result).to include("player-avatar")
       end
     end
 
@@ -109,6 +109,13 @@ RSpec.describe AvatarHelper, type: :helper do
       it "renders NPC avatar" do
         result = helper.participation_avatar_tag(participation)
         expect(result).to match(/npc\/scarecrow/)
+      end
+
+      it "retains the fight's portrait when editable template artwork changes" do
+        participation.snapshot_npc_combat_data!
+        npc.update!(metadata: {"avatar_image" => "orc.png"})
+
+        expect(helper.participation_avatar_tag(participation.reload)).to match(/npc\/scarecrow/)
       end
     end
   end

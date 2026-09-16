@@ -15,7 +15,18 @@ class CityBuildingsController < ApplicationController
     if @building_key == "airship_station"
       @airship_routes = Game::World::AirshipTravel.new(character: current_character).station_routes!
     end
+    if @building_key == "hospital"
+      @hospital_items = ItemTemplate.where(key: %w[beginner_healer_bag skilled_healer_bag experienced_healer_bag combat_first_aid_kit]).order(:base_price)
+      @hospital_offers = Game::Shop::TradeOffers.new(character: current_character).issue(buy_items: @hospital_items)[:buy]
+    end
     prepare_presence_context
+  end
+
+  def purchase
+    item = ItemTemplate.find_by!(key: params[:item_key])
+    result = Game::Shop::Purchase.new(character: current_character, item_template: item, action_key: params[:action_key]).call
+    redirect_to city_building_path(building_key: "hospital"),
+      **(result.success ? {notice: result.message} : {alert: result.message}), status: :see_other
   end
 
   private

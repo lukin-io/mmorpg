@@ -32,6 +32,34 @@
   margin-top: 3px;
 }
 
+.nl-scroll-use {
+  border: 1px solid #b8ae8b;
+  background: #faf9f2;
+  color: #222;
+}
+
+.nl-scroll-use h2 {
+  margin: 0;
+  padding: 2px 4px;
+  border-bottom: 1px solid #b8ae8b;
+  font: bold 13px Verdana, sans-serif;
+}
+
+.nl-scroll-use form {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+}
+
+.nl-scroll-use input[type="text"] {
+  width: 150px;
+  max-width: 100%;
+  min-width: 0;
+}
+
 /* ---------------------------------------------------------------- *
  * Icon strip
  *
@@ -146,9 +174,8 @@
 
 .nl-inventory-item-artwork {
   display: block;
-  width: 60px;
-  height: 60px;
   object-fit: contain;
+  flex-shrink: 0;
 }
 
 /* Stack count, drawn over the icon as in the source cell. */
@@ -287,6 +314,12 @@
   margin: 0;
   color: var(--nl-text);
   font: bold 11px/15px var(--nl-font-tahoma);
+}
+
+.nl-scroll-error {
+  margin: 8px 0;
+  color: #c00;
+  font: bold 12px/1.4 var(--nl-font-tahoma);
 }
 
 .nl-equipment-sets {

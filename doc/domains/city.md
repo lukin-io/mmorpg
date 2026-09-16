@@ -13,17 +13,19 @@ not an outdoor walking grid.
 
 ## Documentation chain
 
-- Neverlands source summary: `doc/design/reference/city/README.md`
-- Current observations: `doc/design/reference/city/observations/`
+- [Required working context and update rules](../DOCUMENTATION.md#21-required-context-and-update-map)
+- General district/route/service/art reference: [WORLD](../WORLD.md#2-forpost-city-and-services)
+- Neverlands source summary: [doc/design/reference/city/README.md](../design/reference/city/README.md)
+- Current observations: [doc/design/reference/city/observations/](../design/reference/city/observations)
 - Latest reciprocal gate survey:
-  `doc/design/reference/world/observations/2026-09-09_starter_routes.md`
-- Normalized design: `doc/design/areas/cities_and_buildings.md`
+  [doc/design/reference/world/observations/2026-09-09_starter_routes.md](../design/reference/world/observations/2026-09-09_starter_routes.md)
+- Normalized design: [doc/design/areas/cities_and_buildings.md](../design/areas/cities_and_buildings.md)
 - Delivery IDs: `CITY-NAV-001`, `CITY-GATE-001`, and
-  `CITY-SERVICES-001` in `doc/design/launch_mvp_plan.md`
-- Current implementation: `doc/features/city.md`; paid transport lifecycle:
-  `doc/features/airship_travel.md`
-- Content operations: `doc/guides/managing_game_content.md`
-- Project building/interior artwork style and prompts: `doc/ARTWORK.md`
+  `CITY-SERVICES-001` in [doc/design/launch_mvp_plan.md](../design/launch_mvp_plan.md)
+- Current implementation: `doc/features/city.md` ([handbook](../features/city.md)); paid transport lifecycle:
+  `doc/features/airship_travel.md` ([handbook](../features/airship_travel.md))
+- Content operations: [doc/guides/managing_game_content.md](../guides/managing_game_content.md)
+- Project building/interior artwork style and prompts: [doc/ARTWORK.md](../ARTWORK.md)
 
 ## Current RPG status
 

@@ -18,6 +18,7 @@ RSpec.describe "World context actions", type: :request do
   end
 
   it "persists inventory as the post-fight destination when an NPC interrupts" do
+    character.update!(level: 4)
     create(:tile_npc, :multi_npc_encounter, zone: zone.name, x: 5, y: 5)
 
     expect {

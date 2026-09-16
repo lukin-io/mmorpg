@@ -1,114 +1,46 @@
 import { Controller } from "@hotwired/stimulus"
 
-/**
- * NL Vitals Controller - HP/MP regeneration with animation
- *
- * Animates HP/MP bar widths and text every second, simulating
- * client-side regeneration between server syncs.
- *
- * Regen formula:
- *   HP += maxHP / hpRegenRate per tick
- *   MP += maxMP / mpRegenRate per tick
- */
+// Render persisted HP/MP. Regeneration belongs to the server; polling recovers
+// missed background ticks without inventing health locally or reviving fighters.
 export default class extends Controller {
   static targets = ["hpFill", "mpFill", "hpText", "mpText"]
-
-  static values = {
-    currentHp: Number,
-    maxHp: Number,
-    currentMp: Number,
-    maxMp: Number,
-    hpRegenRate: { type: Number, default: 1500 },  // Ticks to full HP
-    mpRegenRate: { type: Number, default: 9000 }  // Ticks to full MP
-  }
-
-  interval = null
+  static values = { currentHp: Number, maxHp: Number, currentMp: Number, maxMp: Number, syncUrl: String }
 
   connect() {
-    this.startRegen()
+    if (this.syncUrlValue) this.interval = setInterval(() => this.sync(), 5000)
   }
 
   disconnect() {
-    this.stopRegen()
+    clearInterval(this.interval)
+    this.request?.abort()
   }
 
-  startRegen() {
-    // Clamp initial values
-    if (this.currentHpValue < 0) this.currentHpValue = 0
-    if (this.maxMpValue < 7) this.maxMpValue = 7
-
-    // Start 1-second interval
-    this.interval = setInterval(() => this.tick(), 1000)
-  }
-
-  stopRegen() {
-    if (this.interval) {
-      clearInterval(this.interval)
-      this.interval = null
+  async sync() {
+    if (this.request || document.hidden) return
+    this.request = new AbortController()
+    try {
+      const response = await fetch(this.syncUrlValue, {
+        headers: { Accept: "application/json" }, cache: "no-store", signal: this.request.signal
+      })
+      if (!response.ok) return
+      const values = await response.json()
+      if (!["current_hp", "max_hp", "current_mp", "max_mp"].every(key => Number.isFinite(values?.[key]) && values[key] >= 0)) return
+      this.currentHpValue = values.current_hp
+      this.maxHpValue = values.max_hp
+      this.currentMpValue = values.current_mp
+      this.maxMpValue = values.max_mp
+      this.renderValues()
+    } catch (error) {
+      if (error.name !== "AbortError") return
+    } finally {
+      this.request = null
     }
   }
 
-  tick() {
-    // Clamp values
-    if (this.currentHpValue < 0) this.currentHpValue = 0
-    if (this.currentHpValue > this.maxHpValue) this.currentHpValue = this.maxHpValue
-    if (this.currentMpValue > this.maxMpValue) this.currentMpValue = this.maxMpValue
-
-    // Stop if both full
-    if (this.currentHpValue >= this.maxHpValue && this.currentMpValue >= this.maxMpValue) {
-      this.stopRegen()
-      return
-    }
-
-    const hpPercent = this.maxHpValue > 0 ? (this.currentHpValue / this.maxHpValue) * 100 : 0
-    const mpPercent = this.maxMpValue > 0 ? (this.currentMpValue / this.maxMpValue) * 100 : 0
-
-    // Update HP bar
-    if (this.hasHpFillTarget) {
-      this.hpFillTarget.style.width = `${hpPercent}%`
-    }
-
-    // Update MP bar
-    if (this.hasMpFillTarget) {
-      this.mpFillTarget.style.width = `${mpPercent}%`
-    }
-
-    if (this.hasHpTextTarget) {
-      this.hpTextTarget.textContent = `${Math.round(this.currentHpValue)}/${this.maxHpValue}`
-    }
-
-    if (this.hasMpTextTarget) {
-      this.mpTextTarget.textContent = `${Math.round(this.currentMpValue)}/${this.maxMpValue}`
-    }
-
-    // Regenerate per tick
-    // HP regen: maxHP / regenRate per tick
-    // MP regen: maxMP / regenRate per tick
-    this.currentHpValue += this.maxHpValue / this.hpRegenRateValue
-    this.currentMpValue += this.maxMpValue / this.mpRegenRateValue
-  }
-
-  // Allow external damage/heal events
-  takeDamage(amount) {
-    this.currentHpValue = Math.max(0, this.currentHpValue - amount)
-    this.tick()
-    // Restart regen if stopped
-    if (!this.interval) this.startRegen()
-  }
-
-  heal(amount) {
-    this.currentHpValue = Math.min(this.maxHpValue, this.currentHpValue + amount)
-    this.tick()
-  }
-
-  useMana(amount) {
-    this.currentMpValue = Math.max(0, this.currentMpValue - amount)
-    this.tick()
-    if (!this.interval) this.startRegen()
-  }
-
-  restoreMana(amount) {
-    this.currentMpValue = Math.min(this.maxMpValue, this.currentMpValue + amount)
-    this.tick()
+  renderValues() {
+    if (this.hasHpFillTarget) this.hpFillTarget.style.width = `${this.maxHpValue > 0 ? 100 * this.currentHpValue / this.maxHpValue : 0}%`
+    if (this.hasMpFillTarget) this.mpFillTarget.style.width = `${this.maxMpValue > 0 ? 100 * this.currentMpValue / this.maxMpValue : 0}%`
+    if (this.hasHpTextTarget) this.hpTextTarget.textContent = `${this.currentHpValue}/${this.maxHpValue}`
+    if (this.hasMpTextTarget) this.mpTextTarget.textContent = `${this.currentMpValue}/${this.maxMpValue}`
   }
 }

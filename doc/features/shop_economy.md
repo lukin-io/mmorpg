@@ -3,18 +3,71 @@
 title: Shop and Economy Feature
 description: Implementation handbook for the Neverlands-based city shop, NV wallet, catalog buying, inventory selling, and transaction ledger.
 status: Partially Implemented
-updated: 2026-09-11
+updated: 2026-09-14
 owners: Shop and Economy
 template: feature-v1
 ---
 
 # Shop and Economy
 
+[ECONOMY](../ECONOMY.md) is the complete NV, stock/pricing, qualification,
+license and settlement guide. [MEDICAL](../MEDICAL.md) owns the related
+Hospital/treatment explanation; [CHARACTER](../CHARACTER.md) explains level
+reward ingress. Detailed transaction guarantees and acceptance remain here.
+
+[SCROLLS](../SCROLLS.md) explains the full scroll catalog, activation and typed
+license permissions across Shop, Inventory and Combat; [ITEMS](../ITEMS.md)
+retains the general item/stock editing guide. This handbook owns transactions
+and acquisition acceptance.
+
+### September 14 attack-scroll acquisition
+
+Both purchases and their Inventory/combat handoff are recorded in
+[September 14 local acceptance](player_inventory.md#september-14-local-acceptance).
+
+The ordinary assortment now has 80 goods: the previous 79 plus personal-use
+Fist Attack (`fist_attack`, 250 NV, one use, mass 1, level 10). Initial 500/500
+stock is user-authorized starter content, not captured replenishment. Duel
+Permit I retains 16 NV, one use, level 5 and Stealth 20. Both use the existing
+Purchase/TradeOffers, inventory and wallet receipt. Fist Attack's
+`personal_only` flag prevents sale offers and is rechecked under the sale lock.
+Use remains [Inventory-owned](player_inventory.md#september-14-attack-scrolls).
+See [source variants](../design/reference/inventory/observations/2026-09-14_attack_scrolls.md),
+[ITEMS](../ITEMS.md#attack-scroll-use) and
+[ARTWORK](../ARTWORK.md#september-14-attack-scroll-artwork).
+
 This document is the implementation contract for the current Shop and Economy feature. It explains City and linked-village Shop access, catalog modes and filters, NV payments, stock and inventory mutations, resale pricing, login resume, UI ownership, security, concurrency, and test coverage.
 
 It describes what exists now. It does not treat every captured Neverlands city counter, license rule, novice service, or generic marketplace mechanic as shipped behavior.
 
+### September 12 Hospital purchase handoff
+
+[Medical Care](medical_care.md) adds the captured Hospital bag assortment using
+`Game::Shop::Location`, `TradeOffers` and `Purchase`, not a second purchase
+pipeline. Saved Hospital context/current node selects a separate ShopAccount
+and ShopStock. Existing quotes, locks, capacity, price, funds, stock, receipt
+and duplicate-offer checks apply. Stock seeds preserve traded quantities.
+Doctor licenses now qualify the bounded injury-treatment service together with
+Healer, bag, effective Knowledge and Doctor proficiency checks. Medical Care
+records the September15 threshold enforcement and acceptance. Qualification quests,
+medical crafting and unrelated exchange/market work remain outside this flow.
+Final Hospital purchase and treatment checks are recorded in [Medical Care](medical_care.md#6-acceptance-and-tests).
+
 ## 1. Design authority and related documents
+
+[PERKS: Merchant/Healer](../PERKS.md#2-implemented-perks) explains license
+permission chains; [SKILLS: profession counters](../SKILLS.md#profession-counters)
+explains the separate Trading proficiency reader. Neither selecting a perk nor
+completing a sale automatically trains that counter. Keep their use cases and
+formula links aligned with changed Shop prerequisites and resale behavior.
+
+Read [ITEMS](../ITEMS.md) for definitions, eligibility and licenses,
+[FORMULAS](../FORMULAS.md#9-inventory-and-economy) for prices/capacity and
+[WORLD](../WORLD.md) for merchant locations. [Inventory](player_inventory.md)
+owns carried goods; [Medical Care](medical_care.md) owns treatment;
+the [event catalog](game_shell.md#gameplay-event-catalog) distinguishes receipts
+from chat events. Read and update affected references under the
+[context/update map](../DOCUMENTATION.md#21-required-context-and-update-map).
 
 Domain navigation: `doc/domains/economy.md`.
 
@@ -296,7 +349,7 @@ profession-specific checks in addition to ordinary transaction eligibility:
 | License | Current server check | Playable local state |
 |---|---|---|
 | Trading I–III | `owns_perk?(:merchant)` and `metadata.profession_unlocks.merchant == true` | Merchant qualification below unlocks purchases. No positive numeric Trading prerequisite is imposed. |
-| Doctor I | `owns_perk?(:healer)` | Purchase and timed permission are implemented. This does not provide treatment or medical crafting. |
+| Doctor I | `owns_perk?(:healer)` | Purchase and timed permission are implemented. Treatment now uses Medical Care; crafting remains separate. |
 | Doctor II–III | `owns_perk?(:healer)` and `metadata.profession_unlocks.traumatologist == true` | Definitions and the completion check exist; normal-play purchase remains blocked because the Traumatologist quest is unimplemented. |
 
 The source's 100 Doctor skill threshold governs entry to the Traumatologist
@@ -429,8 +482,7 @@ row. Item loot never enters the wallet; Inventory remains its authority.
 
 ### 6.4 Deferred behavior boundary
 
-Licenses grant their explicitly typed timed permissions. Doctor ownership does
-not implement injury treatment and cannot authorize trading. Doctor qualification
+Licenses grant their explicitly typed timed permissions. Doctor ownership alone cannot treat an injury or authorize trading; Medical Care also validates the bag, effective requirements, patient and consent. Doctor qualification
 quests, renewal/stacking policy and expiry cleanup must not be inferred from a
 card title. Merchant qualification implements the published license-unlock steps
 above; its garment reward and original dialogue/receipt presentation remain
@@ -650,12 +702,15 @@ owns category-atlas presentation, the centered 800px catalog, compact tabs,
 property/requirement cells and one-item controls. Shared framing and navigation
 remain owned by Game Shell.
 
-All 79 authored ordinary goods and six license definitions have original PNG illustrations
+All 80 authored ordinary goods and six license definitions have original PNG illustrations
 under `app/assets/images/items/`. `InventoriesHelper::ITEM_ARTWORK_PATHS` maps
-their explicit stable keys to assets. Buy and Sell reuse those files in a
-62 × 91px box with `object-fit: contain`, preserving the original square art.
-Inventory retains its 60 × 60px image box, and the shared equipment slot fits
-the same file to its existing dimensions. Category controls retain the original
+their explicit stable keys to assets. Buy, Sell and Inventory share
+`item_artwork_dimensions`: wearables use EquipmentSlots, captured Permit I–IV
+uses42×21, other loose goods60×60. Images preserve category proportions with
+`object-fit: contain`; the69px Shop icon column retains its existing width.
+The [September16 source pass](../design/reference/inventory/observations/2026-09-16_artwork_categories.md)
+corrects the former universal weapon/square boxes. [ART-CATEGORY-001](../ARTWORK.md#category-artwork-standard)
+owns backgrounds, framing, delivery sizes and the current asset audit. Category controls retain the original
 category atlas, and unknown goods retain the existing fallback.
 
 The six professional license cards use 60 × 60px original illustrations in
@@ -973,7 +1028,7 @@ repeated seeds preserve traded counts and funds. Forpost's initial balance is
 the captured 99,977,307.40 NV snapshot, not a replenishment rule. Existing
 legacy template counts are bootstrap inputs only, never live global supply.
 No other shop inherits those funds/counts. `db/seeds/data/starter_shop.json`
-authors 79 ordinary goods (five per equipment category and four Duel Permits);
+authors 80 ordinary goods (five per equipment category, four Duel Permits and Fist Attack);
 `db/seeds/shop_inventory.rb` adds six license definitions. Relics and Runes were
 empty in the source; the user excluded Wood Chips, so Other is also empty.
 `db/seeds.rb` already invokes the catalog and account seed owners in order.
@@ -991,8 +1046,10 @@ Shield block points and belt pocket counts are display properties; combat
 block selection and inventory pocket capacity do not consume them. Fast Mana
 Regeneration is a recognized equipment skill bonus whose mana-restoration
 effect remains unimplemented. Duel Permit II–IV descriptions do not add use
-effects. Duel permits can be bought/carried/sold under existing Shop rules,
-but their use remains unsupported by the Inventory effect dispatcher.
+effects. Duel permits can be bought/carried/sold under existing Shop rules;
+Duel Permit I now uses the targeted combat-entry adapter. Personal Fist Attack
+can be bought/used/deleted but cannot be transferred or sold. Other permit
+variants remain unsupported for activation.
 
 ### Local prerequisite emulation and validation
 
@@ -1216,3 +1273,11 @@ automated completion results are recorded in
 | 2026-07-28 | Moved current Shop access to Central Square; added the project-owned CSS scene, measured 800px control frame, four mode tabs, icon category strip, compact filters, local table overflow, responsive acceptance, and source-asset/text boundary. |
 | 2026-07-29 | Linked the cross-feature management guide's future explicit `ItemTemplate` adapter while retaining Shop ownership of catalog visibility, price, stock, and transaction invariants. |
 | 2026-08-23 | Documented the source-backed NPC NV ingress: Arena owns typed loot eligibility/idempotency, while the existing Economy wallet service atomically credits the user's persisted balance and immutable `combat.npc_loot` ledger row before Shell feedback. |
+
+## September 16 category geometry verification
+
+The [manual and automated acceptance record](acceptance/2026-09-16_artwork/README.md)
+records the source-shaped Shop/Inventory images, purchase → wear → reload →
+keyboard removal, Sell restrictions, empty category and zoom checks. Runtime
+geometry is verified. Background/framing normalization and six license-candidate
+replacements remain pending; this is not an all-artwork completion claim.

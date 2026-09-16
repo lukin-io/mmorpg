@@ -26,6 +26,7 @@ module Arena
 
     # Captured Neverlands starter mannequin applications use 300 second turns
     # and the same posted fight rule/trauma value of 30 as normal arena rows.
+    REPLENISHED_ROOMS = %w[training].freeze
     NPC_TIMEOUT_SECONDS = 300
     NPC_TRAUMA_PERCENT = 30
     NPC_WAIT_MINUTES = 5
@@ -47,8 +48,10 @@ module Arena
         return Result.new(success?: false, errors: ["No NPC available for this room"])
       end
 
-      npc_template = find_or_create_npc_template(npc_config)
-      create_application(room: room, npc_template: npc_template)
+      room.with_lock do
+        npc_template = find_or_create_npc_template(npc_config)
+        create_application(room: room, npc_template: npc_template)
+      end
     end
 
     # Create an application for a specific NPC template
@@ -61,7 +64,7 @@ module Arena
         return Result.new(success?: false, errors: ["NPC template is not an arena bot"])
       end
 
-      create_application(room: room, npc_template: npc_template)
+      room.with_lock { create_application(room: room, npc_template: npc_template) }
     end
 
     # Create multiple NPC applications for a room (for initial spawning)
@@ -82,6 +85,13 @@ module Arena
     private
 
     def create_application(room:, npc_template:)
+      return Result.new(success?: false, errors: ["This arena room is unavailable"]) unless room.active?
+
+      # The room lock serializes supply, expiry and match admission. Expired
+      # offers retain history but must not prevent recovery after a worker outage.
+      ArenaApplication.open.where(arena_room: room, npc_template: npc_template)
+        .where("expires_at <= ?", Time.current).update_all(status: ArenaApplication.statuses.fetch("expired"), updated_at: Time.current)
+
       # Check if this NPC already has an open application in this room
       if ArenaApplication.open.exists?(arena_room: room, npc_template: npc_template)
         return Result.new(success?: false, errors: ["This NPC already has an open application"])
@@ -99,8 +109,8 @@ module Arena
         fight_kind: determine_fight_kind(npc_template),
         timeout_seconds: NPC_TIMEOUT_SECONDS,
         trauma_percent: NPC_TRAUMA_PERCENT,
-        team_level_min: room.level_min,
-        team_level_max: room.level_max,
+        team_level_min: npc_template.metadata.fetch("arena_acceptor_level_min", room.level_min),
+        team_level_max: npc_template.metadata.fetch("arena_acceptor_level_max", room.level_max),
         enemy_level_min: NPC_SIDE_LEVEL_RANGE.begin,
         enemy_level_max: NPC_SIDE_LEVEL_RANGE.end,
         wait_minutes: NPC_WAIT_MINUTES,
@@ -108,7 +118,7 @@ module Arena
       )
 
       if application.save
-        broadcast_new_application(application)
+        ActiveRecord.after_all_transactions_commit { broadcast_new_application(application) }
         Result.new(success?: true, application: application)
       else
         Result.new(success?: false, errors: application.errors.full_messages)
@@ -130,14 +140,18 @@ module Arena
       end
 
       # Create new template from config
-      NpcTemplate.create!(
-        npc_key: key,
-        name: npc_config[:name],
-        role: "arena_bot",
-        level: npc_config.fetch(:level),
-        dialogue: npc_config[:dialogue] || "...",
-        metadata: template_metadata_from_config(npc_config)
-      )
+      NpcTemplate.transaction(requires_new: true) do
+        NpcTemplate.create!(
+          npc_key: key,
+          name: npc_config[:name],
+          role: "arena_bot",
+          level: npc_config.fetch(:level),
+          dialogue: npc_config[:dialogue] || "...",
+          metadata: template_metadata_from_config(npc_config)
+        )
+      end
+    rescue ActiveRecord::RecordNotUnique, ActiveRecord::RecordInvalid
+      NpcTemplate.find_by(npc_key: key) || raise
     end
 
     def template_metadata_from_config(npc_config)
@@ -148,6 +162,8 @@ module Arena
         loot_table: npc_config[:loot_table] || npc_config[:loot] || [],
         ai_behavior: npc_config.dig(:metadata, :ai_behavior),
         arena_rooms: npc_config.dig(:metadata, :arena_rooms),
+        arena_acceptor_level_min: npc_config.dig(:metadata, :arena_acceptor_level_min),
+        arena_acceptor_level_max: npc_config.dig(:metadata, :arena_acceptor_level_max),
         description: npc_config.dig(:metadata, :description),
         avatar: npc_config.dig(:metadata, :avatar),
         avatar_image: npc_config.dig(:metadata, :avatar_image),

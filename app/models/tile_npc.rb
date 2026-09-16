@@ -231,6 +231,7 @@ class TileNpc < ApplicationRecord
       sample = raw_sample.stringify_keys
       validate_roster_members(sample["members"])
       validate_optional_non_negative_integer(sample, "encounter_experience_reward")
+      validate_optional_non_negative_integer(sample, "encounter_defeat_experience_reward")
       validate_optional_percent(sample, "trauma_percent")
       key = sample["key"].to_s
       errors.add(:metadata, "encounter roster key is required") if key.blank?

@@ -52,6 +52,33 @@ RSpec.describe "City Shop purchase", type: :system, js: true do
     find(".nl-sheet-table--chips tr", text: "Armor pierce").find("td").text.delete_suffix("%").to_d
   end
 
+  it "preserves category artwork dimensions across Shop, Inventory and equipped slots" do
+    templates = %w[penknife salvation_pendant small_life_ring duel_permit_i].map { |key| ItemTemplate.find_by!(key:) }
+    templates.each { |template| create(:inventory_item, inventory: @inventory, item_template: template) }
+    login_as(user, scope: :user)
+    set_viewport(1500, 1000)
+    visit shop_path(category: "jewelry")
+
+    {"salvation_pendant" => [62, 35], "small_life_ring" => [31, 31]}.each do |key, size|
+      image = find("img.nl-shop-item-icon[src*='items/#{key}']")
+      expect(image.rect.width.round).to eq(size.first)
+      expect(image.rect.height.round).to eq(size.last)
+    end
+
+    within(".nl-top-nav") { click_button "Inventory" }
+    {"penknife" => [62, 91], "salvation_pendant" => [62, 35], "small_life_ring" => [31, 31], "duel_permit_i" => [42, 21]}.each do |key, size|
+      image = find("img.nl-inventory-item-artwork[src*='items/#{key}']")
+      expect(image.rect.width.round).to eq(size.first)
+      expect(image.rect.height.round).to eq(size.last)
+    end
+
+    item = @inventory.inventory_items.find_by!(item_template: @penknife)
+    within(".inventory-slot[data-item-id='#{item.id}']") { click_button "Wear" }
+    expect(page).to have_css(".equipment-slot--main_hand img[src*='items/penknife'][width='62'][height='91']")
+    find("button.equipment-slot--main_hand").click
+    expect(page).to have_css(".inventory-slot[data-item-id='#{item.id}'] img[width='62'][height='91']")
+  end
+
   def enter_market_from_shop
     within(".nl-top-nav") { click_link "City" }
     expect(page).to have_css(".nl-city-scene[aria-label='Central Square city map']")

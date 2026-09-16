@@ -7,7 +7,7 @@
         <tr>
           <td class="nl-shop-icon-cell">
             <% if artwork = item_artwork_path(item.item_template) %>
-              <%= image_tag artwork, width: 62, height: 91, alt: "", class: "nl-shop-item-icon" %>
+              <%= image_tag artwork, **item_artwork_dimensions(item.item_template), alt: "", class: "nl-shop-item-icon" %>
             <% else %>
               <span class="nl-shop-category__icon nl-shop-item-icon" style="<%= shop_category_icon_style(Game::Shop::Catalog.category_for(item.item_template)) %>" aria-hidden="true"></span>
             <% end %>

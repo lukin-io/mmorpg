@@ -65,6 +65,67 @@ RSpec.describe "Arena Match UI Layout", type: :system do
     end
   end
 
+  describe "Public history navigation", js: true do
+    it "opens the standalone log from the fight and keeps all statistics reachable at 320px" do
+      character1.update!(name: "CombatAcceptance0911")
+      match.update!(status: :completed, ended_at: Time.current, winning_team: "b", metadata: {
+        "rewards" => {"experience" => {"character_id" => character1.id, "amount" => 57}}
+      })
+      participation1.update!(result: :defeat, metadata: {"damage_dealt" => 605, "opponents_defeated" => 1})
+      visit arena_match_path(match)
+      expect(page).not_to have_css(".nl-fight-target-line")
+
+      click_link "Fight log", exact: true
+      expect(page).to have_css("body.nl-public-layout--fight-log")
+      expect(page).not_to have_content("Content missing")
+      click_link "Statistics", exact: true
+      page.driver.browser.execute_cdp("Emulation.setDeviceMetricsOverride",
+        width: 320, height: 740, deviceScaleFactor: 1, mobile: false)
+
+      region = find('[role="region"][aria-label="Fight statistics"]')
+      expect(region).to have_css("th", text: "XP", exact_text: true)
+      expect(region).to have_css("td", text: "57", exact_text: true)
+      expect(page).to have_link("Fight log", exact: true)
+      region.click
+      3.times { region.send_keys(:arrow_right) }
+      expect(page).to have_css(".nl-fight-statistics-scroll:focus")
+      expect(page.evaluate_script("document.documentElement.scrollWidth <= window.innerWidth")).to be true
+      page.document.synchronize do
+        reachable = page.evaluate_script(<<~JS)
+          (() => {
+            const panel = document.querySelector('.nl-fight-statistics-scroll');
+            const bounds = panel.getBoundingClientRect();
+            return bounds.left >= 0 && bounds.right <= window.innerWidth && panel.scrollLeft > 0;
+          })()
+        JS
+        raise Capybara::ExpectationNotMet, "Statistics did not scroll inside the viewport" unless reachable
+      end
+    ensure
+      page.driver.browser.execute_cdp("Emulation.clearDeviceMetricsOverride")
+    end
+  end
+
+  it "keeps both header vitals visible with a long player name at phone widths", js: true do
+    character1.update!(name: "CombatAcceptance0911", max_hp: 1530, current_hp: 1530, max_mp: 14, current_mp: 14)
+    visit arena_match_path(match)
+
+    [320, 390, 600].each do |width|
+      page.driver.browser.execute_cdp("Emulation.setDeviceMetricsOverride",
+        width: width, height: 844, deviceScaleFactor: 1, mobile: false)
+      expect(page).to have_css(".nl-vitals-text", text: "[1530/1530 | 14/14]")
+      expect(page.evaluate_script(<<~JS)).to be true
+        (() => {
+          const text = document.querySelector('.nl-vitals-text');
+          const container = document.querySelector('.nl-top-left');
+          return text.getBoundingClientRect().right <= container.getBoundingClientRect().right &&
+            text.scrollWidth <= text.clientWidth && container.scrollWidth <= container.clientWidth;
+        })()
+      JS
+    end
+  ensure
+    page.driver.browser.execute_cdp("Emulation.clearDeviceMetricsOverride")
+  end
+
   describe "Fighter Cards" do
     it "displays fighter-card for each participant" do
       visit arena_match_path(match)
@@ -89,7 +150,7 @@ RSpec.describe "Arena Match UI Layout", type: :system do
       expect(page).to have_content("100/100")
     end
 
-    it "renders complete ManyxMany side rosters" do
+    it "keeps the full ManyxMany roster while expanding only self and the selected opponent" do
       teammate_a = create(:character, name: "TeamAlpha")
       teammate_b = create(:character, name: "TeamBeta")
       create(:arena_participation, arena_match: match, character: teammate_a, user: teammate_a.user, team: "a")
@@ -97,8 +158,9 @@ RSpec.describe "Arena Match UI Layout", type: :system do
 
       visit arena_match_path(match)
 
-      expect(page).to have_css(".arena-fighter--left .fighter-card", count: 2)
-      expect(page).to have_css(".arena-fighter--right .fighter-card", count: 2)
+      expect(page).to have_css(".arena-fighter--left .fighter-card", count: 1)
+      expect(page).to have_css(".arena-fighter--right .fighter-card:not([hidden])", count: 1)
+      expect(page).to have_css("[data-arena-match-target='rosterParticipant']", count: 4)
       expect(page).to have_content("TeamAlpha")
       expect(page).to have_content("TeamBeta")
     end
@@ -110,8 +172,8 @@ RSpec.describe "Arena Match UI Layout", type: :system do
 
       visit arena_match_path(match)
 
-      expect(page).to have_css(%([data-character-id="npc-participation-#{first.id}"]))
-      expect(page).to have_css(%([data-character-id="npc-participation-#{second.id}"]))
+      expect(page).to have_css(%([data-character-id="npc-participation-#{first.id}"]), visible: :all)
+      expect(page).to have_css(%([data-character-id="npc-participation-#{second.id}"]), visible: :all)
     end
   end
 
@@ -130,6 +192,22 @@ RSpec.describe "Arena Match UI Layout", type: :system do
     it "shows turn submit button" do
       visit arena_match_path(match)
       expect(page).to have_button("Turn")
+    end
+
+    it "switches the expanded opponent while retaining both names in the roster" do
+      npc = create(:npc_template, name: "Observed Orc", metadata: {"avatar_image" => "orc.png", "max_mp" => 7, "display_stats" => {"strength" => 17}})
+      npc_side = create(:arena_participation, :npc, arena_match: match, npc_template: npc, team: "b")
+      visit arena_match_path(match)
+
+      click_button "Switch opponent"
+
+      expect(page).to have_css(%(.arena-fighter--right .fighter-card[data-character-id="npc-participation-#{npc_side.id}"]:not([hidden])))
+      within(".arena-fighter--right") do
+        expect(page).to have_content("Observed Orc")
+        expect(page).to have_css(".fighter-mp-text", text: "7/7")
+        expect(page).not_to have_content("MageBeta")
+      end
+      within(".nl-fight-target-line") { expect(page).to have_content("MageBeta") }
     end
 
     it "shows the five captured combat quick slots" do
@@ -252,8 +330,17 @@ RSpec.describe "Arena Match UI Layout", type: :system do
     end
 
     it "shows fight-start message for live match" do
+      match.combat_log_entries.create!(log_type: "system", message: "Fight started", sequence: 1)
       visit arena_match_path(match)
       expect(page).to have_css(".combat-log-entry", text: "Fight started")
+    end
+
+    it "renders the newest durable log row first after reload" do
+      match.combat_log_entries.create!(log_type: "system", message: "First exchange", sequence: 1)
+      match.combat_log_entries.create!(log_type: "damage", message: "Latest exchange", sequence: 2)
+      visit arena_match_path(match)
+
+      expect(all(".arena-combat-log .combat-log-entry").first).to have_text("Latest exchange")
     end
   end
 
@@ -328,6 +415,7 @@ RSpec.describe "Arena Match UI Layout", type: :system do
 
       it "shows finish fight button before returning to arena" do
         visit arena_match_path(match)
+        expect(page).to have_css(".arena-center .nl-fight-result", text: "Finish Fight")
         expect(page).to have_button("Finish Fight")
       end
 

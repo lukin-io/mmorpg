@@ -4,7 +4,7 @@
 # Tracks fight status, participants, and results
 #
 # @example Create a match from applications
-#   Arena::Matchmaker.new.create_match(application1, application2)
+#   Arena::ApplicationHandler.new.accept(application: application, acceptor: character)
 #
 # @example Subscribe to match updates
 #   ArenaMatchChannel.subscribed(match_id: match.id)
@@ -86,6 +86,10 @@ class ArenaMatch < ApplicationRecord
     nil
   end
 
+  def awaiting_duel_confirmation?
+    pending? && metadata.to_h["duel_applicant_id"].present? && metadata.to_h["duel_start_confirmed"] != true
+  end
+
   def start_due?(now: Time.current)
     pending? && scheduled_start_at.present? && now >= scheduled_start_at
   end
@@ -161,11 +165,7 @@ class ArenaMatch < ApplicationRecord
   # @param participation [ArenaParticipation]
   # @return [Boolean]
   def participant_defeated?(participation)
-    if participation.npc?
-      (participation.current_hp || 0) <= 0
-    else
-      (participation.character&.current_hp || 0) <= 0
-    end
+    !participation.combat_alive?
   end
 
   # Determine winner based on remaining HP

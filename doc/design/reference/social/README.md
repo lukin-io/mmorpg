@@ -1,5 +1,8 @@
 # Neverlands Social, Chat, and Presence Source Summary
 
+For the design, delivery status and current implementation using this evidence,
+follow the [Social domain](../../../domains/social.md).
+
 - Document type: neverlands-source-summary
 - Domain: social
 - Updated: 2026-09-07

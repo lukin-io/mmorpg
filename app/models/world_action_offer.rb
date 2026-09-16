@@ -15,6 +15,7 @@ class WorldActionOffer < ApplicationRecord
     board_airship
     shop_buy
     shop_sell
+    scroll_attack
   ].freeze
   TIMED_LOCAL_ACTION_TYPES = %w[search_resources fish drink].freeze
 

@@ -287,6 +287,7 @@ RSpec.describe "World", type: :request do
 
     context "with valid movement offer" do
       it "lets a same-cell hostile NPC interrupt movement before travel starts" do
+        character.update!(level: 4)
         create(:tile_npc, :multi_npc_encounter, zone: zone.name, x: 5, y: 5)
         command = movement_offer(:north)
 
@@ -294,6 +295,18 @@ RSpec.describe "World", type: :request do
 
         expect(response).to redirect_to(arena_match_path(ArenaMatch.last))
         expect(command.reload).to be_offered
+        expect(position.reload).to have_attributes(x: 5, y: 5)
+      end
+
+      it "allows travel when the fixed hostile group exceeds the persisted player level" do
+        character.update!(level: 3)
+        create(:tile_npc, :multi_npc_encounter, zone: zone.name, x: 5, y: 5)
+        command = movement_offer(:north)
+
+        expect { post_offer(command) }.not_to change(ArenaMatch, :count)
+
+        expect(response).to redirect_to(world_path)
+        expect(command.reload).to be_moving
         expect(position.reload).to have_attributes(x: 5, y: 5)
       end
 

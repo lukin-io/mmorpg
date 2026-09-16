@@ -1,26 +1,32 @@
 <% content_for :title, "#{@room.name} - Arena" %>
 
-<%
-  active_tab = (params[:ft].presence || "1").to_s
-  tab_fight_type = {"1" => "duel", "2" => "team_battle", "3" => "sacrifice"}[active_tab] || "duel"
-  visible_applications = @applications.select { |app| app.fight_type == tab_fight_type }
-%>
+<% active_tab = @active_tab %>
+<% tab_fight_type = active_tab == "2" ? "team_battle" : "duel" %>
+<% visible_applications = @applications %>
 
 <div class="nl-arena-frame"
      data-controller="arena"
      data-arena-room-id-value="<%= @room.id %>"
      data-arena-character-id-value="<%= current_character.id %>"
-     data-arena-character-level-value="<%= current_character.level %>">
+     data-arena-character-level-value="<%= current_character.level %>"
+     data-arena-refresh-url-value="<%= arena_room_path(@room, ft: active_tab, level: @own_level_filter ? nil : "all") %>"
+     data-arena-waiting-value="<%= @my_application.present? %>"
+     data-arena-expires-at-value="<%= @my_application&.expires_at&.iso8601 %>">
+  <div class="nl-arena-feedback" data-arena-target="feedback" role="alert"></div>
   <div class="nl-arena-topline">
     <div class="nl-arena-character">
       <%= current_character.name %>[<%= current_character.level %>]
       <span class="nl-arena-vitals"><%= current_character.current_hp %>/<%= current_character.max_hp %> | <%= current_character.current_mp %>/<%= current_character.max_mp %></span>
     </div>
     <div class="nl-arena-controls">
-      <%= link_to "Character", player_path(name: current_character.name), class: "nl-arena-link" %>
-      <%= link_to "Inventory", inventory_path, class: "nl-arena-link" %>
+      <% if @my_application %>
+        <% %w[Character Inventory City].each do |label| %><button disabled class="nl-arena-link"><%= label %></button><% end %>
+      <% else %>
+        <%= link_to "Character", player_path(name: current_character.name), class: "nl-arena-link" %>
+        <%= link_to "Inventory", inventory_path, class: "nl-arena-link" %>
+        <%= link_to "City", world_path, class: "nl-arena-link", data: {turbo: false} %>
+      <% end %>
       <%= link_to "Arena", arena_index_path, class: "nl-arena-link" %>
-      <%= link_to "City", world_path, class: "nl-arena-link", data: {turbo: false} %>
     </div>
   </div>
 
@@ -33,73 +39,65 @@
   </div>
 
   <div class="nl-arena-status-row">
-    <span>Applications: <%= link_to "your level", arena_room_path(@room, ft: active_tab, level: current_character.level), class: "nl-arena-filter" %> | <%= link_to "all", arena_room_path(@room, ft: active_tab), class: "nl-arena-filter" %></span>
+    <span>Applications: <%= link_to "your level", arena_room_path(@room, ft: active_tab, level: nil), class: "nl-arena-filter" %> | <%= link_to "all", arena_room_path(@room, ft: active_tab, level: "all"), class: "nl-arena-filter" %></span>
     <span>Total: <b><%= visible_applications.size %></b></span>
     <%= link_to "Refresh", arena_room_path(@room, ft: active_tab), class: "nl-arena-link" %>
-    <%= link_to "Room Map", arena_index_path, class: "nl-arena-link" %>
+    <button type="button" class="nl-arena-link nl-arena-link--button" data-action="arena#showRooms" aria-expanded="false">Show building scheme</button>
   </div>
+
+  <%= render "arena/room_scheme", rooms: @rooms, selected_room: @room, active_tab: %>
 
   <div class="nl-arena-tabs">
     <%= link_to "Duels", arena_room_path(@room, ft: 1), class: "nl-arena-tab #{'nl-arena-tab--active' if active_tab == '1'}" %>
-    <%= link_to "Team Battles", arena_room_path(@room, ft: 2), class: "nl-arena-tab #{'nl-arena-tab--active' if active_tab == '2'}" %>
-    <%= link_to "Sacrifice", arena_room_path(@room, ft: 3), class: "nl-arena-tab #{'nl-arena-tab--active' if active_tab == '3'}" %>
-    <%= link_to "Statistics", arena_index_path(ft: 4), class: "nl-arena-tab" %>
+    <%= link_to "Groups", arena_room_path(@room, ft: 2), class: "nl-arena-tab #{'nl-arena-tab--active' if active_tab == '2'}" %>
   </div>
 
   <div class="nl-arena-application-form" data-arena-target="formContainer">
     <% if @my_application %>
-      <div class="nl-arena-current-row">
-        <b>Your application:</b>
-        <%= fight_type_label(@my_application.fight_type) %>,
-        <%= fight_kind_label(@my_application.fight_kind) %>,
-        timeout <%= @my_application.timeout_seconds / 60 %> min,
-        trauma <%= @my_application.trauma_percent %>%.
-        <%= button_to "Cancel Application",
-            arena_room_arena_application_path(@room, @my_application),
-            method: :delete,
-            class: "nl-arena-small-button" %>
-      </div>
+      <div class="nl-arena-current-row"><b>Waiting for the fight to begin!</b></div>
+    <% elsif !ArenaApplication.new.character_hp_sufficient?(current_character) %>
+      <div class="nl-arena-current-row"><b>Recover before fighting, you are too weakened!</b></div>
     <% else %>
       <%= form_with url: arena_room_arena_applications_path(@room),
                     method: :post,
                     class: "nl-arena-inline-form",
-                    data: { action: "submit->arena#submitApplication" } do |f| %>
+                    data: { action: "input->arena#editing", turbo_frame: "_top" } do |f| %>
         <%= f.hidden_field :fight_type, value: tab_fight_type %>
         <%= f.select :fight_kind,
-            [["fight kind", ""], ["No Weapons", "no_weapons"], ["Free", "free"], ["Alignment vs Alignment", "alignment_vs_alignment"], ["No Artifacts", "no_artifacts"], ["Limited Artifacts", "limited_artifacts"]],
+            [["fight kind", ""]] + arena_fight_kind_options(tab_fight_type),
             {},
             class: "nl-arena-select",
-            required: true %>
+            required: true, aria: {label: "Fight kind"} %>
         <%= f.select :timeout_seconds,
             [["timeout", ""], ["2 min", 120], ["3 min", 180], ["4 min", 240], ["5 min", 300]],
             {},
             class: "nl-arena-select",
-            required: true %>
+            required: true, aria: {label: "Turn timeout"} %>
         <%= f.select :trauma_percent,
             [["trauma", ""], ["low (10%)", 10], ["medium (30%)", 30], ["high (50%)", 50], ["very high (80%)", 80]],
             {},
             class: "nl-arena-select",
-            required: true %>
+            required: true, aria: {label: "Injury probability"} %>
 
         <% if active_tab != "1" %>
           <%= f.select :wait_minutes,
               [["wait", ""], ["5 min", 5], ["10 min", 10], ["15 min", 15], ["30 min", 30], ["45 min", 45], ["60 min", 60]],
               {},
               class: "nl-arena-select",
-              required: true %>
+              required: true, aria: {label: "Waiting time"} %>
           <span class="nl-arena-team-limits">
             own team:
-            <%= f.number_field :team_count, min: 1, max: 10, value: 1, class: "nl-arena-mini-input" %>
+            <%= f.number_field :team_count, aria: {label: "Your side size"}, required: true, min: 1, max: 30, class: "nl-arena-mini-input" %>
             levels
-            <%= f.number_field :team_level_min, min: 0, max: 33, value: [current_character.level - 1, 0].max, class: "nl-arena-mini-input" %>
+            <%= f.number_field :team_level_min, aria: {label: "Your side minimum level"}, required: true, min: 0, max: 33, class: "nl-arena-mini-input" %>
             -
-            <%= f.number_field :team_level_max, min: 0, max: 33, value: current_character.level + 1, class: "nl-arena-mini-input" %>
+            <%= f.number_field :team_level_max, aria: {label: "Your side maximum level"}, required: true, min: 0, max: 33, class: "nl-arena-mini-input" %>
             vs:
-            <%= f.number_field :enemy_count, min: 1, max: 10, value: 1, class: "nl-arena-mini-input" %>
+            <%= f.number_field :enemy_count, aria: {label: "Opponent side size"}, required: true, min: 1, max: 30, class: "nl-arena-mini-input" %>
             levels
-            <%= f.number_field :enemy_level_min, min: 0, max: 33, value: [current_character.level - 1, 0].max, class: "nl-arena-mini-input" %>
+            <%= f.number_field :enemy_level_min, aria: {label: "Opponent side minimum level"}, required: true, min: 0, max: 33, class: "nl-arena-mini-input" %>
             -
-            <%= f.number_field :enemy_level_max, min: 0, max: 33, value: current_character.level + 1, class: "nl-arena-mini-input" %>
+            <%= f.number_field :enemy_level_max, aria: {label: "Opponent side maximum level"}, required: true, min: 0, max: 33, class: "nl-arena-mini-input" %>
           </span>
         <% end %>
 
@@ -108,67 +106,15 @@
     <% end %>
   </div>
 
-  <table class="nl-arena-table nl-arena-applications-table arena-applications" data-arena-target="applicationList">
-    <thead>
-      <tr>
-        <th>Time</th>
-        <th>Side 1</th>
-        <th>Terms</th>
-        <th>Side 2</th>
-        <th>Action</th>
-      </tr>
-    </thead>
-    <tbody>
-      <% if visible_applications.empty? %>
-        <tr>
-          <td colspan="5" class="nl-arena-empty">No open applications</td>
-        </tr>
-      <% else %>
-        <% visible_applications.each do |app| %>
-          <% applicant_name = app.npc_application? ? app.npc_template.name : app.applicant.name %>
-          <% applicant_level = app.npc_application? ? app.npc_template.level : app.applicant.level %>
-          <% own_app = app.applicant == current_character %>
-          <tr class="<%= 'nl-arena-row--own' if own_app %> <%= 'nl-arena-row--npc' if app.npc_application? %>" data-application-id="<%= app.id %>">
-            <td><%= app.created_at.strftime("%H:%M:%S") %></td>
-            <td>
-              <b><%= applicant_name %>[<%= applicant_level %>]</b>
-              <span class="nl-arena-muted"><%= arena_application_applicant_level_gate(app) %></span>
-            </td>
-            <td>
-              <%= arena_application_rule_label(app) %>,
-              timeout <%= app.timeout_seconds %>s,
-              trauma <%= app.trauma_percent %>,
-              wait <%= distance_of_time_in_words_to_now(app.expires_at) %>
-            </td>
-            <td>
-              <b>no opponents</b>
-              <span class="nl-arena-muted"><%= arena_application_open_side_level_gate(app) %></span>
-            </td>
-            <td>
-              <% if own_app %>
-                <span>Your application</span>
-                <%= button_to "Cancel",
-                    arena_room_arena_application_path(@room, app),
-                    method: :delete,
-                    class: "nl-arena-small-button" %>
-              <% elsif app.acceptable_by?(current_character) %>
-                <%= button_to "Accept",
-                    accept_arena_room_arena_application_path(@room, app),
-                    method: :post,
-                    class: "nl-arena-small-button",
-                    data: {
-                      action: "click->arena#acceptApplication",
-                      application_id: app.id
-                    } %>
-              <% else %>
-                <span class="nl-arena-muted">cannot accept</span>
-              <% end %>
-            </td>
-          </tr>
-        <% end %>
+  <div class="nl-arena-applications-table arena-applications" data-arena-target="applicationList">
+    <% if visible_applications.empty? %>
+      <p class="nl-arena-empty">No open applications</p>
+    <% else %>
+      <% visible_applications.each do |application| %>
+        <%= render "arena_applications/application", application:, character: current_character %>
       <% end %>
-    </tbody>
-  </table>
+    <% end %>
+  </div>
 
   <% if @active_matches.any? %>
     <div class="nl-arena-active-matches">

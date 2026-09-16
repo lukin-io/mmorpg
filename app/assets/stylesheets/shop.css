@@ -154,7 +154,8 @@
 
 /* 62px artwork + 6px padding + the collapsed 1px separator. */
 .nl-shop-table .nl-shop-icon-cell { width: 69px; background: #f9f9f9; }
-.nl-shop-item-icon { display: block; width: 62px; height: 91px; object-fit: contain; }
+.nl-shop-item-icon { display: block; margin-inline: auto; object-fit: contain; }
+.nl-shop-category__icon.nl-shop-item-icon { width: 62px; height: 91px; }
 .nl-shop-durability { display: block; width: 62px; height: 3px; margin: 0; appearance: none; }
 .nl-shop-durability::-webkit-meter-bar { height: 3px; border: 0; border-radius: 0; background: #ddd; }
 .nl-shop-durability::-webkit-meter-optimum-value { background: #0a0; }

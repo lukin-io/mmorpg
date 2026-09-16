@@ -103,6 +103,7 @@ module InventoriesHelper
   }.freeze
 
   ITEM_ARTWORK_PATHS = {
+    "fist_attack" => "items/fist_attack.png",
     "penknife" => "items/penknife.png",
     "assassin_dagger" => "items/assassin_dagger.png",
     "butcher_cleaver" => "items/butcher_cleaver.png",
@@ -123,6 +124,11 @@ module InventoriesHelper
     "steel_club" => "items/steel_club.png",
     "steppe_sword" => "items/steppe_sword.png",
     "war_pick" => "items/war_pick.png",
+    "beginner_healer_bag" => "items/healer_bag.png",
+    "skilled_healer_bag" => "items/healer_bag.png",
+    "experienced_healer_bag" => "items/healer_bag.png",
+    "combat_first_aid_kit" => "items/healer_bag.png",
+    "minor_health_potion" => "items/minor_health_potion.png",
     "primitive_spear" => "items/primitive_spear.png",
     "parrying_spear" => "items/parrying_spear.png",
     "pilum" => "items/pilum.png",
@@ -282,6 +288,16 @@ module InventoriesHelper
 
   def item_artwork_path(item_template)
     ITEM_ARTWORK_PATHS[item_template.key.to_s]
+  end
+
+  # Shop and Inventory preserve the source category footprint. Equipment uses
+  # the same catalog as both combatants' paper dolls; loose goods are square.
+  def item_artwork_dimensions(item_template)
+    slot = EquipmentSlots::ORDERED.find { |entry| entry.key == item_template.equipment_slot }
+    return {width: slot.width, height: slot.height} if slot
+    return {width: 42, height: 21} if %w[duel_permit_i duel_permit_ii duel_permit_iii duel_permit_iv].include?(item_template.key.to_s)
+
+    {width: 60, height: 60}
   end
 
   def inventory_category_options

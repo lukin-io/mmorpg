@@ -66,32 +66,4 @@ RSpec.describe Character, "mana system" do
       expect(character.current_mp).to eq(0)
     end
   end
-
-  describe "#regenerate_mana!" do
-    before do
-      character.update!(current_mp: 50, max_mp: 100)
-    end
-
-    it "regenerates 5% of effective_max_mp per tick" do
-      regenerated = character.regenerate_mana!
-
-      expect(regenerated).to eq(5)
-      expect(character.current_mp).to eq(55)
-    end
-
-    it "regenerates multiple ticks" do
-      regenerated = character.regenerate_mana!(3)
-
-      expect(regenerated).to eq(15)
-      expect(character.current_mp).to eq(65)
-    end
-
-    it "does not exceed effective_max_mp" do
-      character.update!(current_mp: 98)
-
-      character.regenerate_mana!(2)
-
-      expect(character.current_mp).to eq(100)
-    end
-  end
 end
