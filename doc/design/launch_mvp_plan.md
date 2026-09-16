@@ -106,6 +106,23 @@ wiki-list remains the final planned implementation batch.
   qualification rewards through the future [Quest owner](../features/quests.md).
   Existing Doctor-license qualification checks remain enforced.
 
+### September 16 re-audit of the eight primary-list points
+
+Source/current-runtime detail: [audit](reference/character/observations/2026-09-16_primary_list_audit.md).
+Final checks and browser evidence: [acceptance](../features/acceptance/2026-09-16_primary_list/README.md).
+The independent wiki-list is still parked; a wiki description is not a shipped effect.
+
+| Point | Current result | Remaining boundary / next evidence |
+|---|---|---|
+| 1. Character-state consistency | Local corrections implemented: all active matches reserve allocation, both fight modes retain admission AP, worn effect readers share expiry/breakage rules, natural injury expiry has boundary coverage | Exact Neverlands mid-fight gear/injury-expiry ordering is unobserved. This does not claim every input is snapshotted |
+| 2. Fist/PvP calibration | Still open; existing shared fits retained, no sample-specific reward override | Fist93/9835 versus fitted187/577; opponent build/buff inputs and hidden coefficients incomplete. Hit/dodge/critical calibration also remains bounded |
+| 3. Source research | Green combat percentage remains unidentified | Public-profile energy is100 minus fatigue, not proof of the combat label. Snowball/pocket work is cancelled from this MVP batch |
+| 4. Human Group confirmation | Local engine/tests remain implemented; source confirmation open | Requires arranged participants for early/full/underfilled start, coordination and reward distribution |
+| 5. Narrow scroll confirmation | Both ordinary entry paths, consumption and attacker aftermath are source-confirmed | Defender-owned controls, gathering interruption, intervention and exact rejection/timeout boundaries remain unobserved; require appropriate live state/counterpart |
+| 6. Separate feature slices | Source rules and current Workshop/Hospital screens captured; no new profession workflow claimed | Doctor growth, Workshop repair, medical crafting/full Hospital and remaining effects stay open. Source character has0 Craftsmanship and no repair materials. Traumatologist is a future Quest TODO |
+| 7. Skills/Perks presentation | Implemented: learned/red bonuses,15 profession counters,42 perk rows in six categories; unsupported38 read-only | Four selectable perks remain the runtime subset. Other perk effects belong to their own implementation scope; final desktop/narrow/200%-zoom UI checks passed and are recorded in acceptance |
+| 8. Docs and delivery | Canonical timing/UI/scroll summaries synchronized; source/acceptance records retained | Checkpoint9a1672d pushed; its CI system failures remain recorded. Follow-up full verification passed3,118+303, the final profile/CI-path recheck passed14, and manual acceptance passed. Fresh publication/CI is reported separately |
+
 ## Stable Domain Flow Index
 
 These identifiers are the canonical cross-document handles for delivery and

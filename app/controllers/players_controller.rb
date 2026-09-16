@@ -20,7 +20,8 @@ class PlayersController < ApplicationController
     @character = @viewer_character if @own_profile
     @equipment = equipped_items_for(@character)
 
-    if @own_profile
+    @allocation_available = @own_profile && !@browsing_existing_fight_profile && @character.waiting_arena_application.nil?
+    if @allocation_available
       @stats_data = build_stats_data
       @allocatable_stats = Character::PRIMARY_STATS
     end

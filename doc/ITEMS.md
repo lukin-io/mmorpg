@@ -554,3 +554,12 @@ Displayed armor stays the worn-item sum; Health's hidden combat factor does not
 rewrite the item or Profile value. The wiki excludes gear-raised primary Health;
 the local generic alias adapter still accepts it, so adapter support alone must
 not justify authoring an item. Explicit HP bonuses remain a separate property.
+
+### Worn-effect expiry boundary
+
+`InventoryItem#usable_equipment?` admits only equipped, unbroken, unexpired
+instances to numeric Character and new combat-profile inputs. A declared
+malformed expiry is unusable; a valid deadline expires at `now >= expires_at`.
+Expiry does not delete the item, restore current resources or change an
+already persisted fight budget. See [Character state](CHARACTER.md#6-implementation-and-state-ownership)
+and [Inventory runtime](features/player_inventory.md#september-16-worn-effect-expiry-consistency).

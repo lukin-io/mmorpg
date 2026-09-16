@@ -1241,7 +1241,7 @@ members, levels, rewards, probabilities, or selection formula.
 | `ArenaMatch` | Match state, per-turn/global timers, teams, return and selected-encounter metadata | Active state and the explicit World-fight deadline gate actions and completion |
 | `ArenaParticipation` | Player/NPC side, result, combat metadata | Exactly one player character or NPC template; NPC level/HP may be snapshotted per captured roster member |
 | `CombatLogEntry` | Ordered durable event | Source for active and public logs |
-| `Arena::CombatProfile` | Persisted AP/cost/selector profile | Ordinary profiles retain captured overrides; unarmed mode rederives AP/physical cost and forces normal blocking |
+| `Arena::CombatProfile` | Persisted AP/cost/selector profile | Armed/unarmed profiles retain admission budgets; unarmed admission excludes character preview gear overrides and forces normal blocking |
 | `Game::Combat::ActionCatalog` | Attack and exact normal/shield/magic selector identities | Server owns costs, row placement, coverage, and profile availability |
 | `Arena::ExperienceAwarder` | Shared player/NPC XP | Snapshot level/HP, credited damage, team shares and recipient cap; guarded by match finalization |
 | `Arena::EquipmentWearResolver` | Independent post-fight item wear | Exact result chances, one point maximum, Careful Fighter half chance, once-only finalization |
@@ -2388,3 +2388,17 @@ Screenshots: [entry](acceptance/2026-09-15_fist_scroll/01-entry.png),
 [public history](acceptance/2026-09-15_fist_scroll/04-public-log.png),
 [Inventory after Finish](acceptance/2026-09-15_fist_scroll/05-inventory-after-finish.png).
 No new CI/full-suite run or source reward parity is claimed.
+
+### September 16 character-state consistency
+
+All active matches reserve character allocation/equipment routes under the
+existing character lock, including matches missing `physical_only` metadata.
+Unarmed admission ignores character preview weapon/shield overrides, then
+retains its stored AP/cost budget like armed participation. Player numeric
+attributes remain live: timed gear/injury expiry affects subsequent inputs,
+not saved action budgets or current-HP restoration.
+See [Character](../CHARACTER.md#6-implementation-and-state-ownership),
+[source audit](../design/reference/character/observations/2026-09-16_primary_list_audit.md)
+and [acceptance](acceptance/2026-09-16_primary_list/README.md). New request,
+expiry and combat-profile regressions cover these boundaries. This is not
+live proof of Neverlands mid-fight expiry or human Group coordination.

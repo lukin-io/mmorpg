@@ -367,3 +367,13 @@ without changing the displayed item armor. Treatment or expiry removes that
 penalty; merely restoring HP does not. The newly captured base-Knowledge
 qualification for combat HP-restoration magic is a separate future combat
 consumer, not a Doctor skill, bag qualification or injury cure.
+
+### September 16 source follow-up
+
+The [primary-list source audit](design/reference/character/observations/2026-09-16_primary_list_audit.md)
+records current Doctor/Craftsman/repair wiki rules and live Workshop/Hospital
+screens. The source character lacks Craftsmanship/materials and the Pharmacy
+is empty; no successful repair or proficiency-growth action was captured.
+Published prerequisites do not establish the missing growth probability.
+Traumatologist stays a Quest TODO, separate from existing treatment/license
+checks; this observation adds no repair or medical-crafting runtime.

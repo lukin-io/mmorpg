@@ -23,8 +23,10 @@ RSpec.describe "Scroll PvP entry", type: :system, js: true do
     Capybara.using_session(:scroll_target) { login.call(target) }
     login.call(attacker)
     within(".city-actions") { click_button "Shop" }
+    expect(page).to have_css(".nl-shop-page", wait: 10)
     click_link "Scrolls & Potions"
-    within(find(".nl-shop-table > tbody > tr", text: /Duel Permit I\s+\(quantity:/)) do
+    expect(page).to have_css('.nl-shop-category--active[aria-label="Scrolls & Potions"]', wait: 10)
+    within(find(".nl-shop-table > tbody > tr", text: /Duel Permit I\s+\(quantity:/, wait: 10)) do
       accept_confirm("Buy Duel Permit I?") { click_button "Buy" }
     end
     expect(page).to have_content("You carry 484.00 NV")

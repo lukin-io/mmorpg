@@ -8,9 +8,8 @@
   - Skills grouped by category
 %>
 <%
-  # Only saved levels enter allocation; equipment bonuses affect display only.
+  # Only learned levels enter allocation; bonuses are rendered separately.
   skills_json = @skills_data.transform_values { |v| v[:base_level] }.to_json
-  equipment_bonuses_json = @skills_data.transform_values { |v| v[:equipment_bonus] }.to_json
   rates_json = @skills_data.transform_values { |v| v[:progression_rate] }.to_json
   pools_json = @skills_data.transform_values { |v| v[:pool].to_s }.to_json
 %>
@@ -19,7 +18,6 @@
      data-skill-allocation-combat-free-value="<%= @combat_skill_points %>"
      data-skill-allocation-peace-free-value="<%= @peace_skill_points %>"
      data-skill-allocation-skills-value="<%= skills_json %>"
-     data-skill-allocation-equipment-bonuses-value="<%= equipment_bonuses_json %>"
      data-skill-allocation-rates-value="<%= rates_json %>"
      data-skill-allocation-pools-value="<%= pools_json %>"
      data-skill-allocation-spends-value="{}">
@@ -42,79 +40,104 @@
     </div>
   </div>
 
-  <%= form_with url: skills_character_path(@character), method: :patch, class: "nl-allocation-form", data: { turbo_frame: "skill-allocation" } do |f| %>
-    <% Game::Skills::PassiveSkillRegistry.categories.each do |category_key, category_info| %>
-      <% category_skills = @skill_definitions.select { |_, def_| def_[:category] == category_key } %>
-      <% next if category_skills.empty? %>
+  <%= form_with url: skills_character_path(@character), method: :patch, class: "nl-allocation-form", data: { turbo_frame: "skill-allocation" } do %>
+    <div class="nl-development-columns">
+      <% Game::Skills::ProfileCatalog::SKILL_COLUMNS.each_with_index do |categories, column_index| %>
+        <div class="nl-development-column">
+          <% categories.each do |category_key| %>
+            <% category_info = Game::Skills::PassiveSkillRegistry.categories.fetch(category_key) %>
+            <% category_skills = @skill_definitions.select { |_, def_| def_[:category] == category_key } %>
+            <% next if category_skills.empty? %>
 
-      <div class="nl-skill-category-section">
-        <h3 class="nl-skill-category-header nl-skill-category-header--<%= category_key %>">
-          <span class="nl-skill-category-icon">
-            <% case category_key
-               when :combat then %><%= "C" %>
-            <% when :magic then %><%= "M" %>
-            <% when :resistance then %><%= "R" %>
-            <% when :peace_world then %><%= "P" %>
-            <% end %>
-          </span>
-          <%= category_info[:name] %>
-        </h3>
+            <div class="nl-skill-category-section">
+              <h3 class="nl-skill-category-header nl-skill-category-header--<%= category_key %>">
+                <%= category_info[:name] %>
+              </h3>
 
-        <div class="nl-skills-grid">
-          <% category_skills.each do |skill_key, definition| %>
-            <% skill_info = @skills_data[skill_key] %>
-            <div class="nl-skill-row">
-              <div class="nl-skill-info">
-                <span class="nl-skill-name"><%= definition[:name] %></span>
-                <p class="nl-skill-description"><%= definition[:description] %></p>
-              </div>
+              <div class="nl-skills-grid">
+                <% category_skills.each do |skill_key, definition| %>
+                  <% skill_info = @skills_data[skill_key] %>
+                  <div class="nl-skill-row" data-skill-row="<%= skill_key %>">
+                    <div class="nl-skill-info">
+                      <span class="nl-skill-name"><%= definition[:name] %></span>
 
-              <div class="nl-skill-controls">
-                <button type="button"
-                        class="nl-stat-btn nl-stat-btn--minus"
-                        data-action="click->skill-allocation#removeSkill"
-                        data-skill-allocation-skill-param="<%= skill_key %>"
-                        data-skill-allocation-pool-param="<%= definition[:pool] %>"
-                        data-skill-allocation-rate-param="<%= definition[:progression_rate] %>">
-                  -
-                </button>
+                    </div>
 
-                <span class="nl-skill-value"
-                      data-skill-allocation-target="skillValue"
-                      data-skill="<%= skill_key %>">
-                  [<%= skill_info[:level].to_s.rjust(3, "0") %>/100]
-                </span>
+                    <div class="nl-skill-controls">
+                      <button type="button"
+                              class="nl-stat-btn nl-stat-btn--minus"
+                              aria-label="Remove <%= definition[:name] %>"
+                              data-action="click->skill-allocation#removeSkill"
+                              data-skill-allocation-skill-param="<%= skill_key %>"
+                              data-skill-allocation-pool-param="<%= definition[:pool] %>"
+                              data-skill-allocation-rate-param="<%= definition[:progression_rate] %>">
+                        -
+                      </button>
 
-                <button type="button"
-                        class="nl-stat-btn nl-stat-btn--plus"
-                        data-action="click->skill-allocation#addSkill"
-                        data-skill-allocation-skill-param="<%= skill_key %>"
-                        data-skill-allocation-pool-param="<%= definition[:pool] %>"
-                        data-skill-allocation-rate-param="<%= definition[:progression_rate] %>"
-                        <%= "disabled" if skill_info[:at_max] %>>
-                  +
-                </button>
+                      <span class="nl-skill-value"
+                            data-skill-allocation-target="skillValue"
+                            data-skill="<%= skill_key %>">
+                        [<%= skill_info[:base_level].to_s.rjust(3, "0") %>/100]
+                      </span>
 
-                <%= hidden_field_tag "allocated_skills[#{skill_key}]", 0,
-                                     data: { skill_allocation_target: "skillInput", skill: skill_key } %>
-              </div>
+                      <% if skill_info[:equipment_bonus].nonzero? %>
+                        <span class="nl-skill-equipment-bonus" aria-label="Equipment bonus <%= skill_info[:equipment_bonus] %>" title="Equipment bonus">
+                          <%= format("%+d", skill_info[:equipment_bonus]) %>
+                        </span>
+                      <% end %>
 
-              <div class="nl-skill-meta">
-                <div class="nl-skill-gain"
-                     data-skill-allocation-target="skillGain"
-                     data-skill="<%= skill_key %>">
-                  <% if skill_info[:at_max] %>
-                    MAX
-                  <% else %>
-                    +<%= skill_info[:points_per_spend] %>
-                  <% end %>
-                </div>
+                      <button type="button"
+                              class="nl-stat-btn nl-stat-btn--plus"
+                              aria-label="Add <%= definition[:name] %>"
+                              data-action="click->skill-allocation#addSkill"
+                              data-skill-allocation-skill-param="<%= skill_key %>"
+                              data-skill-allocation-pool-param="<%= definition[:pool] %>"
+                              data-skill-allocation-rate-param="<%= definition[:progression_rate] %>"
+                              <%= "disabled" if skill_info[:at_max] %>>
+                        +
+                      </button>
+
+                      <%= hidden_field_tag "allocated_skills[#{skill_key}]", 0,
+                                           data: { skill_allocation_target: "skillInput", skill: skill_key } %>
+                    </div>
+
+                    <div class="nl-skill-meta">
+                      <div title="Gain from one skill point" class="nl-skill-gain"
+                           data-skill-allocation-target="skillGain"
+                           data-skill="<%= skill_key %>">
+                        <% if skill_info[:at_max] %>
+                          MAX
+                        <% else %>
+                          +<%= skill_info[:points_per_spend] %>
+                        <% end %>
+                      </div>
+                    </div>
+                  </div>
+                <% end %>
               </div>
             </div>
           <% end %>
+
+          <% if column_index == 1 %>
+            <section class="nl-skill-category-section" aria-label="Professions">
+              <h3 class="nl-skill-category-header">Professions</h3>
+              <% Game::Skills::ProfileCatalog::PROFESSION_ROWS.each do |key, name| %>
+                <div class="nl-skill-row nl-profession-row" data-profession="<%= key %>">
+                  <span class="nl-skill-name"><%= name %></span>
+                  <div class="nl-skill-controls">
+                    <span class="nl-profession-value">[<%= profession_base_value(@character, key).to_s.rjust(4, "0") %>]</span>
+                    <% bonus = key == :doctor ? @character.doctor_proficiency - profession_base_value(@character, key) : 0 %>
+                    <% if bonus.nonzero? %>
+                      <span class="nl-skill-equipment-bonus" title="Equipment bonus"><%= format("%+d", bonus) %></span>
+                    <% end %>
+                  </div>
+                </div>
+              <% end %>
+            </section>
+          <% end %>
         </div>
-      </div>
-    <% end %>
+      <% end %>
+    </div>
 
     <div class="nl-allocation-actions">
       <button type="button"

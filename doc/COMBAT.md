@@ -267,22 +267,23 @@ its inputs instead of receiving an invented player-like stat curve.
 
 Primary stats start at `1 + allocated points`, then equipment/perk inputs are
 added. Template effects merge with owned instance modifiers/effects before
-summing distinct equipped, unbroken items. Temporary gear/injury effects do not
+summing distinct equipped, unbroken, unexpired items. Temporary gear/injury effects do not
 rewrite base allocations. Exact aliases and vital calculations are in
 [FORMULAS stats](FORMULAS.md#3-character-stats-and-equipment) and
 [ITEMS effective properties](ITEMS.md#3-fields-slots-and-effective-properties).
 
 [CombatProfile](../app/services/arena/combat_profile.rb) persists available actions,
 AP costs/budget, shield table and magic ceiling. Reload uses that profile.
-For `no_weapons`, the reader instead rederives AP/physical cost and forces
-normal blocking to exclude stale equipment overrides; see
+Unarmed admission derives AP/physical costs and normal blocks without character
+preview gear overrides; its stored budget is then retained like armed fights. See
 [CHARACTER's state boundary](CHARACTER.md#6-implementation-and-state-ownership).
 [CombatAttributes](../app/services/arena/combat_attributes.rb) adapts player
 effective values and immutable NPC participation snapshots into the same
 numeric inputs. Player stats are not all immutable match-start snapshots;
-Inventory guards normal gear changes, while progression endpoints currently
-check ownership/outdoor action availability without a general active-match
-allocation prohibition. NPC equipment
+The shared reservation guard blocks normal gear changes and progression during
+all active matches. Timed item/injury effects expire on live reads without
+rewriting saved AP, inventory or current vitals. Exact source mid-fight expiry
+remains unobserved. NPC equipment
 illustrations are descriptive metadata, not player inventory grants or automatic
 stat additions. Editing a creature image cannot change its damage.
 

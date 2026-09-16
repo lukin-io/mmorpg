@@ -84,12 +84,15 @@ Those are evidence-crop dimensions, **not new runtime image dimensions**.
 
 The numeric source separates learned `/100`, red bonuses, available pools and
 profession counters; the boolean source groups42 Yes/No rows into six sections.
-Local forms currently render29 allocatable numeric definitions and four perks,
-with a different bonus/category presentation. Tables, labels, controls and
+Local forms now render29 allocatable numeric definitions with separate red
+bonuses, 15 read-only profession counters and all42 perk rows in six categories.
+Only four perks are selectable; the other38 are visibly unavailable. The
+[September16 source/UI audit](design/reference/character/observations/2026-09-16_primary_list_audit.md)
+records the current presentation and acceptance boundary. Tables, labels, controls and
 help affordances belong in semantic HTML/CSS. No rasterized text table or
 copied Neverlands question-mark bitmap is authorized for runtime.
 
-This documentation update generates no artwork and adds no invented prompt
+This HTML/CSS implementation generates no bitmap and adds no invented prompt
 record. If a later task needs an original help/category illustration, use the
 existing [brief](#prepare-the-asset-brief), [prompt templates](#prompt-templates)
 and [integration requirements](#generation-and-integration), record its exact

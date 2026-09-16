@@ -122,9 +122,9 @@ sixth generic player stat would contradict the established boundary.
    projections for requirements, capacity and combat.
 
 [ITEMS](ITEMS.md) owns equip/use eligibility and broken/expired item checks.
-Current passive stat aggregation excludes broken equipment; it does not itself
-filter expiry. Do not infer that an expired item already worn automatically
-loses every contribution. The source specifically says gear cannot increase
+Passive stat, skill, damage and rating aggregation excludes broken or expired
+worn equipment. Expiry takes effect at the server deadline without removing
+the owned item or refilling current vitals; stored fight AP remains unchanged. The source specifically says gear cannot increase
 Health; the generic local parser still accepts Health aliases, so that parser
 capability is not authority to author Health-boosting gear.
 
@@ -262,9 +262,10 @@ current allocation owner. Extend the routed `Characters` service, not a second
 pipeline. Changes to allocated stats/perks/equipment/injuries affect subsequent
 effective reads; reward/grant writers and stored maxima remain distinct.
 Ordinary combat budgets are stored in participation profiles; player combat
-attributes are read live and unarmed budgets are recalculated. Mid-combat
-allocation/profile consistency remains an audit concern, not a documented
-freeze guarantee. NPC inspection Wisdom/HP does not become player-stat input:
+attributes are read live, while unarmed budgets also retain their admission
+values. The shared reservation guard rejects allocation during every active
+match, waiting application and unfinished result. Time-based expiry still
+affects live reads; source mid-fight expiry ordering is unobserved. NPC inspection Wisdom/HP does not become player-stat input:
 explicit NPC `stats.health` supplies Health, with no inference from HP.
 
 ## 7. Editing and extension recipes
@@ -327,7 +328,7 @@ Creating this guide does not rerun those tests or establish new live evidence.
   formulas are preserved separately from missing coefficients.
 - **[IMPL]** Gear-derived Knowledge does not automatically add its 7-per-point
   MP; generic Health equipment remains technically accepted despite the source
-  restriction. Passive equipped-item expiry is not a universal filter.
+  restriction. Worn expiry now uses the shared usability filter.
 - **[EVIDENCE]** Hidden level coefficients, low-HP penalty magnitude,
   overkill-versus-heal ordering, and exact source rounding/stacking remain
   uncertain. The Life page's `damage > 2*HP` claim does not resolve whether HP

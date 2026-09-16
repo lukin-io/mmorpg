@@ -29,7 +29,7 @@
       <% if @own_profile %>
         <%= render "shared/neverlands_profile_navigation", character: @character %>
 
-        <% if @character.stat_points_available.to_i.positive? %>
+        <% if @allocation_available && @character.stat_points_available.to_i.positive? %>
           <turbo-frame id="stat-allocation" class="nl-allocation-frame">
             <%= render "characters/stat_allocation" %>
           </turbo-frame>

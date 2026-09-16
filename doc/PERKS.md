@@ -215,8 +215,8 @@ and not a flat 30% reduction of final incoming damage.
 | Ведьмак | Inquisitor: axe |
 
 Source class selection excludes magic/warrior mixing and permits up to two
-warrior perks within one class. The local four-row catalog does not expose
-these branches or their special moves. Its retained source-ID exclusion table
+warrior perks within one class. The local selectable four-perk registry does not enable
+these branches or their special moves; their labels are read-only table rows. Its retained source-ID exclusion table
 is described below. A label such as Duelist does not grant an Arena admission
 exception or new combat move locally.
 
@@ -315,11 +315,16 @@ Source: six category tables with bold Yes values and No for unowned rows. The
 supplied image shows eight owned entries, including several not implemented
 locally. It is a snapshot of that source player, not a default local build.
 
-Local **Perks** renders a four-row selection surface with descriptions,
-Yes/No, source-number labels and remaining points. Owned rows are not removable.
-Available points enable pending controls and Reset/Save; an empty pool shows
-no-points feedback. It does not render the full six-category,42-row source
-table. The adjacent **Skills** and **Your licenses** tabs remain separate.
+Local **Perks** renders all 42 rows in the six captured category tables, with
+bold Yes for owned entries and No otherwise. The four supported PerkRegistry
+entries retain their descriptions and allocation controls. The remaining 38
+show Unavailable without controls or submitted keys: visibility does not grant
+an effect. Unknown submitted keys cannot spend points or acquire ownership.
+Source-number labels are omitted. Owned rows remain non-removable; available
+points enable pending controls and Reset/Save. An empty pool shows no-points
+feedback. [ProfileCatalog](../app/lib/game/skills/profile_catalog.rb) owns the
+two-column presentation (stacked on narrow screens); PerkRegistry owns the
+selectable rules. Skills and Your licenses remain separate tabs.
 
 No new bitmap is needed to document this boolean UI. Any later help icons,
 category artwork or layout changes follow

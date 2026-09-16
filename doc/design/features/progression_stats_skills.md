@@ -435,3 +435,15 @@ books own equations, examples and editing impact. The source's hidden combat
 level coefficient remains unimplemented with unknown magnitude. Combat HP
 restoration qualification and elemental magic's10%-armor rule are recorded as
 source-only dependencies beyond the physical MVP, not claims of shipped parity.
+
+### September 16 profile and combat-state alignment
+
+The [live source table audit](../reference/character/observations/2026-09-16_primary_list_audit.md)
+confirms separate numeric learned/bonus values,15 profession counters and42
+Yes/No perk rows. Local HTML/CSS follows that structure; only four supported
+perks are selectable. Every active match reserves owner allocation, including
+older matches without physical-only metadata. Both armed and unarmed action
+budgets persist at admission; live numeric gear/injury effects expire without
+healing or changing saved allocations. Exact source mid-fight expiry remains
+unobserved. [Runtime progression](../../features/character_progression.md) and
+[Character](../../CHARACTER.md) own current behavior and acceptance.

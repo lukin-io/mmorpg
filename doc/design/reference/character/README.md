@@ -5,13 +5,14 @@ follow the [Character domain](../../../domains/character.md).
 
 - Document type: neverlands-source-summary
 - Domain: character
-- Updated: 2026-09-15
+- Updated: 2026-09-16
 - Evidence status: current with preserved legacy analysis
 
 ## Current observations
 
 | Flow/state | Observation | Status |
 |---|---|---|
+| Skills/Perks, character-state and remaining source checks | [September 16 primary-list audit](observations/2026-09-16_primary_list_audit.md) | Live tables captured; allocation/expiry consistency repaired locally; hidden calibration and qualified profession actions remain bounded gaps |
 | Linked stat/resource/effect definitions | [September 15 definition follow-up](observations/2026-09-15_stats_guide_linked_definitions.md) | Revision map; overload, reset, low-HP and limited technique rules remain explicitly source-only |
 | Levels, primary stats, modifier meanings | [September 15 stat audit](observations/2026-09-15_levels_stats_and_modifiers.md) | Published dependencies, enforced roster ceiling, fitted accuracy/Health armor; hidden level and magic inputs remain explicit gaps |
 | Experience rules and table comparison | [September 15 wiki audit](../combat/observations/2026-09-15_wiki_experience_rules.md) | 224 stored values match; table caps distinguished from earned XP and missing bonus effects |
@@ -61,8 +62,9 @@ Fighter's half-probability equipment-wear effect.
   effects. These books do not promote source descriptions to shipped runtime.
 - Current catalogs, formulas, use cases and flags: [SKILLS](../../../SKILLS.md)
   and [PERKS](../../../PERKS.md). 29 numeric definitions can be allocated;
-  only four of 42 source perks are selectable. The skill-bonus/profession
-  presentation differs from the supplied source tables; see the guide UI sections.
+  only four of 42 source perks are selectable. All42 are displayed, with the
+  unsupported38 unavailable; numeric learned/bonus and profession columns now
+  follow the captured structure. See the guide UI and acceptance sections.
 - Merchant `34` and Healer `35` are selectable local perks used by Shop license
   prerequisite checks. The owner-only Your licenses page displays separate
   timed permissions. Shop acquisition activates them at payment locally; that

@@ -282,13 +282,19 @@ counters and remaining pools. The wiki identifies red dots as inactive source
 skills; this does not determine whether a local adapter exists.
 [Wiki: numeric skill overview](http://wiki.neverlands.ru/wiki/Умение).
 
-Local **Skills** renders four sections, C/R/M/P markers, pool counters,
-name/description, plus/minus, effective `[NNN/100]`, and next-spend gain or MAX.
-The displayed next gain is **not** the equipment bonus. Equipment-aware
-allocation exists, but the source's separate red `+bonus` and profession
-column are not reproduced. The current generic description contains the
-source skill number. These are recorded presentation limits, not newly
-accepted visual parity.
+Local **Skills** follows the captured two-column order: combat, resistance and
+magic on the left; peace skills and 15 profession counters on the right.
+Narrow layouts stack the columns. Each allocatable row shows learned
+`[NNN/100]`, a separate red signed equipment bonus, plus/minus and a next-spend
+gain or MAX. The gain preview is not an equipment bonus. Source-number filler
+has been removed; each adjustment button has a named keyboard-accessible label.
+
+Professions display uncapped saved `metadata.profession_skills` counters as at
+least four digits, without `/100` or allocation controls. Doctor alone has the
+implemented equipment-bonus consumer; other visible counters do not invent
+profession growth or new effects. Missing/invalid/negative counters display 0.
+[ProfileCatalog](../app/lib/game/skills/profile_catalog.rb) owns presentation
+order; PassiveSkillRegistry and profession owners retain gameplay authority.
 
 Save success updates the Turbo `skill-allocation` frame and flash; HTML
 requests redirect. Errors preserve persisted values and display feedback.
@@ -298,7 +304,7 @@ in [SCROLLS](SCROLLS.md#7-peace-scrolls-and-purchased-licenses); it is not a
 complete historical-spend refund or perk-respec system.
 
 Screenshots remain [evidence-only assets](design/reference/character/observations/2026-09-14_skills_and_perks.md#artifacts-and-copy-boundary).
-This documentation task generates no runtime artwork. Future UI/assets must
+The tables use HTML/CSS and generate no runtime bitmap. Future UI/assets must
 follow [ARTWORK](ARTWORK.md#skills-and-perks-presentation-reference) and the
 [adaptive client rules](design/areas/game_client_layout.md#adaptive-ui-requirements).
 
@@ -354,10 +360,9 @@ Protecting tests include [registry](../spec/lib/game/skills/passive_skill_regist
 and [level grants](../spec/services/players/progression/level_up_service_spec.rb).
 Consumer-specific checks/acceptance remain in the linked Combat, World,
 Inventory, Medical and Character handbooks. These pointers are not a claim
-that those runtime suites were rerun for this documentation-only task.
+that each historical suite ran again; current results are in [September16 acceptance](features/acceptance/2026-09-16_primary_list/README.md).
 
-Remaining boundaries: `[IMPL]` source bonus/profession presentation,
-successful profession growth, elemental schools and named missing
+Remaining boundaries: `[IMPL]` successful profession growth, elemental schools and named missing
 effects; `[EVIDENCE]` unrecovered exact source coefficients and unsupported
 branches. Source-inactive Throwing/Leadership must not be invented into active
 Neverlands features. Existing fitted active formulas remain authorized.

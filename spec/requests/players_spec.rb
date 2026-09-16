@@ -135,18 +135,22 @@ RSpec.describe "Players", type: :request do
       expect(response.body).to include("in combat")
       expect(response.body).to include("Training Hall")
       expect(response.body).to include(public_fight_log_path(match))
+      character.update!(stat_points_available: 1)
       sign_in user
       get player_path(name: character.name)
       expect(response.body).to include("in combat")
       expect(response.body).not_to include("data-game-layout-encounter-url-value")
+      expect(response.body).not_to include('id="stat-allocation"')
       match.update!(status: :completed)
       get player_path(name: character.name)
       expect(response.body).to include(public_fight_log_path(match), "in combat")
       expect(response.body).not_to include("data-game-layout-encounter-url-value")
+      expect(response.body).not_to include('id="stat-allocation"')
       participation = match.arena_participations.find_by!(character:)
       participation.update!(metadata: {finished_at: Time.current.iso8601})
       get player_path(name: character.name)
       expect(response.body).not_to include("nl-profile-fight-link")
+      expect(response.body).to include('id="stat-allocation"')
       expect(response.body).to include('data-game-layout-encounter-url-value="/combat_status"')
     end
 

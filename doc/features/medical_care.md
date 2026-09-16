@@ -263,3 +263,13 @@ cross a30-point threshold without changing displayed equipment armor.
 [MEDICAL](../MEDICAL.md#injury-penalties-and-the-hidden-health-armor-input) and
 [FORMULAS](../FORMULAS.md#september-15-stat-and-modifier-interpretation) explain
 the effect. This adds no separate treatment or combat-HP-healing workflow.
+
+### September 16 source follow-up
+
+The [primary-list source audit](../design/reference/character/observations/2026-09-16_primary_list_audit.md)
+records current Doctor/Craftsman/repair wiki rules and live Workshop/Hospital
+screens. The source character lacks Craftsmanship/materials and the Pharmacy
+is empty; no successful repair or proficiency-growth action was captured.
+Published prerequisites do not establish the missing growth probability.
+Traumatologist stays a Quest TODO, separate from existing treatment/license
+checks; this observation adds no repair or medical-crafting runtime.

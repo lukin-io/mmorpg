@@ -760,3 +760,12 @@ admission is a bounded historical observation, not an implemented unrestricted
 exception. Snowball and unarmed pocket research/implementation are explicitly
 outside launch MVP and cancelled from the active primary-list on September 16;
 see the [scope decision](design/launch_mvp_plan.md#september-16-primary-list-scope).
+
+### Character-state audit follow-up
+
+All active matches now block owner allocation through the shared reservation
+guard, including old matches without physical-only metadata. Unarmed AP/cost
+budgets persist after admission like armed budgets. Live numeric gear/injury
+expiry remains separate; the source's exact mid-fight expiry is unobserved.
+See [Character](CHARACTER.md#6-implementation-and-state-ownership) and
+[September16 audit](design/reference/character/observations/2026-09-16_primary_list_audit.md).

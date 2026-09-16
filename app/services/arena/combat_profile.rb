@@ -75,9 +75,10 @@ module Arena
       )
       # An unarmed admission has removed/rejected every equipped item. Old
       # character preview overrides cannot retain a shield or weapon's costs.
+      # Once captured, keep the admission budget stable just like armed fights.
       if participation&.arena_match&.metadata.to_h["fight_kind"] == "no_weapons"
-        seed = derived_physical_attack_seed
-        ap_limit = derived_ap_limit
+        seed = integer_value(stored_profile["physical_attack_cost_seed"]) || derived_physical_attack_seed
+        ap_limit = integer_value(stored_profile["ap_limit"]) || derived_ap_limit
         block_table = "normal"
       end
 
@@ -247,7 +248,7 @@ module Arena
     def equipped_items
       return [] unless participant_character&.inventory
 
-      participant_character.inventory.inventory_items.equipped.includes(:item_template)
+      participant_character.inventory.inventory_items.equipped.includes(:item_template).select(&:usable_equipment?)
     end
   end
 end

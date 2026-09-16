@@ -15,7 +15,7 @@ RSpec.describe "Skill allocation with equipment", type: :request do
     create(:inventory_item, :equipped, inventory: character.inventory, item_template: template)
   end
 
-  it "renders effective totals while previewing and enabling allocation from learned levels" do
+  it "separates learned levels and equipment bonuses while enabling allocation" do
     get skills_character_path(character)
 
     expect(response).to have_http_status(:success)
@@ -24,8 +24,8 @@ RSpec.describe "Skill allocation with equipment", type: :request do
     row = document.at_css('[data-skill="knife_mastery"]').ancestors(".nl-skill-row").first
 
     expect(JSON.parse(panel["data-skill-allocation-skills-value"])["knife_mastery"]).to eq(98)
-    expect(JSON.parse(panel["data-skill-allocation-equipment-bonuses-value"])["knife_mastery"]).to eq(30)
-    expect(row.at_css(".nl-skill-value").text).to include("[128/100]")
+    expect(row.at_css(".nl-skill-equipment-bonus").text).to include("+30")
+    expect(row.at_css(".nl-skill-value").text).to include("[098/100]")
     expect(row.at_css(".nl-skill-gain").text.strip).to eq("+2")
     expect(row.at_css(".nl-stat-btn--plus")["disabled"]).to be_nil
     expect(character.reload.base_passive_skill_level(:knife_mastery)).to eq(98)
@@ -42,7 +42,8 @@ RSpec.describe "Skill allocation with equipment", type: :request do
     document = Nokogiri::HTML(response.body)
     {"knife_mastery" => 130, "bludgeoning_mastery" => 150}.each do |skill, effective|
       row = document.at_css("[data-skill='#{skill}']").ancestors(".nl-skill-row").first
-      expect(row.at_css(".nl-skill-value").text).to include("[#{effective}/100]")
+      expect(row.at_css(".nl-skill-value").text).to include("[100/100]")
+      expect(row.at_css(".nl-skill-equipment-bonus").text).to include("+#{effective - 100}")
       expect(row.at_css(".nl-skill-gain").text.strip).to eq("MAX")
       expect(row.at_css(".nl-stat-btn--plus")["disabled"]).not_to be_nil
     end
@@ -60,6 +61,7 @@ RSpec.describe "Skill allocation with equipment", type: :request do
     document = Nokogiri::HTML(response.body)
     panel = document.at_css('[data-controller="skill-allocation"]')
     expect(JSON.parse(panel["data-skill-allocation-skills-value"])["knife_mastery"]).to eq(100)
-    expect(document.at_css('[data-skill="knife_mastery"]').text).to include("[130/100]")
+    expect(document.at_css('[data-skill="knife_mastery"]').text).to include("[100/100]")
+    expect(document.at_css('[data-skill-row="knife_mastery"] .nl-skill-equipment-bonus').text).to include("+30")
   end
 end

@@ -361,10 +361,13 @@ Changing these owners affects Arena, NPC, PvP and mixed teams together.
 
 Captured action tables plus calibrated mastery fit:
 
-Ordinary persisted participation profiles retain their AP/cost values.
-`no_weapons` rederives AP/physical costs and forces normal blocks, overriding
-stale equipment profile values; [CHARACTER](CHARACTER.md#6-implementation-and-state-ownership)
-explains this exception and the separately live player-stat inputs.
+Armed and unarmed persisted participation profiles retain their AP/cost values.
+Unarmed admission derives costs and normal blocks without character preview
+gear overrides; later reads retain that captured budget. [CHARACTER](CHARACTER.md#6-implementation-and-state-ownership)
+explains active-match allocation guards and separately live player-stat inputs.
+Every worn numeric contribution excludes broken/expired equipment; expiry is
+`now >= expires_at`, and a malformed declared deadline is unusable. Expiry does
+not reprice a stored budget, remove ownership or restore current resources.
 
 ```text
 weapon cost[i] = ItemTemplate.requirements.ap (default 45) - floor(mastery[i]/15)
@@ -1074,7 +1077,8 @@ them changes admission only; attacks, blocks, dodge, crit, armor, XP and
 injuries continue through the combat owners in section 5. Fist removes both
 players' gear before snapshots, uses derived unarmed AP/block costs and omits
 artifact damage multipliers; stale preview overrides cannot retain a shield.
-Gear stays in Inventory afterward; source persistence is pending observation.
+Gear stays in Inventory afterward, matching September 15 Fist attacker-aftermath
+evidence; the defender's own Finish/Inventory remains unobserved.
 
 An ordinary Permit entering an open live fight joins opposite the living target
 and preserves that fight's trauma, equipment rules, round commits and deadlines.

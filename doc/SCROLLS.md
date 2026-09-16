@@ -173,7 +173,8 @@ inventories. Recalculate maximum vitals and clamp current HP/MP downward if
 needed; do not heal. Create the same physical match with `fight_kind: no_weapons`
 and trauma 80. Its profile uses derived unarmed costs and normal blocks, ignoring
 old shield/weapon preview overrides. Artifact damage multiplier is 1.0 in this
-mode. Gear stays unequipped after Finish locally; source persistence is pending.
+mode. Gear stays unequipped after Finish, matching the September 15 successful
+Fist attacker aftermath. Defender-owned Finish/Inventory remains unobserved.
 
 **Permit intervention:** the target must be living in a live, non-stale,
 non-closed match with fewer than 60 participants. The attacker must satisfy

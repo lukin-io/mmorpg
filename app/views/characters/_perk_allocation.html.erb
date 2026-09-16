@@ -7,67 +7,66 @@
   </div>
 
   <%= form_with url: perks_character_path(@character), method: :patch, class: "nl-allocation-form", data: {turbo_frame: "perk-allocation"} do %>
-    <div class="nl-skills-grid">
-      <% @perk_definitions.each do |perk_key, definition| %>
-        <% owned = @character.owns_perk?(perk_key) %>
-        <div class="nl-skill-row nl-perk-row" data-perk="<%= perk_key %>">
-          <div class="nl-skill-info">
-            <span class="nl-skill-name"><%= definition[:name] %></span>
-            <p class="nl-skill-description"><%= definition[:description] %></p>
-          </div>
+    <div class="nl-development-columns">
+      <% Game::Skills::ProfileCatalog::PERK_COLUMNS.each do |categories| %>
+        <div class="nl-development-column">
+          <% categories.each do |category_key| %>
+            <% category = Game::Skills::ProfileCatalog::PERK_CATEGORIES.fetch(category_key) %>
+            <section class="nl-skill-category-section" aria-label="<%= category[:name] %>">
+              <h3 class="nl-skill-category-header"><%= category[:name] %></h3>
+              <% category[:rows].each do |name, perk_key| %>
+                <% definition = @perk_definitions[perk_key] %>
+                <% owned = definition.present? && @character.owns_perk?(perk_key) %>
+                <div class="nl-skill-row nl-perk-row" data-perk="<%= perk_key %>">
+                  <div class="nl-skill-info">
+                    <span class="nl-skill-name"><%= name %></span>
+                    <% if definition %>
+                      <p class="nl-skill-description"><%= definition[:description] %></p>
+                    <% else %>
+                      <span class="nl-perk-unavailable">Unavailable</span>
+                    <% end %>
+                  </div>
 
-          <div class="nl-skill-controls">
-            <% if !owned && @perk_points.positive? %>
-              <button type="button"
-                      class="nl-stat-btn nl-stat-btn--minus"
-                      aria-label="Remove <%= definition[:name] %>"
-                      data-action="click->perk-allocation#removePerk"
-                      data-perk-allocation-perk-param="<%= perk_key %>">
-                -
-              </button>
-            <% end %>
-
-            <span class="nl-perk-state<%= " nl-perk-state--owned" if owned %>"
-                  data-perk-allocation-target="perkState"
-                  data-perk="<%= perk_key %>"
-                  data-owned="<%= owned %>">
-              <%= owned ? "Yes" : "No" %>
-            </span>
-
-            <% if !owned && @perk_points.positive? %>
-              <button type="button"
-                      class="nl-stat-btn nl-stat-btn--plus"
-                      aria-label="Add <%= definition[:name] %>"
-                      data-action="click->perk-allocation#addPerk"
-                      data-perk-allocation-perk-param="<%= perk_key %>">
-                +
-              </button>
-
-              <%= hidden_field_tag "selected_perks[#{perk_key}]", 0,
-                                   data: {perk_allocation_target: "perkInput", perk: perk_key} %>
-            <% end %>
-          </div>
-
-          <div class="nl-skill-meta">
-            <span class="nl-perk-source-id">Source #<%= definition[:source_id] %></span>
-          </div>
+                  <div class="nl-skill-controls">
+                    <% if definition && !owned && @perk_points.positive? %>
+                      <button type="button"
+                              class="nl-stat-btn nl-stat-btn--minus"
+                              aria-label="Remove <%= name %>"
+                              data-action="click->perk-allocation#removePerk"
+                              data-perk-allocation-perk-param="<%= perk_key %>">
+                        -
+                      </button>
+                    <% end %>
+                    <span class="nl-perk-state<%= " nl-perk-state--owned" if owned %>"
+                          data-perk-allocation-target="perkState"
+                          data-perk="<%= perk_key %>"
+                          data-owned="<%= owned %>">
+                      <%= owned ? "Yes" : "No" %>
+                    </span>
+                    <% if definition && !owned && @perk_points.positive? %>
+                      <button type="button"
+                              class="nl-stat-btn nl-stat-btn--plus"
+                              aria-label="Add <%= name %>"
+                              data-action="click->perk-allocation#addPerk"
+                              data-perk-allocation-perk-param="<%= perk_key %>">
+                        +
+                      </button>
+                      <%= hidden_field_tag "selected_perks[#{perk_key}]", 0,
+                                           data: {perk_allocation_target: "perkInput", perk: perk_key} %>
+                    <% end %>
+                  </div>
+                </div>
+              <% end %>
+            </section>
+          <% end %>
         </div>
       <% end %>
     </div>
 
     <% if @perk_points.positive? %>
       <div class="nl-allocation-actions">
-        <button type="button"
-                class="nl-btn"
-                data-action="click->perk-allocation#reset">
-          Reset
-        </button>
-        <button type="submit"
-                class="nl-btn nl-btn--disabled"
-                data-perk-allocation-target="saveButton"
-                disabled>
-          Save
-        </button>
+        <button type="button" class="nl-btn" data-action="click->perk-allocation#reset">Reset</button>
+        <button type="submit" class="nl-btn nl-btn--disabled" data-perk-allocation-target="saveButton" disabled>Save</button>
       </div>
     <% else %>
       <p class="nl-perk-empty-points">No new perk points are available.</p>

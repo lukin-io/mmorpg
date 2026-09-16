@@ -32,6 +32,9 @@ RSpec.describe "Seeded world village resume", type: :system, js: true do
     expect(page).to have_css(".nl-map-container[data-nl-world-map-player-x-value='6'][data-nl-world-map-player-y-value='8']")
 
     [[5, 7], [4, 6]].each do |x, y|
+      # Initial viewport negotiation can replace the frame; wait for the
+      # authoritative ready controls before submitting a movement command.
+      expect(page).to have_css(".nl-map-container[data-viewport-ready='true']", wait: 10)
       click_button "Move northwest"
       expect(page).to have_css(".nl-map-container[data-nl-world-map-player-x-value='#{x}'][data-nl-world-map-player-y-value='#{y}']", wait: 8)
     end

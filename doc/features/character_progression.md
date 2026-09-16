@@ -129,13 +129,42 @@ The MVP currently contains:
 - Applying numeric-skill effects beyond the explicitly implemented Wanderer
   movement and Extra Action Points combat-profile formulas, or inventing
   profession or prerequisite formulas.
-- Rendering or selecting the remaining observed `Навыки` merely because their source labels are known.
+- Selecting or applying effects of unsupported `Навыки`; their captured labels are read-only reference rows.
 - Free respec, saved progression builds, skill trees, classes, specializations, or generic ability unlock graphs.
 - Owning equipment, combat, movement, recovery, inventory, or profession mechanics that consume progression values.
 - Owning group XP distribution (the shared Combat owner implements it), XP subtraction, fame/valor awards, or levels beyond the complete row `27`.
 - Recreating Neverlands CGI routes, frames, Russian player-facing copy, or token formats.
 
 ## 4. Player experience
+
+### September 16 current presentation and reservation boundary
+
+The [primary-list source audit](../design/reference/character/observations/2026-09-16_primary_list_audit.md)
+confirms the table structure. `Game::Skills::ProfileCatalog` owns the read-only
+layout: 29 numeric skills in four categories, 15 uncapped profession counters,
+and42 perk rows in six categories. Skills shows learned `/100` and a separate
+red equipment bonus; the next-spend preview remains independent. Doctor uses
+the existing effective proficiency reader; other profession rows are saved
+counter projections, not new growth/effect implementations. Four PerkRegistry
+keys remain selectable;38 rows are Unavailable without form inputs. Source IDs
+remain registry metadata, not player-facing filler.
+
+`ArenaReservation` rejects owner progression during every active match,
+including matches without `physical_only`, and retains waiting/result guards.
+Public profile inspection stays available; its owner stat form is hidden while
+a fight/application/result reserves development.
+Worn contributions use `InventoryItem#usable_equipment?`; expired/broken gear
+cannot supply stats, ratings, skills or a new AP preview. Both armed and unarmed
+stored combat budgets remain fixed. Timed injury/item effects still change
+live effective reads without healing or rewriting inventory.
+
+Regression coverage: `spec/requests/character_combat_availability_spec.rb`,
+`spec/requests/character_development_tables_spec.rb`,
+`spec/models/character_equipment_expiry_spec.rb`, existing combat-profile and
+allocation system specs. [Final local acceptance](acceptance/2026-09-16_primary_list/README.md)
+is separate from historical September11 display acceptance below.
+
+
 
 ### September 11 equipment-aware allocation acceptance
 
@@ -282,7 +311,7 @@ controller, NPC generator or browser script.
 | Receive points | Stat, combat-skill, peace-skill and perk pools increase separately. For example reaching13 gives10 stat points,14 gives12,15 gives15. These do not automatically raise Strength or heal HP/MP. |
 | Allocate | Stats/Skills/Perks save under ownership and row-lock checks. Primary additions persist in `allocated_stats`; numeric skills and owned perks retain separate maps. |
 | Build effective values | `Character#stats` combines base1, saved primary additions, `floor(level/2)` Strength for More Strength, and equipped primary modifiers. Numeric skills combine saved base values and equipped bonuses without clipping the effective total at100; allocation remains capped at100. |
-| Enter combat | `Arena::CombatProfile` persists AP, attack costs and block-table selection. Ordinary profiles retain those values; `no_weapons` rederives AP/physical costs and forces normal blocks to suppress stale gear overrides. `Arena::CombatResolver` consumes current effective player values and NPC snapshots. The [combat handbook](arena_combat.md) owns downstream outcome/mitigation rules. |
+| Enter combat | `Arena::CombatProfile` persists AP, attack costs and block-table selection. Both armed and unarmed profiles retain those values. Unarmed admission derives its costs and normal blocks without character preview gear overrides; all active matches reserve allocation and equipment routes. `Arena::CombatResolver` consumes current effective player values and NPC snapshots. The [combat handbook](arena_combat.md) owns downstream outcome/mitigation rules. |
 | Notify | Arena publishes actual persisted XP through the [Shell event catalog](game_shell.md#gameplay-event-catalog): group/PvP results publish at finalization, while the solo-NPC positive-XP notice is deferred to Finish. Chat never recalculates grants or changes progression state. |
 
 At level0 there are15 free stat points plus five base points. The source's
@@ -336,7 +365,7 @@ The five primary stats begin at base value `1`. Saved additions are merged into 
 
 The numeric registry contains 29 captured `Умения`, each with a source ID, local key, English/source labels, category, combat-or-peace pool, maximum `100`, and exact four-band rate. One spend consumes one point from the assigned pool and may add more than one numeric level according to the current band.
 
-Multiple pending spends are applied sequentially so crossing `25`, `50`, or `75` changes the rate used by later spends. The final allocated base value is capped at `100`; requested spends after the base cap do not consume points. Effective values add equipped bonuses afterward and can exceed100 (source mastery130/150). UI tier/cost/plus-button calculations use base values; displayed totals and equipment requirements use effective values. Unknown skill keys do not consume points. Equipment bonuses contribute to `passive_skill_level`.
+Multiple pending spends are applied sequentially so crossing `25`, `50`, or `75` changes the rate used by later spends. The final allocated base value is capped at `100`; requested spends after the base cap do not consume points. Effective values add equipped bonuses afterward and can exceed100 (source mastery130/150). UI tier/cost/plus-button calculations use base values; the table displays learned `/100` and the equipment bonus separately. Equipment requirements still use effective values. Unknown skill keys do not consume points. Equipment bonuses contribute to `passive_skill_level`.
 
 Numeric skills have bounded downstream effects through their domain owners. World snapshots an exact
 authored cell duration when present; otherwise its configurable fallback uses
@@ -479,7 +508,7 @@ Missing JSON keys mean zero numeric skill, no stat addition, or unowned perk. An
 
 ### 7.3 Presentation versus authority
 
-Plus/minus state, displayed counters, hidden inputs, category grouping, translated names, source IDs rendered in the DOM, and disabled-button CSS are presentation/input only. The server reparses allowlisted keys and checks point balances on save.
+Plus/minus state, displayed counters, hidden inputs, category grouping, translated names, source IDs retained in the registry, and disabled-button CSS are presentation/input only. The server reparses allowlisted keys and checks point balances on save.
 
 Stat, numeric-skill, perk, and XP/level transitions lock and reload the character row before checking or changing point pools. Stale competing allocation requests therefore see the current balance; a losing over-budget request leaves state unchanged.
 
@@ -648,7 +677,7 @@ Arbitrary saved browser fields, translated labels, or profile URLs do not grant 
 | Conflicting captured perks | Reject the entire perk save under lock |
 | Numeric skill reaches `100` | Cap at `100`; no further visible spend is enabled |
 | Equipment changes effective Wanderer | Rebuild effective display; World uses it only for the next authored offer, never to rewrite an active command |
-| Equipment changes effective Extra Action Points | Rebuild effective display; ordinary stored Combat profiles retain their AP, while `no_weapons` rederives its budget; see [CHARACTER's state boundary](../CHARACTER.md#6-implementation-and-state-ownership) |
+| Equipment changes effective Extra Action Points | Rebuild effective display; armed and unarmed stored Combat profiles retain their admission AP; see [CHARACTER's state boundary](../CHARACTER.md#6-implementation-and-state-ownership) |
 | Equipment changes another effective skill | Rebuild effective display; no uncaptured formula is applied |
 | Missing public character name | Return `404`, not an account-profile fallback |
 | Simultaneous/stale Stats or Skills saves | Serialize under the Character row lock; recheck current pools and reject an over-budget request without a lost update |

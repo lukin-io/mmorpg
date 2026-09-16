@@ -153,6 +153,21 @@ RSpec.describe Arena::CombatProfile do
     expect(profile["injected_block_keys"]).to eq([])
   end
 
+  it "captures unarmed admission once without inheriting armed preview overrides" do
+    arena_match.update!(metadata: {"fight_kind" => "no_weapons", "physical_only" => true})
+    character.update!(metadata: {"combat_profile" => {"ap_limit" => 999, "physical_attack_cost_seed" => 99, "block_table" => "shield_90"}})
+    original = described_class.persist!(participation)
+    expect(original).to include("ap_limit" => character.max_action_points, "physical_attack_cost_seed" => 45, "block_table" => "normal")
+
+    # Models may be changed by trusted operators/settlement; a persisted fight
+    # must validate the same committed budget after reload in either fight kind.
+    character.update!(passive_skills: {"extra_action_points" => 100, "unarmed_combat" => 100})
+    expect(described_class.for_participation(participation.reload)).to eq(original)
+    next_match = create(:arena_match, metadata: arena_match.metadata)
+    next_entry = create(:arena_participation, arena_match: next_match, character:, user:)
+    expect(described_class.for_participation(next_entry)).to include("ap_limit" => character.max_action_points, "physical_attack_cost_seed" => 39)
+  end
+
   describe "equipped instance inputs" do
     %w[physical_attack_cost_seed attack_cost_seed].each do |key|
       it "uses merged instance #{key} ahead of template and root properties" do

@@ -1261,3 +1261,14 @@ books own equations, examples and editing impact. The source's hidden combat
 level coefficient remains unimplemented with unknown magnitude. Combat HP
 restoration qualification and elemental magic's10%-armor rule are recorded as
 source-only dependencies beyond the physical MVP, not claims of shipped parity.
+
+### September 16 character-state audit
+
+Armed/unarmed admission now shares persisted AP/cost semantics; unarmed entry
+still derives its own budget and normal blocks. All active matches reserve
+normal allocation/equipment routes. Live player numeric inputs exclude expired
+or broken gear and expired injury penalties, without rewriting ownership,
+current vitals or stored budgets. This is a consistent local contract; exact
+Neverlands mid-fight expiry ordering remains an evidence gap. See
+[Character state](../../CHARACTER.md#6-implementation-and-state-ownership) and
+[the source audit](../reference/character/observations/2026-09-16_primary_list_audit.md).

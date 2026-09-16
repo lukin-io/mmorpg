@@ -309,7 +309,7 @@ holds that lock through the request. Busy requests redirect to World with
 `303 See Other` and preserve equipment, stacks, currency, and saved context.
 The captured navigation lock is recorded in
 `doc/design/reference/world/observations/2026-09-07_forpost_grid_and_action_audit.md`.
-Existing Inventory access during an active fight is unchanged by this guard.
+The separate ArenaReservation guard now reserves Inventory during every active fight, independently of this outdoor-work check.
 
 ### 4.2 Primary surface
 
@@ -755,3 +755,16 @@ records the source-shaped Shop/Inventory images, purchase → wear → reload �
 keyboard removal, Sell restrictions, empty category and zoom checks. Runtime
 geometry is verified. Background/framing normalization and six license-candidate
 replacements remain pending; this is not an all-artwork completion claim.
+
+### September 16 worn-effect expiry consistency
+
+`InventoryItem#usable_equipment?` is the shared equipped/unbroken/unexpired
+filter for Character stat, skill, rating, resistance, weapon damage and new AP
+preview reads. Expiry is inclusive (`now >= expires_at`); malformed declared
+deadlines are unusable. This does not auto-delete or unequip owned records,
+refill HP/MP, or reprice persisted armed/unarmed fight budgets.
+[Character state](../CHARACTER.md#6-implementation-and-state-ownership) owns the
+interaction with active-fight reservation and injury expiry. Boundary coverage
+is in `spec/models/character_equipment_expiry_spec.rb`;
+[local browser acceptance](acceptance/2026-09-16_primary_list/README.md) records
+the changed Skills/Inventory flow. Exact source mid-fight expiry is unobserved.

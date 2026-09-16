@@ -145,13 +145,14 @@ RSpec.describe "Outdoor action availability", type: :request do
     end
   end
 
-  it "preserves existing inventory access during an active fight without outdoor work" do
+  it "reserves inventory during every active fight even without outdoor work" do
     match = create(:arena_match, :live)
     create(:arena_participation, arena_match: match, character:, user:)
 
     get inventory_path
 
-    expect(response).to have_http_status(:ok)
+    expect(response).to redirect_to(arena_match_path(match))
+    expect(response).to have_http_status(:see_other)
     expect(match.reload).to be_live
   end
 

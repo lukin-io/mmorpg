@@ -54,9 +54,15 @@ class InventoryItem < ApplicationRecord
     return false if expires_at.blank?
 
     parsed = Time.zone.parse(expires_at.to_s)
-    parsed.present? && parsed.past?
-  rescue ArgumentError
-    false
+    parsed.nil? || parsed <= Time.current
+  rescue ArgumentError, TypeError
+    true
+  end
+
+  # One current-state rule for every worn stat, skill, rating and AP preview.
+  # Expiry removes effects without deleting inventory history or refilling HP.
+  def usable_equipment?
+    equipped? && !broken? && !expired?
   end
 
   def protected_from_discard?

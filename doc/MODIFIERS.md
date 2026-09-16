@@ -199,8 +199,10 @@ new asset, label or UI behavior.
 
 Player stat/equipment reads are live inputs to subsequent resolution; authored
 NPC combat profiles become participation snapshots. Ordinary action budgets
-remain stored while unarmed budgets can be recalculated. Do not infer frozen
-player equipment/stats solely from the existence of a profile. Calibration
+remain stored for both armed and unarmed fights. Normal allocation/equipment
+routes are reserved throughout active fights. Broken or expired worn gear no
+longer contributes on a live read; injury penalties expire naturally. This
+does not make every numeric input an immutable match-start snapshot. Calibration
 configuration is cached in-process; reload/restart app and workers after
 editing it. Historical actions/logs are persisted outcomes, not projections
 to be rewritten when coefficients change.

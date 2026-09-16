@@ -550,7 +550,7 @@ class Character < ApplicationRecord
     return [] unless inventory
 
     inventory.inventory_items.equipped.includes(:item_template).select do |item|
-      !item.broken? && WEAPON_MASTERY_KEYS.key?(item.effect_modifiers["weapon_family"])
+      item.usable_equipment? && WEAPON_MASTERY_KEYS.key?(item.effect_modifiers["weapon_family"])
     end
   end
 
@@ -569,7 +569,7 @@ class Character < ApplicationRecord
     return 0 unless inventory
 
     inventory.inventory_items.equipped.includes(:item_template).sum do |item|
-      item.broken? ? 0 : weapon_damage_average(item.effect_modifiers)
+      !item.usable_equipment? ? 0 : weapon_damage_average(item.effect_modifiers)
     end
   end
 
@@ -634,7 +634,7 @@ class Character < ApplicationRecord
 
     normalized_keys = keys.flatten.map { |key| normalize_equipment_effect_key(key) }
     inventory.inventory_items.equipped.includes(:item_template).sum do |item|
-      next 0 if item.broken?
+      next 0 unless item.usable_equipment?
 
       normalized_effects = item.effect_modifiers.transform_keys { |key| normalize_equipment_effect_key(key) }
       normalized_keys.sum { |key| numeric_equipment_effect(normalized_effects[key]) }
@@ -772,7 +772,7 @@ class Character < ApplicationRecord
     return 0 unless inventory
 
     inventory.inventory_items.equipped.includes(:item_template).sum do |item|
-      next 0 if item.broken?
+      next 0 unless item.usable_equipment?
 
       equipment_combat_component(item, "attack")
     end
@@ -785,13 +785,15 @@ class Character < ApplicationRecord
     return 0 unless inventory
 
     inventory.inventory_items.equipped.includes(:item_template).sum do |item|
-      next 0 if item.broken?
+      next 0 unless item.usable_equipment?
 
       equipment_combat_component(item, "defense")
     end
   end
 
   def equipment_combat_component(item, stat_key)
+    return 0 unless item.usable_equipment?
+
     stats = item.effect_modifiers.transform_keys { |key| normalize_equipment_effect_key(key) }
     base = combat_component_base(stats, stat_key)
     return 0 if base.zero?
@@ -821,7 +823,7 @@ class Character < ApplicationRecord
     return 0 unless normalized_key == "doctor" || Game::Skills::PassiveSkillRegistry.find(normalized_key)
 
     inventory.inventory_items.equipped.includes(:item_template).sum do |item|
-      next 0 if item.broken? || (normalized_key == "doctor" && item.expired?)
+      next 0 unless item.usable_equipment?
 
       effects = item.effect_modifiers.to_h
       skill_mods = effects["skill_bonuses"] || effects[:skill_bonuses] || {}
@@ -853,7 +855,7 @@ class Character < ApplicationRecord
 
     key = "#{element}_resistance"
     total = inventory.inventory_items.equipped.includes(:item_template).sum do |item|
-      next 0.0 if item.broken?
+      next 0.0 unless item.usable_equipment?
 
       resist_mods = item.effect_modifiers&.dig("resistances")
       next 0.0 unless resist_mods.is_a?(Hash)
@@ -877,7 +879,7 @@ class Character < ApplicationRecord
     return {} unless inventory
 
     inventory.inventory_items.equipped.includes(:item_template).each_with_object(Hash.new(0)) do |item, totals|
-      next if item.broken?
+      next unless item.usable_equipment?
 
       item.effect_modifiers.each do |key, value|
         stat_key = EQUIPMENT_STAT_ALIASES[normalize_equipment_effect_key(key)]

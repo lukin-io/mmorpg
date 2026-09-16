@@ -731,7 +731,8 @@ RSpec.describe CharactersController, type: :request do
       expect(response).to have_http_status(:success)
       expect(response.body).to include("Possible new perks:")
       expect(response.body).to include("More Strength")
-      expect(response.body).to include("Source #7")
+      expect(response.body).to include("Stat Perks")
+      expect(response.body).not_to include("Source #7")
       expect(response.body).to include("Adds one effective Strength for every two character levels, rounded down.")
     end
 

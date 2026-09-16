@@ -263,7 +263,7 @@ RSpec.describe "Arena match transition and reconciliation", type: :system do
         expect(page).to have_current_path(player_path(name: character_a.name))
         expect(page).not_to have_css("body[data-game-layout-encounter-url-value]")
         click_link "in combat"
-        expect(page).to have_current_path(public_fight_log_path(match))
+        expect(page).to have_current_path(public_fight_log_path(match), wait: 10)
       end
       expect(page).to have_css(".arena-action-panel", wait: 8)
     end

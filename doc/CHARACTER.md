@@ -75,7 +75,7 @@ stat; **current HP** is a separate resource. Likewise Knowledge is not current M
 | `metadata.profession_unlocks`, `CharacterLicense` | Separate qualification and timed permission | [Economy](ECONOMY.md) / [Medical](MEDICAL.md); a perk alone is not every required permission |
 | Saved max/current HP and MP, regeneration anchors/remainders | Saved resources | Base maximum recalculation and elapsed recovery have different entry points |
 | Effective stats, ratings, capacity, skill bonuses | Derived on read | Current usable equipment, level/perks and active injuries supply inputs |
-| Combat AP/attack/block profile | Saved per participation, with an unarmed override | Ordinary profiles retain their budget; `no_weapons` rederives AP/physical costs and forces normal blocking instead of inheriting old gear overrides |
+| Combat AP/attack/block profile | Saved per participation, with an unarmed override | Both modes retain admission budgets; unarmed admission derives its own costs/normal blocks without character preview gear overrides |
 | NV | Saved on the user's wallet | [Economy](ECONOMY.md); account-owned, not a separate balance per character |
 
 The 29 numeric definitions and 42 source perks are cataloged in SKILLS/PERKS
@@ -234,17 +234,24 @@ HTML/text. This guide adds no new artwork or browser surface.
 | [CombatProfile](../app/services/arena/combat_profile.rb) | Preview or persisted per-participant AP/attack/block/magic budget used on submission |
 | [Inventory handbook](features/player_inventory.md) | Owned items, equipment mutations, requirement checks, weight and slots |
 
-**Timing matters:** an ordinary stored combat profile retains its budget, not
-every character attribute. `no_weapons` explicitly rederives AP and physical
-costs from the character and forces the normal block table, ignoring stale gear
-profile overrides. CombatAttributes reads current player effective values;
-NPC combat data is a participation snapshot.
+**Timing matters:** armed and unarmed participation profiles retain their
+admission AP/physical-cost budgets. Unarmed admission derives its own costs and
+forces normal blocks, ignoring character preview shield/weapon overrides.
+CombatAttributes still reads current player effective values; NPC combat data
+is a participation snapshot. All active matches, including older matches
+without `physical_only` metadata, block owner allocation and equipment routes
+under the character lock. Waiting applications and unfinished results retain
+their existing reservation guards. Public profile inspection remains
+available, but its owner stat form is hidden until the reservation ends.
 
-Inventory guards normal gear mutation during fights. Progression endpoints
-check ownership and outdoor movement/Look availability; they do not currently
-add a general active-match allocation prohibition. Do not promise an immutable
-whole-player build or a blanket combat edit lock. Changes to this boundary need
-the Combat/Progression owners and source evidence, not only a profile UI change.
+Worn items contribute only while equipped, unbroken and unexpired. At the
+server expiry instant, their stats, skills, damage, ratings and new AP previews
+lose the contribution; inventory ownership, stored fight budgets and current
+HP/MP are not rewritten or refilled. Injury penalties likewise disappear at
+their deadline without healing. A malformed declared item deadline fails
+closed. These are consistent local state rules, not newly observed Neverlands
+mid-fight expiry behavior. The [September 16 audit](design/reference/character/observations/2026-09-16_primary_list_audit.md)
+records the source and verification boundaries.
 
 Reload reads saved development, licenses and effects. A browser preview,
 broadcast or displayed percentage is never authority for allocation, grants or

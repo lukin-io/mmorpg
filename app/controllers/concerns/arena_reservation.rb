@@ -30,7 +30,7 @@ module ArenaReservation
 
     current_character.with_lock do
       application = current_character.waiting_arena_application
-      match = current_character.arena_participations.joins(:arena_match).merge(ArenaMatch.active).where("arena_matches.metadata @> ?", {physical_only: true}.to_json).first&.arena_match
+      match = current_character.arena_participations.joins(:arena_match).merge(ArenaMatch.active).first&.arena_match
       match ||= current_character.unfinished_arena_result
       if application || match
         destination = match ? arena_match_path(match) : arena_room_path(application.arena_room, ft: application.team_battle? ? 2 : 1)
