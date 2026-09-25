@@ -6,7 +6,9 @@ export default class extends Controller {
   static targets = ["freePoints", "perkState", "perkInput", "saveButton"]
 
   static values = {
-    free: { type: Number, default: 0 }
+    free: { type: Number, default: 0 },
+    yesLabel: { type: String, default: "Yes" },
+    noLabel: { type: String, default: "No" }
   }
 
   connect() {
@@ -46,7 +48,7 @@ export default class extends Controller {
       if (element.dataset.owned === "true") return
 
       const selected = this.pending.has(element.dataset.perk)
-      element.textContent = selected ? "Yes" : "No"
+      element.textContent = selected ? this.yesLabelValue : this.noLabelValue
       element.classList.toggle("nl-perk-state--pending", selected)
     })
 

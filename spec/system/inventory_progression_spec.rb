@@ -107,7 +107,7 @@ RSpec.describe "Inventory & Progression UI", type: :system, js: true do
 
       click_visible_button("Save")
 
-      expect(page).to have_css("#flash", text: "Not enough free stat points")
+      expect(page).to have_css("#flash", text: I18n.t("game.flashes.alloc_not_enough_stat_points"))
     end
 
     it "rejects skill allocations that exceed available points (server-side validation)" do

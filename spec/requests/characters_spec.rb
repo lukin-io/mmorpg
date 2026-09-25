@@ -31,15 +31,15 @@ RSpec.describe CharactersController, type: :request do
         expect(response).to have_http_status(:success)
         expect(response.body).to include('<body class="nl-game-layout"')
         expect(response.body).to include('class="nl-character-page-grid"')
-        expect(response.body).to include("Stats")
-        expect(response.body).to include("Free points")
+        expect(response.body).to include(I18n.t("game.profile.stats_title", name: character.name))
+        expect(response.body).to include(I18n.t("game.profile.free_points"))
       end
 
       it "shows all allocatable stats" do
         get stats_character_path(character)
 
-        %w[Strength Dexterity Luck Health Knowledge].each do |stat|
-          expect(response.body).to include(stat)
+        Character::PRIMARY_STATS.each do |stat|
+          expect(response.body).to include(Character.stat_label(stat))
         end
       end
 
@@ -52,7 +52,7 @@ RSpec.describe CharactersController, type: :request do
       it "shows Neverlands starter base stats" do
         get stats_character_path(character)
 
-        expect(response.body).to include("(base: 1)")
+        expect(response.body).to include(I18n.t("game.profile.stat_base", value: 1))
       end
     end
 
@@ -157,7 +157,7 @@ RSpec.describe CharactersController, type: :request do
         }
 
         follow_redirect!
-        expect(response.body).to include("Stats saved")
+        expect(response.body).to include(I18n.t("game.flashes.stats_saved"))
       end
     end
 
@@ -169,7 +169,7 @@ RSpec.describe CharactersController, type: :request do
 
         expect(response).to redirect_to(root_path)
         follow_redirect!
-        expect(response.body).to include("Not enough free stat points")
+        expect(response.body).to include(I18n.t("game.flashes.alloc_not_enough_stat_points"))
         character.reload
         expect(character.stat_points_available).to eq(10) # unchanged
       end
@@ -181,7 +181,7 @@ RSpec.describe CharactersController, type: :request do
 
         expect(response).to redirect_to(root_path)
         follow_redirect!
-        expect(response.body).to include("Not enough free stat points")
+        expect(response.body).to include(I18n.t("game.flashes.alloc_not_enough_stat_points"))
       end
 
       it "rejects zero allocation" do
@@ -191,7 +191,7 @@ RSpec.describe CharactersController, type: :request do
 
         expect(response).to redirect_to(root_path)
         follow_redirect!
-        expect(response.body).to include("No stats selected")
+        expect(response.body).to include(I18n.t("game.flashes.alloc_no_stats"))
       end
 
       it "rejects all-zero allocation" do
@@ -201,7 +201,7 @@ RSpec.describe CharactersController, type: :request do
 
         expect(response).to redirect_to(root_path)
         follow_redirect!
-        expect(response.body).to include("No stats selected")
+        expect(response.body).to include(I18n.t("game.flashes.alloc_no_stats"))
       end
     end
 
@@ -213,7 +213,7 @@ RSpec.describe CharactersController, type: :request do
 
         expect(response).to redirect_to(root_path)
         follow_redirect!
-        expect(response.body).to include("No stats selected")
+        expect(response.body).to include(I18n.t("game.flashes.alloc_no_stats"))
         character.reload
         expect(character.stat_points_available).to eq(10) # unchanged
       end
@@ -225,7 +225,7 @@ RSpec.describe CharactersController, type: :request do
 
         expect(response).to redirect_to(root_path)
         follow_redirect!
-        expect(response.body).to include("Not enough free stat points")
+        expect(response.body).to include(I18n.t("game.flashes.alloc_not_enough_stat_points"))
       end
 
       it "handles string values by converting to integer" do
@@ -257,7 +257,7 @@ RSpec.describe CharactersController, type: :request do
 
         expect(response).to redirect_to(root_path)
         follow_redirect!
-        expect(response.body).to include("No stats selected")
+        expect(response.body).to include(I18n.t("game.flashes.alloc_no_stats"))
       end
 
       it "handles empty allocated_stats hash" do
@@ -267,7 +267,7 @@ RSpec.describe CharactersController, type: :request do
 
         expect(response).to redirect_to(root_path)
         follow_redirect!
-        expect(response.body).to include("No stats selected")
+        expect(response.body).to include(I18n.t("game.flashes.alloc_no_stats"))
       end
 
       it "handles missing allocated_stats param" do
@@ -275,7 +275,7 @@ RSpec.describe CharactersController, type: :request do
 
         expect(response).to redirect_to(root_path)
         follow_redirect!
-        expect(response.body).to include("No stats selected")
+        expect(response.body).to include(I18n.t("game.flashes.alloc_no_stats"))
       end
     end
 
@@ -304,7 +304,7 @@ RSpec.describe CharactersController, type: :request do
 
         expect(response).to redirect_to(root_path)
         follow_redirect!
-        expect(response.body).to include("Not enough free stat points")
+        expect(response.body).to include(I18n.t("game.flashes.alloc_not_enough_stat_points"))
       end
     end
 
@@ -364,30 +364,30 @@ RSpec.describe CharactersController, type: :request do
         get skills_character_path(character)
 
         expect(response).to have_http_status(:success)
-        expect(response.body).to include("Skills")
-        expect(response.body).to include("Combat points:")
-        expect(response.body).to include("Peace points:")
+        expect(response.body).to include(I18n.t("game.profile.skills_title", name: character.name))
+        expect(response.body).to include(I18n.t("game.profile.combat_points"))
+        expect(response.body).to include(I18n.t("game.profile.peace_points"))
       end
 
       it "shows source-backed skills" do
         get skills_character_path(character)
 
-        expect(response.body).to include("Wanderer")
-        expect(response.body).to include("Unarmed Combat")
+        expect(response.body).to include(Game::Skills::PassiveSkillRegistry.display_name(Game::Skills::PassiveSkillRegistry.find(:wanderer)))
+        expect(response.body).to include(Game::Skills::PassiveSkillRegistry.display_name(Game::Skills::PassiveSkillRegistry.find(:unarmed_combat)))
       end
 
       it "shows available skill points count" do
         get skills_character_path(character)
 
         # Default character has combat_skill_points: 5 and peace_skill_points: 5
-        expect(response.body).to include("Combat points:")
+        expect(response.body).to include(I18n.t("game.profile.combat_points"))
       end
 
       it "shows skill categories" do
         get skills_character_path(character)
 
-        expect(response.body).to include("Combat Skills")
-        expect(response.body).to include("Peace Skills")
+        expect(response.body).to include(Game::Skills::PassiveSkillRegistry.categories.fetch(:combat).fetch(:name))
+        expect(response.body).to include(Game::Skills::PassiveSkillRegistry.categories.fetch(:peace_world).fetch(:name))
       end
     end
 
@@ -474,7 +474,7 @@ RSpec.describe CharactersController, type: :request do
         }
 
         follow_redirect!
-        expect(response.body).to include("Skills saved")
+        expect(response.body).to include(I18n.t("game.flashes.skills_saved"))
       end
 
       it "clears passive skill calculator cache" do
@@ -539,7 +539,7 @@ RSpec.describe CharactersController, type: :request do
 
         expect(response).to redirect_to(root_path)
         follow_redirect!
-        expect(response.body).to include("Not enough combat points")
+        expect(response.body).to include(I18n.t("game.flashes.alloc_not_enough_combat_points"))
         character.reload
         expect(character.combat_skill_points).to eq(1)  # unchanged
       end
@@ -551,7 +551,7 @@ RSpec.describe CharactersController, type: :request do
 
         expect(response).to redirect_to(root_path)
         follow_redirect!
-        expect(response.body).to include("No skills selected")
+        expect(response.body).to include(I18n.t("game.flashes.alloc_no_skills"))
       end
     end
 
@@ -567,7 +567,7 @@ RSpec.describe CharactersController, type: :request do
 
         expect(response).to redirect_to(root_path)
         follow_redirect!
-        expect(response.body).to include("No skills selected")
+        expect(response.body).to include(I18n.t("game.flashes.alloc_no_skills"))
       end
 
       it "handles string values by converting to integer" do
@@ -599,7 +599,7 @@ RSpec.describe CharactersController, type: :request do
 
         expect(response).to redirect_to(root_path)
         follow_redirect!
-        expect(response.body).to include("No skills selected")
+        expect(response.body).to include(I18n.t("game.flashes.alloc_no_skills"))
       end
 
       it "handles empty allocated_skills hash" do
@@ -609,7 +609,7 @@ RSpec.describe CharactersController, type: :request do
 
         expect(response).to redirect_to(root_path)
         follow_redirect!
-        expect(response.body).to include("No skills selected")
+        expect(response.body).to include(I18n.t("game.flashes.alloc_no_skills"))
       end
 
       it "handles missing allocated_skills param" do
@@ -617,7 +617,7 @@ RSpec.describe CharactersController, type: :request do
 
         expect(response).to redirect_to(root_path)
         follow_redirect!
-        expect(response.body).to include("No skills selected")
+        expect(response.body).to include(I18n.t("game.flashes.alloc_no_skills"))
       end
     end
 
@@ -664,7 +664,7 @@ RSpec.describe CharactersController, type: :request do
 
         expect(response).to redirect_to(root_path)
         follow_redirect!
-        expect(response.body).to include("Not enough combat points")
+        expect(response.body).to include(I18n.t("game.flashes.alloc_not_enough_combat_points"))
       end
     end
 
@@ -727,12 +727,13 @@ RSpec.describe CharactersController, type: :request do
 
     it "renders the captured binary perk and separate point pool" do
       get perks_character_path(character)
+      perk = Game::Skills::PerkRegistry.find(:more_strength)
 
       expect(response).to have_http_status(:success)
-      expect(response.body).to include("Possible new perks:")
-      expect(response.body).to include("More Strength")
-      expect(response.body).to include("Source #7")
-      expect(response.body).to include("Adds one effective Strength for every two character levels, rounded down.")
+      expect(response.body).to include(I18n.t("game.profile.possible_perks"))
+      expect(response.body).to include(Game::Skills::PerkRegistry.display_name(perk))
+      expect(response.body).to include(I18n.t("game.profile.perk_source", id: 7))
+      expect(response.body).to include(Game::Skills::PerkRegistry.display_description(perk))
     end
 
     it "requires authentication" do
@@ -778,7 +779,7 @@ RSpec.describe CharactersController, type: :request do
 
       expect(response).to redirect_to(perks_character_path(character))
       follow_redirect!
-      expect(response.body).to include("Unknown perk selection")
+      expect(response.body).to include(I18n.t("game.flashes.alloc_unknown_perk"))
       expect(character.reload.perk_points).to eq(1)
     end
 
@@ -833,7 +834,7 @@ RSpec.describe CharactersController, type: :request do
 
       expect(response.media_type).to eq("text/vnd.turbo-stream.html")
       expect(response.body).to include("perk-allocation")
-      expect(response.body).to include("Perks saved")
+      expect(response.body).to include(I18n.t("game.flashes.perks_saved"))
     end
 
     it "returns a turbo stream error without changing state" do
@@ -843,7 +844,7 @@ RSpec.describe CharactersController, type: :request do
 
       expect(response).to have_http_status(:success)
       expect(response.media_type).to eq("text/vnd.turbo-stream.html")
-      expect(response.body).to include("Unknown perk selection")
+      expect(response.body).to include(I18n.t("game.flashes.alloc_unknown_perk"))
       expect(character.reload.perk_points).to eq(1)
     end
 

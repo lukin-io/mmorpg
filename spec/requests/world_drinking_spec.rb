@@ -32,7 +32,7 @@ RSpec.describe "Current-cell drinking", type: :request do
   it "offers Drink at the fatigue lock boundary and uses server recovery despite forged values" do
     character.update!(fatigue_percent: 86)
     offer = offer_drink
-    expect(WorldActionOffer.offered.where(character:).pluck(:action_type)).to eq(["drink"])
+    expect(WorldActionOffer.offered.where(character:).pluck(:action_type)).to eq([I18n.t("game.world.local_action.drinking.label")])
     expect(MovementCommand.offered.where(character:)).to be_empty
 
     drink(offer, extra: {fatigue_recovery_points: 100, duration_seconds: 0})
@@ -41,7 +41,7 @@ RSpec.describe "Current-cell drinking", type: :request do
     expect(character.reload.fatigue_percent).to eq(84)
     expect(offer.reload.local_action_ends_at).to eq(Time.current + 60.seconds)
     follow_redirect!
-    expect(Nokogiri::HTML(response.body).css("dialog").text).to include("Everything went well.")
+    expect(Nokogiri::HTML(response.body).css("dialog").text).to include(I18n.t("game.world.local_action.drinking.message"))
     expect(WorldActionOffer.offered.where(character:)).to be_empty
     expect(MovementCommand.offered.where(character:)).to be_empty
   end

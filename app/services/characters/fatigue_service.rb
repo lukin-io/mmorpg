@@ -24,7 +24,7 @@ module Characters
 
     def increase!(amount:, at: Time.current)
       points = Integer(amount, exception: false)
-      raise ArgumentError, "Fatigue increase must be a positive integer" unless points&.positive?
+      raise ArgumentError, I18n.t("errors.fatigue_increase_positive") unless points&.positive?
 
       character.with_lock do
         character.reload
@@ -39,7 +39,7 @@ module Characters
     # owning action must serialize and record its one-time effect with its offer.
     def recover!(amount:, at: Time.current)
       unless amount.is_a?(Integer) && amount.positive?
-        raise ArgumentError, "Fatigue recovery must be a positive integer"
+        raise ArgumentError, I18n.t("errors.fatigue_recovery_positive")
       end
 
       character.with_lock do

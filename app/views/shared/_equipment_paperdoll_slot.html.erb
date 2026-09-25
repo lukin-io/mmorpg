@@ -14,6 +14,7 @@
 <% interactive = local_assigns.fetch(:interactive, false) %>
 <% item = equipment[slot.key] || equipment[slot.key.to_sym] %>
 <% artwork = item_artwork_path(item.item_template) if item&.item_template %>
+<% slot_label = EquipmentSlots.label_for(slot.key) %>
 <%
   classes = ["nl-doll-slot", "nl-doll-slot--#{slot.key}"]
   classes << "nl-doll-slot--filled" if item
@@ -37,27 +38,27 @@
         method: :post,
         class: classes.join(" "),
         style: size,
-        title: paperdoll_slot_tooltip(item, slot.label),
-        aria: {label: "Remove #{item.item_template&.name || slot.label} from #{slot.label}"},
+        title: paperdoll_slot_tooltip(item, slot_label),
+        aria: {label: t("game.common.remove_aria", item: item.item_template&.display_name || slot_label, slot: slot_label)},
         form: {class: "nl-doll-slot-form"} do %>
     <% if artwork %>
-      <%= image_tag artwork, width: slot.width, height: slot.height, alt: item.item_template.name, class: "nl-doll-slot-artwork" %>
+      <%= image_tag artwork, width: slot.width, height: slot.height, alt: item.item_template.display_name, class: "nl-doll-slot-artwork" %>
     <% else %>
-      <span class="nl-doll-slot-name"><%= item.item_template&.name %></span>
+      <span class="nl-doll-slot-name"><%= item.item_template&.display_name %></span>
     <% end %>
     <span class="nl-doll-slot-wear" style="width: <%= inventory_item_durability_percent(item) %>%" aria-hidden="true"></span>
   <% end %>
 <% elsif item %>
-  <span class="<%= classes.join(" ") %>" style="<%= size %>" title="<%= paperdoll_slot_tooltip(item, slot.label) %>">
+  <span class="<%= classes.join(" ") %>" style="<%= size %>" title="<%= paperdoll_slot_tooltip(item, slot_label) %>">
     <% if artwork %>
-      <%= image_tag artwork, width: slot.width, height: slot.height, alt: item.item_template.name, class: "nl-doll-slot-artwork" %>
+      <%= image_tag artwork, width: slot.width, height: slot.height, alt: item.item_template.display_name, class: "nl-doll-slot-artwork" %>
     <% else %>
-      <span class="nl-doll-slot-name"><%= item.item_template&.name %></span>
+      <span class="nl-doll-slot-name"><%= item.item_template&.display_name %></span>
     <% end %>
     <span class="nl-doll-slot-wear" style="width: <%= inventory_item_durability_percent(item) %>%" aria-hidden="true"></span>
   </span>
 <% else %>
-  <span class="<%= classes.join(" ") %>" style="<%= size %>" title="<%= slot.label %>">
-    <span class="nl-doll-slot-empty"><%= slot.label %></span>
+  <span class="<%= classes.join(" ") %>" style="<%= size %>" title="<%= slot_label %>">
+    <span class="nl-doll-slot-empty"><%= slot_label %></span>
   </span>
 <% end %>

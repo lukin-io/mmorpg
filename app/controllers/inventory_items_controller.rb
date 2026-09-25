@@ -7,6 +7,7 @@ class InventoryItemsController < ApplicationController
 
   before_action :ensure_active_character!
   around_action :with_available_outdoor_actions
+  rescue_from ActiveRecord::RecordNotFound, with: :item_missing
 
   # DELETE /inventory/items/:id
   def destroy
@@ -16,16 +17,26 @@ class InventoryItemsController < ApplicationController
     if result[:success]
       redirect_to inventory_redirect_path, notice: result[:message]
     else
-      redirect_to inventory_redirect_path, alert: result[:error]
+      redirect_to inventory_redirect_path(item_denied: 1), alert: result[:error]
     end
   end
 
   private
 
-  def inventory_redirect_path
-    category = params[:category].presence
-    return inventory_path if category.blank? || category == "all"
+  def item_missing
+    redirect_to inventory_path(item_denied: 1),
+      alert: I18n.t("game.inventory.item_not_found"),
+      status: :see_other
+  end
 
-    inventory_path(category:, subcategory: params[:subcategory], info: params[:info])
+  def inventory_redirect_path(**extra)
+    category = params[:category].presence
+    base =
+      if category.blank? || category == "all"
+        {}
+      else
+        {category:, subcategory: params[:subcategory], info: params[:info]}
+      end
+    inventory_path(**base.merge(extra.compact))
   end
 end

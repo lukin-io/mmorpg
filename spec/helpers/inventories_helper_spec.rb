@@ -20,4 +20,19 @@ RSpec.describe InventoriesHelper, type: :helper do
       end
     end
   end
+
+  describe "#equipment_comparison_rows" do
+    it "shows compact shop, craft, and premium tiers for crafted gear" do
+      template = build_stubbed(:item_template, key: "ash_ranger_jacket", item_type: "equipment", base_price: 276)
+
+      expect(helper.equipment_comparison_rows(template)).to include(
+        [I18n.t("game.details.compare_craft"), "276 NV · 100%"]
+      )
+      expect(helper.equipment_comparison_rows(template).map(&:first)).to contain_exactly(
+        I18n.t("game.details.compare_shop"),
+        I18n.t("game.details.compare_craft"),
+        I18n.t("game.details.compare_premium")
+      )
+    end
+  end
 end

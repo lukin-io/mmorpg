@@ -1,6 +1,7 @@
 <%# Players list for the floating panel %>
 <% players = @players_here || [] %>
-<div data-player-list-count="<%= @presence_player_count || players.size %>" data-player-list-location="<%= @presence_location_label || @position&.zone&.name || 'Unknown' %>" data-player-list-total="<%= @total_online.to_i %>">
+<% viewer = local_assigns[:viewer] || (defined?(current_character) ? current_character : nil) %>
+<div data-player-list-count="<%= @presence_player_count || players.size %>" data-player-list-location="<%= @presence_location_label || @position&.zone&.name || t("game.profile.unknown_location") %>" data-player-list-total="<%= @total_online.to_i %>">
   <% players.each do |player| %>
     <div class="nl-player-entry">
       <span class="nl-player-arrow">&gt;</span>
@@ -10,9 +11,48 @@
         <span class="nl-player-icon">&gt;</span>
       <% end %>
       <a href="<%= player_path(name: player.name) %>" class="nl-player-name-link"><%= player.name %></a><span class="nl-player-lvl">[<%= player.level %>]</span><span class="nl-player-status">g</span>
+      <% if viewer.present? && viewer.id != player.id && Game::World::StartPlayerAssault.offerable?(attacker: viewer, defender: player) %>
+        <% if Game::World::StartPlayerAssault.has_trauma_scroll?(viewer) %>
+          <% preferred = viewer.metadata.to_h["preferred_assault_scroll_kind"].presence || "normal" %>
+          <%= button_to t("game.world.assault_cta"),
+                world_assault_path,
+                method: :post,
+                params: {defender_id: player.id, assault_scroll_kind: preferred},
+                class: "nl-assault-btn",
+                form: {class: "nl-assault-form", data: {turbo: false}},
+                title: t("game.world.assault_hint_kind", kind: t("game.combat.assault_kind.#{preferred}")) %>
+        <% else %>
+          <button type="button"
+                  class="nl-assault-btn nl-assault-btn--blocked"
+                  disabled
+                  title="<%= t("game.world.assault_need_scroll") %>">
+            <%= t("game.world.assault_cta") %>
+          </button>
+          <span class="nl-quests-board__meta" data-assault-need-scroll="1">
+            <%= link_to t("game.inventory.scrolls_block_title"),
+                  inventory_path(category: "things", subcategory: "scrolls"),
+                  class: "nl-sheet-link",
+                  data: {assault_recovery: "inventory"} %>
+            <% if Game::World::CityBuildingCatalog.accessible?(character: viewer, building_key: "hospital") %>
+              ·
+              <%= link_to t("game.buildings.hospital_title_short"),
+                    city_building_path("hospital", anchor: "hospital-premium-desk"),
+                    class: "nl-sheet-link",
+                    data: {assault_recovery: "hospital"} %>
+            <% else %>
+              ·
+              <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {assault_recovery: "world"} %>
+            <% end %>
+          </span>
+        <% end %>
+      <% end %>
     </div>
   <% end %>
   <% if players.empty? %>
-    <div class="nl-no-players">No players nearby</div>
+    <div class="nl-no-players" data-presence-empty="1">
+      <%= t("game.world.no_players") %>
+      ·
+      <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {presence_recovery: "world"} %>
+    </div>
   <% end %>
 </div>

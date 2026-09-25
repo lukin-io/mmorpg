@@ -5,7 +5,7 @@ if defined?(Zone)
     {name: node["zone_name"], location_type: "city", width: 10, height: 10}
   end
   zones = city_zones + [
-    {name: "Outpost Surroundings", location_type: "outdoor", width: 1000, height: 1000}
+    {name: "Пепельный Берег", location_type: "outdoor", width: 1000, height: 1000}
   ]
 
   zones.each do |attrs|
@@ -26,7 +26,7 @@ if defined?(SpawnPoint) && defined?(Zone)
     name: Game::World::CityCatalog.node(Game::World::CityCatalog::STARTER_NODE_KEY)["zone_name"]
   )
 
-  seeded_world_zones = Zone.where(name: city_zone_names + ["Outpost Surroundings"])
+  seeded_world_zones = Zone.where(name: city_zone_names + ["Пепельный Берег"])
   SpawnPoint.where(zone: seeded_world_zones.or(Zone.where(id: forpost_city_zones.map(&:id)))).delete_all
   if central_square
     spawn = SpawnPoint.find_or_initialize_by(zone: central_square, x: 0, y: 0)

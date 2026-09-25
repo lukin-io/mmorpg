@@ -16,7 +16,7 @@ RSpec.describe "World timer-frame result delivery", type: :system, js: true do
     visit world_path
     expect(page).to have_css(".nl-map-container[data-viewport-ready='true']")
     buffer_size = page.all(".nl-map-tile", visible: :all).size
-    expect(page).to have_button("Look Around")
+    expect(page).to have_button(I18n.t("game.world.local_action.resource_search.label"))
     page.execute_script("window.pendingResultMapCell = document.getElementById('tile_20_20')")
     page.evaluate_async_script(<<~JS)
       const done = arguments[arguments.length - 1]
@@ -32,7 +32,7 @@ RSpec.describe "World timer-frame result delivery", type: :system, js: true do
       document.querySelector('[data-nl-world-map-target="refreshForm"]').requestSubmit()
     JS
 
-    expect(page).to have_css('dialog[open]', text: "There is no useful vegetation in this area.")
+    expect(page).to have_css('dialog[open]', text: I18n.t("game.world.local_action.resource_search.message"))
     expect(page).to have_css(".nl-map-tile", count: buffer_size)
     expect(page).to have_css('.nl-map-container[data-nl-world-map-work-active-value="true"]')
     expect(page).to have_css('body.nl-game-layout', count: 1)
@@ -50,7 +50,7 @@ RSpec.describe "World timer-frame result delivery", type: :system, js: true do
       document.querySelector('[data-nl-world-map-target="refreshForm"]').requestSubmit()
     JS
     expect(page).to have_css('.nl-map-container[data-nl-world-map-work-active-value="false"]')
-    expect(page).to have_css('dialog[open]', text: "There is no useful vegetation in this area.")
+    expect(page).to have_css('dialog[open]', text: I18n.t("game.world.local_action.resource_search.message"))
     expect(page.evaluate_script("window.pendingResultDialog === document.querySelector('dialog[open]')")).to be(true)
     expect(action.reload).to be_completed
   end
@@ -61,10 +61,10 @@ RSpec.describe "World timer-frame result delivery", type: :system, js: true do
     login_as(user, scope: :user)
     visit world_path
     expect(page).to have_css(".nl-map-container[data-viewport-ready='true']")
-    click_button "Drink"
+    click_button I18n.t("game.world.local_action.drinking.label")
 
-    expect(page).to have_css('dialog[open]', text: "Everything went well.")
-    expect(page).to have_button("Drink", disabled: true)
+    expect(page).to have_css('dialog[open]', text: I18n.t("game.world.local_action.drinking.message"))
+    expect(page).to have_button(I18n.t("game.world.local_action.drinking.label"), disabled: true)
     expect(page).to have_css(".nl-map-container[data-viewport-ready='true']")
     page.execute_script(<<~JS)
       window.drinkResultDialog = document.querySelector('dialog[open]')
@@ -78,8 +78,8 @@ RSpec.describe "World timer-frame result delivery", type: :system, js: true do
         Date.now = () => originalNow() + 61000
       JS
       expect(page).to have_css('.nl-map-container[data-nl-world-map-work-active-value="false"]')
-      expect(page).to have_button("Drink", disabled: false)
-      expect(page).to have_css('dialog[open]', text: "Everything went well.")
+      expect(page).to have_button(I18n.t("game.world.local_action.drinking.label"), disabled: false)
+      expect(page).to have_css('dialog[open]', text: I18n.t("game.world.local_action.drinking.message"))
       expect(page.evaluate_script("window.drinkResultDialog === document.querySelector('dialog[open]')")).to be(true)
       expect(page.evaluate_script("window.drinkResultMapCell === document.getElementById('tile_20_20')")).to be(true)
       expect(action.reload).to be_completed

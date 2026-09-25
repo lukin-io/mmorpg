@@ -3,7 +3,7 @@
     <div class="char-avatar"></div>
     <div class="char-identity">
       <h2 class="char-name"><%= character.name %></h2>
-      <p class="char-class">Lv.<%= character.level %></p>
+      <p class="char-class"><%= t("game.common.level") %>.<%= character.level %></p>
     </div>
   </div>
 
@@ -25,15 +25,15 @@
 
   <div class="char-stats-grid">
     <div class="char-stat">
-      <span class="char-stat-label">STR</span>
+      <span class="char-stat-label"><%= t("game.fight.str_short") %></span>
       <span class="char-stat-value"><%= character.stats.get(:strength) %></span>
     </div>
     <div class="char-stat">
-      <span class="char-stat-label">DEX</span>
+      <span class="char-stat-label"><%= t("game.fight.dex_short") %></span>
       <span class="char-stat-value"><%= character.stats.get(:dexterity) %></span>
     </div>
     <div class="char-stat">
-      <span class="char-stat-label">LCK</span>
+      <span class="char-stat-label"><%= t("game.fight.luck_short") %></span>
       <span class="char-stat-value"><%= character.stats.get(:luck) %></span>
     </div>
     <div class="char-stat">
@@ -41,7 +41,7 @@
       <span class="char-stat-value"><%= character.stats.get(:vitality) %></span>
     </div>
     <div class="char-stat">
-      <span class="char-stat-label">KNW</span>
+      <span class="char-stat-label"><%= t("game.fight.int_short") %></span>
       <span class="char-stat-value"><%= character.stats.get(:intelligence) %></span>
     </div>
   </div>

@@ -1,6 +1,6 @@
 <% if record.errors.any? %>
   <div class="nl-manage-errors" role="alert">
-    <strong><%= pluralize(record.errors.count, "error") %> prevented this change:</strong>
+    <strong><%= t("manage.views.errors_prevented", count: record.errors.count) %></strong>
     <ul>
       <% record.errors.full_messages.each do |message| %>
         <li><%= message %></li>

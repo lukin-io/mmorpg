@@ -61,20 +61,20 @@ RSpec.describe TileNpc, type: :model do
       expect(build(:tile_npc, :single_npc_encounter)).to be_valid
     end
 
-    it "accepts the source maximum of ten members for fixed counts and roster samples" do
+    it "accepts the source maximum of twenty members for fixed counts and roster samples" do
       npc = build(:tile_npc, metadata: {
-        "encounter_count" => 10,
+        "encounter_count" => 20,
         "encounter_rosters" => [
-          {"key" => "capacity-boundary", "members" => Array.new(10) { {"npc_key" => "rat"} }}
+          {"key" => "capacity-boundary", "members" => Array.new(20) { {"npc_key" => "rat"} }}
         ]
       })
 
       expect(npc).to be_valid
-      expect(npc.encounter_size).to eq(10)
+      expect(npc.encounter_size).to eq(20)
     end
 
     it "rejects null, zero, and oversized encounter counts" do
-      [nil, 0, 11].each do |count|
+      [nil, 0, 21].each do |count|
         npc = build(:tile_npc, metadata: {"encounter_count" => count})
 
         expect(npc).not_to be_valid
@@ -108,7 +108,7 @@ RSpec.describe TileNpc, type: :model do
         nil,
         [],
         [{"key" => "empty", "members" => []}],
-        [{"key" => "large", "members" => Array.new(11) { {"npc_key" => "rat"} }}],
+        [{"key" => "large", "members" => Array.new(21) { {"npc_key" => "rat"} }}],
         [
           {"key" => "duplicate", "members" => [{"npc_key" => "rat"}]},
           {"key" => "duplicate", "members" => [{"npc_key" => "rat"}]}
@@ -137,14 +137,16 @@ RSpec.describe TileNpc, type: :model do
 
       expect(npc).not_to be_valid
       expect(npc.errors[:metadata]).to include(
-        "encounter roster member npc_key is required",
-        "level must be a non-negative integer",
-        "hp must be a positive integer",
-        "encounter roster member metadata must be an object",
-        "encounter_experience_reward must be a non-negative integer",
-        "trauma_percent must be between 0 and 100"
+        I18n.t("manage.encounter_roster_npc_key_required"),
+        I18n.t("manage.level_non_negative"),
+        I18n.t("manage.positive_integer_field", key: "hp"),
+        I18n.t("manage.encounter_roster_member_metadata_object"),
+        I18n.t("manage.non_negative_integer_field", key: "encounter_experience_reward"),
+        I18n.t("manage.percent_field", key: "trauma_percent")
       )
-      expect(npc.errors[:metadata]).to include(match(/passive delay window must have positive ordered bounds/))
+      expect(npc.errors[:metadata]).to include(
+        I18n.t("manage.passive_delay_window_bounds", max: TileNpc::MAX_PASSIVE_DELAY_SECONDS)
+      )
     end
   end
 
@@ -222,6 +224,19 @@ RSpec.describe TileNpc, type: :model do
         expect(npc.defeat!(character)).to be true
 
         expect(npc.respawns_at).to eq(2.hours.from_now)
+      end
+    end
+
+    it "lazy-respawns when the authored timer has elapsed" do
+      npc.npc_template.update!(metadata: {"respawn_seconds" => 45, "respawn_variance_seconds" => 0})
+
+      travel_to Time.zone.local(2026, 5, 21, 12, 0, 0) do
+        expect(npc.defeat!(character)).to be true
+      end
+
+      travel_to Time.zone.local(2026, 5, 21, 12, 1, 0) do
+        expect(npc.alive?).to be true
+        expect(npc.reload).to have_attributes(defeated_at: nil, current_hp: npc.max_hp)
       end
     end
   end

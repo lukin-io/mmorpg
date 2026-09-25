@@ -14,7 +14,7 @@ module VerifiedEmailRequired
 
     respond_to do |format|
       format.html do
-        redirect_to root_path, alert: "Verify your email to access this feature."
+        redirect_to root_path, alert: I18n.t("game.flashes.verify_email")
       end
       format.turbo_stream { head :forbidden }
       format.json { render json: {error: "email_not_verified"}, status: :forbidden }

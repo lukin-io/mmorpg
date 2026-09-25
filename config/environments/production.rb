@@ -58,8 +58,14 @@ Rails.application.configure do
   # Set this to true and configure the email server for immediate delivery to raise delivery errors.
   # config.action_mailer.raise_delivery_errors = false
 
+  # Railway sandbox has no SMTP. Keep registration from crashing on confirmation mail.
+  if ENV["SANDBOX_OPEN_AUTH"] == "1"
+    config.action_mailer.delivery_method = :test
+    config.action_mailer.raise_delivery_errors = false
+  end
+
   # Set host to be used by links generated in mailer templates.
-  config.action_mailer.default_url_options = {host: "example.com"}
+  config.action_mailer.default_url_options = {host: ENV.fetch("RAILWAY_PUBLIC_DOMAIN", "example.com")}
 
   # Specify outgoing SMTP server. Remember to add smtp/* credentials via bin/rails credentials:edit.
   # config.action_mailer.smtp_settings = {

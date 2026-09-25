@@ -54,8 +54,8 @@ RSpec.describe "Open-world regions", type: :request do
         y: position.y,
         metadata: {
           "local_actions" => [
-            {"type" => "resource_search", "source_id" => "look", "label" => "Look Around"},
-            {"type" => "fishing", "source_id" => "fis", "label" => "Fish"},
+            {"type" => "resource_search", "source_id" => "look", "label" => I18n.t("game.world.local_action.resource_search.label")},
+            {"type" => "fishing", "source_id" => "fis", "label" => I18n.t("game.world.local_action.fishing.label")},
             {"type" => "digging", "source_id" => "dig", "label" => "Dig"}
           ]
         }
@@ -70,9 +70,9 @@ RSpec.describe "Open-world regions", type: :request do
       offers = WorldActionOffer.offered.where(character:)
       expect(response).to have_http_status(:success)
       expect(response.body).not_to include(tile_npc.display_name)
-      expect(response.body).to include("Look Around")
-      expect(response.body).to include('value="Fish"')
-      expect(response.body).not_to include('value="Dig"')
+      expect(response.body).to include(I18n.t("game.world.local_action.resource_search.label"))
+      expect(response.body).to include(I18n.t("game.world.local_action.fishing.label"))
+      expect(response.body).not_to include(%(value="#{I18n.t("game.world.local_action.digging.label")}"))
       expect(offers.pluck(:action_type)).to contain_exactly("search_resources", "fish")
       expect(offers.find_by(action_type: "search_resources")).to have_attributes(target: tile)
       expect(offers.find_by(action_type: "fish")).to have_attributes(target: tile)

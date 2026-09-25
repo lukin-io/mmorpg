@@ -22,12 +22,25 @@ RSpec.describe "Inventories", type: :request do
       expect(response.body).to include('<body class="nl-game-layout"')
     end
 
+    it "guides deferred player sales toward Shop Sell instead of a live form" do
+      item_template = create(:item_template, name: "Pocket Knife", item_type: "equipment", slot: "main_hand")
+      create(:inventory_item, inventory:, item_template:)
+
+      get inventory_path
+
+      expect(response).to have_http_status(:success)
+      expect(response.body).to include('data-inventory-player-sell="deferred"')
+      expect(response.body).to include(I18n.t("game.inventory.player_sales_unavailable"))
+      expect(response.body).to include(I18n.t("game.inventory.player_sales_shop_cta"))
+      expect(response.body).not_to include(sell_to_player_inventory_path)
+    end
+
     it "displays inventory slots and weight" do
       get inventory_path
 
-      expect(response.body).to include("Inventory")
-      expect(response.body).to include("Inventory mass")
-      expect(response.body).to include("Inventory categories")
+      expect(response.body).to include(I18n.t("game.inventory.title"))
+      expect(response.body).to include(I18n.t("game.inventory.mass_label"))
+      expect(response.body).to include(I18n.t("game.inventory.categories_aria"))
       expect(response.body).to include("nl-icon-strip-item")
       expect(response.body).not_to include("assets/neverlands")
       expect(response.body).not_to include("nl-inventory-empty-slot")
@@ -36,6 +49,26 @@ RSpec.describe "Inventories", type: :request do
     context "with items in inventory" do
       let(:item_template) { create(:item_template, name: "Pocket Knife", item_type: "equipment", slot: "main_hand") }
       let!(:inventory_item) { create(:inventory_item, inventory: inventory, item_template: item_template) }
+
+      it "marks broken durable items in the grid" do
+        blade = create(:item_template, :durable, name: "Cracked Blade", item_type: "equipment", slot: "main_hand")
+        create(
+          :inventory_item,
+          inventory: inventory,
+          item_template: blade,
+          properties: {"current_durability" => 0, "max_durability" => 10}
+        )
+
+        get inventory_path
+
+        html = Nokogiri::HTML(response.body)
+        row = html.at_css('.nl-inventory-item[data-inventory-broken="1"]')
+        expect(row).to be_present
+        expect(row["class"]).to include("nl-inventory-item--broken")
+        expect(response.body).to include(I18n.t("game.inventory.item_broken"))
+        expect(html.at_css(".nl-inventory-broken-badge").text).to eq(I18n.t("game.inventory.item_broken"))
+        expect(html.at_css('[data-inventory-repair="deferred"]')).to be_present
+      end
 
       it "displays items in the grid" do
         get inventory_path
@@ -61,9 +94,9 @@ RSpec.describe "Inventories", type: :request do
     it "renders Neverlands inventory family empty states" do
       get inventory_path(category: "alchemy")
 
-      expect(response.body).to include("Alchemy Inventory")
-      expect(response.body).to include("Alchemy Resources")
-      expect(response.body).to include("No alchemy inventory items available.")
+      expect(response.body).to include(I18n.t("game.inventory.item_types.alchemy_inventory"))
+      expect(response.body).to include(I18n.t("game.inventory.item_types.alchemy_resources"))
+      expect(response.body).to include(I18n.t("game.inventory.item_types.alchemy_inventory_empty"))
     end
 
     it "shows unmet requirements and hides wear action" do
@@ -74,8 +107,8 @@ RSpec.describe "Inventories", type: :request do
       get inventory_path
 
       expect(response.body).to include("Mage Dagger")
-      expect(response.body).to include("Requirements not met")
-      expect(response.body).not_to include("Wear")
+      expect(response.body).to include(I18n.t("game.inventory.requirements_not_met", list: ""))
+      expect(response.body).not_to include(I18n.t("game.common.wear"))
     end
 
     it "flattens nested Neverlands-style stat and skill requirements" do
@@ -86,9 +119,9 @@ RSpec.describe "Inventories", type: :request do
       get inventory_path
 
       expect(response.body).to include("Hunter Knife")
-      expect(response.body).to include("Knowledge")
-      expect(response.body).to include("Knife Skill")
-      expect(response.body).to include("current 0")
+      expect(response.body).to include(I18n.t("game.details.knowledge"))
+      expect(response.body).to include(I18n.t("game.skills.knife_skill"))
+      expect(response.body).to include(I18n.t("game.inventory.requirement_label", name: "x", required: 1, current: 0).split("(").last.sub(")", ""))
     end
 
     it "renders equipped items only in the equipment doll, not as carried rows" do
@@ -102,13 +135,13 @@ RSpec.describe "Inventories", type: :request do
       page = Nokogiri::HTML(response.body)
       expect(page.css(".nl-doll-slot--ring_1").text).to include("Knowledge Ring")
       expect(page.css(".nl-inventory-list").text).not_to include("Knowledge Ring")
-      expect(response.body).to include("Remove all gear")
+      expect(response.body).to include(I18n.t("game.inventory.strip_title"))
     end
 
     it "does not show bulk unequip when no items are equipped" do
       get inventory_path
 
-      expect(response.body).not_to include("Remove all gear")
+      expect(response.body).not_to include(I18n.t("game.inventory.strip_title"))
     end
   end
 
@@ -332,8 +365,8 @@ RSpec.describe "Inventories", type: :request do
         price: "12.50"
       }
 
-      expect(response).to redirect_to(inventory_path)
-      expect(flash[:alert]).to eq("Player sales are currently unavailable.")
+      expect(response).to redirect_to(inventory_path(transfer_denied: 1))
+      expect(flash[:alert]).to eq(I18n.t("game.inventory.player_sales_unavailable"))
       expect(user.currency_wallet.reload.nv_balance).to eq(0)
       expect(recipient_user.currency_wallet.reload.nv_balance).to eq(12.75)
       expect(inventory_item.reload.quantity).to eq(2)
@@ -350,7 +383,7 @@ RSpec.describe "Inventories", type: :request do
 
       post sell_to_player_inventory_path, params: {item_id: inventory_item.id, recipient_name: "receiver", price: "1.00"}
 
-      expect(flash[:alert]).to eq("Trade license required.")
+      expect(flash[:alert]).to eq(I18n.t("game.inventory.trade_license_required"))
       expect(inventory_item.reload.quantity).to eq(2)
       expect(recipient.inventory.inventory_items).to be_empty
     end
@@ -362,7 +395,7 @@ RSpec.describe "Inventories", type: :request do
 
       post sell_to_player_inventory_path, params: {item_id: inventory_item.id, recipient_name: "receiver", price: "1.00"}
 
-      expect(flash[:alert]).to eq("Trade license required.")
+      expect(flash[:alert]).to eq(I18n.t("game.inventory.trade_license_required"))
       expect(inventory_item.reload.quantity).to eq(2)
       expect(recipient.inventory.inventory_items).to be_empty
     end

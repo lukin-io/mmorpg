@@ -1,0 +1,58 @@
+<%#
+  Combat scrolls block inside Character (things) inventory — buy / use without
+  running to the Infirmary for every activation.
+%>
+<% Game::Professions::Templates.ensure_craft_items! %>
+<% scroll_keys = Game::Shop::PremiumScrollPurchase::OFFERINGS.keys.reject { |k| k == "combat_trauma_scroll" } %>
+<% preferred = current_character.metadata.to_h["preferred_assault_scroll_kind"].presence || "normal" %>
+<% marks = current_character.user.currency_wallet&.veil_marks.to_i %>
+<aside class="nl-inventory-scrolls" data-inventory-scrolls="1" data-preferred-assault="<%= preferred %>">
+  <h2 class="nl-sheet-subtitle"><%= t("game.inventory.scrolls_block_title") %></h2>
+  <p class="nl-quests-board__meta"><%= t("game.inventory.scrolls_block_lead") %></p>
+  <div class="nl-handbook__grid">
+    <% scroll_keys.each do |item_key| %>
+      <% template = ItemTemplate.find_by(key: item_key) %>
+      <% next unless template %>
+      <% owned = Game::Combat::AssaultScrolls.quantity(current_character, item_key) %>
+      <% price = Game::Shop::PremiumScrollPurchase::OFFERINGS.fetch(item_key) %>
+      <% stack = current_character.inventory&.inventory_items&.find_by(item_template: template, equipped: false) %>
+      <article class="nl-handbook__card"
+               data-inventory-scroll-key="<%= item_key %>"
+               data-inventory-scroll-owned="<%= owned %>">
+        <h3><%= t("game.buildings.premium_item.#{item_key}", default: template.name) %></h3>
+        <p class="nl-quests-board__meta">
+          <%= t("game.buildings.premium_owned", count: owned) %>
+          ·
+          <%= price %> VM
+        </p>
+        <div class="nl-inventory-scrolls__actions">
+          <% if owned.positive? && stack.present? %>
+            <%= button_to t("game.common.use"),
+                  use_inventory_path(category: @category, subcategory: @subcategory, info: @info_mode),
+                  method: :post,
+                  params: {item_id: stack.id},
+                  class: "lbut",
+                  form: {data: {turbo: false}} %>
+          <% end %>
+          <% if marks >= price %>
+            <%= button_to t("game.buildings.premium_buy_cta", amount: price),
+                  buy_scroll_inventory_path(category: @category, subcategory: @subcategory, info: @info_mode),
+                  method: :post,
+                  params: {item_key: item_key},
+                  class: "lbut",
+                  form: {data: {turbo: false}} %>
+          <% else %>
+            <button type="button" class="lbut" disabled title="<%= t("game.buildings.premium_short", amount: price) %>">
+              <%= t("game.buildings.premium_buy_cta", amount: price) %>
+            </button>
+          <% end %>
+        </div>
+      </article>
+    <% end %>
+  </div>
+  <% if Game::Combat::AssaultScrolls.quantity(current_character, Game::Combat::AssaultScrolls::PROTECTION_KEY).positive? %>
+    <p class="nl-quests-board__meta">
+      <%= link_to t("game.combat.interventions_open"), combat_interventions_path, class: "nl-sheet-link", data: {inventory_protection: "1"} %>
+    </p>
+  <% end %>
+</aside>

@@ -6,7 +6,7 @@ FactoryBot.define do
     action { "update" }
     record_type { "MapTileTemplate" }
     sequence(:record_id)
-    record_label { "Outpost Surroundings [7, 7]" }
+    record_label { "Пепельный Берег [7, 7]" }
     change_set { {"passable" => {"from" => true, "to" => false}} }
     metadata { {"source" => "manage_namespace"} }
   end

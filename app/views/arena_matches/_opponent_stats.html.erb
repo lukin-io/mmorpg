@@ -10,20 +10,20 @@
 <% if stats.present? %>
   <div class="arena-opponent-stats">
     <dl class="stats-grid stats-grid--compact">
-      <div class="stat-item" title="Affects physical damage">
-        <dt>Str</dt>
+      <div class="stat-item" title="<%= t("game.fight.str_hint") %>">
+        <dt><%= t("game.fight.str_short") %></dt>
         <dd><%= stats[:strength] || stats[:attack] || "-" %></dd>
       </div>
-      <div class="stat-item" title="Affects hit chance and dodge">
-        <dt>Dex</dt>
+      <div class="stat-item" title="<%= t("game.fight.dex_hint") %>">
+        <dt><%= t("game.fight.dex_short") %></dt>
         <dd><%= stats[:dexterity] || stats[:agility] || "-" %></dd>
       </div>
-      <div class="stat-item" title="Affects critical chance">
-        <dt>Luck</dt>
+      <div class="stat-item" title="<%= t("game.fight.luck_hint") %>">
+        <dt><%= t("game.fight.luck_short") %></dt>
         <dd><%= stats[:luck] || "-" %></dd>
       </div>
-      <div class="stat-item" title="Affects magic damage">
-        <dt>Int</dt>
+      <div class="stat-item" title="<%= t("game.fight.int_hint") %>">
+        <dt><%= t("game.fight.int_short") %></dt>
         <dd><%= stats[:knowledge] || stats[:intelligence] || "-" %></dd>
       </div>
     </dl>

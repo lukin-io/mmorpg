@@ -8,8 +8,13 @@
 
 <div class="arena-applications-list">
   <% if applications.empty? %>
-    <div class="arena-empty">
-      <p class="text-muted">No open applications.</p>
+    <div class="arena-empty" data-arena-apps-empty="1">
+      <p class="text-muted"><%= t("arena.table.empty") %></p>
+      <p class="nl-quests-board__meta">
+        <%= t("arena.table.empty_hint") %>
+        ·
+        <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {turbo: false, arena_recovery: "city"} %>
+      </p>
     </div>
   <% else %>
     <% applications.each do |app| %>

@@ -79,7 +79,7 @@ RSpec.describe Game::World::EncounterRosterSelector do
       ]})
 
       expect { described_class.new(tile_npc:).call }
-        .to raise_error(described_class::InvalidRosterError, /combat parameters/)
+        .to raise_error(described_class::InvalidRosterError, I18n.t("manage.roster_combat_params_not_documented"))
     end
   end
 
@@ -143,7 +143,10 @@ RSpec.describe Game::World::EncounterRosterSelector do
 
     expect {
       described_class.new(tile_npc:, rng: instance_double(Random)).call
-    }.to raise_error(described_class::InvalidRosterError, /deleted-template.*unavailable/)
+    }.to raise_error(
+      described_class::InvalidRosterError,
+      I18n.t("manage.roster_template_unavailable", key: '"deleted-template"')
+    )
   end
 
   it "fails closed when persisted roster or member metadata has the wrong shape" do
@@ -151,7 +154,7 @@ RSpec.describe Game::World::EncounterRosterSelector do
 
     expect {
       described_class.new(tile_npc:).call
-    }.to raise_error(described_class::InvalidRosterError, /roster is not documented/)
+    }.to raise_error(described_class::InvalidRosterError, I18n.t("manage.roster_not_documented"))
 
     tile_npc.update_columns(metadata: {
       "encounter_rosters" => [
@@ -164,7 +167,7 @@ RSpec.describe Game::World::EncounterRosterSelector do
 
     expect {
       described_class.new(tile_npc:).call
-    }.to raise_error(described_class::InvalidRosterError, /member metadata is not documented/)
+    }.to raise_error(described_class::InvalidRosterError, I18n.t("manage.roster_member_metadata_not_documented"))
   end
 
   it "uses explicit relative weights and samples only within the authored level range" do

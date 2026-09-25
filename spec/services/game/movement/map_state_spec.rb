@@ -3,7 +3,7 @@
 require "rails_helper"
 
 RSpec.describe Game::Movement::MapState do
-  let(:zone) { create(:zone, name: "Outpost Surroundings", location_type: "outdoor", width: 10, height: 10) }
+  let(:zone) { create(:zone, name: "Пепельный Берег", location_type: "outdoor", width: 10, height: 10) }
   let(:character) { create(:character) }
   let!(:position) { create(:character_position, character:, zone:, x: 5, y: 5) }
 
@@ -104,6 +104,16 @@ RSpec.describe Game::Movement::MapState do
 
     expect(state.destinations).to be_empty
     expect(state.locked_reason).to eq(:fatigued)
+    expect(MovementCommand.offered.where(character:)).to be_empty
+  end
+
+  it "does not issue destinations while heavy injury blocks wilderness travel" do
+    Game::Combat::InjuryState.new(character:).apply!(severity: :heavy, duration: 2.hours)
+
+    state = described_class.new(character:).call
+
+    expect(state.destinations).to be_empty
+    expect(state.locked_reason).to eq(:injured)
     expect(MovementCommand.offered.where(character:)).to be_empty
   end
 

@@ -26,7 +26,7 @@ class CharacterLicense < ApplicationRecord
   def positive_interval
     return if starts_at.blank? || expires_at.blank? || expires_at > starts_at
 
-    errors.add(:expires_at, "must be after activation")
+    errors.add(:expires_at, I18n.t("errors.license_expires_after_start"))
   end
 
   def owned_purchase_offer
@@ -34,6 +34,6 @@ class CharacterLicense < ApplicationRecord
     return if world_action_offer.character_id == character_id && world_action_offer.action_type == "shop_buy" &&
       world_action_offer.target_type == "ItemTemplate" && world_action_offer.target_id == item_template_id
 
-    errors.add(:world_action_offer, "must be this character's license purchase")
+    errors.add(:world_action_offer, I18n.t("errors.license_offer_mismatch"))
   end
 end

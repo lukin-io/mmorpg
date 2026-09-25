@@ -3,7 +3,7 @@
 require "rails_helper"
 
 RSpec.describe Game::Movement::CompleteMove do
-  let(:zone) { create(:zone, name: "Outpost Surroundings", location_type: "outdoor", width: 10, height: 10) }
+  let(:zone) { create(:zone, name: "Пепельный Берег", location_type: "outdoor", width: 10, height: 10) }
   let(:character) { create(:character) }
   let!(:position) { create(:character_position, character:, zone:, x: 5, y: 5, last_turn_number: 2) }
 
@@ -58,7 +58,7 @@ RSpec.describe Game::Movement::CompleteMove do
     described_class.new(character:).call
 
     expect(command.reload).to be_failed
-    expect(command.error_message).to eq("Character is no longer at the movement source")
+    expect(command.error_message).to eq(I18n.t("game.world.movement_source_lost"))
     expect([position.reload.x, position.y]).to eq([4, 5])
   end
 
@@ -69,7 +69,7 @@ RSpec.describe Game::Movement::CompleteMove do
     described_class.new(character:).call
 
     expect(command.reload).to be_failed
-    expect(command.error_message).to eq("Tile is not passable")
+    expect(command.error_message).to eq(I18n.t("game.world.tile_not_passable"))
     expect([position.reload.x, position.y]).to eq([5, 5])
     expect(character.reload.fatigue_percent).to eq(0)
   end
@@ -80,7 +80,7 @@ RSpec.describe Game::Movement::CompleteMove do
     described_class.new(character:).call
 
     expect(command.reload).to be_failed
-    expect(command.error_message).to eq("Movement target is not an adjacent step")
+    expect(command.error_message).to eq(I18n.t("game.world.movement_not_adjacent"))
     expect([position.reload.x, position.y]).to eq([5, 5])
     expect(character.reload.fatigue_percent).to eq(0)
   end
@@ -123,7 +123,7 @@ RSpec.describe Game::Movement::CompleteMove do
     2.times { described_class.new(character: Character.find(character.id)).call }
 
     expect(command.reload).to be_failed
-    expect(command.error_message).to eq("Character is no longer at the movement source")
+    expect(command.error_message).to eq(I18n.t("game.world.movement_source_lost"))
     expect(position.reload).to have_attributes(zone: other_region, x: 5, y: 5, last_turn_number: 2)
     expect(character.reload.fatigue_percent).to eq(0)
   end

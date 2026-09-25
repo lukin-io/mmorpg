@@ -6,6 +6,6 @@
     <% end %>
   </div>
   <% if local_assigns[:new_path].present? %>
-    <%= link_to local_assigns[:new_label] || "Create", new_path, class: "lbut" %>
+    <%= link_to local_assigns[:new_label] || t("manage.create"), new_path, class: "lbut" %>
   <% end %>
 </header>

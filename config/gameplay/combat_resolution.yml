@@ -1,0 +1,62 @@
+# Ashen Veil soft-release combat resolution tables.
+# Hit/block coefficients are applied by Arena::CombatResolver.
+# Soft-release damage core (base_hit / crit / evasion / full defense subtract)
+# is authored in CombatResolver constants — not the legacy dodge/crit YAML blocks.
+
+base_hit_chance: 85
+base_block_chance: 45
+critical_multiplier: 2.0
+magic_defense_factor: 0.65
+min_damage: 1
+# Soft-launch undergear (no chest armor) vs NPCs — Mist/Legend early gear necessity.
+undergear_incoming_multiplier: 1.45
+undergear_outgoing_multiplier: 0.82
+
+hit_chance:
+  min: 5.0
+  max: 95.0
+  dexterity: 0.3
+  accuracy: 0.5
+  defender_agility: 0.2
+  defender_evasion: 0.4
+
+# Ashen soft-release core (documented; enforced in CombatResolver code):
+#   evasion_chance = (evasion * 1.5 - accuracy * 0.4).clamp(5, 70)
+#   crit_chance    = (luck * 1.8 + dexterity * 0.3).clamp(5, 75)
+#   base_hit       = rand(attack_power * 0.6 .. attack_power * 1.3)
+#   armor          = max(final_damage - defense, 1)
+evasion_chance:
+  min: 5.0
+  max: 70.0
+  evasion: 1.5
+  attacker_accuracy: 0.4
+
+crit_chance:
+  min: 5.0
+  max: 75.0
+  luck: 1.8
+  dexterity: 0.3
+
+block_chance:
+  min: 5.0
+  max: 95.0
+  # Soft-release: defense is already a large derived score; keep contribution
+  # modest so mid/high characters do not auto-succeed covered blocks.
+  defense: 0.15
+  agility: 0.2
+  dexterity: 0.15
+  attacker_accuracy: 0.2
+  attacker_dexterity: 0.1
+  extra_part_penalty: 4
+
+body_part_hit_modifiers:
+  head: -10
+  torso: 0
+  stomach: 5
+  legs: -5
+
+body_part_block_modifiers:
+  head: -5
+  torso: 5
+  stomach: 2
+  legs: -3

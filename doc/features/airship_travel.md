@@ -2,7 +2,7 @@
 title: Airship Travel Feature
 description: Implementation handbook for paid scheduled journeys, bounded flight maps, and region-qualified destination handoffs.
 status: Partially Implemented
-updated: 2026-09-08
+updated: 2026-09-14
 owners: World Transport
 template: feature-v3
 ---
@@ -210,5 +210,12 @@ or generic job/reconciler framework is introduced.
 
 | Date | Change |
 |---|---|
+| 2026-09-14 | Short-NV Board recovery Junk/Shop links expose `data-airship-recovery`. |
+| 2026-09-14 | ≤360px airship station/routes reflow to full width; coarse-pointer Board/recovery controls target ~44×44 CSS px (`UI-ADAPT-005`). |
+| 2026-09-13 | Board/disembark/reconcile violations use `game.airship.*` i18n (ru/en); English copy preserves prior TravelViolationError vocabulary. |
+| 2026-09-13 | In-flight map aria, craft alt, and early-disembark confirm use `game.airship.map_aria` / `craft_label` / `disembark_confirm`. |
+| 2026-09-13 | Station exposes route count and board readiness (`data-airship-routes` / `data-airship-can-board`). |
+| 2026-09-13 | Short-NV boarding state links to Ash Buyer (or Shop) so players can earn fare without guessing. |
+| 2026-09-13 | Station greys out Board when wallet NV cannot cover fare; rows expose `data-airship-affordable`. |
 | 2026-09-08 | Added evidence-backed flight lifecycle and region-ready transport capability without populated destination content. |
 | 2026-09-08 | Retained identical same-region airship DOM cells across snapshots; changed art and cross-region replacement covered in Chrome. Full bounded server snapshots remain an explicit efficiency gap. |

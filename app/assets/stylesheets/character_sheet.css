@@ -330,6 +330,42 @@ button.nl-doll-slot--filled:hover {
   font: 11px/15px var(--nl-font-tahoma);
 }
 
+.nl-sheet-sets {
+  margin: 4px 0 2px;
+  padding: 2px 0 0;
+  border-top: 1px solid var(--nl-rule-blue);
+}
+
+.nl-sheet-sets-title {
+  margin: 0 0 2px;
+  color: var(--nl-bonus);
+  font: bold 10px/14px var(--nl-font-verdana);
+}
+
+.nl-sheet-sets-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.nl-sheet-sets-item {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin: 0 0 3px;
+  color: var(--nl-text);
+  font: 10px/13px var(--nl-font-tahoma);
+}
+
+.nl-sheet-sets-name {
+  color: var(--nl-text);
+  font-weight: bold;
+}
+
+.nl-sheet-sets-bonus {
+  color: var(--nl-bonus);
+}
+
 /* ---------------------------------------------------------------- *
  * Responsive fallback
  *
@@ -358,5 +394,17 @@ button.nl-doll-slot--filled:hover {
   .nl-character-parameters {
     width: 100%;
     max-width: var(--nl-parameters-width);
+  }
+}
+
+@media (max-width: 360px) {
+  .nl-character-page,
+  .nl-inventory-page,
+  .nl-allocation-page {
+    padding: 0 2px;
+  }
+
+  .nl-character-parameters {
+    font-size: 10px;
   }
 }

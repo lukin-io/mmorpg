@@ -35,8 +35,8 @@ class PublicFightLogsController < ApplicationController
     @arena_match = ArenaMatch.find(params[:id])
   rescue ActiveRecord::RecordNotFound
     respond_to do |format|
-      format.html { render plain: "Fight log not found", status: :not_found }
-      format.json { render json: {error: "fight log not found"}, status: :not_found }
+      format.html { render "missing", status: :not_found }
+      format.json { render json: {error: I18n.t("game.flashes.fight_log_missing")}, status: :not_found }
     end
   end
 

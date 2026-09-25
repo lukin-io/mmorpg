@@ -1,4 +1,4 @@
-<% content_for :title, "Stats - #{@character.name}" %>
+<% content_for :title, t("game.profile.stats_title", name: @character.name) %>
 
 <section class="nl-allocation-page nl-character-page">
   <div class="nl-character-page-grid">
@@ -12,6 +12,15 @@
 
     <main class="nl-character-page-main">
       <%= render "shared/neverlands_profile_navigation", character: @character, current_section: :stats %>
+      <% if params[:allocation_denied].to_s == "1" %>
+        <p class="nl-quests-board__meta" data-allocation-denied="1">
+          <%= t("game.profile.allocation_denied_next") %>
+          ·
+          <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {allocation_recovery: "world"} %>
+          ·
+          <%= link_to t("game.profile.overview"), player_path(@character.name), class: "nl-sheet-link", data: {allocation_recovery: "sheet"} %>
+        </p>
+      <% end %>
       <turbo-frame id="stat-allocation" class="nl-allocation-frame">
         <%= render "characters/stat_allocation" %>
       </turbo-frame>

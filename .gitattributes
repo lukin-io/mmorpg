@@ -7,3 +7,6 @@ db/structure.sql linguist-generated
 vendor/* linguist-vendored
 config/credentials/*.yml.enc diff=rails_credentials
 config/credentials.yml.enc diff=rails_credentials
+
+# Keep executable scripts LF so Linux containers can run them.
+bin/* text eol=lf

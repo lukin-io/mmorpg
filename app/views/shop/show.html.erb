@@ -1,9 +1,9 @@
 <div class="nl-shop-page">
-  <h1 class="sr-only">Shop</h1>
+  <h1 class="sr-only"><%= t("game.shop.title") %></h1>
   <%= render "shared/building_entrance", asset: "shop/interior.png" %>
 
   <div class="nl-shop-frame">
-    <nav class="nl-shop-tabs" aria-label="Shop mode">
+    <nav class="nl-shop-tabs" aria-label="<%= t("game.shop.mode_aria") %>">
       <% shop_mode_options.each do |key, label| %>
         <%= link_to label,
                     shop_path(mode: key, category: @category, **shop_filter_context),
@@ -13,9 +13,19 @@
       <% end %>
     </nav>
 
+    <% if params[:trade_denied].to_s == "1" %>
+      <p class="nl-quests-board__meta" data-shop-trade-denied="1">
+        <%= t("game.shop.trade_denied_next") %>
+        ·
+        <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {shop_recovery: "world"} %>
+        ·
+        <%= link_to t("game.shop.title"), shop_path(mode: @mode), class: "nl-sheet-link", data: {shop_recovery: "shop"} %>
+      </p>
+    <% end %>
+
     <% unless @mode == "licenses" %>
       <div class="nl-shop-filter-viewport">
-        <nav class="nl-shop-categories" aria-label="Item category">
+        <nav class="nl-shop-categories" aria-label="<%= t("game.shop.category_aria") %>">
           <% shop_category_options.each do |key, label| %>
             <%= link_to shop_path(mode: @mode, category: key, **shop_filter_context),
                         class: ["nl-shop-category", ("nl-shop-category--active" if @category == key)],
@@ -30,39 +40,106 @@
         <%= form_with url: shop_path, method: :get, class: "nl-shop-filters", local: true, data: {turbo_action: "advance"} do |f| %>
           <%= f.hidden_field :mode, value: @mode %>
           <%= f.hidden_field :category, value: @category %>
-          <span class="nl-shop-filter-label">Level:</span>
-          <%= f.text_field :min_level, value: @catalog.filters[:min_level], size: 3, inputmode: "numeric", class: "nl-shop-mini-input", aria: {label: "Minimum level"} %>
+          <span class="nl-shop-filter-label"><%= t("game.shop.level_filter") %></span>
+          <%= f.text_field :min_level, value: @catalog.filters[:min_level], size: 3, inputmode: "numeric", class: "nl-shop-mini-input", aria: {label: t("game.shop.min_level")} %>
           <span aria-hidden="true">-</span>
-          <%= f.text_field :max_level, value: @catalog.filters[:max_level], size: 3, inputmode: "numeric", class: "nl-shop-mini-input", aria: {label: "Maximum level"} %>
-          <span class="nl-shop-filter-label nl-shop-filter-label--price">Price:</span>
-          <%= f.text_field :min_price, value: @catalog.filters[:min_price], size: 20, inputmode: "numeric", class: "nl-shop-price-input", aria: {label: "Minimum price"} %>
+          <%= f.text_field :max_level, value: @catalog.filters[:max_level], size: 3, inputmode: "numeric", class: "nl-shop-mini-input", aria: {label: t("game.shop.max_level")} %>
+          <span class="nl-shop-filter-label nl-shop-filter-label--price"><%= t("game.shop.price_filter") %></span>
+          <%= f.text_field :min_price, value: @catalog.filters[:min_price], size: 20, inputmode: "numeric", class: "nl-shop-price-input", aria: {label: t("game.shop.min_price")} %>
           <span aria-hidden="true">-</span>
-          <%= f.text_field :max_price, value: @catalog.filters[:max_price], size: 20, inputmode: "numeric", class: "nl-shop-price-input", aria: {label: "Maximum price"} %>
+          <%= f.text_field :max_price, value: @catalog.filters[:max_price], size: 20, inputmode: "numeric", class: "nl-shop-price-input", aria: {label: t("game.shop.max_price")} %>
           <span>NV</span>
-          <%= f.submit "Apply", class: "invbut" %>
+          <%= f.submit t("game.common.apply"), class: "invbut" %>
         <% end %>
       </div>
     <% end %>
 
-    <div class="nl-shop-table-viewport">
+    <div class="nl-shop-table-viewport" data-shop-mode="<%= @mode %>">
       <% unless @mode == "licenses" %>
-        <div class="nl-shop-status-row">
-          <div>You carry <b><%= number_with_precision(@wallet.nv_balance, precision: 2) %> NV</b> and items weighing: <b><%= number_with_precision(@inventory.current_weight, precision: 2) %></b>. Maximum weight: <b><%= shop_max_weight %></b></div>
+        <% shop_balance = @wallet.nv_balance.to_d %>
+        <% shop_any_affordable =
+             @mode != "sell" &&
+             @shop_items.present? &&
+             @shop_items.any? { |template| shop_buy_block_reason(template).nil? && @shop_buy_offers[template.id].present? } %>
+        <% shop_any_sellable =
+             @mode == "sell" &&
+             @sell_items.present? &&
+             @sell_items.any? { |item| shop_sell_block_reason(item).nil? && @shop_sell_offers[item.id].present? } %>
+        <div class="nl-shop-status-row"
+             data-shop-wallet="<%= shop_balance.to_i %>"
+             data-shop-weight="<%= number_with_precision(@inventory.current_weight, precision: 2) %>"
+             data-shop-any-affordable="<%= shop_any_affordable ? "1" : "0" %>"
+             data-shop-any-sellable="<%= shop_any_sellable ? "1" : "0" %>"
+             data-shop-funds="<%= @shop_account ? @shop_account.nv_balance.to_i : 0 %>">
+          <div><%= t("game.shop.carry_html",
+            nv: number_with_precision(@wallet.nv_balance, precision: 2),
+            weight: number_with_precision(@inventory.current_weight, precision: 2),
+            max: shop_max_weight).html_safe %></div>
           <% if @shop_account %>
-            <div>Shop funds: <b><%= number_with_precision(@shop_account.nv_balance, precision: 2) %> NV</b></div>
+            <div><%= t("game.shop.shop_funds_html",
+              nv: number_with_precision(@shop_account.nv_balance, precision: 2)).html_safe %></div>
+          <% end %>
+          <% if @mode == "sell" %>
+            <div>
+              <% if Game::World::CityBuildingCatalog.accessible?(character: current_character, building_key: "junk_dealer") %>
+                <%= link_to t("game.buildings.junk_dealer_link"), city_building_path("junk_dealer"), class: "nl-shop-junk-link", data: {shop_recovery: "junk"} %>
+              <% else %>
+                <span class="nl-shop-junk-hint" title="<%= t("game.shop.junk_hint") %>"><%= t("game.shop.junk_hint_short") %></span>
+              <% end %>
+            </div>
+          <% elsif @shop_items.present? && !shop_any_affordable %>
+            <% short_nv_desk = @shop_items.any? { |template|
+                 shop_buy_block_reason(template) == I18n.t("game.shop.not_enough_nv")
+               } %>
+            <% if short_nv_desk %>
+              <p class="nl-quests-board__meta" data-shop-short-nv="1">
+                <%= t("game.shop.short_nv_next") %>
+                ·
+                <% if Game::World::CityBuildingCatalog.accessible?(character: current_character, building_key: "bank") %>
+                  <%= link_to t("game.shop.open_bank"), city_building_path("bank"), class: "nl-sheet-link", data: {shop_recovery: "bank"} %>
+                <% elsif Game::World::CityBuildingCatalog.accessible?(character: current_character, building_key: "junk_dealer") %>
+                  <%= link_to t("game.buildings.junk_dealer_link"), city_building_path("junk_dealer"), class: "nl-sheet-link", data: {shop_recovery: "junk"} %>
+                <% else %>
+                  <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {shop_recovery: "world"} %>
+                <% end %>
+              </p>
+            <% else %>
+              <p class="nl-quests-board__meta" data-shop-buy-blocked="1">
+                <%= t("game.shop.buy_blocked_next") %>
+                ·
+                <%= link_to t("game.shop.open_inventory"), inventory_path, class: "nl-sheet-link", data: {shop_recovery: "inventory"} %>
+                ·
+                <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {shop_recovery: "world"} %>
+              </p>
+            <% end %>
           <% end %>
         </div>
       <% end %>
       <% if @mode == "licenses" %>
         <%= render "shop/licenses", items: @shop_items %>
       <% elsif @mode == "novice" && current_character.level >= 10 %>
-        <p class="nl-empty-note nl-shop-empty">This section is available only to players below level 10.</p>
+        <p class="nl-empty-note nl-shop-empty" data-shop-novice="denied">
+          <%= t("game.shop.novice_only") %>
+          <%= link_to t("game.shop.modes.buy"), shop_path(mode: "buy"), class: "nl-sheet-link", data: {shop_recovery: "buy"} %>
+        </p>
+      <% elsif @mode == "novice" %>
+        <p class="nl-empty-note nl-shop-empty" data-shop-novice="empty">
+          <%= t("game.shop.novice_empty") %>
+          <%= link_to t("game.shop.modes.buy"), shop_path(mode: "buy"), class: "nl-sheet-link", data: {shop_recovery: "buy"} %>
+        </p>
       <% elsif @mode == "sell" %>
+        <% unless @shop_license_rules.active?(:trading) %>
+          <%= render "shop/sell_onboarding" %>
+        <% end %>
+        <%= render "shop/sell_license_status" %>
         <%= render "shop/sell_table", items: @sell_items %>
       <% else %>
         <%= render "shop/buy_table", items: @shop_items %>
       <% end %>
     </div>
+    <% if @mode == "licenses" %>
+      <%= render "shop/doctor_onboarding" %>
+    <% end %>
     <% if @mode == "licenses" && Game::Shop::MerchantQualification.new(character: current_character).status.in?(%w[accepted paid]) %>
       <div class="nl-shop-qualification">
         <%= render "shop/merchant_qualification", location: :shop %>

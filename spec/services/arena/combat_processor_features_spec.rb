@@ -507,7 +507,7 @@ RSpec.describe Arena::CombatProcessor, "Neverlands-style combat features" do
             target: teammate
           )
           expect(result.success?).to be false
-          expect(result.error).to eq("Cannot attack an ally")
+          expect(result.error).to eq(I18n.t("game.fight.errors.cannot_attack_ally"))
         end
       end
     end

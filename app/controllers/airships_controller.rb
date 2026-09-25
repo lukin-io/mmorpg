@@ -9,9 +9,10 @@ class AirshipsController < ApplicationController
   def show
     @airship_state = travel.state
     unless @airship_state
-      respond_to do |format|
-        format.json { render json: {phase: "disembarked"} }
-        format.html { redirect_to resume_path, status: :see_other }
+      if request.format.json?
+        render json: {phase: "disembarked"}
+      else
+        redirect_to denied_resume_path, status: :see_other
       end
       return
     end
@@ -47,8 +48,12 @@ class AirshipsController < ApplicationController
     Game::World::ResumeContext.new(character: current_character).resume_path
   end
 
+  def denied_resume_path
+    world_path(airship_denied: 1)
+  end
+
   def reject_travel(error)
-    redirect_to resume_path, alert: error.message, status: :see_other
+    redirect_to denied_resume_path, alert: error.message, status: :see_other
   end
 
   def map_snapshot

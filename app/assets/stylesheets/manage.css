@@ -260,3 +260,32 @@
   .nl-manage-field > label { padding-top: 0; }
   .nl-manage-dashboard { grid-template-columns: 1fr; }
 }
+
+@media (max-width: 360px) {
+  .nl-manage-layout,
+  .nl-manage-main,
+  .nl-manage-detail {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .nl-manage-header,
+  .nl-manage-main {
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+}
+
+@media (pointer: coarse) {
+  .nl-manage-layout .lbut,
+  .nl-manage-layout button,
+  .nl-manage-layout input[type="submit"],
+  .nl-manage-nav a,
+  .nl-manage-record-actions a {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 8px 10px;
+    font-size: 12px;
+    line-height: 1.25;
+  }
+}

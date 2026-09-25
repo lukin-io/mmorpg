@@ -74,7 +74,7 @@ RSpec.describe Character, type: :model do
       extra_character = build(:character, user: user)
 
       expect(extra_character).not_to be_valid
-      expect(extra_character.errors[:base]).to include("character limit reached")
+      expect(extra_character.errors[:base]).to include(I18n.t("errors.character_limit_reached"))
     end
   end
 
@@ -83,13 +83,13 @@ RSpec.describe Character, type: :model do
 
     it "defaults to no alignment" do
       expect(character.alignment).to eq("none")
-      expect(character.alignment_label).to eq("None")
+      expect(character.alignment_label).to eq(I18n.t("game.buildings.law_alignment.none"))
     end
 
     it "uses source-backed alignment labels" do
       character.update!(alignment: "light")
 
-      expect(character.alignment_display).to eq("Light")
+      expect(character.alignment_display).to eq(I18n.t("game.buildings.law_alignment.light"))
     end
   end
 

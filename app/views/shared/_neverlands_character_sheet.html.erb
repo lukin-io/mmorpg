@@ -13,7 +13,7 @@
 <% metadata = character.metadata.to_h %>
 <% fatigue = profile_fatigue(character) %>
 
-<section class="nl-character-sheet" aria-label="<%= character.name %> character sheet">
+<section class="nl-character-sheet" aria-label="<%= t("game.sheet.aria_label", name: character.name) %>">
   <div class="nl-character-doll-column">
     <%= render "shared/equipment_paperdoll",
       character: character,
@@ -29,15 +29,68 @@
       <table class="nl-sheet-table nl-sheet-table--money">
         <tbody>
           <tr>
-            <th><span class="nl-money-mark" aria-hidden="true">NV</span> Money:</th>
-            <td><%= number_with_delimiter(character.user&.currency_wallet&.nv_balance || 0) %> NV</td>
+            <th><span class="nl-money-mark" aria-hidden="true">NV</span> <%= t("game.sheet.money") %>:</th>
+            <td class="nl-sheet-nv" data-sheet-nv="<%= character.user&.currency_wallet&.nv_balance.to_i %>">
+              <%= number_with_delimiter(character.user&.currency_wallet&.nv_balance || 0) %> NV
+              <% if character == current_character && character.user&.currency_wallet&.nv_balance.to_i <= 0 %>
+                ·
+                <% if Game::World::CityBuildingCatalog.accessible?(character:, building_key: "junk_dealer") %>
+                  <%= link_to t("game.buildings.junk_dealer_link"), city_building_path("junk_dealer"), class: "nl-sheet-link", data: {sheet_recovery: "junk"} %>
+                <% elsif Game::World::CityBuildingCatalog.accessible?(character:, building_key: "shop") %>
+                  <%= link_to t("game.shop.modes.sell"), shop_path(mode: "sell"), class: "nl-sheet-link", data: {sheet_recovery: "shop"} %>
+                <% else %>
+                  <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {sheet_recovery: "world"} %>
+                <% end %>
+              <% end %>
+            </td>
           </tr>
+          <% if character == current_character %>
+            <tr>
+              <th><span class="nl-money-mark" aria-hidden="true">VM</span> <%= t("game.sheet.veil_marks") %>:</th>
+              <td class="nl-sheet-vm" data-sheet-vm="<%= character.user&.currency_wallet&.veil_marks.to_i %>">
+                <%= number_with_delimiter(character.user&.currency_wallet&.veil_marks.to_i) %> VM
+                <% if Game::World::CityBuildingCatalog.accessible?(character:, building_key: "hospital") %>
+                  · <%= link_to t("game.sheet.veil_marks_open_cta"), city_building_path("hospital"), class: "nl-sheet-link", data: {sheet_recovery: "hospital"} %>
+                <% elsif character == current_character %>
+                  · <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {sheet_recovery: "world"} %>
+                <% end %>
+              </td>
+            </tr>
+            <% vault_nv = Game::World::BankVault.balance_for(character) %>
+            <tr>
+              <th><%= t("game.sheet.vault") %>:</th>
+              <td class="nl-sheet-vault" data-sheet-vault="<%= vault_nv %>">
+                <%= number_with_delimiter(vault_nv) %> NV
+                <% if Game::World::CityBuildingCatalog.accessible?(character:, building_key: "bank") %>
+                  · <%= link_to t("game.sheet.vault_open_cta"), city_building_path("bank"), class: "nl-sheet-link", data: {sheet_recovery: "bank"} %>
+                <% elsif character == current_character %>
+                  · <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {sheet_recovery: "world"} %>
+                <% end %>
+              </td>
+            </tr>
+            <% stored = Game::World::BankItemLocker.stored_for(character) %>
+            <tr>
+              <th><%= t("game.sheet.locker") %>:</th>
+              <td class="nl-sheet-locker" data-sheet-locker="<%= stored.present? ? "occupied" : "empty" %>">
+                <% if stored.present? %>
+                  <%= t("game.sheet.locker_occupied", name: stored["name"], qty: stored["quantity"]) %>
+                <% else %>
+                  <%= t("game.sheet.locker_empty") %>
+                  <% if Game::World::CityBuildingCatalog.accessible?(character:, building_key: "bank") %>
+                    · <%= link_to t("game.sheet.vault_open_cta"), city_building_path("bank"), class: "nl-sheet-link", data: {sheet_recovery: "bank"} %>
+                  <% else %>
+                    · <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {sheet_recovery: "world"} %>
+                  <% end %>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
         </tbody>
       </table>
     <% end %>
 
     <table class="nl-sheet-table nl-sheet-table--stats">
-      <caption class="nl-visually-hidden">Primary stats</caption>
+      <caption class="nl-visually-hidden"><%= t("game.sheet.primary_stats") %></caption>
       <tbody>
         <% profile_primary_stats(character).each do |stat| %>
           <tr>
@@ -51,47 +104,75 @@
           </tr>
         <% end %>
         <tr>
-          <th>Wisdom:</th>
+          <th><%= t("game.sheet.wisdom") %>:</th>
           <td class="nl-sheet-stat-total"><%= metadata.fetch("wisdom", 0) %></td>
           <td class="nl-sheet-stat-breakdown"></td>
         </tr>
       </tbody>
     </table>
 
-    <div class="nl-sheet-link-row"><%= link_to "Save", player_path(name: character.name) %></div>
+    <div class="nl-sheet-link-row"><%= link_to t("game.common.save"), player_path(name: character.name) %></div>
 
     <hr class="nl-sheet-divider">
 
     <table class="nl-sheet-table nl-sheet-table--experience">
-      <caption>Experience</caption>
+      <caption><%= t("game.sheet.experience") %></caption>
       <tbody>
-        <tr><th>Combat:</th><td class="nl-sheet-xp-combat"><%= number_with_delimiter(character.experience) %></td></tr>
-        <tr><th>Glory:</th><td class="nl-sheet-xp-glory"><%= number_with_delimiter(metadata.fetch("glory", 0)) %></td></tr>
-        <tr><th>Valor:</th><td class="nl-sheet-xp-valor"><%= number_with_delimiter(metadata.fetch("valor", 0)) %></td></tr>
-        <tr><th>To level:</th><td><%= number_with_delimiter(character.experience_to_next_level) %></td></tr>
+        <tr><th><%= t("game.sheet.combat_xp") %>:</th><td class="nl-sheet-xp-combat"><%= number_with_delimiter(character.experience) %></td></tr>
+        <tr><th><%= t("game.sheet.glory") %>:</th><td class="nl-sheet-xp-glory"><%= number_with_delimiter(metadata.fetch("glory", 0)) %></td></tr>
+        <tr><th><%= t("game.sheet.valor") %>:</th><td class="nl-sheet-xp-valor"><%= number_with_delimiter(metadata.fetch("valor", 0)) %></td></tr>
+        <tr><th><%= t("game.sheet.to_level") %>:</th><td><%= number_with_delimiter(character.experience_to_next_level) %></td></tr>
       </tbody>
     </table>
 
     <hr class="nl-sheet-divider">
 
     <table class="nl-sheet-table nl-sheet-table--record">
-      <caption class="nl-visually-hidden">Fight record</caption>
+      <caption class="nl-visually-hidden"><%= t("game.sheet.fight_record") %></caption>
       <tbody>
-        <tr><th>Wins:</th><td><%= metadata.fetch("player_wins", 0) %></td></tr>
-        <tr><th>Losses:</th><td><%= metadata.fetch("player_losses", 0) %></td></tr>
-        <tr><th>Wins over NPC:</th><td><%= metadata.fetch("npc_wins", 0) %></td></tr>
-        <tr><th>Losses to NPC:</th><td><%= metadata.fetch("npc_losses", 0) %></td></tr>
+        <tr><th><%= t("game.sheet.wins") %>:</th><td><%= metadata.fetch("player_wins", 0) %></td></tr>
+        <tr><th><%= t("game.sheet.losses") %>:</th><td><%= metadata.fetch("player_losses", 0) %></td></tr>
+        <tr><th><%= t("game.sheet.wins_npc") %>:</th><td><%= metadata.fetch("npc_wins", 0) %></td></tr>
+        <tr><th><%= t("game.sheet.losses_npc") %>:</th><td><%= metadata.fetch("npc_losses", 0) %></td></tr>
       </tbody>
     </table>
 
-    <div class="nl-sheet-increases">Increases: <%= character.stat_points_available.to_i %></div>
+    <div class="nl-sheet-increases" data-sheet-increases="<%= character.stat_points_available.to_i %>">
+      <%= t("game.sheet.increases") %>: <%= character.stat_points_available.to_i %>
+      <% if character == current_character && character.stat_points_available.to_i <= 0 %>
+        ·
+        <%= link_to t("nav.world"), world_path, class: "nl-sheet-link", data: {sheet_recovery: "world"} %>
+      <% end %>
+    </div>
 
     <table class="nl-sheet-table nl-sheet-table--chips">
-      <caption class="nl-visually-hidden">Combat parameters</caption>
+      <caption class="nl-visually-hidden"><%= t("game.sheet.combat_params") %></caption>
       <tbody>
         <tr>
-          <th>Fatigue:</th>
-          <td class="nl-sheet-chip nl-sheet-chip--fatigue"><%= fatigue %>%</td>
+          <th><%= t("game.sheet.fatigue") %>:</th>
+          <td class="nl-sheet-chip nl-sheet-chip--fatigue">
+            <%= fatigue %>%
+            <% if character == current_character && fatigue.to_i.positive? %>
+              <% if Game::World::CityBuildingCatalog.accessible?(character:, building_key: "tavern") %>
+                · <%= link_to t("game.buildings.tavern_rest_cta"), city_building_path("tavern"), class: "nl-sheet-link", data: {sheet_recovery: "tavern"} %>
+              <% else %>
+                · <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {sheet_recovery: "world"} %>
+              <% end %>
+            <% end %>
+          </td>
+        </tr>
+        <tr>
+          <th><%= t("game.sheet.alignment") %>:</th>
+          <td class="nl-sheet-chip">
+            <%= t("game.buildings.law_alignment.#{character.alignment}") %>
+            <% if character == current_character %>
+              <% if Game::World::CityBuildingCatalog.accessible?(character:, building_key: "law_abode") %>
+                · <%= link_to t("game.buildings.law_open_cta"), city_building_path("law_abode"), class: "nl-sheet-link", data: {sheet_recovery: "law"} %>
+              <% elsif character.alignment.to_s == "none" %>
+                · <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {sheet_recovery: "world"} %>
+              <% end %>
+            <% end %>
+          </td>
         </tr>
         <% profile_combat_stats(character).each do |label, value| %>
           <tr>
@@ -102,6 +183,67 @@
       </tbody>
     </table>
 
-    <p class="nl-sheet-effects">Total effects: <%= metadata.fetch("active_effects", []).size %> / 99</p>
+    <% active_sets = character.set_bonus_summary %>
+    <% if active_sets.present? %>
+      <div class="nl-sheet-sets" aria-label="<%= t("game.sheet.sets_aria") %>">
+        <p class="nl-sheet-sets-title"><%= t("game.sheet.sets_title") %></p>
+        <ul class="nl-sheet-sets-list">
+          <% active_sets.each do |row| %>
+            <% meta = Game::Equipment::SetBonuses::SET_META[row[:set_id]] %>
+            <% name = I18n.locale.to_s.start_with?("ru") ? meta&.dig(:name_ru) : meta&.dig(:name_en) %>
+            <% name ||= row[:set_id].to_s %>
+            <% labels = Array(row[:labels]).map { |label| label[I18n.locale.to_s] || label["ru-RU"] || label["en-US"] }.compact %>
+            <li class="nl-sheet-sets-item">
+              <span class="nl-sheet-sets-name"><%= name %> · <%= row[:pieces] %>/6</span>
+              <% if labels.any? %>
+                <span class="nl-sheet-sets-bonus"><%= labels.last %></span>
+              <% end %>
+            </li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <% active_buffs = Characters::TimedBuffs.new(character:).active %>
+    <p class="nl-sheet-effects" data-sheet-buffs="<%= active_buffs.size %>">
+      <%= t("game.sheet.total_effects") %>: <%= active_buffs.size %> / 99
+    </p>
+    <% if active_buffs.any? %>
+      <div class="nl-sheet-buff-icons" data-sheet-buff-list="1" aria-label="<%= t("game.sheet.active_buffs") %>">
+        <% active_buffs.each do |buff| %>
+          <% tip = Game::Professions::PotionCatalog.tooltip_for(buff) %>
+          <% blood = Game::Professions::PotionCatalog.fetch(buff["key"])&.dig(:blood) || 1 %>
+          <% icon_path = "cc0/icons/potion_blood_#{{1 => "i", 2 => "ii", 3 => "iii"}[blood] || "i"}.png" %>
+          <% has_icon = Rails.root.join("app/assets/images", icon_path).exist? %>
+          <span class="nl-buff-icon nl-buff-icon--blood<%= blood %>"
+                title="<%= tip %>"
+                data-buff-key="<%= buff["key"] %>"
+                tabindex="0"
+                role="img"
+                aria-label="<%= tip.tr("\n", ". ") %>"><% if has_icon %><%= image_tag icon_path, alt: "", class: "nl-buff-icon-img", width: 16, height: 16 %><% else %>⚗<% end %></span>
+        <% end %>
+      </div>
+      <ul class="nl-sheet-buff-list">
+        <% active_buffs.each do |buff| %>
+          <% expires = begin
+               Time.zone.parse(buff["expires_at"].to_s)
+             rescue ArgumentError, TypeError
+               nil
+             end %>
+          <li title="<%= Game::Professions::PotionCatalog.tooltip_for(buff) %>">
+            <%= buff["label"] %>
+            <% if expires %>
+              · <%= t("game.sheet.buff_until", time: expires.strftime("%H:%M")) %>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    <% end %>
+    <% post_note = Game::World::PostOfficeNote.current_for(character) %>
+    <% if post_note.present? %>
+      <p class="nl-sheet-effects" title="<%= t("game.sheet.post_note_hint") %>">
+        <%= t("game.sheet.post_note") %>: <%= truncate(post_note, length: 80) %>
+      </p>
+    <% end %>
   </div>
 </section>

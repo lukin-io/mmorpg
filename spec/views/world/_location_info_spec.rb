@@ -3,7 +3,7 @@
 require "rails_helper"
 
 RSpec.describe "world/_location_info.html.erb", type: :view do
-  let(:zone) { build_stubbed(:zone, name: "Outpost Surroundings", location_type: "outdoor") }
+  let(:zone) { build_stubbed(:zone, name: "Пепельный Берег", location_type: "outdoor") }
   let(:position) { build_stubbed(:character_position, zone:, x: 7, y: 0) }
 
   it "renders the local outdoor cell without exposing source coordinates" do

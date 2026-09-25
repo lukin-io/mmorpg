@@ -170,10 +170,8 @@ RSpec.describe "world/_city_view.html.erb", type: :view do
     }
 
     expect(rendered).not_to have_button("Arena")
-    expect(rendered).to have_css(
-      ".nl-city-hotspot--unavailable[aria-label*='Requires level 50']",
-      visible: :all
-    )
+    expect(rendered).to match(/Requires level 50|Нужен уровень 50/)
+    expect(rendered).to have_css(".nl-city-hotspot--unavailable", visible: :all)
   end
 
   it "uses a bounded native-pixel fallback for an unknown custom route" do

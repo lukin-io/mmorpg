@@ -248,7 +248,7 @@ RSpec.describe "ArenaMatches", type: :request do
             as: :json
 
           expect(response).to have_http_status(:unprocessable_entity)
-          expect(response.parsed_body["error"]).to eq("Unsupported player combat intent")
+          expect(response.parsed_body["error"]).to eq(I18n.t("game.fight.errors.unsupported_intent"))
         end
 
         expect(other_character.reload.current_hp).to eq(initial_hp)
@@ -268,7 +268,7 @@ RSpec.describe "ArenaMatches", type: :request do
           as: :json
 
         expect(response).to have_http_status(:unprocessable_entity)
-        expect(response.parsed_body["error"]).to eq("Cannot attack an ally")
+        expect(response.parsed_body["error"]).to eq(I18n.t("game.fight.errors.cannot_attack_ally"))
         expect(live_match.arena_participations.find_by(user: user).reload.metadata["pending_turn"]).to be_blank
         expect(live_match.combat_log_entries.count).to eq(initial_log_count)
       end
@@ -439,7 +439,7 @@ RSpec.describe "ArenaMatches", type: :request do
         as: :json
 
       expect(response).to have_http_status(:unprocessable_content)
-      expect(response.parsed_body["error"]).to eq("Turn timer has not expired yet")
+      expect(response.parsed_body["error"]).to eq(I18n.t("game.fight.errors.turn_timer_active"))
       expect(live_match.reload).to be_live
       expect(live_match.winning_team).to be_nil
     end
@@ -573,7 +573,7 @@ RSpec.describe "ArenaMatches", type: :request do
       post finish_arena_match_path(completed_match), as: :json
 
       expect(response).to have_http_status(:unprocessable_content)
-      expect(response.parsed_body["error"]).to eq("The fight is still active.")
+      expect(response.parsed_body["error"]).to eq(I18n.t("game.flashes.fight_still_active"))
       expect(completed_match.arena_participations.find_by(user: user).reload.metadata["finished_at"]).to be_blank
       expect(character.reload).to be_in_combat
     end
@@ -616,6 +616,16 @@ RSpec.describe "ArenaMatches", type: :request do
       post finish_arena_match_path(completed_match)
 
       expect(response).to redirect_to(world_path)
+    end
+
+    it "appends a combat trauma infirmary hint on finish" do
+      character.update!(in_combat: true)
+      Game::Combat::InjuryState.new(character:).apply!(severity: "combat", duration: 12.hours)
+
+      post finish_arena_match_path(completed_match)
+
+      expect(response).to redirect_to(arena_index_path)
+      expect(flash[:notice]).to include(I18n.t("game.injuries.combat_finish_hint"))
     end
   end
 end

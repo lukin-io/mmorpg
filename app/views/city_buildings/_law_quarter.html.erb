@@ -1,0 +1,32 @@
+<section class="nl-handbook">
+  <h2><%= building["title"] %></h2>
+  <% case local_assigns[:building_key].to_s %>
+  <% when "prison" %>
+    <p class="nl-handbook__lead" data-prison="1"><%= t("game.buildings.prison_lead") %></p>
+    <p>
+      <% if Game::World::CityBuildingCatalog.accessible?(character: current_character, building_key: "law_abode") %>
+        <%= link_to t("game.buildings.law_open_cta"), city_building_path("law_abode"), class: "lbut", data: {prison_recovery: "law"} %>
+      <% else %>
+        <%= link_to t("arena.nav.city"), world_path, class: "lbut", data: {turbo: false, prison_recovery: "world"} %>
+      <% end %>
+    </p>
+  <% when "gallows" %>
+    <p class="nl-handbook__lead" data-gallows="1"><%= t("game.buildings.gallows_lead") %></p>
+    <p>
+      <% if Game::World::CityBuildingCatalog.accessible?(character: current_character, building_key: "law_abode") %>
+        <%= link_to t("game.buildings.law_open_cta"), city_building_path("law_abode"), class: "lbut", data: {gallows_recovery: "law"} %>
+      <% else %>
+        <%= link_to t("arena.nav.city"), world_path, class: "lbut", data: {turbo: false, gallows_recovery: "world"} %>
+      <% end %>
+    </p>
+    <p class="nl-quests-board__meta" data-gallows-east="1">
+      <%= t("game.buildings.gallows_east_gate") %>
+      ·
+      <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {gallows_recovery: "world"} %>
+    </p>
+  <% else %>
+    <p class="nl-handbook__lead" data-landmark-inspect="1">
+      <%= t("game.buildings.landmark_inspect_lead", city: t("arena.nav.city")) %>
+    </p>
+  <% end %>
+</section>

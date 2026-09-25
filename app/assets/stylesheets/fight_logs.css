@@ -270,3 +270,33 @@ body.nl-public-layout--fight-log {
   .fight-participants { margin-top: 12px; }
   .log-pagination { margin-top: 16px; }
 }
+
+@media (pointer: coarse) {
+  .fight-log-modes a,
+  .log-pagination a,
+  .log-pagination .page-link,
+  .fight-participants a,
+  .nl-public-fight-log .nl-sheet-link {
+    min-height: 44px;
+    min-width: 44px;
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 10px;
+    font-size: 12px;
+    line-height: 1.25;
+  }
+}
+
+@media (max-width: 360px) {
+  .nl-public-fight-log,
+  .combat-log-viewer,
+  .fight-participants {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .log-entry {
+    grid-template-columns: 40px minmax(0, 1fr);
+    font-size: 11px;
+  }
+}

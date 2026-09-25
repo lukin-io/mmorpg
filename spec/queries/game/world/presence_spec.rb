@@ -54,7 +54,7 @@ RSpec.describe Game::World::Presence do
 
     result = described_class.new(character:).call
 
-    expect(result.label).to eq("Shop")
+    expect(result.label).to eq(I18n.t("game.world.shop_presence"))
     expect(result.players).to contain_exactly(character, inside)
   end
 
@@ -109,7 +109,7 @@ RSpec.describe Game::World::Presence do
   it "uses an authored exact-cell label without changing its audience identity" do
     position.update!(x: 13, y: 10)
     cell = create(:map_tile_template, zone: zone.name, x: 13, y: 10,
-      metadata: {"presence_label" => "Outpost Surroundings, Pond"})
+      metadata: {"presence_label" => "Пепельный Берег, Pond"})
     neighbor = present_character(name: "PondNeighbor", x: 13, y: 10)
     present_character(name: "AdjacentPondNeighbor", x: 12, y: 10)
     presence = described_class.new(character:)
@@ -120,7 +120,7 @@ RSpec.describe Game::World::Presence do
       ActiveSupport::Notifications.subscribed(subscriber, "sql.active_record") { result = presence.call }
     end
 
-    expect(result).to have_attributes(label: "Outpost Surroundings, Pond", count: 2)
+    expect(result).to have_attributes(label: "Пепельный Берег, Pond", count: 2)
     expect(result.players).to contain_exactly(character, neighbor)
     expect(presence.context_key).to eq("zone:#{zone.id}:cell:13:10")
     expect(queries.size).to eq(1)
@@ -163,27 +163,27 @@ RSpec.describe Game::World::Presence do
   it "returns no location or player data without a persisted position" do
     result = described_class.new(character: create(:character)).call
 
-    expect(result).to have_attributes(players: [], label: "Unknown", count: 0)
+    expect(result).to have_attributes(players: [], label: I18n.t("game.profile.unknown_location"), count: 0)
   end
 
   it "returns a label without querying or counting the online audience" do
     position.update!(x: 13, y: 10)
     create(:map_tile_template, zone: zone.name, x: 13, y: 10,
-      metadata: {"presence_label" => "Outpost Surroundings, Pond"})
+      metadata: {"presence_label" => "Пепельный Берег, Pond"})
     presence = described_class.new(character:, position:)
     queries = []
     subscriber = ->(event) { queries << event.payload[:sql] unless event.payload[:name] == "SCHEMA" }
 
     ActiveRecord::Base.uncached do
       ActiveSupport::Notifications.subscribed(subscriber, "sql.active_record") do
-        expect(presence.label).to eq("Outpost Surroundings, Pond")
+        expect(presence.label).to eq("Пепельный Берег, Pond")
       end
     end
 
     expect(queries.grep(/FROM "(?:characters|user_sessions)"|COUNT\(/i)).to be_empty
     expect(queries.grep(/FROM "map_tile_templates"/).size).to eq(1)
-    expect(described_class.new(character: nil).label).to eq("Unknown")
-    expect(described_class.new(character: create(:character)).label).to eq("Unknown")
+    expect(described_class.new(character: nil).label).to eq(I18n.t("game.profile.unknown_location"))
+    expect(described_class.new(character: create(:character)).label).to eq(I18n.t("game.profile.unknown_location"))
   end
 
   it "requires a recent open session, excludes the exact expiry boundary, and deduplicates devices" do
@@ -242,7 +242,7 @@ RSpec.describe Game::World::Presence do
 
       character.remember_gameplay_context!(name: "shop")
       result = described_class.new(character:).call
-      expect(result.label).to eq("Shop")
+      expect(result.label).to eq(I18n.t("game.world.shop_presence"))
       expect(result.players).to contain_exactly(character, shop)
       expect(described_class.new(character:).context_key).to end_with("room:shop")
     end

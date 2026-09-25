@@ -8,8 +8,16 @@
 <% unavailable_actions = Array(@building.location_definition["unavailable_actions"]) %>
 <% if unavailable_actions.any? %>
   <% unavailable_actions.each do |label| %>
-    <button type="button" class="nl-nav-link nl-nav-link--button nl-nav-link--disabled" disabled><%= label %></button>
+    <button type="button" class="nl-nav-link nl-nav-link--button nl-nav-link--disabled" disabled title="<%= t("game.locations.action_deferred") %>"><%= label %></button>
   <% end %>
+  <p class="nl-quests-board__meta" data-location-actions-deferred="1">
+    <%= t("game.locations.action_deferred") %>
+    ·
+    <%= link_to t("arena.nav.city"), world_path, data: {turbo: false, location_recovery: "world"} %>
+  </p>
 <% else %>
   <span class="nl-nav-link nl-nav-link--disabled" aria-current="page"><%= @building.location_short_label %></span>
+  <p class="nl-quests-board__meta" data-location-here-next="1">
+    <%= link_to t("arena.nav.city"), world_path, data: {turbo: false, location_recovery: "world"} %>
+  </p>
 <% end %>

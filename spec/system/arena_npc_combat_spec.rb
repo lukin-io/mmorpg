@@ -18,7 +18,7 @@ RSpec.describe "Arena NPC Combat UI", type: :system do
 
   # Setup pattern matching world_map_spec.rb - character belongs to user
   let(:user) { create(:user) }
-  let(:zone) { create(:zone, name: "Outpost Surroundings", location_type: "outdoor") }
+  let(:zone) { create(:zone, name: "Пепельный Берег", location_type: "outdoor") }
   let(:character) { create(:character, user: user, name: "max_kerby_arena", level: 5, current_hp: 100, max_hp: 100) }
   let!(:position) { create(:character_position, character: character, zone: zone, x: 5, y: 5) }
   let!(:arena_hotspot) { create(:city_hotspot, :arena, zone: zone, active: true, required_level: 1) }

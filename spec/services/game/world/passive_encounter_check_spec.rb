@@ -24,9 +24,9 @@ RSpec.describe Game::World::PassiveEncounterCheck do
       "zone_id" => zone.id,
       "x" => 5,
       "y" => 5,
-      "tile_npc_id" => npc.id,
       "due_at" => (now + 17.seconds).iso8601(6)
     )
+    expect(character.reload.metadata.fetch(described_class::SCHEDULE_METADATA_KEY)).not_to have_key("tile_npc_id")
   end
 
   it "samples only inside captured delay windows for the exact cell" do
@@ -69,7 +69,7 @@ RSpec.describe Game::World::PassiveEncounterCheck do
     npc.update!(npc_template: template, npc_key: "wilderness_bandit", level: 7, max_hp: 155, current_hp: 155,
       metadata: definition.fetch(:metadata).deep_stringify_keys)
     interval_rng = instance_double(Random)
-    expect(interval_rng).to receive(:rand).with(300..360).once.and_return(300)
+    expect(interval_rng).to receive(:rand).with(300..300).once.and_return(300)
 
     initial = described_class.new(character:, clock:, rng: interval_rng).call
     expect(initial.retry_after_ms).to eq(300_000)
@@ -78,6 +78,7 @@ RSpec.describe Game::World::PassiveEncounterCheck do
     expect(ArenaMatch.count).to eq(0)
 
     selection_rng = instance_double(Random)
+    expect(selection_rng).to receive(:rand).with(1).once.and_return(0)
     expect(selection_rng).to receive(:rand).with(2).once.and_return(0)
     due = described_class.new(character:, clock: -> { now + 300.seconds }, rng: selection_rng).call
     expect(due).to be_interrupted
@@ -103,10 +104,12 @@ RSpec.describe Game::World::PassiveEncounterCheck do
     expect(early.retry_after_ms).to eq(12_000)
     expect(ArenaMatch.count).to eq(0)
 
+    due_rng = instance_double(Random)
+    expect(due_rng).to receive(:rand).with(1).and_return(0)
     due = described_class.new(
       character:,
       clock: -> { now + 17.seconds },
-      rng: instance_double(Random)
+      rng: due_rng
     ).call
 
     expect(due).to be_interrupted
@@ -164,9 +167,9 @@ RSpec.describe Game::World::PassiveEncounterCheck do
     expect(result.retry_after_ms).to eq(23_000)
     expect(character.reload.metadata.fetch(described_class::SCHEDULE_METADATA_KEY)).to include(
       "x" => 6,
-      "y" => 5,
-      "tile_npc_id" => destination_npc.id
+      "y" => 5
     )
+    expect(character.reload.metadata.fetch(described_class::SCHEDULE_METADATA_KEY)).not_to have_key("tile_npc_id")
   end
 
   it "clears a stale schedule when the cell has no live hostile" do

@@ -45,7 +45,7 @@ RSpec.describe Game::Skills::PerkAllocation do
   it "rejects an unknown perk without spending points" do
     expect do
       allocation.call(selected_keys: [:invented_perk])
-    end.to raise_error(described_class::AllocationError, "Unknown perk selection")
+    end.to raise_error(described_class::AllocationError, I18n.t("game.flashes.alloc_unknown_perk"))
 
     expect(character.reload.perk_points).to eq(1)
     expect(character.perks).to eq({})
@@ -54,13 +54,13 @@ RSpec.describe Game::Skills::PerkAllocation do
   it "rejects an empty selection" do
     expect do
       allocation.call(selected_keys: [])
-    end.to raise_error(described_class::AllocationError, "No new perks selected")
+    end.to raise_error(described_class::AllocationError, I18n.t("game.flashes.alloc_no_new_perks"))
   end
 
   it "rejects a null selection" do
     expect do
       allocation.call(selected_keys: nil)
-    end.to raise_error(described_class::AllocationError, "No new perks selected")
+    end.to raise_error(described_class::AllocationError, I18n.t("game.flashes.alloc_no_new_perks"))
   end
 
   it "normalizes blank and duplicate selections before spending" do
@@ -76,7 +76,7 @@ RSpec.describe Game::Skills::PerkAllocation do
 
     expect do
       allocation.call(selected_keys: [:more_strength])
-    end.to raise_error(described_class::AllocationError, "Not enough new-perk points")
+    end.to raise_error(described_class::AllocationError, I18n.t("game.flashes.alloc_not_enough_perk_points"))
   end
 
   it "does not charge again for an owned perk" do
@@ -84,7 +84,7 @@ RSpec.describe Game::Skills::PerkAllocation do
 
     expect do
       allocation.call(selected_keys: [:more_strength])
-    end.to raise_error(described_class::AllocationError, "No new perks selected")
+    end.to raise_error(described_class::AllocationError, I18n.t("game.flashes.alloc_no_new_perks"))
 
     expect(character.reload.perk_points).to eq(1)
   end
@@ -94,7 +94,7 @@ RSpec.describe Game::Skills::PerkAllocation do
 
     expect do
       allocation.call(selected_keys: [:more_strength])
-    end.to raise_error(described_class::AllocationError, "Selected perks are mutually exclusive")
+    end.to raise_error(described_class::AllocationError, I18n.t("game.flashes.alloc_perks_exclusive"))
 
     expect(character.reload.perks).to eq({})
   end

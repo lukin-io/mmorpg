@@ -1,44 +1,56 @@
-# Source-backed outdoor NPC configuration.
-# Captured Neverlands outdoor bot attacks near Outpost Surroundings used
-# Plague Rat NPCs and the normal shared fight pipeline.
+# Ashen Veil outdoor NPC configuration (Пепельный Берег).
+# Coordinates and encounter samples preserve the prior Neverlands capture;
+# names/loot are reskinned for the sandbox fork.
 
 outpost_surroundings:
-  zone_name: "Outpost Surroundings"
+  zone_name: "Пепельный Берег"
   source_map: "m_1001_999"
-  # A bootstrap of complete captured groups onto matching atlas cells, not an
-  # inferred global distance/difficulty formula. Existing cell edits survive.
   starter_encounters:
     atlas_names:
-      plague_rat: "Крысы"
-      wilderness_bandit: "Разбойники"
-      wilderness_robber: "Грабители"
+      plague_rat: "Пепельные клещи"
+      wilderness_bandit: "Патруль Завесы"
+      wilderness_robber: "Солевые контрабандисты"
+      ash_shore_scout: "Пепельные разведчики"
+      ash_gate_mite: "Клещи у ворот"
+      ash_gate_patrol: "Дозоры у ворот"
+      ash_bell_mite: "Колокольные клещи"
+      salt_dock_wraith: "Солевые призраки пирса"
+      soot_market_knifer: "Ножевики Сажевого рынка"
+      veil_dust_chanter: "Пылевые певцы Завесы"
     profiles:
       - key: forpost_captured_rat_pair
         source_npc_key: plague_rat
       - key: forpost_captured_bandit_groups
         source_npc_key: wilderness_bandit
-    # User-reported September 9 cadence; uniform sampling within this interval
-    # is a local calibration, not a measured Neverlands distribution.
-    passive_delay_source: "user_reported_2026-09-09"
+    passive_delay_source: "ashen_operator_2026-09-13_five_minutes"
     passive_delay_windows:
-      - key: user_reported_five_to_six_minutes
+      - key: ashen_five_minutes
         min_seconds: 300
-        max_seconds: 360
+        max_seconds: 300
   npc_templates:
     - key: wilderness_robber
-      name: Robber
+      name: Солевой контрабандист
       role: hostile
       level: 8
       hp: 270
       xp: 0
       metadata:
-        source_name: "Грабитель"
+        source_name: "Солевой контрабандист"
         source_observation: "2026-09-01_wilderness_bandit_group_variation_and_magic"
         source_map: "m_1008_1007"
         max_attacks_per_turn: 2
+      loot:
+        - kind: item
+          item: set-judge-bracers-t5
+          source_name: "Наручи «Судия» · T5"
+          chance: 0.05
+        - kind: currency
+          currency: NV
+          amount: 12
+          chance: 0.45
   npcs:
     - key: plague_rat
-      name: Plague Rat
+      name: Пепельный клещ
       role: hostile
       level: 4
       x: 7
@@ -47,8 +59,8 @@ outpost_surroundings:
       damage: 7
       xp: 35
       metadata:
-        source_name: "Plague Rat"
-        source_location: "Outpost Surroundings"
+        source_name: "Пепельный клещ"
+        source_location: "Пепельный Берег"
         source_observation: "neverlands_live_outdoor_npc_resource"
         source_map: "m_1001_999"
         source_coordinates: [1001, 999]
@@ -66,18 +78,250 @@ outpost_surroundings:
       loot:
         - kind: item
           item: rat_tail
-          source_name: "Rat Tail"
-          # Exact Neverlands probability is not captured. Preserve the prior
-          # no-drop behavior until source evidence supplies a value.
-          chance: 0.0
+          source_name: "Хвост Крысы Завесы"
+          chance: 0.55
+        - kind: item
+          item: wood_chips
+          source_name: "Щепа Смолы"
+          chance: 0.4
+        - kind: item
+          item: set-blood-helm-t5
+          source_name: "Шлем «Кровь Завесы» · T5"
+          chance: 0.06
+        - kind: currency
+          currency: NV
+          amount: 4
+          chance: 0.5
 
-    # Source [1008,1007] maps to local [14,15] with the zone's [994,992]
-    # coordinate offset. This independent capture is not beside the west gate.
-    # Each roster entry is one exact observed output. Replaying these samples
-    # is an MVP calibration and does not claim the source's hidden pool or
-    # weights.
+    - key: ash_gate_mite
+      name: Клещ у ворот
+      role: hostile
+      level: 2
+      x: 6
+      y: 7
+      hp: 45
+      damage: 3
+      xp: 18
+      respawn_seconds: 45
+      metadata:
+        source_name: "Клещ у ворот"
+        source_location: "Пепельный Берег"
+        source_observation: "ashen_sandbox_gate_mite_soft_release_2026-09-16"
+        source_map: "m_1001_999"
+        source_coordinates: [1000, 999]
+        encounter_count: 1
+        encounter_experience_reward: 18
+        avatar_image: "zombie.png"
+        max_attacks_per_turn: 1
+        respawn_seconds: 45
+      loot:
+        - kind: item
+          item: rat_tail
+          source_name: "Хвост Крысы Завесы"
+          chance: 0.5
+        - kind: item
+          item: wood_chips
+          source_name: "Щепа Смолы"
+          chance: 0.55
+        - kind: item
+          item: ash_herb
+          source_name: "Пепельная трава"
+          chance: 0.45
+        - kind: currency
+          currency: NV
+          amount: 3
+          chance: 0.55
+
+    - key: ash_gate_patrol
+      name: Дозор у ворот
+      role: hostile
+      level: 4
+      x: 7
+      y: 8
+      hp: 95
+      damage: 6
+      xp: 26
+      metadata:
+        source_name: "Дозор у ворот"
+        source_location: "Пепельный Берег"
+        source_observation: "ashen_sandbox_gate_patrol_2026-09-13"
+        source_map: "m_1001_999"
+        encounter_count: 1
+        encounter_experience_reward: 26
+        avatar_image: "zombie.png"
+        max_attacks_per_turn: 1
+      loot:
+        - kind: item
+          item: ashen_bait
+          source_name: "Приманка Завесы"
+          chance: 0.25
+        - kind: item
+          item: wood_chips
+          source_name: "Щепа Смолы"
+          chance: 0.4
+        - kind: item
+          item: ash_herb
+          source_name: "Пепельная трава"
+          chance: 0.4
+        - kind: currency
+          currency: NV
+          amount: 5
+          chance: 0.5
+
+    - key: ash_shore_scout
+      name: Пепельный разведчик
+      role: hostile
+      level: 5
+      x: 9
+      y: 8
+      hp: 120
+      damage: 9
+      xp: 28
+      metadata:
+        source_name: "Пепельный разведчик"
+        source_location: "Пепельный Берег"
+        source_observation: "ashen_sandbox_starter_scout_2026-09-12"
+        source_map: "m_1001_999"
+        encounter_count: 1
+        encounter_experience_reward: 28
+        avatar_image: "zombie.png"
+        max_attacks_per_turn: 1
+      loot:
+        - kind: item
+          item: set-swamp-boots-t5
+          source_name: "Сапоги «Топь» · T5"
+          chance: 0.08
+        - kind: currency
+          currency: NV
+          amount: 8
+          chance: 0.5
+
+    - key: ash_bell_mite
+      name: Колокольный клещ
+      role: hostile
+      level: 6
+      x: 11
+      y: 10
+      hp: 140
+      damage: 10
+      xp: 32
+      metadata:
+        source_name: "Колокольный клещ"
+        source_location: "Пепельный Берег"
+        source_observation: "ashen_sandbox_bell_mite_2026-09-12"
+        source_map: "m_1001_999"
+        encounter_count: 1
+        encounter_experience_reward: 32
+        avatar_image: "zombie.png"
+        max_attacks_per_turn: 1
+      loot:
+        - kind: item
+          item: rat_tail
+          source_name: "Хвост Крысы Завесы"
+          chance: 0.45
+        - kind: item
+          item: wood_chips
+          source_name: "Щепа Смолы"
+          chance: 0.35
+        - kind: item
+          item: set-judge-helm-t5
+          source_name: "Шлем «Судия» · T5"
+          chance: 0.05
+        - kind: currency
+          currency: NV
+          amount: 10
+          chance: 0.5
+
+    - key: salt_dock_wraith
+      name: Солевой призрак пирса
+      role: hostile
+      level: 7
+      x: 12
+      y: 13
+      hp: 165
+      damage: 12
+      xp: 40
+      metadata:
+        source_name: "Солевой призрак пирса"
+        source_location: "Пепельный Берег"
+        source_observation: "ashen_sandbox_salt_dock_wraith_2026-09-13"
+        source_map: "m_1001_999"
+        encounter_count: 1
+        encounter_experience_reward: 40
+        avatar_image: "zombie.png"
+        max_attacks_per_turn: 1
+      loot:
+        - kind: item
+          item: set-swamp-amulet-t5
+          source_name: "Амулет «Топь» · T5"
+          chance: 0.06
+        - kind: currency
+          currency: NV
+          amount: 14
+          chance: 0.55
+
+    - key: soot_market_knifer
+      name: Ножевик Сажевого рынка
+      role: hostile
+      level: 8
+      x: 16
+      y: 12
+      hp: 190
+      damage: 14
+      xp: 48
+      metadata:
+        source_name: "Ножевик Сажевого рынка"
+        source_location: "Пепельный Берег"
+        source_observation: "ashen_sandbox_soot_knifer_2026-09-13"
+        source_map: "m_1001_999"
+        encounter_count: 1
+        encounter_experience_reward: 48
+        avatar_image: "zombie.png"
+        max_attacks_per_turn: 2
+      loot:
+        - kind: item
+          item: set-distortion-gloves-t5
+          source_name: "Перчатки «Искажение» · T5"
+          chance: 0.05
+        - kind: item
+          item: set-blood-bracers-t5
+          source_name: "Наручи «Кровь Завесы» · T5"
+          chance: 0.04
+        - kind: currency
+          currency: NV
+          amount: 16
+          chance: 0.55
+
+    - key: veil_dust_chanter
+      name: Пылевой певец Завесы
+      role: hostile
+      level: 6
+      x: 8
+      y: 11
+      hp: 150
+      damage: 11
+      xp: 36
+      metadata:
+        source_name: "Пылевой певец Завесы"
+        source_location: "Пепельный Берег"
+        source_observation: "ashen_sandbox_veil_dust_chanter_2026-09-13"
+        source_map: "m_1001_999"
+        encounter_count: 1
+        encounter_experience_reward: 36
+        avatar_image: "zombie.png"
+        max_attacks_per_turn: 1
+      loot:
+        - kind: item
+          item: set-demiurge-amulet-t5
+          source_name: "Амулет «Демиург» · T5"
+          chance: 0.05
+        - kind: currency
+          currency: NV
+          amount: 11
+          chance: 0.5
+
     - key: wilderness_bandit
-      name: Bandit
+      name: Пепельный патрульный
       role: hostile
       level: 7
       x: 14
@@ -85,8 +329,8 @@ outpost_surroundings:
       hp: 155
       xp: 0
       metadata:
-        source_name: "Разбойник"
-        source_location: "Captured wilderness cell"
+        source_name: "Пепельный патрульный"
+        source_location: "Пепельный Берег"
         source_observation: "2026-09-01_wilderness_bandit_group_variation_and_magic"
         source_map: "m_1008_1007"
         source_coordinates: [1008, 1007]
@@ -95,12 +339,9 @@ outpost_surroundings:
         max_attacks_per_turn: 2
         encounter_selection_mode: "observed_sample_replay"
         passive_delay_windows:
-          - key: "2026-09-01-interval-1"
-            min_seconds: 230
-            max_seconds: 278
-          - key: "2026-09-01-interval-2"
-            min_seconds: 127
-            max_seconds: 187
+          - key: "ashen_five_minutes"
+            min_seconds: 300
+            max_seconds: 300
         encounter_rosters:
           - key: "2026-09-01-2334"
             trauma_percent: 30
@@ -139,3 +380,20 @@ outpost_surroundings:
               - npc_key: wilderness_robber
                 level: 9
                 hp: 310
+      loot:
+        - kind: item
+          item: set-blood-weapon-sword-t5
+          source_name: "Клинок «Кровь Завесы» · T5"
+          chance: 0.07
+        - kind: item
+          item: set-swamp-gloves-t5
+          source_name: "Перчатки «Топь» · T5"
+          chance: 0.05
+        - kind: item
+          item: set-judge-boots-t5
+          source_name: "Сапоги «Судия» · T5"
+          chance: 0.04
+        - kind: currency
+          currency: NV
+          amount: 18
+          chance: 0.55

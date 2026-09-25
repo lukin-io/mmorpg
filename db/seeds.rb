@@ -8,17 +8,25 @@
 require_relative "seeds/world_content_support"
 
 %w[
+  ashen_veil_world_labels
   accounts
   world_zones
   world_cells
   starter_characters
   shop_inventory
+  ashen_veil_item_labels
+  ashen_veil_thematic_sets
+  ashen_veil_item_catalog
+  ashen_veil_enemy_catalog
+  ashen_veil_instance_catalogs
   starter_wallets
   arena_rooms
   world_locations
   city_hotspots
   shop_accounts
+  ashen_veil_runtime_activation
   outdoor_npcs
+  ashen_veil_world_population
 ].each do |phase|
   load Rails.root.join("db/seeds", "#{phase}.rb")
 end

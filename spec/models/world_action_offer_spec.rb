@@ -71,7 +71,7 @@ RSpec.describe WorldActionOffer, type: :model do
 
       expect(edge_offer).to be_valid
       expect(outside_offer).not_to be_valid
-      expect(outside_offer.errors[:x]).to include("must be within zone bounds")
+      expect(outside_offer.errors[:x]).to include(I18n.t("manage.coord_outside_zone"))
       expect(negative_offer).not_to be_valid
     end
 
@@ -141,7 +141,7 @@ RSpec.describe WorldActionOffer, type: :model do
       offer.metadata.delete("local_action_result")
 
       expect(offer).not_to be_valid
-      expect(offer.errors[:metadata]).to include("must have a local action result")
+      expect(offer.errors[:metadata]).to include(I18n.t("errors.local_action_result_required"))
     end
 
     it "returns no timer or result for ordinary offers" do
@@ -155,18 +155,23 @@ RSpec.describe WorldActionOffer, type: :model do
     it "consumes the saved result once across stale instances without changing timing or work state" do
       offer.save!
       stale_offer = described_class.find(offer.id)
-      result = offer.local_action_result
+      presented = I18n.t("game.world.local_action.resource_search.message")
 
-      expect(offer.consume_local_action_result!(at: now)).to eq(result)
+      expect(offer.consume_local_action_result!(at: now)).to eq(presented)
       expect(stale_offer.consume_local_action_result!(at: now + 1.second)).to be_nil
       expect(offer.reload.metadata["local_action_result_delivered_at"]).to eq(now.iso8601(6))
-      expect(offer).to have_attributes(local_action_result: result, local_action_ends_at: now + 28.seconds, status: "accepted")
+      expect(offer).to have_attributes(
+        local_action_result: "There is no useful vegetation in this area.",
+        local_action_ends_at: now + 28.seconds,
+        status: "accepted"
+      )
     end
 
     it "permits an undelivered completed result and rejects cancelled, failed, and ordinary offers" do
       offer.save!
       offer.complete!
-      expect(offer.consume_local_action_result!(at: now + 29.seconds)).to eq(offer.local_action_result)
+      expect(offer.consume_local_action_result!(at: now + 29.seconds))
+        .to eq(I18n.t("game.world.local_action.resource_search.message"))
 
       %w[cancelled failed offered].each do |state|
         candidate = create(:world_action_offer, status: state, metadata: {

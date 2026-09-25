@@ -1,0 +1,34 @@
+<% if @mode == "licenses" %>
+  <% clearance = Game::Shop::TraumatologistClearance.new(character: current_character) %>
+  <section class="nl-panel" aria-label="<%= t("game.shop.doctor_onboarding_title") %>" data-shop-doctor-onboarding="1">
+    <h2><%= t("game.shop.doctor_onboarding_title") %></h2>
+    <p class="nl-empty-note"><%= t("game.shop.doctor_onboarding_lead") %></p>
+    <ol class="nl-shop-sell-onboarding__steps">
+      <li>
+        <% if current_character.owns_perk?(:healer) %>
+          <%= t("game.shop.doctor_onboarding_perk_done") %>
+        <% else %>
+          <%= t("game.shop.doctor_onboarding_perk") %>
+          <%= link_to t("game.shop.traumatologist_open_perks"), perks_character_path(current_character), class: "nl-sheet-link", data: {doctor_recovery: "perks"} %>
+        <% end %>
+      </li>
+      <li>
+        <%= t("game.shop.doctor_onboarding_tier1") %>
+          ·
+          <%= link_to t("game.shop.modes.licenses"), shop_path(mode: "licenses"), class: "nl-sheet-link", data: {doctor_recovery: "licenses"} %>
+      </li>
+      <li>
+        <% if clearance.completed? %>
+          <%= t("game.shop.doctor_onboarding_clearance_done") %>
+        <% else %>
+          <%= t("game.shop.doctor_onboarding_clearance") %>
+          <% if Game::World::CityBuildingCatalog.accessible?(character: current_character, building_key: "hospital") %>
+            <%= link_to t("game.buildings.hospital_title_short"), city_building_path("hospital"), class: "nl-sheet-link", data: {doctor_recovery: "hospital"} %>
+          <% else %>
+            <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {doctor_recovery: "world"} %>
+          <% end %>
+        <% end %>
+      </li>
+    </ol>
+  </section>
+<% end %>

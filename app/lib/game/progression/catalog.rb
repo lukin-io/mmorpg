@@ -47,14 +47,14 @@ module Game
       end
 
       # Returns the cumulative combat-experience threshold for reaching the
-      # requested level. A target without a complete reward row is intentionally
-      # unsupported instead of extrapolated.
+      # requested level. Soft-release Ashen curve (Curves) owns the number;
+      # a target without a complete reward row remains unsupported.
       def experience_threshold_to_reach(level_number)
         target = level_number.to_i
         return 0 if target <= 0
         return unless level(target)
 
-        level(target - 1)&.fetch("experience_to_next_level")
+        Game::Progression::Curves.cumulative_threshold(target)
       end
 
       def fight_experience_cap(level_number)
@@ -79,7 +79,11 @@ module Game
           end
         end
 
-        thresholds = entries.values.map { |row| row.fetch("experience_to_next_level") }
+        # Soft-release XP thresholds are formula-driven (Curves). YAML
+        # experience_to_next_level remains for docs/compat; Curves must stay
+        # strictly increasing across the authored level range.
+        max_level = entries.keys.max
+        thresholds = (1..max_level).map { |lvl| Game::Progression::Curves.cumulative_threshold(lvl) }
         raise "Experience thresholds must be strictly increasing" unless thresholds.each_cons(2).all? { |left, right| right > left }
       end
       private_class_method :validate!

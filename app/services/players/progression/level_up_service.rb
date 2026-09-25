@@ -24,7 +24,7 @@ module Players
 
       def apply_experience!(amount)
         gained_experience = Integer(amount, exception: false)
-        raise ProgressionError, "Experience must be a non-negative integer" unless gained_experience&.>= 0
+        raise ProgressionError, I18n.t("errors.experience_non_negative") unless gained_experience&.>= 0
 
         reset_totals
         ApplicationRecord.transaction do

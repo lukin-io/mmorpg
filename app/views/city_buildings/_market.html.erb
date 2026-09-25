@@ -1,13 +1,182 @@
 <%= render "shop/merchant_qualification", location: :market %>
 
-<h2>Stall tiers</h2>
-<table class="nl-detail-table nl-city-building-table">
+<% market_wallet = current_user.currency_wallet || current_user.create_currency_wallet!(nv_balance: 0) %>
+<% active_stall = local_assigns.fetch(:stall_lease, nil) || Game::Shop::StallRent.active_for(current_character) %>
+<% trading_skill = Game::Shop::LicenseRules.trading_skill(current_character) %>
+<% merchant_unlocked = current_character.metadata.to_h.dig("profession_unlocks", "merchant") == true %>
+<% stall_listings = local_assigns.fetch(:stall_listings, @stall_listings) || [] %>
+<% stall_listable = local_assigns.fetch(:stall_listable, @stall_listable) || [] %>
+<% stall_mass_used = local_assigns.fetch(:stall_mass_used, @stall_mass_used).to_i %>
+<p class="nl-quests-board__meta" data-market-wallet="<%= market_wallet.nv_balance.to_i %>">
+  <%= t("game.buildings.junk_wallet", amount: market_wallet.nv_balance.to_i) %>
+  ·
+  <%= t("game.buildings.stall_trading_skill", skill: trading_skill) %>
+</p>
+<% if Game::Seasons::Catalog.active? %>
+  <p class="nl-quests-board__meta" data-stall-season-fomo="1">
+    <%= t("game.buildings.stall_season_fomo") %>
+    · <%= link_to t("game.season.nav"), season_path, class: "nl-sheet-link", data: {turbo_frame: "_top"} %>
+    · <%= link_to t("game.locations.buildings.resource_exchange"), trade_hub_path(tab: "exchange"), class: "nl-sheet-link" %>
+  </p>
+<% end %>
+
+<% if active_stall %>
+  <p class="nl-quests-board__meta"
+     data-market-stall-active="1"
+     data-market-stall-name="<%= active_stall["stall_name"] %>">
+    <%= t(
+          "game.buildings.stall_active",
+          name: active_stall["stall_name"],
+          mass: active_stall["mass"],
+          tax: active_stall["tax"],
+          expires: begin
+            t = Game::Shop::StallRent.parse_time(active_stall["expires_at"])
+            t ? l(t, format: :short) : active_stall["expires_at"]
+          end
+        ) %>
+  </p>
+<% end %>
+
+<p class="nl-city-building-notice">
+  <%= link_to t("game.shop.title"), shop_path, class: "lbut", data: {market_recovery: "shop"} %>
+  <%= link_to t("game.buildings.junk_dealer_link"), city_building_path("junk_dealer"), class: "lbut", data: {market_recovery: "junk"} %>
+</p>
+
+<%= render "city_buildings/junk_buyback", offers: local_assigns.fetch(:offers, []) %>
+
+<h2><%= t("game.buildings.stall_tiers") %></h2>
+<% stall_tiers = building["stall_tiers"] || [] %>
+<% any_stall_affordable = stall_tiers.any? { |_name, _skill, _mass, rent, _tax| market_wallet.nv_balance.to_i >= rent.to_i } %>
+<table class="nl-detail-table nl-city-building-table"
+       data-market-stalls="<%= stall_tiers.size %>"
+       data-market-any-stall-affordable="<%= any_stall_affordable ? "1" : "0" %>"
+       data-market-stall-rent="live">
   <thead>
-    <tr><th>Stall</th><th>Merchant skill</th><th>Mass</th><th>30-day rent</th><th>Sale tax</th></tr>
+    <tr>
+      <th><%= t("game.common.stall") %></th>
+      <th><%= t("game.common.merchant_skill") %></th>
+      <th><%= t("game.common.mass") %></th>
+      <th><%= t("game.buildings.stall_rent_30d") %></th>
+      <th><%= t("game.common.sale_tax") %></th>
+      <th><%= t("game.common.action") %></th>
+    </tr>
   </thead>
   <tbody>
-    <% building["stall_tiers"].each do |name, skill, mass, rent, tax| %>
-      <tr><td><%= name %></td><td><%= skill %></td><td><%= mass %></td><td><%= number_with_delimiter(rent) %> NV</td><td><%= tax %></td></tr>
+    <% stall_tiers.each do |name, skill, mass, rent, tax| %>
+      <% rent_i = rent.to_i %>
+      <% skill_i = skill.to_i %>
+      <% affordable = market_wallet.nv_balance.to_i >= rent_i %>
+      <% skill_ok = trading_skill >= skill_i %>
+      <% unlock_ok = skill_i.zero? || merchant_unlocked %>
+      <% can_rent = affordable && skill_ok && unlock_ok %>
+      <% is_active = active_stall && active_stall["stall_name"].to_s == name.to_s %>
+      <tr data-market-stall="<%= name %>"
+          data-market-stall-rent="<%= rent_i %>"
+          data-market-stall-affordable="<%= affordable ? "1" : "0" %>"
+          data-market-stall-can-rent="<%= can_rent ? "1" : "0" %>">
+        <td><%= name %></td>
+        <td><%= skill %></td>
+        <td><%= mass %></td>
+        <td><%= number_with_delimiter(rent) %> NV</td>
+        <td><%= tax %></td>
+        <td>
+          <% if is_active %>
+            <span class="nl-quests-board__meta"><%= t("game.buildings.stall_current") %></span>
+          <% elsif can_rent %>
+            <%= button_to t("game.buildings.stall_rent_cta"),
+                  city_building_rent_stall_path("market"),
+                  method: :post,
+                  params: {stall_name: name},
+                  class: "lbut",
+                  data: {market_stall_rent: name} %>
+          <% elsif !affordable %>
+            <span class="nl-quests-board__meta"><%= t("game.buildings.stall_need_nv", amount: rent_i) %></span>
+          <% elsif !skill_ok %>
+            <span class="nl-quests-board__meta"><%= t("game.buildings.stall_need_skill", need: skill_i) %></span>
+          <% else %>
+            <span class="nl-quests-board__meta"><%= t("game.buildings.stall_need_merchant") %></span>
+          <% end %>
+        </td>
+      </tr>
     <% end %>
   </tbody>
 </table>
+
+<section class="nl-handbook" aria-label="<%= t("game.buildings.stall_listings_title") %>" data-market-stall-listings="live">
+  <h2><%= t("game.buildings.stall_listings_title") %></h2>
+  <p class="nl-handbook__lead"><%= t("game.buildings.stall_listings_lead") %></p>
+
+  <% if active_stall %>
+    <p class="nl-quests-board__meta"
+       data-market-stall-mass-used="<%= stall_mass_used %>"
+       data-market-stall-mass-cap="<%= active_stall["mass"].to_i %>">
+      <%= t("game.buildings.stall_listing_mass_used", used: stall_mass_used, capacity: active_stall["mass"].to_i) %>
+    </p>
+    <% if stall_listable.any? %>
+      <div class="nl-trade-hub__list-form" data-market-stall-can-list="1">
+        <%= form_with url: city_building_list_stall_path("market"), method: :post, local: true, data: {turbo: false} do |f| %>
+          <p>
+            <%= f.label :inventory_item_id, t("game.trade_hub.auction_item") %>
+            <%= f.select :inventory_item_id,
+                  stall_listable.map { |i| ["#{i.item_template.name} ×#{i.quantity}", i.id] },
+                  {},
+                  class: "nl-trade-hub__select" %>
+          </p>
+          <p>
+            <%= f.label :quantity, t("game.trade_hub.auction_qty") %>
+            <%= f.number_field :quantity, value: 1, min: 1, class: "nl-trade-hub__input" %>
+          </p>
+          <p>
+            <%= f.label :price_nv, t("game.trade_hub.auction_price") %>
+            <%= f.number_field :price_nv, value: 10, min: 1, step: 1, class: "nl-trade-hub__input" %>
+          </p>
+          <p>
+            <%= f.check_box :featured, {}, "1", "0" %>
+            <%= f.label :featured, t("game.buildings.stall_feature_cta", fee: Game::Shop::StallListing::FEATURE_FEE_NV.to_i) %>
+          </p>
+          <%= f.submit t("game.buildings.stall_listing_cta"), class: "lbut" %>
+        <% end %>
+      </div>
+    <% else %>
+      <p class="nl-quests-board__meta" data-market-stall-can-list="0"><%= t("game.buildings.stall_listing_need_items") %></p>
+    <% end %>
+  <% else %>
+    <p class="nl-quests-board__meta" data-market-stall-can-list="0"><%= t("game.buildings.stall_listing_need_lease") %></p>
+  <% end %>
+
+  <% if stall_listings.blank? %>
+    <p class="nl-trade-hub__empty" data-market-stall-empty="1"><%= t("game.buildings.stall_listing_empty") %></p>
+  <% else %>
+    <ul class="nl-trade-hub__list" data-market-stall-list="1" data-market-stall-lots="<%= stall_listings.size %>">
+      <% stall_listings.each do |listing| %>
+        <li data-market-stall-lot="<%= listing.id %>">
+          <%= listing.item_template.name %> ×<%= listing.quantity %>
+          — <%= listing.price_nv %> NV
+          (<%= listing.seller_character.name %>)
+          <% if listing.metadata.to_h["featured"] == true %>
+            <em data-stall-featured="1"><%= t("game.buildings.stall_featured_badge") %></em>
+          <% end %>
+          <% if Game::Seasons::Catalog.active? && Array(Game::Seasons::Catalog.current["craft_demand_keys"]).map(&:to_s).include?(listing.item_template.key.to_s) %>
+            <em data-stall-demand="1"><%= t("game.buildings.stall_demand_badge") %></em>
+          <% end %>
+          <% if listing.seller_character_id != current_character.id %>
+            <%= button_to t("game.common.buy", default: "Buy"),
+                  city_building_buy_stall_path("market"),
+                  method: :post,
+                  params: {listing_id: listing.id},
+                  class: "lbut",
+                  form: {data: {turbo: false}} %>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+</section>
+
+<p class="nl-quests-board__meta">
+  <%= link_to t("game.shop.modes.sell"), shop_path(mode: "sell"), class: "nl-sheet-link", data: {market_recovery: "shop_sell"} %>
+  ·
+  <%= link_to t("game.buildings.junk_dealer_link"), city_building_path("junk_dealer"), class: "nl-sheet-link", data: {market_recovery: "junk"} %>
+</p>
+
+<%= render "city_buildings/landmark", building: building, building_key: "market" %>

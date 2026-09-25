@@ -8,12 +8,12 @@ if defined?(MapTileTemplate)
   city_zone_names = forpost_city_zones.map(&:name)
   MapTileTemplate.where(zone: city_zone_names).delete_all
 
-  # Outpost Surroundings uses sparse authored overrides inside one logical
+  # Пепельный Берег uses sparse authored overrides inside one logical
   # 1000x1000 region. Missing in-bounds rows use the deterministic passable
   # outdoor default shared by rendering and movement validation. cell_art stores
   # only a stable catalog key and zero-based sheet location; passability,
   # entrances, local actions, and hidden NPCs remain independent layers.
-  outpost_surroundings = Zone.find_by(name: "Outpost Surroundings")
+  outpost_surroundings = Zone.find_by(name: "Пепельный Берег")
   outdoor_tiles = outpost_surroundings ? Seeds::WorldContentSupport.outdoor_route_tiles(outpost_surroundings.name) : []
 
   outdoor_tiles.each do |attrs|

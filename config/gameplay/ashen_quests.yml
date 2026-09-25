@@ -1,0 +1,577 @@
+# Sandbox Ashen Veil starter quests (Пепельная Завеса).
+# Lightweight journal progress stored on character.metadata["ashen_quests"].
+# requires: list of completed quest keys before accept is allowed.
+# unlocks: quest keys auto-accepted after a successful turn-in.
+# where_*: short HUD/board hint for where to go next.
+
+quests:
+  veil_lure_drill:
+    title_ru: "Приманка Завесы"
+    title_en: "Veil Lure Drill"
+    summary_ru: "Боты сами нападают раз в 5 минут. Чтобы вызвать бой раньше — используйте Приманку Завесы (Осмотр/Вход на клетке с ботом). Победите врага берега или манекен в Зале Помощи и доложите."
+    summary_en: "Bots ambush on their own every 5 minutes. To force a fight earlier, use Ashen Bait (Look/Enter on a hostile cell). Defeat a shore foe or the Help Hall mannequin and report."
+    dialogue_accept_ru: "Писец Ратуши кивает: «Берег не прощает робких. Возьми приманку — и докажи, что Завеса тебя слышит.»"
+    dialogue_accept_en: "The Hall clerk nods: “The shore does not forgive the timid. Take the lure — prove the Veil can hear you.”"
+    dialogue_complete_ru: "«Хорошая работа. Пепел не цепляется к тем, кто бьёт первым.» Писец ставит печать."
+    dialogue_complete_en: "“Good work. Ash does not cling to those who strike first.” The clerk stamps the ledger."
+    where_ru: "Западные ворота → Пепельный Берег · или Арена → Зал Помощи"
+    where_en: "West Gate → Ashen Shore · or Arena → Help Hall"
+    giver: "Ратуша Угля"
+    objective:
+      type: kill_npc
+      npc_keys: [plague_rat, ash_gate_mite, ash_gate_patrol, ash_shore_scout, wilderness_bandit, wilderness_robber, ash_bell_mite, arena_training_dummy]
+      count: 1
+    reward:
+      experience: 25
+      currency_nv: 20
+    unlocks: [veil_tail_delivery, ash_first_herbs]
+    sort: 1
+
+  ash_first_herbs:
+    title_ru: "Первые травы берега"
+    title_en: "First Shore Herbs"
+    summary_ru: "Соберите 3 «Пепельные травы» на клетках с травой (Осмотр) и сдайте в Ратушу — начало часа собирателя."
+    summary_en: "Gather 3 Ash Herbs on herb cells (Look) and turn them in at City Hall — forager hour start."
+    dialogue_accept_ru: "«Трава Завесы пахнет сажей. Принесите три пучка — Лазарет не кормит словами.»"
+    dialogue_accept_en: "“Veil herbs smell of soot. Bring three bundles — the Infirmary does not feed on words.”"
+    dialogue_complete_ru: "«Хватит на отвар. Теперь сети — рыба слышит прилив.»"
+    dialogue_complete_en: "“Enough for a brew. Now nets — fish hear the tide.”"
+    where_ru: "Берег → клетка с травой → Осмотр → Ратуша"
+    where_en: "Shore → herb cell → Look → City Hall"
+    giver: "Ратуша Угля"
+    requires: [veil_lure_drill]
+    objective:
+      type: deliver_item
+      item_key: ash_herb
+      count: 3
+    reward:
+      experience: 20
+      currency_nv: 15
+      item_key: ash_herb
+    unlocks: [ash_first_catch]
+    sort: 2
+
+  ash_first_catch:
+    title_ru: "Первый улов"
+    title_en: "First Catch"
+    summary_ru: "Поймайте 2 «Пепельных окуня» на рыбных клетках (нужна удочка/крючок из стартового набора) и сдайте в Ратушу."
+    summary_en: "Catch 2 Ash Perch on fish cells (starter rod/hook) and turn them in at City Hall."
+    dialogue_accept_ru: "«Окунь Завесы дёргает леску. Два хвоста — и Смолокур откроет вам щёпу.»"
+    dialogue_accept_en: "“Veil perch tug the line. Two tails — and the Tar Smith opens chips to you.”"
+    dialogue_complete_ru: "«Свежий улов. Берег кормит тех, кто не боится мокрых рук.»"
+    dialogue_complete_en: "“Fresh catch. The shore feeds those who do not fear wet hands.”"
+    where_ru: "Берег → рыбная клетка → Рыбалка → Ратуша"
+    where_en: "Shore → fish cell → Fish → City Hall"
+    giver: "Ратуша Угля"
+    requires: [ash_first_herbs]
+    objective:
+      type: deliver_item
+      item_key: ash_perch
+      count: 2
+    reward:
+      experience: 25
+      currency_nv: 20
+      item_key: wood_chips
+    sort: 3
+
+  veil_tail_delivery:
+    title_ru: "Хвост Завесы"
+    title_en: "Veil Tail Delivery"
+    summary_ru: "Добыйте «Хвост Крысы Завесы» с клещей у ворот и сдайте в Ратушу."
+    summary_en: "Collect a Veil Rat Tail from gate mites and turn it in at City Hall."
+    dialogue_accept_ru: "«Хвост — не трофей, а доказательство. Без него кузнецы не откроют вам смолу.»"
+    dialogue_accept_en: "“A tail is not a trophy — it is proof. Without it the smiths will not open the tar to you.”"
+    dialogue_complete_ru: "Писец взвешивает хвост: «Завеса отметила вас. Идите к Смолокуру.»"
+    dialogue_complete_en: "The clerk weighs the tail: “The Veil marked you. Go to the Tar Smith.”"
+    where_ru: "Ворота → бой → Ратуша"
+    where_en: "Gate → fight → City Hall"
+    giver: "Ратуша Угля"
+    requires: [veil_lure_drill]
+    objective:
+      type: deliver_item
+      item_key: rat_tail
+      count: 1
+    reward:
+      experience: 30
+      currency_nv: 15
+    unlocks: [tar_smith_first_bandage]
+    sort: 4
+
+  tar_smith_first_bandage:
+    title_ru: "Первый бинт Смолокура"
+    title_en: "First Tar Smith Bandage"
+    summary_ru: "Скрафтите «Пепельный бинт» в Смоляной Кузнице (щепа + хвост) и сдайте его в Ратушу."
+    summary_en: "Craft an Ashen Bandage at the Pitch Forge (chips + tail) and turn it in at City Hall."
+    dialogue_accept_ru: "«Смола жжёт, но держит жизнь. Принесите первый бинт — доказательство, что кузня вас приняла.»"
+    dialogue_accept_en: "“Tar burns, but it holds life. Bring the first bandage — proof the forge accepted you.”"
+    dialogue_complete_ru: "«Чистая работа. Теперь Лазарет откроет сумку новичка.»"
+    dialogue_complete_en: "“Clean work. The Infirmary will open the novice bag next.”"
+    where_ru: "Смоляная Кузница"
+    where_en: "Pitch Forge"
+    giver: "Ратуша Угля"
+    requires: [veil_tail_delivery]
+    objective:
+      type: deliver_item
+      item_key: ashen_bandage
+      count: 1
+    reward:
+      experience: 35
+      currency_nv: 25
+      item_key: wood_chips
+    unlocks: [ash_healer_first_bag, tar_field_kit_contract]
+    sort: 3
+
+  ash_healer_first_bag:
+    title_ru: "Первая сумка Лекаря"
+    title_en: "First Healer Bag"
+    summary_ru: "Скрафтите «Сумку новичка-лекаря» в Лазарете Угля (бинт + трава + щепа) и сдайте её в Ратушу."
+    summary_en: "Craft a Novice Healer Bag at Coal Infirmary (bandage + herb + chips) and turn it in at City Hall."
+    where_ru: "Лазарет Угля"
+    where_en: "Coal Infirmary"
+    giver: "Ратуша Угля"
+    requires: [tar_smith_first_bandage]
+    objective:
+      type: deliver_item
+      item_key: healer_bag_light
+      count: 1
+    reward:
+      experience: 40
+      currency_nv: 30
+      item_key: ash_herb
+    unlocks: [ash_mite_patrol]
+    sort: 4
+
+  tar_field_kit_contract:
+    title_ru: "Полевой набор Смолокура"
+    title_en: "Tar Smith Field Kit"
+    summary_ru: "Скрафтите «Полевой набор Завесы» в Кузнице (2 бинта + приманка, навык ≥3) и сдайте его в Ратушу."
+    summary_en: "Craft a Veil Field Kit at the Forge (2 bandages + bait, skill ≥3) and turn it in at City Hall."
+    where_ru: "Смоляная Кузница"
+    where_en: "Pitch Forge"
+    giver: "Ратуша Угля"
+    requires: [tar_smith_first_bandage]
+    objective:
+      type: deliver_item
+      item_key: veil_field_kit
+      count: 1
+    reward:
+      experience: 45
+      currency_nv: 30
+      item_key: ashen_bait
+    unlocks: [tar_lure_pack_contract, ash_healer_adept_bag]
+    sort: 5
+
+  tar_lure_pack_contract:
+    title_ru: "Пачка приманок"
+    title_en: "Lure Pack Run"
+    summary_ru: "Скрафтите «Пачку смоляных приманок» и сдайте 5 приманок в Ратушу (навык Смолокура ≥1)."
+    summary_en: "Craft a Tar Lure Pack and turn in 5 Ashen Bait at City Hall (Tar Smith skill ≥1)."
+    where_ru: "Смоляная Кузница"
+    where_en: "Pitch Forge"
+    giver: "Ратуша Угля"
+    requires: [tar_field_kit_contract]
+    objective:
+      type: deliver_item
+      item_key: ashen_bait
+      count: 5
+    reward:
+      experience: 40
+      currency_nv: 35
+      item_key: wood_chips
+    sort: 6
+
+  ash_healer_adept_bag:
+    title_ru: "Сумка опытного лекаря"
+    title_en: "Adept Healer Bag"
+    summary_ru: "Скрафтите «Сумку опытного лекаря» в Лазарете (навык ≥3) и сдайте в Ратушу — снимает тяжёлые травмы."
+    summary_en: "Craft an Adept Healer Bag at the Infirmary (skill ≥3) and turn it in — clears heavy injuries."
+    where_ru: "Лазарет Угля"
+    where_en: "Coal Infirmary"
+    giver: "Ратуша Угля"
+    requires: [ash_healer_first_bag, tar_field_kit_contract]
+    objective:
+      type: deliver_item
+      item_key: healer_bag_heavy
+      count: 1
+    reward:
+      experience: 55
+      currency_nv: 40
+      item_key: ash_herb
+    unlocks: [ash_healer_master_bag]
+    sort: 7
+
+  ash_healer_master_bag:
+    title_ru: "Сумка мастера-лекаря"
+    title_en: "Master Healer Bag"
+    summary_ru: "Скрафтите «Сумку мастера-лекаря» (опыт + полевой набор + травы, навык ≥8) и сдайте — снимает боевую травму от PvP."
+    summary_en: "Craft a Master Healer Bag (adept + field kit + herbs, skill ≥8) and turn it in — clears combat trauma from PvP."
+    where_ru: "Лазарет Угля"
+    where_en: "Coal Infirmary"
+    giver: "Ратуша Угля"
+    requires: [ash_healer_adept_bag]
+    objective:
+      type: deliver_item
+      item_key: healer_bag_combat
+      count: 1
+    reward:
+      experience: 80
+      currency_nv: 60
+      item_key: combat_heal_scroll
+    unlocks: [veil_patrol_sweep]
+    sort: 8
+
+  ash_mite_patrol:
+    title_ru: "Пепельный дозор"
+    title_en: "Ash Mite Patrol"
+    summary_ru: "Уничтожьте трёх пепельных клещей у ворот и доложите в Ратушу."
+    summary_en: "Defeat three ash mites at the gate and report to City Hall."
+    where_ru: "Пепельный Берег у ворот"
+    where_en: "Ashen Shore at the gate"
+    giver: "Ратуша Угля"
+    requires: [ash_healer_first_bag]
+    objective:
+      type: kill_npc
+      npc_keys: [plague_rat, ash_gate_mite]
+      count: 3
+    reward:
+      experience: 40
+      currency_nv: 25
+      item_key: set-blood-ring-t5
+    unlocks: [ash_scout_watch, bell_yard_crumbs]
+    sort: 10
+
+  ash_scout_watch:
+    title_ru: "Разведка берега"
+    title_en: "Shore Recon"
+    summary_ru: "Сбейте пепельного разведчика у Пепельного Берега и доложите в Ратушу."
+    summary_en: "Defeat the ash shore scout and report to City Hall."
+    where_ru: "Пепельный Берег"
+    where_en: "Ashen Shore"
+    giver: "Ратуша Угля"
+    requires: [ash_mite_patrol]
+    objective:
+      type: kill_npc
+      npc_keys: [ash_shore_scout]
+      count: 1
+    reward:
+      experience: 35
+      currency_nv: 20
+      item_key: set-distortion-gloves-t5
+    unlocks: [salt_smuggler_trace]
+    sort: 15
+
+  salt_smuggler_trace:
+    title_ru: "След соли"
+    title_en: "Salt Trail"
+    summary_ru: "Сбейте солевых контрабандистов и патруль Завесы, затем вернитесь с докладом."
+    summary_en: "Defeat salt smugglers and Veil patrols, then report back."
+    where_ru: "Пепельный Берег (глубже)"
+    where_en: "Ashen Shore (deeper)"
+    giver: "Ратуша Угля"
+    requires: [ash_scout_watch]
+    objective:
+      type: kill_npc
+      npc_keys: [wilderness_robber, wilderness_bandit]
+      count: 2
+    reward:
+      experience: 80
+      currency_nv: 45
+      item_key: set-judge-amulet-t5
+    unlocks: [bell_mite_cull]
+    sort: 20
+
+  bell_yard_crumbs:
+    title_ru: "Крошки колокольного двора"
+    title_en: "Bell Yard Crumbs"
+    summary_ru: "Принесите в Ратушу два «Хвоста Крысы Завесы» — следы клещей у берега."
+    summary_en: "Bring two Veil Rat Tails to City Hall — ash mite traces from the shore."
+    where_ru: "Берег → Ратуша"
+    where_en: "Shore → City Hall"
+    giver: "Ратуша Угля"
+    requires: [ash_mite_patrol]
+    objective:
+      type: deliver_item
+      item_key: rat_tail
+      count: 2
+    reward:
+      experience: 55
+      currency_nv: 30
+      item_key: set-swamp-amulet-t5
+    sort: 25
+
+  bell_mite_cull:
+    title_ru: "Колокольный выводок"
+    title_en: "Bell Mite Cull"
+    summary_ru: "Уничтожьте двух колокольных клещей у берега и вернитесь с докладом."
+    summary_en: "Defeat two bell mites on the shore and report back."
+    where_ru: "Пепельный Берег"
+    where_en: "Ashen Shore"
+    giver: "Ратуша Угля"
+    requires: [salt_smuggler_trace]
+    objective:
+      type: kill_npc
+      npc_keys: [ash_bell_mite]
+      count: 2
+    reward:
+      experience: 70
+      currency_nv: 35
+      item_key: set-judge-helm-t5
+    unlocks: [salt_pier_haunt]
+    sort: 28
+
+  veil_patrol_sweep:
+    title_ru: "Зачистка патруля"
+    title_en: "Patrol Sweep"
+    summary_ru: "Победите четырёх врагов патруля/контрабанды на Пепельном Береге."
+    summary_en: "Defeat four patrol or smuggler foes on the Ashen Shore."
+    where_ru: "Пепельный Берег"
+    where_en: "Ashen Shore"
+    giver: "Ратуша Угля"
+    requires: [ash_healer_master_bag]
+    objective:
+      type: kill_npc
+      npc_keys: [wilderness_bandit, wilderness_robber, ash_shore_scout]
+      count: 4
+    reward:
+      experience: 120
+      currency_nv: 60
+      item_key: set-blood-bracers-t5
+    unlocks: [soot_knifer_bounty]
+    sort: 30
+
+  salt_pier_haunt:
+    title_ru: "Призраки соляного пирса"
+    title_en: "Salt Pier Haunt"
+    summary_ru: "Сбейте двух солевых призраков у пирса и доложите в Ратушу."
+    summary_en: "Defeat two salt dock wraiths near the pier and report to City Hall."
+    where_ru: "Пирс / соляной берег"
+    where_en: "Pier / salt shore"
+    giver: "Ратуша Угля"
+    requires: [bell_mite_cull]
+    objective:
+      type: kill_npc
+      npc_keys: [salt_dock_wraith]
+      count: 2
+    reward:
+      experience: 90
+      currency_nv: 50
+      item_key: set-swamp-amulet-t5
+    unlocks: [dust_chanter_silence]
+    sort: 35
+
+  soot_knifer_bounty:
+    title_ru: "Награда за ножевика"
+    title_en: "Knifer Bounty"
+    summary_ru: "Устраните ножевика Сажевого рынка на берегу и вернитесь с докладом."
+    summary_en: "Eliminate a soot-market knifer on the shore and report back."
+    where_ru: "Пепельный Берег (рынок-сажа)"
+    where_en: "Ashen Shore (soot market)"
+    giver: "Ратуша Угля"
+    requires: [veil_patrol_sweep]
+    objective:
+      type: kill_npc
+      npc_keys: [soot_market_knifer]
+      count: 1
+    reward:
+      experience: 100
+      currency_nv: 55
+      item_key: set-distortion-gloves-t5
+    sort: 40
+
+  dust_chanter_silence:
+    title_ru: "Заглушить пыль"
+    title_en: "Silence the Dust"
+    summary_ru: "Сбейте двух пылевых певцов Завесы и доложите в Ратушу."
+    summary_en: "Defeat two Veil dust chanters and report back."
+    where_ru: "Пепельный Берег (пыль)"
+    where_en: "Ashen Shore (dust)"
+    giver: "Ратуша Угля"
+    requires: [salt_pier_haunt]
+    objective:
+      type: kill_npc
+      npc_keys: [veil_dust_chanter]
+      count: 2
+    reward:
+      experience: 85
+      currency_nv: 40
+      item_key: set-demiurge-amulet-t5
+    sort: 45
+
+  ash_fortress_scout:
+    title_ru: "Разведка крепости"
+    title_en: "Fortress Scout"
+    summary_ru: "Встаньте на клетку любой активной крепости на карте Пепла и доложите в Ратушу."
+    summary_en: "Stand on any active fortress cell on the Ash map and report to City Hall."
+    where_ru: "Карта → крепость"
+    where_en: "Map → fortress"
+    giver: "Ратуша Угля"
+    requires: [veil_lure_drill]
+    objective:
+      type: visit_fortress
+      count: 1
+    reward:
+      experience: 40
+      currency_nv: 25
+    unlocks: [ash_pack_first_floor]
+    sort: 50
+
+  ash_pack_first_floor:
+    title_ru: "Первый этаж руин"
+    title_en: "First Ruins Floor"
+    summary_ru: "Пройдите один этаж пака «Руины Пепла» (клетка 28,28) и сдайте отчёт."
+    summary_en: "Clear one floor of the Ruins of Ash pack (cell 28,28) and turn in."
+    where_ru: "Карта 28,28 → вход"
+    where_en: "Map 28,28 → enter"
+    giver: "Ратуша Угля"
+    requires: [ash_fortress_scout]
+    objective:
+      type: clear_pack_floor
+      pack_keys: [ruins_of_ash]
+      count: 1
+    reward:
+      experience: 60
+      currency_nv: 35
+    unlocks: [ash_pack_salt_floor, ash_surface_ore]
+    sort: 55
+
+  ash_pack_salt_floor:
+    title_ru: "Соляной этаж"
+    title_en: "Salt Floor"
+    summary_ru: "Пройдите один этаж «Соляных катакомб» (клетка 72,28)."
+    summary_en: "Clear one floor of Salt Catacombs (cell 72,28)."
+    where_ru: "Карта 72,28 → вход"
+    where_en: "Map 72,28 → enter"
+    giver: "Ратуша Угля"
+    requires: [ash_pack_first_floor]
+    objective:
+      type: clear_pack_floor
+      pack_keys: [salt_catacombs]
+      count: 1
+    reward:
+      experience: 70
+      currency_nv: 40
+    unlocks: [ash_pack_veil_well]
+    sort: 56
+
+  ash_pack_veil_well:
+    title_ru: "Колодец Завесы"
+    title_en: "Veil Well Dive"
+    summary_ru: "Пройдите один этаж пака «Колодец Завесы» (клетка 72,72)."
+    summary_en: "Clear one floor of Veil Well (cell 72,72)."
+    where_ru: "Карта 72,72 → вход"
+    where_en: "Map 72,72 → enter"
+    giver: "Ратуша Угля"
+    requires: [ash_pack_salt_floor]
+    objective:
+      type: clear_pack_floor
+      pack_keys: [veil_well]
+      count: 1
+    reward:
+      experience: 85
+      currency_nv: 50
+      item_key: ashen_bait
+    unlocks: [ash_pack_ash_pit]
+    sort: 57
+
+  ash_pack_ash_pit:
+    title_ru: "Яма Пепла"
+    title_en: "Ash Pit Plunge"
+    summary_ru: "Пройдите один этаж «Ямы Пепла» (клетка 28,72)."
+    summary_en: "Clear one floor of Ash Pit (cell 28,72)."
+    where_ru: "Карта 28,72 → вход"
+    where_en: "Map 28,72 → enter"
+    giver: "Ратуша Угля"
+    requires: [ash_pack_veil_well]
+    objective:
+      type: clear_pack_floor
+      pack_keys: [ash_pit]
+      count: 1
+    reward:
+      experience: 100
+      currency_nv: 60
+    unlocks: [ash_pack_group_spire]
+    sort: 58
+
+  ash_pack_group_spire:
+    title_ru: "Шпиль руин"
+    title_en: "Ruin Spire"
+    summary_ru: "В группе пройдите один этаж «Шпиля руин» (клетка 65,55)."
+    summary_en: "As a group, clear one floor of Ruin Spire (cell 65,55)."
+    where_ru: "Карта 65,55 → вход (группа)"
+    where_en: "Map 65,55 → enter (group)"
+    giver: "Ратуша Угля"
+    requires: [ash_pack_ash_pit]
+    objective:
+      type: clear_pack_floor
+      pack_keys: [group_spire]
+      count: 1
+    reward:
+      experience: 120
+      currency_nv: 80
+      item_key: ashen_bandage
+    sort: 59
+
+  ash_surface_ore:
+    title_ru: "Руда на поверхности"
+    title_en: "Surface Ore"
+    summary_ru: "Добудьте 3 «Железной руды» — копайте на рудных клетках берега или в угольной галерее шахты — и сдайте в Ратушу."
+    summary_en: "Gather 3 Iron Ore — dig outdoor ore cells or the mine coal gallery — and turn in at City Hall."
+    dialogue_accept_ru: "«Железо слышит Завесу только под ударом. Спуститесь в галерею или бейте жилу снаружи.»"
+    dialogue_accept_en: "“Iron hears the Veil only under the pick. Descend the gallery or strike the outdoor vein.”"
+    dialogue_complete_ru: "Писец стучит по слитку: «Хватит на первые обмены. Несите уголь, когда будете готовы.»"
+    dialogue_complete_en: "The clerk taps the ingot: “Enough for first exchanges. Bring coal when you are ready.”"
+    where_ru: "Шахта → Угольная галерея · или клетка руды → Копать"
+    where_en: "Mine → Coal gallery · or ore cell → Dig"
+    giver: "Ратуша Угля"
+    requires: [ash_pack_first_floor]
+    objective:
+      type: deliver_item
+      item_key: iron_ore
+      count: 3
+    reward:
+      experience: 55
+      currency_nv: 40
+      item_key: coal_chunk
+    unlocks: [ash_trade_exchange]
+    sort: 60
+
+  ash_trade_exchange:
+    title_ru: "Обмен Завесы"
+    title_en: "Veil Exchange"
+    summary_ru: "Принесите 2 «Угольных куска» в Ратушу — подготовка к Бирже ресурсов и NV↔VM в Торговом узле."
+    summary_en: "Bring 2 Coal Chunks to City Hall — prep for Resource Exchange and NV↔VM Trade Hub."
+    where_ru: "Копать → Ратуша · Биржа / Торговый узел"
+    where_en: "Dig → City Hall · Exchange / Trade Hub"
+    giver: "Ратуша Угля"
+    requires: [ash_surface_ore]
+    objective:
+      type: deliver_item
+      item_key: coal_chunk
+      count: 2
+    reward:
+      experience: 45
+      currency_nv: 30
+    unlocks: [ash_exchange_desk]
+    sort: 65
+
+  ash_exchange_desk:
+    title_ru: "Стол Биржи"
+    title_en: "Exchange Desk"
+    summary_ru: "Принесите 1 «Железную руду» в Ратушу после визита на Обмен ресурсов (гос.цена на Бирже)."
+    summary_en: "Bring 1 Iron Ore to City Hall after visiting the Resource Exchange (government rate)."
+    dialogue_accept_ru: "«Гос.цена на железо — 25 NV. Сдайте на Бирже или принесите слиток сюда.»"
+    dialogue_accept_en: "“Iron clears at 25 NV government. Sell at the Exchange or bring the ore here.”"
+    dialogue_complete_ru: "Писец кивает: «Биржа слышит вас. Дальше — уголь и серебро.»"
+    dialogue_complete_en: "The clerk nods: “The Exchange hears you. Next — coal and silver.”"
+    where_ru: "Форпост → Обмен ресурсов · или Ратуша"
+    where_en: "Outpost → Resource Exchange · or City Hall"
+    giver: "Ратуша Угля"
+    requires: [ash_trade_exchange]
+    objective:
+      type: deliver_item
+      item_key: iron_ore
+      count: 1
+    reward:
+      experience: 50
+      currency_nv: 35
+    sort: 70

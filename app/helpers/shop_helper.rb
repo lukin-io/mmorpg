@@ -4,7 +4,7 @@ module ShopHelper
   include InventoriesHelper
 
   def shop_location_return_label
-    @shop_parent_location&.location_short_label || "City"
+    @shop_parent_location&.location_short_label || I18n.t("game.common.city")
   end
 
   def shop_location_return_path
@@ -12,19 +12,19 @@ module ShopHelper
   end
 
   def shop_mode_options
-    Game::Shop::Catalog::MODES
+    Game::Shop::Catalog::VALID_MODES.map { |key| [key, I18n.t("game.shop.modes.#{key}")] }
   end
 
   def shop_category_options
-    Game::Shop::Catalog::CATEGORIES
+    Game::Shop::Catalog::VALID_CATEGORIES.map { |key| [key, I18n.t("game.shop.categories.#{key}")] }
   end
 
   def shop_mode_label(mode)
-    shop_mode_options.to_h.fetch(mode, mode.to_s)
+    I18n.t("game.shop.modes.#{mode}", default: mode.to_s)
   end
 
   def shop_category_label(category)
-    shop_category_options.to_h.fetch(category, category.to_s)
+    I18n.t("game.shop.categories.#{category}", default: category.to_s)
   end
 
   def shop_category_icon_style(category)
@@ -38,12 +38,12 @@ module ShopHelper
 
   def shop_item_properties(template, item: nil)
     lines = []
-    lines << ["Price", "#{number_with_precision(template.base_price, precision: 2, strip_insignificant_zeros: true, delimiter: ",")} NV"]
-    lines << ["Damage", "#{template.stat_modifiers["damage_min"]}-#{template.stat_modifiers["damage_max"]}"] if template.stat_modifiers["damage_min"] && template.stat_modifiers["damage_max"]
+    lines << [I18n.t("game.details.price"), "#{number_with_precision(template.base_price, precision: 2, strip_insignificant_zeros: true, delimiter: ",")} NV"]
+    lines << [I18n.t("game.details.damage"), "#{template.stat_modifiers["damage_min"]}-#{template.stat_modifiers["damage_max"]}"] if template.stat_modifiers["damage_min"] && template.stat_modifiers["damage_max"]
     if item ? item.durable? : template.durability_max.to_i.positive?
       current = item ? item.current_durability : template.durability_max
       maximum = item ? item.max_durability : template.durability_max
-      lines << ["Durability", "#{current}/#{maximum}"]
+      lines << [I18n.t("game.details.durability"), "#{current}/#{maximum}"]
     end
 
     template.stat_modifiers.to_h.each do |stat, value|
@@ -61,13 +61,13 @@ module ShopHelper
       append_inventory_property_rows(lines, label, value, signed: false)
     end
 
-    lines << ["Description", template.description] if template.description.present?
+    lines << [I18n.t("game.details.description"), template.description] if template.description.present?
 
-    lines.presence || [["Description", "Shop item"]]
+    lines.presence || [[I18n.t("game.details.description"), I18n.t("game.shop.title")]]
   end
 
   def shop_item_requirements(template)
-    rows = [["Mass", template.weight, inventory_can_carry?(template.weight)]]
+    rows = [[I18n.t("game.details.mass"), template.weight, inventory_can_carry?(template.weight)]]
     template.requirements.to_h.sort_by.with_index { |(key, _value), index| [shop_requirement_order(key), index] }.each do |key, value|
       current = shop_requirement_current_value(key)
       met = current.nil? || current.to_i >= value.to_i
@@ -83,33 +83,67 @@ module ShopHelper
   end
 
   def shop_buy_block_reason(template)
-    return "Unavailable" unless template.available_in_shop?
+    return I18n.t("game.shop.unavailable") unless template.available_in_shop?
     license_reason = @shop_license_rules.purchase_block_reason(template)
     return license_reason if license_reason
     stock = @shop_stocks&.[](template.id)
-    return "Unavailable" unless stock
-    return "Out of stock" if stock.out_of_stock?
-    return "Not enough NV." if @wallet.nv_balance.to_d < template.base_price.to_d
+    return I18n.t("game.shop.unavailable") unless stock
+    return I18n.t("game.shop.out_of_stock") if stock.out_of_stock?
+    return I18n.t("game.shop.not_enough_nv") if @wallet.nv_balance.to_d < template.base_price.to_d
     return if Game::Shop::LicenseRules.definition(template)
-    return "Carrying capacity exceeded." unless inventory_can_carry?(template.weight)
-    return "no room" unless inventory_has_slot_for?(template)
+    return I18n.t("game.shop.capacity") unless inventory_can_carry?(template.weight)
+    return I18n.t("game.shop.no_room") unless inventory_has_slot_for?(template)
 
     nil
   end
 
   def shop_sell_block_reason(item)
-    return "Invalid durability" unless item.valid_sale_durability?
-    return "equipped or protected" if item.protected_from_discard?
-    return "not accepted" unless shop_sale_price(item).positive?
+    return I18n.t("game.shop.invalid_durability") unless item.valid_sale_durability?
+    return I18n.t("game.shop.equipped_or_protected") if item.protected_from_discard?
+    return I18n.t("game.shop.not_accepted") unless shop_sale_price(item).positive?
 
-    return "A trading license is required to sell items to the shop." unless @shop_license_rules.active?(:trading)
+    return I18n.t("game.shop.trading_license_required") unless @shop_license_rules.active?(:trading)
 
     stock = @shop_stocks&.[](item.item_template_id)
-    return "This shop does not accept this item." unless stock
-    return "The shop has enough of this item." unless stock.accepts_return?
-    return "The shop does not have enough NV." unless @shop_account && @shop_account.nv_balance >= shop_sale_price(item)
+    return I18n.t("game.shop.not_accepted") unless stock
+    return I18n.t("game.shop.shop_full") unless stock.accepts_return?
+    return I18n.t("game.shop.shop_no_nv") unless @shop_account && @shop_account.nv_balance >= shop_sale_price(item)
 
     nil
+  end
+
+  # Recovery CTA next to a shop denial so blocked buys/licenses are not dead ends.
+  def shop_block_recovery_link(block_reason)
+    return if block_reason.blank?
+
+    case block_reason
+    when I18n.t("game.shop.capacity"), I18n.t("game.shop.no_room")
+      link_to t("game.shop.open_inventory"), inventory_path, class: "nl-sheet-link", data: {shop_recovery: "inventory"}
+    when I18n.t("game.shop.not_enough_nv")
+      if Game::World::CityBuildingCatalog.accessible?(character: current_character, building_key: "bank")
+        link_to t("game.shop.open_bank"), city_building_path("bank"), class: "nl-sheet-link", data: {shop_recovery: "bank"}
+      elsif Game::World::CityBuildingCatalog.accessible?(character: current_character, building_key: "junk_dealer")
+        link_to t("game.buildings.junk_dealer_link"), city_building_path("junk_dealer"), class: "nl-sheet-link", data: {shop_recovery: "junk"}
+      else
+        link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {shop_recovery: "world"}
+      end
+    when I18n.t("game.shop.healer_perk_required"), I18n.t("game.shop.merchant_perk_required")
+      link_to t("game.shop.open_perks"), perks_character_path(current_character), class: "nl-sheet-link", data: {shop_recovery: "perks"}
+    when I18n.t("game.shop.traumatologist_quest_required")
+      if Game::World::CityBuildingCatalog.accessible?(character: current_character, building_key: "hospital")
+        link_to t("game.buildings.hospital_title_short"), city_building_path("hospital"), class: "nl-sheet-link", data: {shop_recovery: "hospital"}
+      else
+        link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {shop_recovery: "world"}
+      end
+    when I18n.t("game.shop.merchant_qualification_required")
+      if Game::World::CityBuildingCatalog.accessible?(character: current_character, building_key: "market")
+        link_to t("game.shop.sell_onboarding_market"), city_building_path("market"), class: "nl-sheet-link", data: {shop_recovery: "market"}
+      else
+        link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {shop_recovery: "world"}
+      end
+    when I18n.t("game.shop.trading_license_required")
+      link_to t("game.shop.sell_onboarding_licenses"), shop_path(mode: "licenses"), class: "nl-sheet-link", data: {shop_recovery: "licenses"}
+    end
   end
 
   def shop_stock_label(template)

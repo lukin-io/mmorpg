@@ -24,7 +24,7 @@ module Game
       def enqueue(direction:)
         position = respawn_service.ensure_position!
         offsets = Game::Movement::Directions::OFFSETS
-        offset = offsets.fetch(direction.to_sym) { raise ArgumentError, "Unknown direction #{direction}" }
+        offset = offsets.fetch(direction.to_sym) { raise ArgumentError, I18n.t("game.flashes.unknown_direction", direction: direction) }
 
         target_x = position.x + offset.first
         target_y = position.y + offset.last
@@ -32,7 +32,7 @@ module Game
         tile_provider = Game::Movement::TileProvider.new(zone: position.zone)
         validator = Game::Movement::MovementValidator.new(tile_provider)
         unless validator.valid?(target_x, target_y)
-          raise Game::Movement::MovementViolationError, "Tile is not passable"
+          raise Game::Movement::MovementViolationError, I18n.t("game.world.tile_not_passable")
         end
         tile_metadata = tile_provider.metadata_at(target_x, target_y) || {}
         terrain_type = tile_provider.terrain_type_at(target_x, target_y)

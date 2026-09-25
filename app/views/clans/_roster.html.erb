@@ -1,0 +1,43 @@
+<% if @clan.blank? %>
+  <p class="nl-quests-board__meta"><%= t("game.clans.roster_need_clan") %></p>
+<% else %>
+  <h2><%= t("game.clans.tab_roster") %></h2>
+  <p><%= t("game.clans.members", count: @members.size) %></p>
+  <ul class="nl-clan-roster">
+    <% @members.each do |row| %>
+      <li>
+        <strong><%= row.character.name %></strong>
+        [<%= row.character.level %>]
+        — <%= t("game.clans.roles.#{row.role}") %>
+        <% if @membership&.role == "leader" && row.character_id != current_character.id && row.role != "leader" %>
+          <%= form_with url: set_role_clan_path, method: :post, local: true, class: "nl-clan-inline" do |f| %>
+            <%= f.hidden_field :member_character_id, value: row.character_id %>
+            <%= f.select :role, Clan::ROLES.reject { |r| r == "leader" }.map { |r| [t("game.clans.roles.#{r}"), r] }, selected: row.role %>
+            <%= f.submit t("game.clans.set_role_cta"), class: "lbut" %>
+          <% end %>
+          <%= button_to t("game.clans.transfer_cta"),
+                transfer_leadership_clan_path,
+                method: :post,
+                params: {member_character_id: row.character_id},
+                class: "lbut",
+                form: {data: {turbo_confirm: t("game.clans.transfer_confirm", name: row.character.name)}} %>
+        <% end %>
+        <% if @clan.can_manage?(current_character) && row.character_id != current_character.id && row.role != "leader" %>
+          <%= button_to t("game.clans.kick_cta"),
+                membership_clan_path,
+                method: :post,
+                params: {membership_action: "kick", member_character_id: row.character_id},
+                class: "lbut" %>
+        <% end %>
+      </li>
+    <% end %>
+  </ul>
+  <% if @membership && @membership.role != "leader" %>
+    <%= button_to t("game.clans.leave_cta"),
+          membership_clan_path,
+          method: :post,
+          params: {membership_action: "leave"},
+          class: "lbut",
+          form: {data: {turbo_confirm: t("game.clans.leave_confirm")}} %>
+  <% end %>
+<% end %>

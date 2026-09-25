@@ -6,7 +6,7 @@
 puts "Seeding Tile Buildings..."
 
 if defined?(TileBuilding) && defined?(Zone)
-  outpost_surroundings = Zone.find_by(name: "Outpost Surroundings")
+  outpost_surroundings = Zone.find_by(name: "Пепельный Берег")
   tile_buildings = []
 
   if outpost_surroundings

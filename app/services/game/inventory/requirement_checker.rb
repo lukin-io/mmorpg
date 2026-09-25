@@ -51,8 +51,8 @@ module Game
       end
 
       def call
-        return failure("Item is broken") if item.broken?
-        return failure("Item has expired") if item.expired?
+        return failure(I18n.t("game.inventory.wear_item_broken")) if item.broken?
+        return failure(I18n.t("game.inventory.wear_item_expired")) if item.expired?
 
         missing = missing_requirements
         return {allowed: true, missing: []} if missing.empty?
@@ -60,7 +60,7 @@ module Game
         {
           allowed: false,
           missing: missing,
-          error: "Requirements not met: #{missing.map { |entry| entry[:label] }.join(", ")}"
+          error: I18n.t("game.inventory.requirements_not_met", list: missing.map { |entry| entry[:label] }.join(", "))
         }
       end
 
@@ -79,8 +79,31 @@ module Game
           current = current_value_for(key)
           next if current.nil? || current >= required.to_i
 
-          {key:, required: required.to_i, current:, label: "#{key.to_s.titleize} #{required} (current #{current})"}
+          {
+            key:,
+            required: required.to_i,
+            current:,
+            label: I18n.t(
+              "game.inventory.requirement_label",
+              name: requirement_name(key),
+              required: required.to_i,
+              current:
+            )
+          }
         end
+      end
+
+      def requirement_name(key)
+        normalized = normalize_key(key)
+        return I18n.t("game.details.level") if normalized == "level"
+
+        detail_key = InventoriesHelper::ITEM_DETAIL_I18N_KEYS[normalized]
+        return I18n.t("game.details.#{detail_key}") if detail_key
+
+        skill_key = InventoriesHelper::ITEM_SKILL_I18N_KEYS[normalized]
+        return I18n.t("game.skills.#{skill_key}") if skill_key
+
+        I18n.t("game.details.#{normalized}", default: normalized.tr("_", " "))
       end
 
       def flattened_requirements

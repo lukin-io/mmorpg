@@ -1,0 +1,49 @@
+<% preferred = @preferred %>
+<aside class="nl-inventory-scrolls" data-inventory-scrolls="1" data-preferred-assault="<%= preferred %>">
+  <header class="nl-inventory-scrolls__header">
+    <h2 class="nl-inventory-scrolls__title"><%= t("game.inventory.scrolls_block_title") %></h2>
+    <p class="nl-inventory-scrolls__lead"><%= t("game.trade_hub.scrolls_lead") %></p>
+  </header>
+  <div class="nl-inventory-scrolls__rail">
+    <% @scroll_keys.each do |item_key| %>
+      <% template = ItemTemplate.find_by(key: item_key) %>
+      <% next unless template %>
+      <% owned = Game::Combat::AssaultScrolls.quantity(current_character, item_key) %>
+      <% price = Game::Shop::PremiumScrollPurchase::OFFERINGS.fetch(item_key) %>
+      <% stack = current_character.inventory&.inventory_items&.find_by(item_template: template, equipped: false) %>
+      <% kind = case item_key
+         when "assault_scroll_peaceful" then "peaceful"
+         when "assault_scroll_bloody" then "bloody"
+         when "assault_scroll_normal" then "normal"
+         else nil
+         end %>
+      <% armed = kind.present? && preferred == kind %>
+      <article class="nl-inventory-scrolls__card nl-inventory-scrolls__card--<%= kind || item_key.to_s.tr("_", "-") %><%= " is-preferred" if armed %>"
+               data-inventory-scroll-key="<%= item_key %>">
+        <div class="nl-inventory-scrolls__meta">
+          <h3 class="nl-inventory-scrolls__name"><%= t("game.buildings.premium_item.#{item_key}", default: template.name) %></h3>
+          <% if armed %>
+            <span class="nl-inventory-scrolls__badge" data-scroll-preferred="1"><%= t("game.inventory.scroll_preferred") %></span>
+          <% end %>
+          <p class="nl-inventory-scrolls__owned">
+            <%= t("game.buildings.premium_owned", count: owned) %> · <%= price %> NV
+          </p>
+        </div>
+        <div class="nl-inventory-scrolls__actions">
+          <% if owned.positive? && stack.present? %>
+            <%= button_to t("game.common.use"),
+                  use_inventory_path,
+                  method: :post,
+                  params: {item_id: stack.id},
+                  class: "lbut nl-inventory-scrolls__btn" %>
+          <% end %>
+          <%= button_to t("game.common.buy", default: "Buy"),
+                buy_scroll_trade_hub_path,
+                method: :post,
+                params: {item_key:},
+                class: "lbut nl-inventory-scrolls__btn" %>
+        </div>
+      </article>
+    <% end %>
+  </div>
+</aside>

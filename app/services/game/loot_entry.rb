@@ -15,7 +15,7 @@ module Game
     # @raise [InvalidError] when the entry or its explicit chance is invalid
     def initialize(raw_entry)
       unless raw_entry.respond_to?(:each_pair)
-        raise InvalidError, "Loot entry must be an object"
+        raise InvalidError, I18n.t("manage.loot_entry_object")
       end
 
       @attributes = raw_entry.to_h.with_indifferent_access.freeze
@@ -25,14 +25,14 @@ module Game
     private
 
     def normalize_chance
-      raise InvalidError, "Loot chance is required" unless attributes.key?(:chance)
+      raise InvalidError, I18n.t("manage.loot_chance_required") unless attributes.key?(:chance)
 
       chance = Float(attributes[:chance], exception: false)
-      raise InvalidError, "Loot chance must be between 0 and 100" unless chance
+      raise InvalidError, I18n.t("manage.loot_chance_range") unless chance
 
       percentage = chance <= 1 ? chance * 100 : chance
       unless percentage.between?(0, 100)
-        raise InvalidError, "Loot chance must be between 0 and 100"
+        raise InvalidError, I18n.t("manage.loot_chance_range")
       end
 
       percentage

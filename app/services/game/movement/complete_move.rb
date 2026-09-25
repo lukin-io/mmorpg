@@ -40,14 +40,14 @@ module Game
           position.lock!
 
           unless source_position_matches?(command, position)
-            mark_failed(command, "Character is no longer at the movement source")
+            mark_failed(command, I18n.t("game.world.movement_source_lost"))
             return
           end
 
           return unless command.ends_at && command.ends_at <= Time.current
 
           if character.arena_participations.joins(:arena_match).merge(ArenaMatch.active).exists?
-            mark_failed(command, "Cannot complete movement during an active fight")
+            mark_failed(command, I18n.t("game.world.movement_active_fight"))
             return
           end
 
@@ -58,14 +58,14 @@ module Game
             target_x: command.target_x,
             target_y: command.target_y
           )
-            mark_failed(command, "Movement target is not an adjacent step")
+            mark_failed(command, I18n.t("game.world.movement_not_adjacent"))
             return
           end
 
           provider = Game::Movement::TileProvider.new(zone: command.zone)
           validator = Game::Movement::MovementValidator.new(provider)
           unless validator.valid?(command.target_x, command.target_y)
-            mark_failed(command, "Tile is not passable")
+            mark_failed(command, I18n.t("game.world.tile_not_passable"))
             return
           end
 

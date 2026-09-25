@@ -45,8 +45,8 @@ RSpec.describe Game::World::StarterEncounterDistribution do
       roster_source_map: "m_1008_1007",
       source_capture_scope: "atlas_eligible_captured_roster_reuse",
       encounter_profile: "forpost_captured_bandit_groups",
-      passive_delay_source: "user_reported_2026-09-09",
-      passive_delay_windows: [{key: "user_reported_five_to_six_minutes", min_seconds: 300, max_seconds: 360}]
+      passive_delay_source: "ashen_operator_2026-09-13_five_minutes",
+      passive_delay_windows: [{key: "ashen_five_minutes", min_seconds: 300, max_seconds: 300}]
     )
     expect(npc.dig(:metadata, :encounter_rosters).map { |sample| sample[:members].size }).to eq([3, 1, 1])
     expect(npc.dig(:metadata, :encounter_rosters).last[:members]).to eq([{npc_key: "wilderness_bandit", level: 7, hp: 155}])
@@ -96,7 +96,7 @@ RSpec.describe Game::World::StarterEncounterDistribution do
 
   it "keeps the explicit captured definitions and their measured windows unchanged" do
     expect(zone_config.fetch(:npcs).map { |npc| npc.values_at(:x, :y) }).to eq([[7, 7], [14, 15]])
-    expect(zone_config.fetch(:npcs).last.dig(:metadata, :passive_delay_windows).pluck(:min_seconds, :max_seconds)).to eq([[230, 278], [127, 187]])
+    expect(zone_config.fetch(:npcs).last.dig(:metadata, :passive_delay_windows).pluck(:min_seconds, :max_seconds)).to eq([[300, 300]])
     expect(Game::World::OutdoorNpcConfig.config.dig(:outpost_surroundings, :starter_npcs)).to eq(placements)
   end
 end

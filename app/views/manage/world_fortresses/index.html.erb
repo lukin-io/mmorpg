@@ -1,0 +1,20 @@
+<% content_for :title, "Fortresses · Manage" %>
+<%= render "manage/shared/page_header", title: t("manage.views.fortresses_title"), description: t("manage.views.fortresses_hint") %>
+<table class="nl-manage-table">
+  <thead>
+    <tr>
+      <th>Key</th><th>Name</th><th>Cell</th><th>Owner clan</th><th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @fortresses.each do |fort| %>
+      <tr>
+        <td><%= fort.fortress_key %></td>
+        <td><%= fort.name %></td>
+        <td><%= fort.zone %> [<%= fort.x %>, <%= fort.y %>]</td>
+        <td><%= fort.owner_clan&.name || "—" %></td>
+        <td><%= link_to t("manage.edit"), edit_manage_world_fortress_path(fort) %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

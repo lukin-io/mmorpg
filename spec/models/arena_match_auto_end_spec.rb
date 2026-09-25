@@ -48,16 +48,16 @@ RSpec.describe ArenaMatch, "Auto-End Functionality" do
         expect(match.stale?).to be false
       end
 
-      it "returns false when just under 2x timeout" do
+      it "returns false well under the absolute fight ceiling" do
         travel_to(match.started_at + 9.minutes) do
           expect(match.stale?).to be false
         end
       end
     end
 
-    context "when match exceeds 2x turn timeout" do
-      it "returns true when past 2x timeout" do
-        travel_to(match.started_at + 11.minutes) do
+    context "when match exceeds the absolute fight ceiling" do
+      it "returns true when past the absolute ceiling" do
+        travel_to(match.started_at + ArenaMatch::ABSOLUTE_FIGHT_CEILING.seconds + 1.minute) do
           expect(match.stale?).to be true
         end
       end
@@ -88,7 +88,7 @@ RSpec.describe ArenaMatch, "Auto-End Functionality" do
         [nil, 0, -1, "invalid"].each do |value|
           match.update!(metadata: {"fight_timeout_seconds" => value})
 
-          expect(match.fight_timeout_seconds).to eq(600)
+          expect(match.fight_timeout_seconds).to eq(ArenaMatch::ABSOLUTE_FIGHT_CEILING)
         end
       end
     end
@@ -269,7 +269,7 @@ RSpec.describe ArenaMatch, "Auto-End Functionality" do
 
     context "when match is stale (timeout)" do
       it "returns true and ends match" do
-        travel_to(match.started_at + 15.minutes) do
+        travel_to(match.started_at + ArenaMatch::ABSOLUTE_FIGHT_CEILING.seconds + 1.minute) do
           expect(match.auto_end_if_needed!).to be true
           expect(match.reload.status).to eq("completed")
           expect(match.reload.timed_out).to be true
@@ -279,7 +279,7 @@ RSpec.describe ArenaMatch, "Auto-End Functionality" do
       it "sets winning team when someone is defeated" do
         character2.update!(current_hp: 0) # Defeated
 
-        travel_to(match.started_at + 15.minutes) do
+        travel_to(match.started_at + ArenaMatch::ABSOLUTE_FIGHT_CEILING.seconds + 1.minute) do
           match.auto_end_if_needed!
           expect(match.reload.winning_team).to eq("a")
         end

@@ -62,7 +62,16 @@ Supporting documents:
 
 ## 2. Feature summary
 
-After login, the player opens the persisted allowlisted gameplay surface through a persistent Neverlands-shaped game frame, with World as the bootstrap/fallback. The live-measured `955 × 817` composition uses a 29px top strip, flexible scrolling main frame, 8px resize band, 240px chat/presence row with a 300px right presence column, 1px separator, and 30px CSS/text chat controls. The header shows name, level, stacked server-rendered HP/MP strips, Character and Inventory actions, contextual Return/Look around, and a CSS/text exit control. Character and Inventory submit the allowlisted World context-action route so a source-backed same-cell hostile encounter can replace navigation with combat and return to the requested destination afterward.
+After login, the player opens the persisted allowlisted gameplay surface through a persistent Neverlands-shaped game frame, with World as the bootstrap/fallback. The live-measured `955 × 817` composition uses a 29px top strip, flexible scrolling main frame, 8px resize band, 240px chat/presence row with a 300px right presence column, 1px separator, and 30px CSS/text chat controls. The header shows name, level, stacked server-rendered HP/MP strips, Character and Inventory actions, contextual Return/Look around, and a CSS/text exit control. Character and Inventory submit the allowlisted World context-action route so a
+source-backed same-cell hostile encounter can replace those shell navigations
+with combat when Ashen Bait is present, then return to the requested destination
+afterward. Without bait those navigations proceed. Offered wilderness movement
+away from the cell is not interrupted (escape). Passive outdoor ambushes still
+fire about once every five minutes without bait. The outdoor HUD bait chip shows
+quantity; when empty it links back to City (`data-bait-recovery="city"`) so
+“buy in town” is not dead text. In-district empty bait still opens Relics/Shop.
+While an Arena match page is open, Character/Inventory/Q/A chrome stays locked
+until the player finishes the fight.
 
 The server owns identity, character state, location presence, social verification, channel visibility, message and game-event persistence, event audience, ignore filtering, and authorization. The browser owns only main-frame navigation, presence sort/refresh preferences, and chat focus/scroll/reset presentation.
 
@@ -111,7 +120,7 @@ The MVP currently contains:
 - Recreating Neverlands framesets, CGI URLs, browser quirks, or Russian copy.
 - Copying Neverlands images, sprites, logos, decorative artwork, branding,
   signatures, administration text, or project/service prose into runtime UI.
-- Claiming the currently inert smile palettes, chat mode/speed cycles, transliteration, or player-action popup are complete before their live states are captured and implemented.
+- Claiming the currently inert smile palettes, chat mode/speed cycles, transliteration, or player-action popup are complete before their live states are captured and implemented. Soft release disables those tools (`aria-disabled` + `social.tool_deferred`) so they no longer look actionable.
 - Making presence into movement authority, a precise global-online system, or a remote-player locator.
 - Treating client-side HP/MP interpolation as authoritative regeneration.
 - Owning World, City, Inventory, Profile, Shop, Arena, or Combat domain mutations rendered in the main frame.
@@ -268,7 +277,7 @@ DOM placement, displayed location text, a player-list row, local storage, or a s
 | Chat creation | `POST /chat/local`; authorized explicit channel POST | Interactive | Policy and `MessageDispatcher` |
 | Inline HP/MP | Every shell render | Interactive presentation over authoritative values | Shared vitals partial and Stimulus controller |
 | Send, clear input, refresh chat, clear visible chat | Bottom controls | Interactive | `game-layout` presentation actions plus chat form/frame |
-| Smile palettes, chat mode/speed, transliteration, player actions | Bottom controls | Not Done | Measured CSS/text controls rendered; transition states remain evidence/implementation gaps |
+| Smile palettes, chat mode/speed, transliteration, player actions | Bottom controls | Partially Done — controls render disabled with `social.tool_deferred` titles and `data-chat-tools-deferred`; live smile/mode/speed/transliteration remain evidence gaps | Measured CSS/text controls rendered; transition states remain evidence/implementation gaps |
 
 ### 6.2 Header, main frame, and vitals
 
@@ -1237,3 +1246,46 @@ Before extending Game Shell:
 | 2026-08-23 | Extended the source-backed search-result projection with typed NV awards: committed item loot remains Inventory-owned, committed NV enters the Economy wallet ledger, and both publish one retry-safe recipient row only after their authoritative mutation succeeds. |
 | 2026-08-23 | Added the maintainer workflow for introducing a producer versus a genuinely new event type, including transaction ordering, deterministic keys, migration/rendering/coverage requirements, and the explicit no-generic-endpoint/PubSub boundary. |
 | 2026-08-25 | Made account retention behavior explicit: the cancellation UI is removed, direct Devise destroy requests preserve the user/session with an unavailable alert, and the immutable `money_found` event-type migration is documented as forward-only instead of falsely reversible. |
+| 2026-09-13 | Chat post rejects (mute/system/location/private/privacy) use `game.chat.*` i18n. |
+| 2026-09-13 | EventPublisher fight/search timeline bodies use `game.events.*` i18n. |
+| 2026-09-13 | Chat channel create names (global/local/whisper/arena) use `game.chat.*` i18n. |
+| 2026-09-14 | Local chat channel router location denial uses `game.chat.location_required`. |
+| 2026-09-14 | Chat timeline system/unknown sender labels use `game.chat.system_sender` / `unknown_sender`. |
+| 2026-09-14 | Chat channel type badge uses `game.chat.types.*`. |
+| 2026-09-13 | Fight/chat browser titles use `game.fight.*_title` / `game.chat.page_title`. |
+| 2026-09-13 | Presence unknown/Shop labels and profile combat location text use `game.profile.unknown_location` / `game.world.shop_presence` / `game.profile.location_in_combat` i18n. |
+| 2026-09-13 | Presence player-list unknown location data attribute uses `game.profile.unknown_location`. |
+| 2026-09-14 | Auth password reset/change labels and English `auth.*` mirror use `config/locales/en.yml` / `ru.yml`. |
+| 2026-09-14 | English `social.*` shell chrome mirrors RU (`config/locales/en.yml`). |
+| 2026-09-14 | Nearby-player sort links use `social.sort_az` / `sort_za` / `sort_lvl_*`. |
+| 2026-09-15 | Missing chat channel ids recover to World with `chat_denied=1` chrome. |
+| 2026-09-15 | Posting a message to a missing chat channel recovers to World with `chat_denied=1` chrome. |
+| 2026-09-15 | Unknown `/locale/:locale` falls back to the default locale and shows `locale_denied` recovery chrome (RU/EN). |
+| 2026-09-14 | English `app.*` / `locales.*` / `errors.forbidden` mirrors complete `:en` shell chrome. |
+| 2026-09-14 | English ActiveRecord user attribute/error and date/time format mirrors for signup/account forms. |
+| 2026-09-14 | Auth/chat denial raises use `game.chat.*` / `game.flashes.character_required` / `email_verification_required`; HTML alerts prefer localized exception text over generic English policy denials. |
+| 2026-09-14 | Empty trauma/heal chips always render and recover via Infirmary premium desk or City; outdoor fatigue and unset-alignment chips recover via Tavern/City/Law when out of district; presence Assault blocked recovers to Infirmary. |
+| 2026-09-15 | Outdoor empty bait chip is a City recovery link (`data-bait-recovery="city"`); smoke asserts it when qty=0. |
+| 2026-09-15 | Soft-release smoke steps from west gate toward a shore foe, starts a bait interrupt fight via shell Inventory, then finishes. |
+| 2026-09-15 | Soft-release smoke logs out and logs back in to restore the persisted game surface. |
+| 2026-09-15 | Soft-release smoke sends one ordinary local chat line from the shell composer after bandage use. |
+| 2026-09-15 | Soft-release smoke performs outdoor Look (`resource_search`) on the shore cell after the west-gate step, before bait. |
+| 2026-09-15 | Soft-release smoke walks from east gate toward the pond and drinks (`drinking`). |
+| 2026-09-15 | Soft-release smoke waits out the Drink lock, then runs the pond no-bait Fish entry (`fishing`). |
+| 2026-09-15 | Soft-release smoke re-enters City from the east gate after Fish and binds at the Veil Obelisk. |
+| 2026-09-15 | Soft-release smoke leaves Business Quarter after Obelisk bind, then recalls via the World shell chip (−15 NV). |
+| 2026-09-14 | Empty trauma/heal scroll chips recover via Infirmary or City (`data-trauma-recovery` / `data-heal-recovery`). |
+| 2026-09-14 | Alignment/fatigue/quest/obelisk shell chips expose `data-alignment-recovery` / `data-fatigue-recovery` / `data-quest-recovery` / `data-obelisk-recovery` when linking. |
+| 2026-09-14 | City empty bait chip recovers via Souvenir/Shop (`data-bait-recovery`); footer Q/A tools expose `data-shell-recovery`. |
+| 2026-09-14 | Compact shell chat empty state recovers to World (`data-chat-empty` + `data-chat-recovery="world"`). |
+| 2026-09-14 | Deferred chat toolstrip notes recover to City (`data-chat-tools-next` + `data-chat-recovery="world"`). |
+| 2026-09-14 | Presence empty list recovers to World (`data-presence-empty` + `data-presence-recovery="world"`); smoke asserts when alone. |
+| 2026-09-14 | Broken wear chip opens Pitch Forge when in district; otherwise Inventory. |
+| 2026-09-14 | Full chat channel empty state recovers to World. |
+| 2026-09-14 | Shell drops forced `min-width: 760px` so 390px viewports do not force page-level horizontal scroll. |
+| 2026-09-14 | Root `html/body` use `overflow-x: clip` as a belt-and-suspenders against page-level horizontal scroll. |
+| 2026-09-14 | Short-landscape shell compresses social/chat rows so controls stay reachable (`max-height: 430px`). |
+| 2026-09-14 | ≤360px shell compresses vitals/nav/presence/chat action columns for the UI-ADAPT-001 minimum-width path. |
+| 2026-09-14 | Coarse-pointer shell nav and primary chat controls target ~44×44 CSS px (`UI-ADAPT-005`). |
+| 2026-09-14 | Coarse-pointer presence sort/player-menu and chat send/new-message controls also target ~44×44 CSS px. |
+| 2026-09-14 | Outdoor short-NV Obelisk recall chip and out-of-district bound chip recover to City (`data-obelisk-recovery="city"`). |

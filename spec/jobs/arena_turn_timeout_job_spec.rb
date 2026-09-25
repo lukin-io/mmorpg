@@ -83,6 +83,33 @@ RSpec.describe ArenaTurnTimeoutJob do
             .exactly(:once)
         end
 
+        context "when a wilderness NPC fight times out from player AFK" do
+          let(:npc_template) { create(:npc_template, name: "Ash Rat", level: 5) }
+          let!(:npc_participation) do
+            create(:arena_participation, :npc,
+              arena_match: arena_match,
+              npc_template:,
+              team: "b",
+              current_hp: 40)
+          end
+
+          before do
+            participation2.destroy!
+            arena_match.update!(
+              metadata: arena_match.metadata.to_h.merge("is_npc_fight" => true, "source" => "world_npc")
+            )
+          end
+
+          it "ends the fight as an NPC timeout win so the player can press Finish later" do
+            described_class.new.perform(match_id: arena_match.id)
+
+            arena_match.reload
+            expect(arena_match).to be_completed
+            expect(arena_match).to be_timed_out
+            expect(arena_match.winning_team).to eq("b")
+          end
+        end
+
         it "keeps the round waiting when one player has a pending turn" do
           participation1.update!(
             metadata: {

@@ -7,13 +7,16 @@ class Character < ApplicationRecord
 
   PRIMARY_STATS = %i[strength dexterity luck vitality intelligence].freeze
   BASE_PRIMARY_STATS = PRIMARY_STATS.index_with { 1 }.freeze
-  HP_PER_HEALTH = 5
-  MP_PER_KNOWLEDGE = 7
-  MASS_PER_STRENGTH = 5
-  MASS_PER_HEALTH = 10
-  MASS_PER_LEVEL = 10
+  HP_PER_HEALTH = 8
+  MP_PER_KNOWLEDGE = 8
+  MASS_PER_STRENGTH = 12
+  MASS_PER_HEALTH = 20
+  MASS_PER_LEVEL = 25
+  BASE_CARRYING_CAPACITY = 80
   BASE_ACTION_POINTS = 80
-  ACTION_POINT_LEVEL_BONUSES = {5 => 10, 10 => 10}.freeze
+  ACTION_POINT_LEVEL_BONUSES = {5 => 10, 10 => 10, 20 => 15, 30 => 20, 40 => 25, 50 => 30}.freeze
+  # Soft encumbrance: travel slows when carried mass exceeds capacity (Ashen rule).
+  ENCUMBRANCE_SPEED_CAP = 2.5
   STAT_LABELS = {
     strength: "Strength",
     dexterity: "Dexterity",
@@ -55,7 +58,14 @@ class Character < ApplicationRecord
     "intelligence" => :intelligence,
     "knowledge" => :intelligence,
     "vitality" => :vitality,
-    "health" => :vitality
+    "health" => :vitality,
+    "hp" => :vitality,
+    "attack" => :strength,
+    "armor_class" => :vitality,
+    "armor" => :vitality,
+    "magic_power" => :intelligence,
+    "speed" => :dexterity,
+    "resist" => :luck
   }.freeze
   EQUIPMENT_SKILL_ALIASES = {
     "unarmed_skill" => :unarmed_combat,
@@ -85,8 +95,15 @@ class Character < ApplicationRecord
 
   has_one :position, class_name: "CharacterPosition", dependent: :destroy
   has_one :inventory, dependent: :destroy
+  has_one :clan_membership, dependent: :destroy
+  has_one :clan, through: :clan_membership
+  has_many :dungeon_run_states, dependent: :destroy
+  has_many :clan_invitations_received, class_name: "ClanInvitation",
+    foreign_key: :invitee_character_id, dependent: :destroy, inverse_of: :invitee_character
   has_many :character_licenses, dependent: :destroy
   has_many :arena_applications, foreign_key: :applicant_id, dependent: :destroy
+  has_many :activity_achievements, dependent: :destroy
+  has_many :daily_activity_contracts, dependent: :destroy
   has_many :arena_participations, dependent: :destroy
 
   has_many :movement_commands, dependent: :destroy
@@ -105,6 +122,13 @@ class Character < ApplicationRecord
   validate :respect_character_limit, on: :create
 
   after_create :ensure_inventory!
+
+  # Presence uses the same UserSession freshness window as the world player list.
+  def online?
+    return false unless user_id
+
+    UserSession.recent.where(user_id:).exists?
+  end
 
   # Query fresh state: boarding and disembarkation can happen in another tab.
   def active_airship_journey
@@ -126,8 +150,8 @@ class Character < ApplicationRecord
   # entry together. Reloading an unchanged surface preserves its entry time.
   def remember_gameplay_context!(name:, params: {})
     normalized_name = name.to_s
-    raise ArgumentError, "Unsupported gameplay context" unless GAMEPLAY_CONTEXTS.include?(normalized_name)
-    raise ArgumentError, "Gameplay context params must be an object" unless params.is_a?(Hash)
+    raise ArgumentError, I18n.t("errors.unsupported_gameplay_context") unless GAMEPLAY_CONTEXTS.include?(normalized_name)
+    raise ArgumentError, I18n.t("errors.gameplay_context_params_object") unless params.is_a?(Hash)
 
     payload = {
       "name" => normalized_name,
@@ -165,7 +189,7 @@ class Character < ApplicationRecord
   end
 
   def self.stat_label(key)
-    STAT_LABELS.fetch(key.to_sym)
+    I18n.t("game.stats.#{key}", default: STAT_LABELS.fetch(key.to_sym))
   end
 
   def self.xp_required_for_level(level)
@@ -192,9 +216,29 @@ class Character < ApplicationRecord
 
   def carrying_capacity
     current_stats = stats
-    (current_stats.get(:strength).to_i * MASS_PER_STRENGTH) +
+    BASE_CARRYING_CAPACITY +
+      (current_stats.get(:strength).to_i * MASS_PER_STRENGTH) +
       (current_stats.get(:vitality).to_i * MASS_PER_HEALTH) +
       (level.to_i * MASS_PER_LEVEL)
+  end
+
+  def carried_mass
+    inventory&.current_weight.to_i
+  end
+
+  def overweight?
+    carrying_capacity.positive? && carried_mass > carrying_capacity
+  end
+
+  # 1.0 at/under capacity; >1.0 when overloaded (feeds TravelTime).
+  def encumbrance_ratio
+    cap = carrying_capacity.to_i
+    return 1.0 if cap <= 0
+
+    mass = carried_mass
+    return 1.0 if mass <= cap
+
+    [mass.to_f / cap, ENCUMBRANCE_SPEED_CAP].min
   end
 
   def assign_base_vitals_from_stats
@@ -225,7 +269,7 @@ class Character < ApplicationRecord
   end
 
   def alignment_label
-    ALIGNMENT_LABELS.fetch(alignment, "None")
+    I18n.t("game.buildings.law_alignment.#{alignment}", default: ALIGNMENT_LABELS.fetch(alignment, ALIGNMENT_LABELS.fetch("none")))
   end
 
   def alignment_display
@@ -489,7 +533,7 @@ class Character < ApplicationRecord
     base = stats.get(:strength).to_i * 2
     dex_bonus = stats.get(:dexterity).to_i / 2
     level_bonus = level.to_i / 2
-    base + dex_bonus + level_bonus + equipment_attack_bonus
+    base + dex_bonus + level_bonus + equipment_attack_bonus + fortress_buffs.attack_bonus + timed_buffs.modifier("attack").to_i
   end
 
   # Calculate defense for combat
@@ -500,7 +544,15 @@ class Character < ApplicationRecord
     base = stats.get(:vitality).to_i
     str_bonus = stats.get(:strength).to_i / 3
     level_bonus = level.to_i / 2
-    base + str_bonus + level_bonus + equipment_defense_bonus
+    base + str_bonus + level_bonus + equipment_defense_bonus + fortress_buffs.defense_bonus + timed_buffs.modifier("defense").to_i
+  end
+
+  def fortress_buffs
+    @fortress_buffs ||= Game::Clans::FortressBuffs.new(character: self)
+  end
+
+  def timed_buffs
+    Characters::TimedBuffs.new(character: self)
   end
 
   # Calculate critical hit chance
@@ -510,12 +562,15 @@ class Character < ApplicationRecord
   def critical_chance
     base = 5
     dex_bonus = stats.get(:dexterity).to_i / 5
-    luck_bonus = stats.get(:luck).to_i / 10
+    luck_bonus = (stats.get(:luck).to_i + fortress_buffs.luck_bonus + timed_buffs.modifier("luck").to_i) / 10
     [base + dex_bonus + luck_bonus, 50].min
   end
 
   def effective_max_hp
-    read_attribute(:max_hp).to_i + equipment_effect_value("hp", "max_hp").to_i
+    read_attribute(:max_hp).to_i +
+      equipment_effect_value("hp", "max_hp").to_i +
+      fortress_buffs.hp_bonus +
+      timed_buffs.modifier("max_hp").to_i
   end
 
   def armor_pierce_percent
@@ -527,11 +582,11 @@ class Character < ApplicationRecord
   end
 
   def accuracy_bonus
-    equipment_effect_value("accuracy")
+    equipment_effect_value("accuracy") + fortress_buffs.accuracy_bonus + timed_buffs.modifier("accuracy").to_i
   end
 
   def dodge_bonus
-    equipment_effect_value("dodge", "evasion")
+    equipment_effect_value("dodge", "evasion") + fortress_buffs.evasion_bonus + timed_buffs.modifier("dodge").to_i
   end
 
   def elemental_resistance_percent(element)
@@ -571,12 +626,13 @@ class Character < ApplicationRecord
     current_stats = stats
     attack_strength = current_stats.get(:strength).to_i * 2
     attack_dexterity = current_stats.get(:dexterity).to_i / 2
-    attack_level = level.to_i / 2
+    # Level is a first-class power axis so mid/high characters outscale lower brackets.
+    attack_level = level.to_i * 2
     attack_equipment = equipment_attack_bonus
 
     defense_vitality = current_stats.get(:vitality).to_i
     defense_strength = current_stats.get(:strength).to_i / 3
-    defense_level = level.to_i / 2
+    defense_level = level.to_i * 2
     defense_equipment = equipment_defense_bonus
 
     critical_base = 5
@@ -723,11 +779,13 @@ class Character < ApplicationRecord
   def equipment_attack_bonus
     return 0 unless inventory
 
-    inventory.inventory_items.equipped.includes(:item_template).sum do |item|
+    item_bonus = inventory.inventory_items.equipped.includes(:item_template).sum do |item|
       next 0 if item.broken?
 
       equipment_combat_component(item, "attack")
     end
+    set_bonus = Game::Equipment::SetBonuses.new(character: self).call.modifiers["attack"].to_i
+    item_bonus + set_bonus
   end
 
   # Get defense bonus from equipped items
@@ -736,11 +794,13 @@ class Character < ApplicationRecord
   def equipment_defense_bonus
     return 0 unless inventory
 
-    inventory.inventory_items.equipped.includes(:item_template).sum do |item|
+    item_bonus = inventory.inventory_items.equipped.includes(:item_template).sum do |item|
       next 0 if item.broken?
 
       equipment_combat_component(item, "defense")
     end
+    set_mods = Game::Equipment::SetBonuses.new(character: self).call.modifiers
+    item_bonus + set_mods["armor_class"].to_i + set_mods["armor"].to_i
   end
 
   def equipment_combat_component(item, stat_key)
@@ -757,6 +817,22 @@ class Character < ApplicationRecord
       item.properties&.dig("family") || item.properties&.dig("weapon_family")
 
     explicit.to_s.presence
+  end
+
+  # Primary equipped weapon family for use-based skill training / damage boosts.
+  # @return [String, nil]
+  def equipment_weapon_family
+    return nil unless inventory
+
+    weapon = inventory.inventory_items.equipped.includes(:item_template).find do |item|
+      next false if item.broken?
+
+      slot = item.equipment_slot.to_s
+      slot.in?(%w[weapon right_hand main_hand]) || equipment_item_family(item).present?
+    end
+    return nil unless weapon
+
+    equipment_item_family(weapon).presence || "unarmed"
   end
 
   # Get skill bonus from equipped items for a specific skill
@@ -827,15 +903,30 @@ class Character < ApplicationRecord
   def equipment_stat_modifiers
     return {} unless inventory
 
-    inventory.inventory_items.equipped.includes(:item_template).each_with_object(Hash.new(0)) do |item, totals|
+    totals = inventory.inventory_items.equipped.includes(:item_template).each_with_object(Hash.new(0)) do |item, acc|
       next if item.broken?
 
       item.effect_modifiers.each do |key, value|
         stat_key = EQUIPMENT_STAT_ALIASES[normalize_equipment_effect_key(key)]
-        totals[stat_key] += numeric_equipment_effect(value) if stat_key
+        acc[stat_key] += numeric_equipment_effect(value) if stat_key
       end
     end
+
+    Game::Equipment::SetBonuses.new(character: self).call.modifiers.each do |key, value|
+      stat_key = EQUIPMENT_STAT_ALIASES[normalize_equipment_effect_key(key)]
+      totals[stat_key] += value.to_i if stat_key
+    end
+    totals
   end
+
+  # Sheet UI reads active set thresholds; must stay public for views.
+  public
+
+  def set_bonus_summary
+    Game::Equipment::SetBonuses.new(character: self).call.active
+  end
+
+  private
 
   def combat_component_base(stats, stat_key)
     case stat_key.to_s
@@ -874,11 +965,11 @@ class Character < ApplicationRecord
     return unless user
 
     if user.characters.count >= User::MAX_CHARACTERS
-      errors.add(:base, "character limit reached")
+      errors.add(:base, I18n.t("errors.character_limit_reached"))
     end
   end
 
   def ensure_inventory!
-    create_inventory!(slot_capacity: 30, weight_capacity: carrying_capacity) unless inventory
+    create_inventory!(slot_capacity: 9_999, weight_capacity: [carrying_capacity, 100].max) unless inventory
   end
 end

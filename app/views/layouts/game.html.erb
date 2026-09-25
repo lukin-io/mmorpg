@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<%= I18n.locale %>">
 <head>
-  <title><%= content_for(:title) || "RPG" %></title>
+  <title><%= content_for(:title) || t("app.title") %></title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#fcfaf3">
+  <meta name="theme-color" content="#1a1410">
   <% if @active_airship_journey || controller_name == "character_licenses" || (controller_name == "world" && @zone&.outdoor?) %>
     <%# Cached offers, license expiry and acquisition timestamps require a fresh read. %>
     <meta name="turbo-cache-control" content="no-cache">
@@ -16,54 +16,255 @@
 </head>
 <body class="nl-game-layout"
       data-controller="game-layout"
+      data-chat-menu-private="<%= t("game.chat.menu_private") %>"
+      data-chat-menu-info="<%= t("game.chat.menu_info") %>"
+      data-chat-menu-copy="<%= t("game.chat.menu_copy") %>"
+      data-chat-menu-ignore="<%= t("game.chat.menu_ignore") %>"
+      data-chat-menu-assault="<%= t("game.world.assault_cta") %>"
+      data-assault-cta="<%= t("game.world.assault_cta") %>"
+      data-party-invite-cta="<%= t("game.world.party_invite_cta") %>"
+      data-action-panel-empty="<%= t("social.action_panel_empty") %>"
       data-action="nl-world-map:refreshed->game-layout#refreshPlayersList nl-world-map:refreshed->game-layout#refreshChat nl-world-map:movement-state->game-layout#updateWorldMovementState chat:context->game-layout#updateLocalChatContext"
       <% if controller_name == "world" && @zone&.outdoor? %>
         data-game-layout-encounter-url-value="<%= world_encounter_check_path %>"
       <% end %>>
-  <% world_actions_locked = controller_name == "world" && (@active_movement.present? || @active_world_action.present?) %>
+  <% world_actions_locked = begin
+    if controller_name == "world" && (@active_movement.present? || @active_world_action.present?)
+      true
+    elsif controller_name == "arena_matches" && @arena_match.present?
+      true
+    else
+      false
+    end
+  end %>
 
-  <%# === TOP STATUS BAR (like original: name[lv] + HP/MP + text links) === %>
   <header class="nl-top-bar">
     <div class="sr-only" data-controller="online-reload" <%= online_reload_attributes %> aria-hidden="true"></div>
-    <%# Left: Character name + level + HP/MP bars %>
     <div class="nl-top-left">
       <% if current_character %>
         <a href="<%= player_path(name: current_character.name) %>" class="nl-player-link">
           <%= current_character.name %></a><span class="nl-player-level">[<%= current_character.level %>]</span>
         <%= render "shared/nl_vitals_bar", character: current_character %>
+        <% injury_state = Game::Combat::InjuryState.new(character: current_character) %>
+        <% if (injury_summary = injury_state.summary).present? %>
+          <% hospital_open = Game::World::CityBuildingCatalog.accessible?(character: current_character, building_key: "hospital") %>
+          <% if hospital_open %>
+            <%= link_to injury_summary,
+                  city_building_path("hospital"),
+                  class: "nl-injury-chip#{' nl-injury-chip--heavy' if injury_state.blocks_movement?}",
+                  title: t("game.injuries.hospital_hint"),
+                  data: {
+                    injury_chip: "1",
+                    injury_blocks: (injury_state.blocks_movement? ? "1" : "0"),
+                    injury_recovery: "hospital"
+                  } %>
+          <% else %>
+            <%= link_to injury_summary,
+                  inventory_path,
+                  class: "nl-injury-chip#{' nl-injury-chip--heavy' if injury_state.blocks_movement?}",
+                  title: t("game.injuries.outdoor_lock_title"),
+                  data: {
+                    injury_chip: "1",
+                    injury_blocks: (injury_state.blocks_movement? ? "1" : "0"),
+                    injury_recovery: "inventory"
+                  } %>
+          <% end %>
+        <% end %>
+        <% trauma_scrolls = Game::World::StartPlayerAssault.trauma_scroll_quantity(current_character) %>
+        <% if Game::World::CityBuildingCatalog.accessible?(character: current_character, building_key: "hospital") %>
+          <%= link_to t("game.world.trauma_scroll_chip", count: trauma_scrolls),
+                city_building_path("hospital", anchor: "hospital-premium-desk"),
+                class: "nl-trauma-chip#{' nl-trauma-chip--empty' if trauma_scrolls <= 0}",
+                title: t("game.world.trauma_scroll_chip_hint"),
+                data: {trauma_scrolls: trauma_scrolls, trauma_recovery: "hospital"} %>
+        <% elsif trauma_scrolls.positive? %>
+          <span class="nl-trauma-chip" data-trauma-scrolls="<%= trauma_scrolls %>" title="<%= t("game.world.trauma_scroll_chip_hint") %>">
+            <%= t("game.world.trauma_scroll_chip", count: trauma_scrolls) %>
+          </span>
+        <% else %>
+          <%= link_to t("game.world.trauma_scroll_chip", count: 0),
+                world_path,
+                class: "nl-trauma-chip nl-trauma-chip--empty",
+                title: t("game.world.trauma_scroll_chip_hint"),
+                data: {trauma_scrolls: 0, trauma_recovery: "world"} %>
+        <% end %>
+        <% heal_scrolls = Game::Shop::PremiumScrollPurchase.owned_quantity(current_character, "combat_heal_scroll") %>
+        <% if Game::World::CityBuildingCatalog.accessible?(character: current_character, building_key: "hospital") %>
+          <%= link_to t("game.world.heal_scroll_chip", count: heal_scrolls),
+                city_building_path("hospital", anchor: "hospital-premium-desk"),
+                class: "nl-heal-chip#{' nl-heal-chip--empty' if heal_scrolls <= 0}",
+                title: t("game.world.heal_scroll_chip_hint"),
+                data: {heal_scrolls: heal_scrolls, heal_recovery: "hospital"} %>
+        <% elsif heal_scrolls.positive? %>
+          <span class="nl-heal-chip" data-heal-scrolls="<%= heal_scrolls %>" title="<%= t("game.world.heal_scroll_chip_hint") %>">
+            <%= t("game.world.heal_scroll_chip", count: heal_scrolls) %>
+          </span>
+        <% else %>
+          <%= link_to t("game.world.heal_scroll_chip", count: 0),
+                world_path,
+                class: "nl-heal-chip nl-heal-chip--empty",
+                title: t("game.world.heal_scroll_chip_hint"),
+                data: {heal_scrolls: 0, heal_recovery: "world"} %>
+        <% end %>
+        <% wear = Game::Inventory::EquippedWear.summary_for(current_character) %>
+        <% if wear.worn.positive? %>
+          <% wear_to_workshop = wear.broken.positive? && Game::World::CityBuildingCatalog.accessible?(character: current_character, building_key: "workshop") %>
+          <%= link_to(
+                wear.broken.positive? ? t("game.world.wear_chip_broken", count: wear.broken) : t("game.world.wear_chip", count: wear.worn),
+                (wear_to_workshop ? city_building_path("workshop") : inventory_path),
+                class: "nl-wear-chip#{' nl-wear-chip--broken' if wear.broken.positive?}",
+                title: t("game.world.wear_chip_hint"),
+                data: {
+                  wear_worn: wear.worn,
+                  wear_broken: wear.broken,
+                  wear_recovery: (wear_to_workshop ? "workshop" : "inventory")
+                }
+              ) %>
+        <% end %>
+        <% if current_character.alignment.to_s == "none" %>
+          <% if Game::World::CityBuildingCatalog.accessible?(character: current_character, building_key: "law_abode") %>
+            <%= link_to t("game.world.alignment_chip"),
+                  city_building_path("law_abode"),
+                  class: "nl-alignment-chip",
+                  title: t("game.world.alignment_chip_hint"),
+                  data: {alignment_chip: "1", alignment_recovery: "law"} %>
+          <% else %>
+            <%= link_to t("game.world.alignment_chip"),
+                  world_path,
+                  class: "nl-alignment-chip",
+                  title: t("game.world.alignment_chip_hint"),
+                  data: {alignment_chip: "1", alignment_recovery: "world"} %>
+          <% end %>
+        <% end %>
+        <% fatigue_pct = Characters::FatigueService.new(character: current_character).current_percent %>
+        <% if fatigue_pct.positive? %>
+          <% if Game::World::CityBuildingCatalog.accessible?(character: current_character, building_key: "tavern") %>
+            <%= link_to t("game.world.fatigue_chip", percent: fatigue_pct),
+                  city_building_path("tavern"),
+                  class: "nl-fatigue-chip#{' nl-fatigue-chip--locked' if fatigue_pct >= 86}",
+                  title: t("game.world.fatigue_chip_hint"),
+                  data: {fatigue_pct: fatigue_pct, fatigue_recovery: "tavern"} %>
+          <% else %>
+            <%= link_to t("game.world.fatigue_chip", percent: fatigue_pct),
+                  world_path,
+                  class: "nl-fatigue-chip#{' nl-fatigue-chip--locked' if fatigue_pct >= 86}",
+                  title: t("game.world.fatigue_chip_hint"),
+                  data: {fatigue_pct: fatigue_pct, fatigue_recovery: "world"} %>
+          <% end %>
+        <% end %>
+        <% journal = Game::Quests::Journal.new(character: current_character) %>
+        <% if (quest_chip = journal.active_chip).present? %>
+          <%= link_to quest_chip, quests_path,
+                class: "nl-quest-chip#{' nl-quest-chip--ready' if journal.active_chip_ready?}",
+                title: t("game.quests.title"),
+                data: {
+                  quest_chip: "1",
+                  quest_chip_ready: (journal.active_chip_ready? ? "1" : "0"),
+                  quest_recovery: "journal"
+                } %>
+        <% end %>
+        <% obelisk_bound = Game::World::ObeliskRecall.bound_for(current_character) %>
+        <% if obelisk_bound.present? %>
+          <% if @zone&.outdoor? %>
+            <% obelisk_wallet = current_user.currency_wallet&.nv_balance.to_d %>
+            <% recall_cost = Game::World::ObeliskRecall::RECALL_COST.to_d %>
+            <% can_outdoor_recall = obelisk_wallet >= recall_cost %>
+            <% if can_outdoor_recall %>
+              <%= button_to t("game.world.obelisk_recall_chip", amount: Game::World::ObeliskRecall::RECALL_COST),
+                    world_obelisk_path,
+                    method: :post,
+                    params: {obelisk_action: "recall"},
+                    class: "nl-obelisk-chip",
+                    title: t("game.world.obelisk_recall_chip_hint"),
+                    form: {class: "nl-obelisk-chip-form", data: {turbo: false, obelisk_chip_affordable: "1"}} %>
+            <% else %>
+              <%= link_to "#{t("game.world.obelisk_recall_chip", amount: Game::World::ObeliskRecall::RECALL_COST)} · #{t("game.buildings.obelisk_need_nv_short")}",
+                    world_path,
+                    class: "nl-obelisk-chip nl-obelisk-chip--short",
+                    title: t("game.buildings.obelisk_need_nv", amount: Game::World::ObeliskRecall::RECALL_COST),
+                    data: {obelisk_chip_affordable: "0", obelisk_recovery: "city"} %>
+            <% end %>
+          <% elsif Game::World::CityBuildingCatalog.accessible?(character: current_character, building_key: "obelisk") %>
+            <%= link_to t("game.world.obelisk_bound_chip", place: obelisk_bound["zone_name"]),
+                  city_building_path("obelisk"),
+                  class: "nl-obelisk-chip",
+                  title: t("game.world.obelisk_bound_chip_hint"),
+                  data: {obelisk_recovery: "obelisk"} %>
+          <% else %>
+            <%= link_to t("game.world.obelisk_bound_chip", place: obelisk_bound["zone_name"]),
+                  world_path,
+                  class: "nl-obelisk-chip",
+                  title: t("game.world.obelisk_bound_chip_hint"),
+                  data: {obelisk_recovery: "city"} %>
+          <% end %>
+        <% end %>
+        <% if @zone&.outdoor? %>
+          <% bait_qty = Game::World::Bait.new(character: current_character).quantity %>
+          <% if bait_qty <= 0 %>
+            <%= link_to "#{t("game.world.bait_chip", count: bait_qty)} · #{t("game.world.bait_chip_outdoor_empty_short")}",
+                  world_path,
+                  class: "nl-bait-chip nl-bait-chip--empty",
+                  data: {bait_qty: bait_qty, bait_recovery: "city"},
+                  title: t("game.world.bait_chip_outdoor_empty_hint") %>
+          <% else %>
+            <span class="nl-bait-chip" data-bait-qty="<%= bait_qty %>" title="<%= t("game.world.bait_chip_hint") %>">
+              <%= t("game.world.bait_chip", count: bait_qty) %>
+            </span>
+          <% end %>
+        <% elsif bait_link = (
+             Game::World::CityBuildingCatalog.accessible?(character: current_character, building_key: "souvenir_shop") ? "souvenir_shop" :
+             (Game::World::CityBuildingCatalog.accessible?(character: current_character, building_key: "shop") ? "shop" : nil)
+           ) %>
+          <% bait_qty = Game::World::Bait.new(character: current_character).quantity %>
+          <% if bait_qty <= 0 %>
+            <%= link_to t("game.world.bait_chip", count: bait_qty),
+                  (bait_link == "shop" ? shop_path : city_building_path(bait_link)),
+                  class: "nl-bait-chip nl-bait-chip--empty",
+                  data: {bait_qty: bait_qty, bait_recovery: bait_link},
+                  title: t("game.world.bait_chip_city_hint") %>
+          <% else %>
+            <span class="nl-bait-chip" data-bait-qty="<%= bait_qty %>" title="<%= t("game.world.bait_chip_hint") %>">
+              <%= t("game.world.bait_chip", count: bait_qty) %>
+            </span>
+          <% end %>
+        <% end %>
       <% end %>
     </div>
 
-    <%# Right: Navigation text links (like original) %>
     <nav class="nl-top-nav">
       <% if current_character %>
         <% if controller_name == "players" %>
-          <span class="nl-nav-link nl-nav-link--disabled" aria-current="page">Your character</span>
+          <span class="nl-nav-link nl-nav-link--disabled" aria-current="page"><%= t("nav.your_character") %></span>
         <% else %>
-          <%= button_to "Your character",
+          <%= button_to t("nav.your_character"),
               world_context_action_path,
               method: :post,
               params: {context: "profile"},
               class: "nl-nav-link nl-nav-link--button",
-              data: {game_layout_target: "worldNavigation"},
-              disabled: world_actions_locked,
-              form: {class: "nl-nav-action-form"} %>
+              data: {turbo: false},
+              form: {class: "nl-nav-action-form", data: {turbo: false}} %>
         <% end %>
         <% if controller_name == "inventories" %>
-          <span class="nl-nav-link nl-nav-link--disabled" aria-current="page">Inventory</span>
+          <span class="nl-nav-link nl-nav-link--disabled" aria-current="page"><%= t("nav.inventory") %></span>
+          <%= button_to t("nav.return"),
+              world_context_action_path,
+              method: :post,
+              params: {context: "world"},
+              class: "nl-nav-link nl-nav-link--button",
+              data: {turbo: false},
+              form: {class: "nl-nav-action-form", data: {turbo: false}} %>
         <% else %>
-          <%= button_to "Inventory",
+          <%= button_to t("nav.inventory"),
               world_context_action_path,
               method: :post,
               params: {context: "inventory"},
               class: "nl-nav-link nl-nav-link--button",
-              data: {game_layout_target: "worldNavigation"},
-              disabled: world_actions_locked,
-              form: {class: "nl-nav-action-form", data: {turbo_frame: ("main_content" if controller_name == "shop")}} %>
+              data: {turbo: false},
+              form: {class: "nl-nav-action-form", data: {turbo: false}} %>
         <% end %>
         <% if @active_airship_journey %>
           <% unless controller_name == "airships" %>
-            <%= link_to "Return", airship_path, class: "nl-nav-link", data: {turbo_frame: "_top"} %>
+            <%= link_to t("nav.return"), airship_path, class: "nl-nav-link", data: {turbo_frame: "_top"} %>
           <% end %>
         <% elsif controller_name == "world" %>
           <% if @zone&.outdoor? %>
@@ -71,15 +272,15 @@
               <%= render "world/actions", available_actions: @available_actions || [], position: @position %>
             <% end %>
           <% else %>
-            <span class="nl-nav-link nl-nav-link--disabled" aria-current="page"><%= @zone&.display_name || "City" %></span>
+            <span class="nl-nav-link nl-nav-link--disabled" aria-current="page"><%= @zone&.display_name || t("nav.city") %></span>
           <% end %>
         <% elsif controller_name == "world_locations" %>
           <%= render "world_locations/navigation" %>
         <% elsif controller_name == "shop" %>
           <%= link_to shop_location_return_label, shop_location_return_path,
               class: "nl-nav-link", data: {turbo_frame: "_top"} %>
-        <% else %>
-          <%= button_to "Return",
+        <% elsif controller_name != "inventories" %>
+          <%= button_to t("nav.return"),
               world_context_action_path,
               method: :post,
               params: {context: "world"},
@@ -87,19 +288,18 @@
               form: {class: "nl-nav-action-form"} %>
         <% end %>
       <% end %>
+      <%= render "shared/locale_switcher" %>
     </nav>
 
-    <%# Far right: Close button %>
     <div class="nl-top-right">
       <% if user_signed_in? %>
         <%= link_to destroy_user_session_path,
-            data: { turbo_method: :delete, turbo_confirm: "Exit the game?" },
-            class: "nl-close-btn", title: "Exit" do %>X<% end %>
+            data: { turbo_method: :delete, turbo_confirm: t("nav.exit_confirm") },
+            class: "nl-close-btn", title: t("nav.exit") do %>X<% end %>
       <% end %>
     </div>
   </header>
 
-  <%# Neverlands main_top frame: the only scrolling gameplay surface. %>
   <main class="nl-main-area" data-game-layout-target="mainContent">
     <%= turbo_frame_tag "main_content" do %>
       <% if content_for?(:main_content) %>
@@ -108,17 +308,23 @@
         <%= yield %>
       <% end %>
     <% end %>
-
   </main>
 
-  <div class="nl-frame-resizer" aria-hidden="true"></div>
+  <div class="nl-frame-resizer"
+       role="separator"
+       aria-orientation="horizontal"
+       aria-label="<%= t("social.resize_chat", default: "Resize chat height") %>"
+       aria-valuemin="96"
+       aria-valuemax="520"
+       tabindex="0"
+       data-game-layout-target="socialResizer"
+       data-action="pointerdown->game-layout#startSocialResize keydown->game-layout#nudgeSocialResize"></div>
 
-  <%# Neverlands chmain/ch_list frames translated into one persistent row. %>
-  <section class="nl-social-row" aria-label="Chat and nearby players">
+  <section class="nl-social-row" aria-label="<%= t("social.chat_players") %>">
     <div class="nl-chat-history" id="chat-messages" data-game-layout-target="chatMessages">
       <% unless content_for?(:hide_shell_chat_history) %>
         <%= turbo_frame_tag "chat_messages", src: current_character ? local_chat_path : nil, loading: "lazy" do %>
-          <div class="nl-chat-loading">Loading...</div>
+          <div class="nl-chat-loading"><%= t("social.loading") %></div>
         <% end %>
       <% end %>
     </div>
@@ -126,34 +332,49 @@
     <aside class="nl-players-float" data-game-layout-target="playersPanel">
       <div class="nl-players-header-float">
         <span class="nl-sort-links">
-          Sort:
-          <a href="#" data-action="click->game-layout#sortPlayers" data-sort="az">a-z</a>
-          <a href="#" data-action="click->game-layout#sortPlayers" data-sort="za">z-a</a>
-          <a href="#" data-action="click->game-layout#sortPlayers" data-sort="lvl-asc">0-33</a>
-          <a href="#" data-action="click->game-layout#sortPlayers" data-sort="lvl-desc">33-0</a>
+          <%= t("social.sort") %>
+          <a href="#" data-action="click->game-layout#sortPlayers" data-sort="az"><%= t("social.sort_az") %></a>
+          <a href="#" data-action="click->game-layout#sortPlayers" data-sort="za"><%= t("social.sort_za") %></a>
+          <a href="#" data-action="click->game-layout#sortPlayers" data-sort="lvl-asc"><%= t("social.sort_lvl_asc") %></a>
+          <a href="#" data-action="click->game-layout#sortPlayers" data-sort="lvl-desc"><%= t("social.sort_lvl_desc") %></a>
         </span>
         <label class="nl-refresh-check">
           <input type="checkbox" checked data-action="change->game-layout#toggleAutoRefresh">
-          <span class="nl-refresh-image">refresh</span>
+          <span class="nl-refresh-image"><%= t("social.refresh") %></span>
         </label>
       </div>
       <div class="nl-players-location">
-        <span class="nl-location-text" data-game-layout-target="playersLocation"><%= @presence_location_label || @position&.zone&.name || "Unknown" %> [ <%= @presence_player_count || @players_here&.size || 0 %> ]</span>
-        <span class="nl-total-online" data-game-layout-target="playersTotal">Total [ <%= @total_online.to_i %> ]</span>
+        <span class="nl-location-text" data-game-layout-target="playersLocation" data-presence-count="<%= @presence_player_count || @players_here&.size || 0 %>"><%= @presence_location_label || @position&.zone&.name || t("social.unknown") %> [ <%= @presence_player_count || @players_here&.size || 0 %> ]</span>
+        <span class="nl-total-online" data-game-layout-target="playersTotal" data-online-total="<%= @total_online.to_i %>"><%= t("social.total") %> [ <%= @total_online.to_i %> ]</span>
       </div>
       <div class="nl-players-list-float" data-game-layout-target="playersList">
-        <%= render "shared/nl_players_list" %>
+        <%= render "shared/nl_players_list", viewer: current_character %>
       </div>
     </aside>
   </section>
 
   <div class="nl-frame-separator" aria-hidden="true"></div>
 
-  <%# Compact game-owned chat controls using text and CSS only. %>
   <footer class="nl-bottom-bar" data-game-layout-target="bottomBar">
     <div class="nl-action-area">
-      <label class="nl-action-check"><input type="checkbox"> Action</label>
-      <button type="button" class="nl-chat-image-button nl-chat-image-button--say" data-action="click->game-layout#focusChat" title="Say">Say</button>
+      <label class="nl-action-check">
+        <input type="checkbox"
+               data-game-layout-target="actionCheck"
+               data-action="change->game-layout#toggleActionPanel"
+               aria-controls="nl-action-panel">
+        <%= t("social.action") %>
+      </label>
+      <div id="nl-action-panel"
+           class="nl-action-panel"
+           hidden
+           data-game-layout-target="actionPanel"
+           role="dialog"
+           aria-label="<%= t("social.action_panel_aria") %>">
+        <p class="nl-action-panel__hint"><%= t("social.action_panel_hint") %></p>
+        <p class="nl-action-panel__nick" data-game-layout-target="actionNick"><%= t("social.action_panel_empty") %></p>
+        <div class="nl-action-panel__links" data-game-layout-target="actionLinks"></div>
+      </div>
+      <button type="button" class="nl-chat-image-button nl-chat-image-button--say" data-action="click->game-layout#focusChat" title="<%= t("social.say") %>"><%= t("social.say") %></button>
     </div>
 
     <div class="nl-chat-input-bar" data-game-layout-target="chatArea">
@@ -163,7 +384,10 @@
                         method: :post,
                         scope: :chat_message,
                         class: "nl-chat-form-inline",
-                        data: { controller: "chat-input", action: "turbo:submit-end->chat-input#reset" } do |f| %>
+                        data: {
+                          controller: "chat-input",
+                          action: "turbo:submit-start->game-layout#prepareChatSubmit turbo:submit-end->chat-input#reset"
+                        } do |f| %>
             <%= hidden_field_tag :context_key, current_character.metadata.to_h.dig("local_chat_context", "key") %>
             <%= f.text_field :body,
                 class: "nl-chat-input-field",
@@ -180,27 +404,145 @@
       <% end %>
     </div>
 
-    <div class="nl-chat-toolstrip" aria-label="Chat controls">
-      <button type="button" class="nl-chat-tool nl-chat-tool--send" aria-label="Send message" title="Send message" data-action="click->game-layout#sendChat">&gt;</button>
-      <button type="button" class="nl-chat-tool nl-chat-tool--clear-input" aria-label="Clear input" title="Clear input" data-action="click->game-layout#clearChatInput">X</button>
-      <button type="button" class="nl-chat-tool nl-chat-tool--smiles-one" aria-label="Emoticons" title="Emoticons">:)</button>
-      <button type="button" class="nl-chat-tool nl-chat-tool--smiles-two" aria-label="More emoticons" title="More emoticons">:D</button>
-      <button type="button" class="nl-chat-tool nl-chat-tool--refresh" aria-label="Refresh chat" title="Refresh chat" data-action="click->game-layout#refreshChat">R</button>
-      <button type="button" class="nl-chat-tool nl-chat-tool--clear-chat" aria-label="Clear chat" title="Clear chat" data-action="click->game-layout#clearChat">X</button>
-      <button type="button" class="nl-chat-tool nl-chat-tool--messages" aria-label="Show all messages" title="Show all messages">All</button>
-      <button type="button" class="nl-chat-tool nl-chat-tool--speed" aria-label="Refresh every 10 seconds" title="Refresh every 10 seconds">10s</button>
-      <button type="button" class="nl-chat-tool nl-chat-tool--language" aria-label="Text mode" title="Text mode">Aa</button>
+    <div class="nl-chat-toolstrip" aria-label="<%= t("social.chat_players") %>" data-chat-tools-live="1">
+      <button type="button" class="nl-chat-tool nl-chat-tool--send" aria-label="<%= t("social.send") %>" title="<%= t("social.send") %>" data-action="click->game-layout#sendChat">&gt;</button>
+      <% if current_character %>
+        <button type="button"
+                class="nl-chat-tool nl-chat-tool--help"
+                aria-label="<%= t("social.location_help") %>"
+                title="<%= t("social.location_help_title") %>"
+                data-action="click->game-layout#requestLocationHelp"
+                data-game-layout-target="helpButton"
+                data-location-help-url="<%= location_help_path %>">?</button>
+      <% end %>
+      <button type="button"
+              class="nl-chat-tool nl-chat-tool--timers"
+              aria-label="<%= t("social.timers") %>"
+              title="<%= t("social.timers") %>"
+              data-action="click->game-layout#toggleTimers"
+              data-game-layout-target="timersToggle">⏱</button>
+      <button type="button" class="nl-chat-tool nl-chat-tool--clear-input" aria-label="<%= t("social.clear_input") %>" title="<%= t("social.clear_input") %>" data-action="click->game-layout#clearChatInput">X</button>
+      <button type="button"
+              class="nl-chat-tool nl-chat-tool--smiles-one"
+              aria-label="<%= t("social.emoticons") %>"
+              title="<%= t("social.emoticons") %>"
+              aria-expanded="false"
+              aria-controls="nl-smiles-popover"
+              data-action="click->game-layout#toggleSmiles"
+              data-game-layout-target="smilesToggle">:)</button>
+      <button type="button"
+              class="nl-chat-tool nl-chat-tool--smiles-two"
+              aria-label="<%= t("social.more_emoticons") %>"
+              title="<%= t("social.more_emoticons") %>"
+              aria-expanded="false"
+              aria-controls="nl-smiles-popover"
+              data-action="click->game-layout#toggleSmiles"
+              data-smiles-set="2"
+              data-game-layout-target="smilesToggleMore">:D</button>
+      <div id="nl-smiles-popover"
+           class="nl-smiles-popover"
+           hidden
+           data-game-layout-target="smilesPopover"
+           role="listbox"
+           aria-label="<%= t("social.emoticons") %>">
+        <% [
+          %w[smile grin wink sad],
+          %w[angry shock cool heart]
+        ].each_with_index do |row, set_idx| %>
+          <div class="nl-smiles-popover__row" data-smiles-set="<%= set_idx + 1 %>">
+            <% row.each do |key| %>
+              <button type="button"
+                      class="nl-smiles-popover__btn"
+                      role="option"
+                      title=":<%= key %>:"
+                      aria-label=":<%= key %>:"
+                      data-action="click->game-layout#insertSmile"
+                      data-smile-code=":<%= key %>:">
+                <%= image_tag "cc0/smiles/#{key}.png", alt: ":#{key}:", width: 16, height: 16 %>
+              </button>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+      <button type="button" class="nl-chat-tool nl-chat-tool--refresh" aria-label="<%= t("social.refresh_chat") %>" title="<%= t("social.refresh_chat") %>" data-action="click->game-layout#refreshChat">R</button>
+      <button type="button" class="nl-chat-tool nl-chat-tool--clear-chat" aria-label="<%= t("social.clear_chat") %>" title="<%= t("social.clear_chat") %>" data-action="click->game-layout#clearChat">X</button>
+      <button type="button"
+              class="nl-chat-tool nl-chat-tool--messages"
+              aria-label="<%= t("social.all_messages") %>"
+              title="<%= t("social.all_messages") %>"
+              data-action="click->game-layout#cycleChatFilter"
+              data-game-layout-target="chatFilter"
+              data-label-all="<%= t("social.all_messages") %>"
+              data-label-chat="<%= t("social.filter_chat") %>"
+              data-label-system="<%= t("social.filter_system") %>"><%= t("social.all_messages") %></button>
+      <button type="button"
+              class="nl-chat-tool nl-chat-tool--speed"
+              aria-label="<%= t("social.refresh_10s") %>"
+              title="<%= t("social.refresh_10s") %>"
+              data-action="click->game-layout#cycleChatSpeed"
+              data-game-layout-target="chatSpeed"
+              data-label-10="<%= t("social.refresh_10s") %>"
+              data-label-30="<%= t("social.refresh_30s") %>"
+              data-label-60="<%= t("social.refresh_60s") %>"
+              data-label-off="<%= t("social.refresh_off") %>">10s</button>
+      <button type="button"
+              class="nl-chat-tool nl-chat-tool--language"
+              aria-label="<%= t("social.translit_off") %>"
+              title="<%= t("social.translit_off") %>"
+              aria-pressed="false"
+              data-action="click->game-layout#toggleTranslit"
+              data-game-layout-target="chatTranslit"
+              data-label-on="<%= t("social.translit_on") %>"
+              data-label-off="<%= t("social.translit_off") %>">Aa</button>
     </div>
+    <div class="nl-timers-popover" hidden data-game-layout-target="timersPopover" aria-live="polite">
+      <h3><%= t("social.timers_title") %></h3>
+      <div data-game-layout-target="timersBody"><%= t("social.timers_loading") %></div>
+    </div>
+    <p class="nl-quests-board__meta nl-chat-tools-next" data-chat-tools-next="1">
+      <%= t("social.tools_help_hint") %>
+      ·
+      <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {turbo: false, chat_recovery: "world"} %>
+    </p>
 
     <div class="nl-status-icons">
       <span class="nl-time-display"><%= Time.current.strftime("%H:%M:%S") %></span>
       <% if current_character %>
-        <%= link_to "A", character_licenses_path, class: "nl-chat-tool nl-chat-tool--abilities", aria: {label: "Abilities"}, title: "Abilities", data: {turbo_frame: "_top"} %>
+        <% if world_actions_locked %>
+          <span class="nl-chat-tool nl-chat-tool--quests nl-chat-tool--disabled" aria-disabled="true" title="<%= t("game.fight.inventory_locked") %>">Q</span>
+          <span class="nl-chat-tool nl-chat-tool--abilities nl-chat-tool--disabled" aria-disabled="true" title="<%= t("game.fight.inventory_locked") %>">A</span>
+        <% else %>
+          <%= link_to "E", dress_path, class: "nl-chat-tool nl-chat-tool--quests", aria: {label: t("game.dress.title")}, title: t("game.dress.title"), data: {turbo_frame: "_top", shell_recovery: "dress"} %>
+          <%= link_to "Q", quests_path, class: "nl-chat-tool nl-chat-tool--quests", aria: {label: t("nav.quests")}, title: t("nav.quests"), data: {turbo_frame: "_top", shell_recovery: "quests"} %>
+          <%= link_to "D", instances_path, class: "nl-chat-tool nl-chat-tool--quests", aria: {label: t("nav.instances")}, title: t("nav.instances"), data: {turbo_frame: "_top", shell_recovery: "instances"} %>
+          <%= link_to "G", gifts_path, class: "nl-chat-tool nl-chat-tool--quests", aria: {label: t("game.gifts.title")}, title: t("game.gifts.title"), data: {turbo_frame: "_top", shell_recovery: "gifts"} %>
+          <%= link_to activity_path,
+                class: "nl-chat-tool nl-chat-tool--quests#{" nl-chat-tool--claim" if @activity_claimable.to_i.positive?}",
+                aria: {label: t("nav.activity")},
+                title: (@activity_claimable.to_i.positive? ? t("game.activity.claim_ready", count: @activity_claimable) : t("nav.activity")),
+                data: {turbo_frame: "_top", shell_recovery: "activity", claimable: @activity_claimable.to_i} do %>
+            C<% if @activity_claimable.to_i.positive? %><span class="nl-claim-dot" aria-hidden="true"><%= @activity_claimable %></span><% end %>
+          <% end %>
+          <%= link_to season_path,
+                class: "nl-chat-tool nl-chat-tool--quests#{" nl-chat-tool--claim" if @season_claimable.to_i.positive? || (@season_days_left.to_i.positive? && @season_days_left.to_i <= 7)}",
+                aria: {label: t("game.season.nav")},
+                title: season_shell_title,
+                data: {turbo_frame: "_top", shell_recovery: "season", season_claimable: @season_claimable.to_i, season_days: @season_days_left.to_i} do %>
+            S<% if @season_claimable.to_i.positive? %><span class="nl-claim-dot" aria-hidden="true"><%= @season_claimable %></span><% elsif @season_days_left.to_i.positive? && @season_days_left.to_i <= 7 %><span class="nl-claim-dot" aria-hidden="true"><%= @season_days_left %></span><% end %>
+          <% end %>
+          <%= link_to wars_path,
+                class: "nl-chat-tool nl-chat-tool--quests#{" nl-chat-tool--claim" if @wars_siege_count.to_i.positive?}",
+                aria: {label: t("game.wars.title")},
+                title: (@wars_siege_count.to_i.positive? ? t("game.wars.shell_siege_title", count: @wars_siege_count) : t("game.wars.title")),
+                data: {turbo_frame: "_top", shell_recovery: "wars", wars_sieges: @wars_siege_count.to_i} do %>
+            W<% if @wars_siege_count.to_i.positive? %><span class="nl-claim-dot" aria-hidden="true"><%= @wars_siege_count %></span><% end %>
+          <% end %>
+          <%= link_to "A", character_licenses_path, class: "nl-chat-tool nl-chat-tool--abilities", aria: {label: t("nav.abilities")}, title: t("nav.abilities"), data: {turbo_frame: "_top", shell_recovery: "licenses"} %>
+        <% end %>
       <% end %>
     </div>
   </footer>
 
-  <%# Flash messages %>
   <div class="nl-flash-container" id="flash">
     <% flash.to_hash.except("world_action_result", "world_action_result_offer_id").each do |type, message| %>
       <%= render "shared/flash", type:, message: %>

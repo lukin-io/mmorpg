@@ -1,2 +1,2 @@
-<%= render "manage/shared/page_header", title: "Edit Cell NPC", description: @tile_npc.display_name %>
-<%= render "form", tile_npc: @tile_npc, url: manage_tile_npc_path(@tile_npc), submit_label: "Save cell NPC", cancel_path: manage_tile_npc_path(@tile_npc) %>
+<%= render "manage/shared/page_header", title: t("manage.views.edit_cell_npc"), description: @tile_npc.display_name %>
+<%= render "form", tile_npc: @tile_npc, url: manage_tile_npc_path(@tile_npc), submit_label: t("manage.views.save_cell_npc"), cancel_path: manage_tile_npc_path(@tile_npc) %>

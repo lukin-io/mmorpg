@@ -1,0 +1,63 @@
+<section class="nl-handbook" aria-label="<%= t("game.buildings.souvenir_aria") %>">
+  <h2><%= t("game.buildings.souvenir_title") %></h2>
+  <p class="nl-handbook__lead"><%= t("game.buildings.souvenir_lead") %></p>
+  <% if params[:souvenir_denied].to_s == "1" %>
+    <p class="nl-quests-board__meta" data-souvenir-denied="1">
+      <%= t("game.buildings.souvenir_denied_next") %>
+      ·
+      <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {souvenir_recovery: "world"} %>
+      ·
+      <%= link_to t("game.buildings.souvenir_title"), city_building_path("souvenir_shop"), class: "nl-sheet-link", data: {souvenir_recovery: "souvenir"} %>
+    </p>
+  <% end %>
+  <% wallet = current_user.currency_wallet || current_user.create_currency_wallet!(nv_balance: 0) %>
+  <% balance = wallet.nv_balance.to_d %>
+  <% offerings = Game::World::SouvenirPurchase.offerings %>
+  <% any_affordable = offerings.any? { |_key, price| balance >= price.to_d } %>
+  <p class="nl-quests-board__meta" data-souvenir-wallet="<%= balance.to_i %>" data-souvenir-any-affordable="<%= any_affordable ? "1" : "0" %>">
+    <%= t("game.buildings.souvenir_wallet", amount: balance.to_i) %>
+  </p>
+  <div class="nl-handbook__grid">
+    <% offerings.each do |item_key, price| %>
+      <% template = ItemTemplate.find_by(key: item_key) %>
+      <% owned = template ? current_character.inventory&.inventory_items&.where(item_template: template, equipped: false)&.sum(:quantity).to_i : 0 %>
+      <% affordable = balance >= price.to_d %>
+      <article class="nl-handbook__card"
+               data-souvenir-item="<%= item_key %>"
+               data-souvenir-affordable="<%= affordable ? "1" : "0" %>">
+        <h3>
+          <%= template&.display_name || item_key %>
+          <% if template&.enhancement_rules.to_h["description"].present? %>
+            <%= nl_info_tip(template.enhancement_rules.to_h["description"]) %>
+          <% end %>
+        </h3>
+        <p class="nl-quests-board__meta">
+          <%= price %> NV
+          · <%= t("game.buildings.souvenir_owned", count: owned) %>
+        </p>
+        <% if affordable %>
+          <%= button_to t("game.buildings.souvenir_buy_cta", amount: price),
+                city_building_souvenir_path("souvenir_shop"),
+                method: :post,
+                params: {item_key: item_key},
+                class: "lbut",
+                form: {data: {turbo: false}} %>
+        <% else %>
+          <button type="button" class="lbut" disabled title="<%= t("game.buildings.souvenir_need_nv", amount: price) %>"><%= t("game.buildings.souvenir_need_nv_short") %></button>
+          <p class="nl-quests-board__meta">
+            <%= t("game.buildings.souvenir_need_nv", amount: price) %>
+            <% if Game::World::CityBuildingCatalog.accessible?(character: current_character, building_key: "bank") %>
+              <%= link_to t("game.shop.open_bank"), city_building_path("bank"), class: "nl-sheet-link", data: {souvenir_recovery: "bank"} %>
+            <% elsif Game::World::CityBuildingCatalog.accessible?(character: current_character, building_key: "junk_dealer") %>
+              <%= link_to t("game.buildings.junk_dealer_link"), city_building_path("junk_dealer"), class: "nl-sheet-link", data: {souvenir_recovery: "junk"} %>
+            <% else %>
+              <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {souvenir_recovery: "world"} %>
+            <% end %>
+          </p>
+        <% end %>
+      </article>
+    <% end %>
+  </div>
+</section>
+
+<%= render "city_buildings/landmark", building: building, building_key: "souvenir_shop" %>

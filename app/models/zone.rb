@@ -70,7 +70,7 @@ class Zone < ApplicationRecord
         next unless geometry.is_a?(Hash) && geometry.key?("polygon")
         next if Game::World::CityCatalog.valid_polygon?(geometry["polygon"])
 
-        errors.add(:metadata, "city #{kind} polygon must contain 3 to 32 percentage points enclosing an area")
+        errors.add(:metadata, I18n.t("manage.city_polygon_invalid", kind: kind))
       end
     end
   end
@@ -79,7 +79,7 @@ class Zone < ApplicationRecord
     return unless metadata.to_h.key?("airship_station_title")
     return if airship_station_title
 
-    errors.add(:metadata, "airship_station_title must be a nonblank string of at most 120 characters")
+    errors.add(:metadata, I18n.t("manage.airship_station_title_invalid"))
   end
 
   # Sparse content uses the unique Zone name as its persisted region key.
@@ -89,6 +89,6 @@ class Zone < ApplicationRecord
     return unless persisted? && will_save_change_to_name?
     return unless [MapTileTemplate, TileNpc, TileBuilding].any? { |type| type.where(zone: name_in_database).exists? }
 
-    errors.add(:name, "identifies populated region content; change the display title instead")
+    errors.add(:name, I18n.t("manage.zone_name_populated"))
   end
 end

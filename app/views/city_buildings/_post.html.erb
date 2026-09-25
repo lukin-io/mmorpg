@@ -1,0 +1,52 @@
+<section class="nl-handbook" aria-label="<%= t("game.buildings.post_aria") %>">
+  <h2><%= t("game.buildings.post_title") %></h2>
+  <p class="nl-handbook__lead"><%= t("game.buildings.post_lead") %></p>
+  <% if params[:post_denied].to_s == "1" %>
+    <p class="nl-quests-board__meta" data-post-denied="1">
+      <%= t("game.buildings.post_denied_next") %>
+      ·
+      <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {post_recovery: "world"} %>
+      ·
+      <%= link_to t("game.buildings.post_title"), city_building_path("post"), class: "nl-sheet-link", data: {post_recovery: "post"} %>
+    </p>
+  <% end %>
+  <% note = local_assigns.fetch(:note, "") %>
+  <% max_len = Game::World::PostOfficeNote::MAX_LEN %>
+  <% used = note.to_s.length %>
+  <% if note.present? %>
+    <p class="nl-quests-board__meta" data-post-empty="0"><%= t("game.buildings.post_current", text: note) %></p>
+  <% else %>
+    <p class="nl-quests-board__meta" data-post-empty="1">
+      <%= t("game.buildings.post_empty") %>
+      ·
+      <% if Game::World::CityBuildingCatalog.accessible?(character: current_character, building_key: "city_hall") %>
+        <%= link_to t("game.buildings.city_hall_short"), city_building_path("city_hall"), data: {turbo: false, post_recovery: "city_hall"} %>
+      <% else %>
+        <%= link_to t("arena.nav.city"), world_path, data: {turbo: false, post_recovery: "world"} %>
+      <% end %>
+    </p>
+  <% end %>
+  <p class="nl-quests-board__meta"
+     data-post-remaining="<%= max_len - used %>"
+     data-post-used="<%= used %>"
+     data-post-max="<%= max_len %>"
+     data-post-can-clear="<%= note.present? ? "1" : "0" %>">
+    <%= t("game.buildings.post_remaining", used: used, max: max_len) %>
+  </p>
+  <%= form_with url: city_building_post_path("post"), method: :post, data: {turbo: false} do |f| %>
+    <%= f.text_area :body, rows: 3, maxlength: max_len, class: "nl-post-body", placeholder: t("game.buildings.post_placeholder"), value: note %>
+    <p>
+      <%= f.submit t("game.buildings.post_save_cta"), class: "lbut" %>
+    </p>
+  <% end %>
+  <% if note.present? %>
+    <%= button_to t("game.buildings.post_clear_cta"),
+          city_building_post_path("post"),
+          method: :post,
+          params: {post_action: "clear"},
+          class: "lbut",
+          form: {data: {turbo: false}} %>
+  <% end %>
+</section>
+
+<%= render "city_buildings/landmark", building: building, building_key: "post" %>

@@ -248,6 +248,38 @@ a:hover {
   text-decoration: none;
 }
 
+@media (pointer: coarse) {
+  .nl-stat-btn {
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    font-size: 18px;
+    line-height: 44px;
+  }
+
+  .lbut {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 8px 10px;
+  }
+
+  .nl-sheet-link,
+  .nl-flash-dismiss {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 8px 10px;
+  }
+}
+
+@media (max-width: 360px) {
+  .nl-public-main,
+  .nl-flash-container,
+  .nl-flash {
+    min-width: 0;
+    max-width: 100%;
+  }
+}
+
 /* ---------------------------------------------------------------- *
  * Form fields (game.css textBox family)
  * ---------------------------------------------------------------- */

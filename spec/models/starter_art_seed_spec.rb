@@ -4,7 +4,7 @@ require "rails_helper"
 require Rails.root.join("db/seeds/world_content_support")
 
 RSpec.describe "Starter landscape seed upgrade", type: :model do
-  let!(:zone) { create(:zone, :mvp_outdoor_region, name: "Outpost Surroundings") }
+  let!(:zone) { create(:zone, :mvp_outdoor_region, name: "Пепельный Берег") }
 
   def load_cells
     load Rails.root.join("db/seeds/world_cells.rb")

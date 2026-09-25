@@ -24,8 +24,9 @@ module Game
         keyword_init: true
       )
 
-      def initialize(tile_npc:, rng: Random.new)
+      def initialize(tile_npc:, character: nil, rng: Random.new)
         @tile_npc = tile_npc
+        @character = character
         @rng = rng
       end
 
@@ -38,16 +39,16 @@ module Game
 
       private
 
-      attr_reader :tile_npc, :rng
+      attr_reader :tile_npc, :character, :rng
 
       def sample_index(samples)
         unless samples.size.between?(1, TileNpc::MAX_ROSTER_SAMPLES)
-          raise InvalidRosterError, "NPC encounter roster count is unsupported."
+          raise InvalidRosterError, I18n.t("manage.roster_count_unsupported")
         end
         weights = samples.map do |sample|
-          value = normalized_hash!(sample, "NPC encounter roster is not documented.").fetch("weight", 1)
+          value = normalized_hash!(sample, I18n.t("manage.roster_not_documented")).fetch("weight", 1)
           unless value.is_a?(Integer) && value.between?(1, TileNpc::MAX_ROSTER_WEIGHT)
-            raise InvalidRosterError, "NPC encounter roster weight is unsupported."
+            raise InvalidRosterError, I18n.t("manage.roster_weight_unsupported")
           end
           value
         end
@@ -62,24 +63,24 @@ module Game
       end
 
       def build_selection(raw_sample)
-        sample = normalized_hash!(raw_sample, "NPC encounter roster is not documented.")
+        sample = normalized_hash!(raw_sample, I18n.t("manage.roster_not_documented"))
         raw_members = sample["members"]
         unless raw_members.is_a?(Array)
-          raise InvalidRosterError, "NPC encounter roster members are not documented."
+          raise InvalidRosterError, I18n.t("manage.roster_members_not_documented")
         end
         validate_member_count!(raw_members.size)
         normalized_members = raw_members.map do |raw_member|
-          normalized_hash!(raw_member, "NPC encounter roster member is not documented.")
+          normalized_hash!(raw_member, I18n.t("manage.roster_member_not_documented"))
         end
         templates = templates_by_key(normalized_members)
         members = normalized_members.map do |member|
           npc_key = member["npc_key"].to_s
           template = templates[npc_key]
-          raise InvalidRosterError, "NPC template #{npc_key.inspect} is unavailable." unless template
+          raise InvalidRosterError, I18n.t("manage.roster_template_unavailable", key: npc_key.inspect) unless template
 
           member_metadata = normalized_hash!(
             member.fetch("metadata", {}),
-            "NPC encounter member metadata is not documented."
+            I18n.t("manage.roster_member_metadata_not_documented")
           )
           Member.new(
             npc_template: template,
@@ -100,7 +101,7 @@ module Game
       end
 
       def fixed_selection
-        count = tile_npc.encounter_size
+        count = encounter_member_count
         validate_member_count!(count)
         health = [tile_npc.current_hp.to_i, tile_npc.npc_template.health.to_i].find(&:positive?)
         members = Array.new(count) do
@@ -119,6 +120,14 @@ module Game
           experience_reward: fixed_experience_reward,
           trauma_percent: optional_percent(tile_npc.metadata.to_h, "trauma_percent") || 30
         )
+      end
+
+      def encounter_member_count
+        if character && tile_npc.personal_instance?
+          AggroPackSize.new(level: character.level, rng:).call
+        else
+          tile_npc.encounter_size
+        end
       end
 
       def fixed_experience_reward
@@ -142,19 +151,19 @@ module Game
       def validate_members!(members)
         return if members.all? { |member| non_negative_level(member.level) && member.max_hp.to_i.positive? }
 
-        raise InvalidRosterError, "NPC combat parameters are not documented."
+        raise InvalidRosterError, I18n.t("manage.roster_combat_params_not_documented")
       end
 
       def validate_member_count!(count)
         return if count.between?(1, TileNpc::MAX_ENCOUNTER_SIZE)
 
-        raise InvalidRosterError, "NPC encounter size is not supported."
+        raise InvalidRosterError, I18n.t("manage.roster_size_unsupported")
       end
 
       def positive_member_value(member, key, fallback)
         return fallback unless member.key?(key)
 
-        positive_integer(member[key]) || raise(InvalidRosterError, "NPC combat parameters are not documented.")
+        positive_integer(member[key]) || raise(InvalidRosterError, I18n.t("manage.roster_combat_params_not_documented"))
       end
 
       # A range is an explicit authoring policy, never an inferred source
@@ -162,13 +171,13 @@ module Game
       def member_level(member, fallback)
         unless member.key?("level_min") || member.key?("level_max")
           return non_negative_level(member.fetch("level", fallback)) ||
-            raise(InvalidRosterError, "NPC combat parameters are not documented.")
+            raise(InvalidRosterError, I18n.t("manage.roster_combat_params_not_documented"))
         end
 
         minimum = member["level_min"]
         maximum = member["level_max"]
         if TileNpc.member_level_range_errors(member).any?
-          raise InvalidRosterError, "NPC encounter level range is not documented."
+          raise InvalidRosterError, I18n.t("manage.roster_level_range_not_documented")
         end
 
         minimum == maximum ? minimum : rng.rand(minimum..maximum)
@@ -190,7 +199,7 @@ module Game
         parsed = Integer(data[key], exception: false)
         return parsed if parsed && parsed >= 0
 
-        raise InvalidRosterError, "NPC encounter experience is not documented."
+        raise InvalidRosterError, I18n.t("manage.roster_experience_not_documented")
       end
 
       def optional_percent(data, key)
@@ -199,7 +208,7 @@ module Game
         parsed = Integer(data[key], exception: false)
         return parsed if parsed&.between?(0, 100)
 
-        raise InvalidRosterError, "NPC encounter injury risk is not documented."
+        raise InvalidRosterError, I18n.t("manage.roster_injury_risk_not_documented")
       end
     end
   end

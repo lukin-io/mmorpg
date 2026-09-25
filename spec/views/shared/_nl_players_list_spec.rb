@@ -100,6 +100,29 @@ RSpec.describe "shared/_nl_players_list.html.erb", type: :view do
 
       expect(rendered).to have_link("max_kerby_list", href: player_path(name: "max_kerby_list"))
     end
+    it "shows an assault control only when the viewer can assault that player" do
+      viewer = double("Character", id: 99)
+      allow(Game::World::StartPlayerAssault).to receive(:offerable?).and_return(false)
+      allow(Game::World::StartPlayerAssault).to receive(:offerable?).with(attacker: viewer, defender: player1).and_return(true)
+      allow(Game::World::StartPlayerAssault).to receive(:has_trauma_scroll?).with(viewer).and_return(true)
+
+      render partial: "shared/nl_players_list", locals: {viewer:}
+
+      expect(rendered).to have_css(".nl-assault-btn", count: 1)
+      expect(rendered).to include(world_assault_path)
+    end
+
+    it "disables assault when colocated but the trauma scroll is missing" do
+      viewer = double("Character", id: 99)
+      allow(Game::World::StartPlayerAssault).to receive(:offerable?).and_return(false)
+      allow(Game::World::StartPlayerAssault).to receive(:offerable?).with(attacker: viewer, defender: player2).and_return(true)
+      allow(Game::World::StartPlayerAssault).to receive(:has_trauma_scroll?).with(viewer).and_return(false)
+
+      render partial: "shared/nl_players_list", locals: {viewer:}
+
+      expect(rendered).to have_css(".nl-assault-btn--blocked[disabled]", count: 1)
+      expect(rendered).not_to include(world_assault_path)
+    end
   end
 
   describe "with no players" do
@@ -111,7 +134,7 @@ RSpec.describe "shared/_nl_players_list.html.erb", type: :view do
       render partial: "shared/nl_players_list"
 
       expect(rendered).to have_css(".nl-no-players")
-      expect(rendered).to include("No players nearby")
+      expect(rendered).to include(I18n.t("game.world.no_players_nearby"))
     end
 
     it "does not render player entries" do

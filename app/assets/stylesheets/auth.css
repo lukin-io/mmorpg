@@ -141,3 +141,118 @@
   background: var(--nl-red-soft);
   color: var(--nl-red);
 }
+
+/* Ashen Veil public chrome */
+.nl-public-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  background: linear-gradient(180deg, #2a221c 0%, #1a1410 100%);
+  border-bottom: 1px solid #5a4636;
+  color: #f0e6d4;
+}
+
+.nl-public-brand {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.15rem;
+  letter-spacing: 0.04em;
+  color: #f3e4c8;
+}
+
+.nl-locale-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.nl-locale-sep {
+  opacity: 0.45;
+}
+
+.nl-locale-link {
+  color: #9bb6d4;
+  text-decoration: none;
+  padding: 1px 4px;
+}
+
+.nl-locale-link:hover {
+  color: #d8ecff;
+}
+
+.nl-locale-link.is-active {
+  color: #fff4d6;
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+.nl-top-nav .nl-locale-switch {
+  margin-left: 8px;
+  padding-left: 8px;
+  border-left: 1px solid rgba(0, 0, 0, 0.18);
+}
+
+.nl-public-layout {
+  background:
+    linear-gradient(180deg, rgba(12, 10, 8, 0.72) 0%, rgba(12, 10, 8, 0.88) 55%, rgba(8, 7, 6, 0.94) 100%),
+    url("/ashen/hubs/bg-city-under-bell.png") center top / cover no-repeat fixed,
+    #12100e;
+  min-height: 100vh;
+}
+
+.nl-public-layout .login-container {
+  border-color: #6a5340;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+  background: rgba(28, 22, 18, 0.92);
+  color: #f0e6d4;
+}
+
+.nl-public-layout .login-container h1 {
+  color: #f3e4c8;
+}
+
+.nl-public-layout .login-container label,
+.nl-public-layout .login-container .text-muted {
+  color: #cbbba3;
+}
+
+.nl-public-layout .login-container a {
+  color: #9bb6d4;
+}
+
+@media (max-width: 360px) {
+  .nl-public-layout .login-container {
+    width: calc(100% - 16px);
+    max-width: 100%;
+    margin: 12px auto;
+    padding: 14px 12px;
+  }
+
+  .nl-top-nav {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+}
+
+@media (pointer: coarse) {
+  .nl-public-layout .login-container input[type="submit"],
+  .nl-public-layout .login-container button,
+  .nl-public-layout .login-container .btn,
+  .nl-locale-link {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 8px 12px;
+    font-size: 14px;
+    line-height: 1.25;
+  }
+
+  .nl-public-layout .login-container input[type="email"],
+  .nl-public-layout .login-container input[type="password"],
+  .nl-public-layout .login-container input[type="text"] {
+    min-height: 44px;
+    font-size: 16px;
+  }
+}

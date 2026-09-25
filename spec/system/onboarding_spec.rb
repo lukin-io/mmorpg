@@ -6,7 +6,7 @@ RSpec.describe "Onboarding", type: :system do
   describe "success cases" do
     it "signs in via Devise UI and lands on the world page" do
       user = create(:user, password: "Password123!", password_confirmation: "Password123!")
-      zone = create(:zone, name: "Outpost Surroundings", location_type: "outdoor", width: 10, height: 10)
+      zone = create(:zone, name: "Пепельный Берег", location_type: "outdoor", width: 10, height: 10)
       character = create(:character, user: user)
       create(:character_position, character: character, zone: zone, x: 5, y: 5)
 
@@ -17,7 +17,7 @@ RSpec.describe "Onboarding", type: :system do
       click_button "Enter"
 
       expect(page).to have_css(".nl-map-container")
-      expect(page).to have_content("Outpost Surroundings")
+      expect(page).to have_content("Пепельный Берег")
     end
   end
 

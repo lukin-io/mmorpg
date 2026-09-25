@@ -11,6 +11,7 @@ class InventoriesController < ApplicationController
 
   before_action :ensure_active_character!
   around_action :with_available_outdoor_actions
+  rescue_from ActiveRecord::RecordNotFound, with: :item_missing
 
   # GET /inventory
   def show
@@ -21,6 +22,10 @@ class InventoriesController < ApplicationController
     @items = filtered_inventory_items(@inventory, @category, @subcategory)
     @equipment = current_character_equipment
     @equipment_sets = Game::Inventory::EquipmentSetService.new(character: current_character).all
+    Game::Professions::Templates.ensure_craft_items!
+    junk_rows = Game::Shop::JunkBuyback.offer_rows_for(current_character)
+    @junk_offer_count = junk_rows.size
+    @junk_offer_total = junk_rows.sum { |row| row[:quantity].to_i * row[:price].to_i }
   end
 
   # POST /inventory/equip
@@ -39,7 +44,7 @@ class InventoriesController < ApplicationController
 
           render turbo_stream: [inventory_grid_stream, character_sheet_stream]
         end
-        format.html { redirect_to inventory_redirect_path, notice: "Item worn!" }
+        format.html { redirect_to inventory_redirect_path, notice: I18n.t("game.flashes.item_worn") }
       else
         format.turbo_stream do
           render turbo_stream: turbo_stream.update(
@@ -48,14 +53,14 @@ class InventoriesController < ApplicationController
             locals: {type: :alert, message: result[:error]}
           ), status: :unprocessable_content
         end
-        format.html { redirect_to inventory_redirect_path, alert: result[:error] }
+        format.html { redirect_to inventory_redirect_path(equip_denied: 1), alert: result[:error] }
       end
     end
   end
 
   # POST /inventory/unequip
   def unequip
-    slot = params[:slot].to_sym
+    slot = params[:slot].presence&.to_sym
 
     result = Game::Inventory::EquipmentService.new(
       character: current_character,
@@ -69,7 +74,7 @@ class InventoriesController < ApplicationController
 
           render turbo_stream: [inventory_grid_stream, character_sheet_stream]
         end
-        format.html { redirect_to inventory_redirect_path, notice: "Item removed!" }
+        format.html { redirect_to inventory_redirect_path, notice: I18n.t("game.flashes.item_removed") }
       else
         format.turbo_stream do
           render turbo_stream: turbo_stream.update(
@@ -78,7 +83,7 @@ class InventoriesController < ApplicationController
             locals: {type: :alert, message: result[:error]}
           ), status: :unprocessable_content
         end
-        format.html { redirect_to inventory_redirect_path, alert: result[:error] }
+        format.html { redirect_to inventory_redirect_path(equip_denied: 1), alert: result[:error] }
       end
     end
   end
@@ -87,7 +92,7 @@ class InventoriesController < ApplicationController
   def unequip_all
     result = Game::Inventory::EquipmentService.new(character: current_character).unequip_all!
 
-    redirect_to inventory_redirect_path, notice: "Removed #{result[:count]} equipped item(s)."
+    redirect_to inventory_redirect_path, notice: I18n.t("game.flashes.unequip_all", count: result[:count])
   end
 
   # POST /inventory/use
@@ -98,16 +103,21 @@ class InventoriesController < ApplicationController
 
     respond_to do |format|
       if result[:success]
-        format.turbo_stream do
-          @inventory = current_character.inventory.reload
+        if result[:redirect].present?
+          format.html { redirect_to result[:redirect], notice: result[:message] }
+          format.turbo_stream { redirect_to result[:redirect], notice: result[:message] }
+        else
+          format.turbo_stream do
+            @inventory = current_character.inventory.reload
 
-          render turbo_stream: [
-            inventory_grid_stream,
-            character_sheet_stream,
-            turbo_stream.update("flash", partial: "shared/flash", locals: {type: "notice", message: result[:message]})
-          ]
+            render turbo_stream: [
+              inventory_grid_stream,
+              character_sheet_stream,
+              turbo_stream.update("flash", partial: "shared/flash", locals: {type: "notice", message: result[:message]})
+            ]
+          end
+          format.html { redirect_to inventory_redirect_path, notice: result[:message] }
         end
-        format.html { redirect_to inventory_redirect_path, notice: result[:message] }
       else
         format.turbo_stream do
           render turbo_stream: turbo_stream.update(
@@ -116,9 +126,19 @@ class InventoriesController < ApplicationController
             locals: {type: "alert", message: result[:error]}
           )
         end
-        format.html { redirect_to inventory_redirect_path, alert: result[:error] }
+        format.html { redirect_to inventory_redirect_path(use_denied: 1), alert: result[:error] }
       end
     end
+  end
+
+  # POST /inventory/buy_scroll
+  def buy_scroll
+    result = Game::Shop::PremiumScrollPurchase.new(
+      character: current_character,
+      item_key: params[:item_key]
+    ).call
+
+    redirect_to inventory_redirect_path, flash_for_result(result)
   end
 
   # DELETE /inventory/:id
@@ -130,7 +150,7 @@ class InventoriesController < ApplicationController
     if result[:success]
       redirect_to inventory_redirect_path, notice: result[:message]
     else
-      redirect_to inventory_redirect_path, alert: result[:error]
+      redirect_to inventory_redirect_path(use_denied: 1), alert: result[:error]
     end
   end
 
@@ -140,25 +160,25 @@ class InventoriesController < ApplicationController
 
     Game::Inventory::Manager.sort_inventory!(current_character.inventory, by: sort_type.to_sym)
 
-    redirect_to inventory_redirect_path, notice: "Inventory sorted."
+    redirect_to inventory_redirect_path, notice: I18n.t("game.flashes.inventory_sorted")
   end
 
   def save_equipment_set
     result = Game::Inventory::EquipmentSetService.new(character: current_character).save!(params[:set_name])
 
-    redirect_to inventory_redirect_path, flash_for_result(result)
+    redirect_after_set_mutation(result)
   end
 
   def wear_equipment_set
     result = Game::Inventory::EquipmentSetService.new(character: current_character).wear!(params[:set_name])
 
-    redirect_to inventory_redirect_path, flash_for_result(result)
+    redirect_after_set_mutation(result)
   end
 
   def delete_equipment_set
     result = Game::Inventory::EquipmentSetService.new(character: current_character).delete!(params[:set_name])
 
-    redirect_to inventory_redirect_path, flash_for_result(result)
+    redirect_after_set_mutation(result)
   end
 
   def transfer_item
@@ -169,7 +189,7 @@ class InventoriesController < ApplicationController
       quantity: transfer_quantity
     )
 
-    redirect_to inventory_redirect_path, flash_for_result(result)
+    redirect_after_transfer(result)
   end
 
   def gift_item
@@ -181,7 +201,7 @@ class InventoriesController < ApplicationController
       gift: true
     )
 
-    redirect_to inventory_redirect_path, flash_for_result(result)
+    redirect_after_transfer(result)
   end
 
   def sell_to_player
@@ -193,7 +213,7 @@ class InventoriesController < ApplicationController
       price: params[:price]
     )
 
-    redirect_to inventory_redirect_path, flash_for_result(result)
+    redirect_after_transfer(result)
   end
 
   def transfer_money
@@ -202,7 +222,7 @@ class InventoriesController < ApplicationController
       amount: params[:amount]
     )
 
-    redirect_to inventory_redirect_path, flash_for_result(result)
+    redirect_after_transfer(result)
   end
 
   private
@@ -276,11 +296,31 @@ class InventoriesController < ApplicationController
     params[:info].presence == "short" ? "short" : "full"
   end
 
-  def inventory_redirect_path
+  def inventory_redirect_path(**extra)
     category = current_category
-    return inventory_path if category == "all"
+    base =
+      if category == "all"
+        {}
+      else
+        {category:, subcategory: current_subcategory, info: current_info_mode}
+      end
+    inventory_path(**base.merge(extra.compact))
+  end
 
-    inventory_path(category:, subcategory: current_subcategory, info: current_info_mode)
+  def redirect_after_set_mutation(result)
+    extra = result.success ? {} : {set_denied: 1}
+    redirect_to inventory_redirect_path(**extra), flash_for_result(result)
+  end
+
+  def redirect_after_transfer(result)
+    extra = result.success ? {} : {transfer_denied: 1}
+    redirect_to inventory_redirect_path(**extra), flash_for_result(result)
+  end
+
+  def item_missing
+    redirect_to inventory_path(item_denied: 1),
+      alert: I18n.t("game.inventory.item_not_found"),
+      status: :see_other
   end
 
   def current_character_equipment

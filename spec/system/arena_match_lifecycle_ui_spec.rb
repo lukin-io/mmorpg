@@ -143,7 +143,7 @@ RSpec.describe "Arena Match Lifecycle UI", type: :system, js: true do
       visit arena_match_path(live_match)
 
       within(".arena-combat-log") do
-        expect(page).to have_content("Fight started")
+        expect(page).to have_content(/Fight started|Бой начат/)
       end
     end
 

@@ -13,8 +13,8 @@ RSpec.describe CharacterPosition, type: :model do
       position = build(:character_position, :outside_region)
 
       expect(position).not_to be_valid
-      expect(position.errors[:x]).to include("must be within zone bounds")
-      expect(position.errors[:y]).to include("must be within zone bounds")
+      expect(position.errors[:x]).to include(I18n.t("manage.coord_outside_zone"))
+      expect(position.errors[:y]).to include(I18n.t("manage.coord_outside_zone"))
     end
 
     it "rejects negative and null coordinates" do
@@ -22,7 +22,7 @@ RSpec.describe CharacterPosition, type: :model do
       null = build(:character_position, x: nil, y: 0)
 
       expect(negative).not_to be_valid
-      expect(negative.errors[:x]).to include("must be within zone bounds")
+      expect(negative.errors[:x]).to include(I18n.t("manage.coord_outside_zone"))
       expect(null).not_to be_valid
       expect(null.errors[:x]).to be_present
     end

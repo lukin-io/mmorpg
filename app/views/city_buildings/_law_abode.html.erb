@@ -1,0 +1,80 @@
+<% cost = Game::World::LawAlignmentPledge::CHANGE_COST.to_d %>
+<% wallet = current_user.currency_wallet || current_user.create_currency_wallet!(nv_balance: 0) %>
+<% balance = wallet.nv_balance.to_d %>
+<% first_pledge = current_character.alignment.to_s == "none" %>
+<% can_afford_change = first_pledge || balance >= cost %>
+<section class="nl-handbook" aria-label="<%= t("game.buildings.law_aria") %>"
+         data-law-alignment="<%= current_character.alignment %>"
+         data-law-wallet="<%= balance.to_i %>"
+         data-law-first-pledge="<%= first_pledge ? "1" : "0" %>"
+         data-law-can-afford="<%= can_afford_change ? "1" : "0" %>">
+  <h2><%= t("game.buildings.law_title") %></h2>
+  <p class="nl-handbook__lead">
+    <%= t(
+          "game.buildings.law_lead",
+          current: t("game.buildings.law_alignment.#{current_character.alignment}"),
+          amount: Game::World::LawAlignmentPledge::CHANGE_COST
+        ) %>
+  </p>
+  <% if params[:law_denied].to_s == "1" %>
+    <p class="nl-quests-board__meta" data-law-denied="1">
+      <%= t("game.buildings.law_denied_next") %>
+      ·
+      <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {law_recovery: "world"} %>
+      ·
+      <%= link_to t("game.buildings.law_title"), city_building_path("law_abode"), class: "nl-sheet-link", data: {law_recovery: "law"} %>
+    </p>
+  <% end %>
+  <p class="nl-quests-board__meta"><%= t("game.buildings.law_wallet", amount: balance.to_i) %></p>
+  <p class="nl-quests-board__meta" data-law-pledge-mode="<%= first_pledge ? "free" : "paid" %>">
+    <%= first_pledge ? t("game.buildings.law_first_free") : t("game.buildings.law_change_cost", amount: Game::World::LawAlignmentPledge::CHANGE_COST) %>
+  </p>
+  <p class="nl-quests-board__meta"><%= t("game.buildings.law_quarter_east_gate") %></p>
+  <div class="nl-handbook__grid">
+    <% Game::World::LawAlignmentPledge::CHOICES.each do |key| %>
+      <% current_choice = current_character.alignment == key %>
+      <% choice_ready = current_choice ? false : (first_pledge || balance >= cost) %>
+      <article class="nl-handbook__card"
+               data-law-choice="<%= key %>"
+               data-law-choice-current="<%= current_choice ? "1" : "0" %>"
+               data-law-choice-ready="<%= choice_ready ? "1" : "0" %>">
+        <h3><%= t("game.buildings.law_alignment.#{key}") %></h3>
+        <p><%= t("game.buildings.law_alignment_hint.#{key}") %></p>
+        <% if current_choice %>
+          <button type="button" class="lbut" disabled><%= t("game.buildings.law_current_cta") %></button>
+          <p class="nl-quests-board__meta" data-law-choice-current-next="1">
+            <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {law_recovery: "world"} %>
+          </p>
+        <% elsif first_pledge %>
+          <%= button_to t("game.buildings.law_pledge_cta"),
+                city_building_law_path("law_abode"),
+                method: :post,
+                params: {alignment: key},
+                class: "lbut",
+                form: {data: {turbo: false}} %>
+        <% elsif balance >= cost %>
+          <%= button_to t("game.buildings.law_change_cta", amount: Game::World::LawAlignmentPledge::CHANGE_COST),
+                city_building_law_path("law_abode"),
+                method: :post,
+                params: {alignment: key},
+                class: "lbut",
+                form: {data: {turbo: false}} %>
+        <% else %>
+          <button type="button" class="lbut" disabled title="<%= t("game.buildings.law_need_nv", amount: Game::World::LawAlignmentPledge::CHANGE_COST) %>"><%= t("game.buildings.law_need_nv_short") %></button>
+          <p class="nl-quests-board__meta">
+            <%= t("game.buildings.law_need_nv", amount: Game::World::LawAlignmentPledge::CHANGE_COST) %>
+            <% if Game::World::CityBuildingCatalog.accessible?(character: current_character, building_key: "bank") %>
+              <%= link_to t("game.shop.open_bank"), city_building_path("bank"), class: "nl-sheet-link", data: {law_recovery: "bank"} %>
+            <% elsif Game::World::CityBuildingCatalog.accessible?(character: current_character, building_key: "junk_dealer") %>
+              <%= link_to t("game.buildings.junk_dealer_link"), city_building_path("junk_dealer"), class: "nl-sheet-link", data: {law_recovery: "junk"} %>
+            <% else %>
+              <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {law_recovery: "world"} %>
+            <% end %>
+          </p>
+        <% end %>
+      </article>
+    <% end %>
+  </div>
+</section>
+
+<%= render "city_buildings/landmark", building: local_assigns.fetch(:building, {}), building_key: "law_abode" %>

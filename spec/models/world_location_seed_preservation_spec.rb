@@ -4,7 +4,7 @@ require "rails_helper"
 require Rails.root.join("db/seeds/world_content_support")
 
 RSpec.describe "Linked location seed preservation", type: :model do
-  let!(:zone) { create(:zone, :mvp_outdoor_region, name: "Outpost Surroundings") }
+  let!(:zone) { create(:zone, :mvp_outdoor_region, name: "Пепельный Берег") }
 
   def load_locations
     allow($stdout).to receive(:puts)

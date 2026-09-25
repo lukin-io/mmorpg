@@ -44,9 +44,26 @@ class ArenaTurnTimeoutJob < ApplicationJob
   def process_timeout(match)
     processor = Arena::CombatProcessor.new(match)
 
+    # PvP: waiting player may claim victory/draw.
     if processor.pending_player_turns?
       processor.mark_timeout_claim_available!
       broadcast_timeout(match, claim_available: true)
+      return
+    end
+
+    # Wilderness NPC fight: player went AFK — bots win by timeout. The player
+    # must still open the match and press Finish; we do not silently dismiss.
+    if processor.npc_fight? && !processor.player_turn_commit_required?
+      npc_team = match.arena_participations.npcs
+        .detect { |row| row.current_hp.to_i.positive? }
+        &.team || match.arena_participations.npcs.first&.team
+      Arena::CombatLogRecorder.new(match).record!(
+        entry_type: "timeout",
+        actor: nil,
+        description: I18n.t("game.fight.fight_timeout")
+      )
+      processor.end_match(npc_team, reason: :timeout)
+      broadcast_timeout(match, claim_available: false)
       return
     end
 
@@ -56,27 +73,21 @@ class ArenaTurnTimeoutJob < ApplicationJob
       description: "Turn #{match.current_turn_number} ended by timeout"
     )
 
-    # Mark turn as timed out and advance to next turn
     match.advance_turn!(timed_out: true)
-
-    # Broadcast timeout to all participants
     broadcast_timeout(match, claim_available: false)
 
-    # NPC-only opposing sides act immediately. Fights with live players on
-    # multiple sides stay in the player turn-commit flow.
     if processor.npc_fight? && !processor.player_turn_commit_required?
       processor.process_npc_turn
     end
 
-    # Check if match should end after too many timeouts
     check_excessive_timeouts(match, processor)
   end
 
   def broadcast_timeout(match, claim_available:)
     message = if claim_available
-      "Turn timer expired. Timeout finish is available."
+      I18n.t("game.fight.turn_timeout_claim")
     else
-      "Turn ended by timeout"
+      I18n.t("game.fight.turn_ended_by_timeout")
     end
 
     Arena::CombatBroadcaster.new(match).broadcast_event(
@@ -96,9 +107,8 @@ class ArenaTurnTimeoutJob < ApplicationJob
     match.metadata["timeout_count"] = timeout_count + 1
     match.save!
 
-    # End match after 3 consecutive timeouts from same team
     if timeout_count >= 3
-      processor.end_match(nil) # Draw due to inactivity
+      processor.end_match(nil, reason: :timeout)
     end
   end
 end

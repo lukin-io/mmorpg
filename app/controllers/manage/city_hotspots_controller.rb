@@ -28,7 +28,7 @@ module Manage
       attributes = parsed_city_hotspot_params
 
       if attributes && mutate(@city_hotspot, operation: :create, attributes:)
-        redirect_to manage_city_hotspot_path(@city_hotspot), notice: "City action created.", status: :see_other
+        redirect_to manage_city_hotspot_path(@city_hotspot), notice: I18n.t("manage.flashes.hotspot_created"), status: :see_other
       else
         render :new, status: :unprocessable_content
       end
@@ -38,7 +38,7 @@ module Manage
       attributes = parsed_city_hotspot_params
 
       if attributes && mutate(@city_hotspot, operation: :update, attributes:)
-        redirect_to manage_city_hotspot_path(@city_hotspot), notice: "City action updated.", status: :see_other
+        redirect_to manage_city_hotspot_path(@city_hotspot), notice: I18n.t("manage.flashes.hotspot_updated"), status: :see_other
       else
         render :edit, status: :unprocessable_content
       end
@@ -46,7 +46,7 @@ module Manage
 
     def destroy
       if mutate(@city_hotspot, operation: :destroy)
-        redirect_to manage_city_hotspots_path, notice: "City action deleted.", status: :see_other
+        redirect_to manage_city_hotspots_path, notice: I18n.t("manage.flashes.hotspot_deleted"), status: :see_other
       else
         redirect_to manage_city_hotspot_path(@city_hotspot), alert: @city_hotspot.errors.full_messages.to_sentence,
           status: :see_other

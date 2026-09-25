@@ -1,0 +1,101 @@
+{
+  "version": 1,
+  "jobs": [
+    {
+      "id": "fortress_marker",
+      "status": "done",
+      "prompt": "tiny pixel art fortress tower marker, top-down RPG icon, 64x64, dark stone, orange accent, transparent background, CC0 style",
+      "out": "app/assets/images/cc0/markers/fortress.png",
+      "size": 64,
+      "written": "app/assets/images/cc0/markers/fortress.png"
+    },
+    {
+      "id": "castle_marker",
+      "status": "done",
+      "prompt": "tiny pixel art castle keep marker, top-down RPG icon, 64x64, purple-gray stone, transparent background",
+      "out": "app/assets/images/cc0/markers/castle.png",
+      "size": 64,
+      "written": "app/assets/images/cc0/markers/castle.png"
+    },
+    {
+      "id": "dungeon_entrance",
+      "status": "done",
+      "prompt": "tiny pixel art dungeon cave mouth marker, top-down RPG icon, 64x64, blue-gray stone arch, transparent background",
+      "out": "app/assets/images/cc0/markers/dungeon.png",
+      "size": 64,
+      "written": "app/assets/images/cc0/markers/dungeon.png"
+    },
+    {
+      "id": "mine_node",
+      "status": "done",
+      "prompt": "tiny pixel art mine ore pile marker, top-down RPG icon, 64x64, brown rock with metal flecks, transparent background",
+      "out": "app/assets/images/cc0/markers/mine.png",
+      "size": 64,
+      "written": "app/assets/images/cc0/markers/mine.png"
+    },
+    {
+      "id": "resource_herbs",
+      "status": "done",
+      "prompt": "tiny pixel art herb bush marker, top-down RPG icon, 64x64, green leaves, transparent background",
+      "out": "app/assets/images/cc0/markers/resource.png",
+      "size": 64,
+      "written": "app/assets/images/cc0/markers/resource.png"
+    },
+    {
+      "id": "siege_banner",
+      "status": "done",
+      "prompt": "tiny pixel art contested siege banner flag, 64x64, red cloth on pole, transparent background",
+      "out": "app/assets/images/cc0/markers/siege_banner.png",
+      "size": 64,
+      "written": "app/assets/images/cc0/markers/siege_banner.png"
+    },
+    {
+      "id": "potion_blood_i",
+      "status": "done",
+      "prompt": "tiny pixel art red blood potion vial I, 32x32, transparent",
+      "out": "app/assets/images/cc0/icons/potion_blood_i.png",
+      "size": 32,
+      "written": "app/assets/images/cc0/icons/potion_blood_i.png"
+    },
+    {
+      "id": "potion_blood_ii",
+      "status": "done",
+      "prompt": "tiny pixel art crimson blood potion vial II, 32x32, transparent",
+      "out": "app/assets/images/cc0/icons/potion_blood_ii.png",
+      "size": 32,
+      "written": "app/assets/images/cc0/icons/potion_blood_ii.png"
+    },
+    {
+      "id": "potion_blood_iii",
+      "status": "done",
+      "prompt": "tiny pixel art dark blood potion vial III, 32x32, transparent",
+      "out": "app/assets/images/cc0/icons/potion_blood_iii.png",
+      "size": 32,
+      "written": "app/assets/images/cc0/icons/potion_blood_iii.png"
+    },
+    {
+      "id": "herb_moon_orchid",
+      "status": "done",
+      "prompt": "tiny pixel art moon orchid herb sprig, 32x32, pale blue-white, transparent",
+      "out": "app/assets/images/cc0/icons/herb_moon_orchid.png",
+      "size": 32,
+      "written": "app/assets/images/cc0/icons/herb_moon_orchid.png"
+    },
+    {
+      "id": "fish_ashen_trout",
+      "status": "done",
+      "prompt": "tiny pixel art trout fish icon, 32x32, silver-gray, transparent",
+      "out": "app/assets/images/cc0/icons/fish_ashen_trout.png",
+      "size": 32,
+      "written": "app/assets/images/cc0/icons/fish_ashen_trout.png"
+    },
+    {
+      "id": "map_parchment",
+      "status": "done",
+      "prompt": "64x64 parchment paper texture tile, warm beige, soft grain, seamless",
+      "out": "app/assets/images/cc0/textures/map_parchment.png",
+      "size": 64,
+      "written": "app/assets/images/cc0/textures/map_parchment.png"
+    }
+  ]
+}

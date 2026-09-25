@@ -1,0 +1,14 @@
+<div class="nl-trade-hub__panel" data-trade-hub-premium="1">
+  <p><%= t("game.trade_hub.premium_lead") %></p>
+  <p><%= t("game.trade_hub.premium_vm", vm: @vm) %></p>
+  <% if Game::World::CityBuildingCatalog.accessible?(character: current_character, building_key: "hospital") %>
+    <p>
+      <%= link_to t("game.trade_hub.premium_hospital"),
+            city_building_path("hospital", anchor: "hospital-premium-desk"),
+            class: "lbut" %>
+    </p>
+  <% else %>
+    <p class="nl-trade-hub__note"><%= t("game.trade_hub.premium_city_hint") %></p>
+    <%= link_to t("nav.city"), world_path, class: "lbut" %>
+  <% end %>
+</div>

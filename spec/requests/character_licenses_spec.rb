@@ -35,11 +35,12 @@ RSpec.describe "Character licenses", type: :request do
 
     expect(response).to have_http_status(:ok)
     html = Nokogiri::HTML(response.body)
-    expect(html.at_css('[aria-label="Abilities"]')).to be_present
-    expect(html.at_css('a[aria-label="Abilities"]')["href"]).to eq(character_licenses_path)
-    expect(html.at_css('.nl-profile-tabs [aria-current="page"]').text).to eq("Your licenses")
-    expect(html.at_css("#character-licenses-heading").text).to eq("Your licenses")
-    expect(response.body).to include("You have no licenses.")
+    expect(html.at_css(%([aria-label="#{I18n.t("nav.abilities")}"]))).to be_present
+    expect(html.at_css(%(a[aria-label="#{I18n.t("nav.abilities")}"]))["href"]).to eq(character_licenses_path)
+    expect(html.at_css('.nl-profile-tabs [aria-current="page"]').text).to eq(I18n.t("game.common.licenses"))
+    expect(html.at_css("#character-licenses-heading").text).to eq(I18n.t("game.profile.licenses"))
+    expect(response.body).to include(I18n.t("game.licenses.empty"))
+    expect(html.at_css(%([data-licenses-empty="1"] a[data-licenses-recovery="shop"]))["href"]).to eq(shop_path(mode: "licenses"))
     expect(html.at_css('meta[name="turbo-cache-control"]')["content"]).to eq("no-cache")
   end
 
@@ -94,12 +95,12 @@ RSpec.describe "Character licenses", type: :request do
 
       travel 1.second
       get character_licenses_path
-      expect(response.body).to include("You have no licenses.")
+      expect(response.body).to include(I18n.t("game.licenses.empty"))
       expect(response.body).not_to include("character_license_#{license.id}")
 
       travel 1.second
       get character_licenses_path
-      expect(response.body).to include("You have no licenses.")
+      expect(response.body).to include(I18n.t("game.licenses.empty"))
       expect(CharacterLicense.exists?(license.id)).to be true
     end
   end
@@ -108,7 +109,7 @@ RSpec.describe "Character licenses", type: :request do
     freeze_time do
       license = grant(starts_at: 1.second.from_now)
       get character_licenses_path
-      expect(response.body).to include("You have no licenses.")
+      expect(response.body).to include(I18n.t("game.licenses.empty"))
 
       travel 1.second
       get character_licenses_path
@@ -131,7 +132,7 @@ RSpec.describe "Character licenses", type: :request do
   it "links the owner's profile to their licenses without exposing the link on visitor profiles" do
     get player_path(name: character.name)
     html = Nokogiri::HTML(response.body)
-    expect(html.at_css(".nl-profile-tabs a[href='#{character_licenses_path}']").text).to eq("Your licenses")
+    expect(html.at_css(".nl-profile-tabs a[href='#{character_licenses_path}']").text).to eq(I18n.t("game.common.licenses"))
 
     get player_path(name: create(:character).name)
     html = Nokogiri::HTML(response.body)

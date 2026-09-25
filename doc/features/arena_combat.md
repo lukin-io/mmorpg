@@ -419,12 +419,38 @@ attack/block key is present in the participant's profile and that posted block
 coverage equals the canonical catalog coverage, so client-authored zones or a
 different shield tier cannot change AP or protection.
 
-`NpcExperienceAwarder` uses one configured NPC reward or an explicit
-encounter-level total. The captured paired Plague Rat encounter stores `35` XP
-for the whole fight and is not summed to `70`; uncaptured multi-NPC totals and
-multi-player distribution fail closed. `EquipmentWearResolver` rolls each
+`NpcExperienceAwarder` uses an explicit encounter-level total when present.
+Otherwise each defeated NPC contributes Ashen level-delta XP:
+`(monster_level × 15) × max(1.0 − |Δlevel| × 0.1, 0.1)`. Party shares split by
+`damage_dealt` (equal fallback). Per-character fight XP caps still apply.
+
+`NpcLootAwarder` always credits soft-release formula NV once per kill
+(`monster_level × 3 + rand(1..(monster_level × 2))`), scales table drop chances
+by luck (`× (1 + luck × 0.01)` on top of observation/pet), and when the table
+has no rarity tags may roll a one-item rarity fallback (common/uncommon/rare)
+from `config/gameplay/ashen_loot_rarity.yml`. At most one gear piece per kill.
+`EquipmentWearResolver` rolls each
 equipped durable item at basis-point precision and applies Careful Fighter's
 half chance, including `0.5%` after an arena defeat.
+
+Soft-release hit/block coefficients live in
+`config/gameplay/combat_resolution.yml` and are applied by
+`Arena::CombatResolver`. Soft-release damage core is authored in
+`CombatResolver` constants:
+evasion `(evasion×1.5 − accuracy×0.4).clamp(5,70)`,
+crit `(luck×1.8 + dexterity×0.3).clamp(5,75)` (not the UI
+`Character#critical_chance` composite),
+`base_hit` random in `[attack_power×0.6, attack_power×1.3]` then action/body
+multipliers, crit ×2 before armor, then `max(final − defense, 1)`.
+Hit chance still uses dexterity/accuracy vs agility/evasion from YAML; block
+uses defense×0.15/agility vs attacker accuracy when the selected block covers
+the zone. Mana/elemental attacks use `magic_power` with a reduced physical-armor
+factor and elemental resistance percentages. Confirmed hits never resolve below
+`min_damage: 1`. Fight-finished system chat hides the XP
+suffix when awarded XP is 0 (loss/draw). Equipment flat `attack` / `armor` /
+`magic_power` / `hp` modifiers are combat outputs only and must not be aliased
+into primary Strength/Health/Knowledge (that previously double-counted attack
+power).
 
 Solo NPC finalization increments the winning character's persisted `npc_wins`
 metadata once per encounter inside the existing idempotent reward boundary.
@@ -453,11 +479,15 @@ encounter probability/cooldown/delay distribution, or its internal bot-storage
 model. The local captured-sample replay must not be presented as those unknown
 source rules.
 
-The official NPC article establishes capacity for groups up to ten. The shared
-`TileNpc`/config/selector limit is therefore `1..10`; the fight-start boundary
-creates ten distinct opponent slots and rejects eleven without a partial
-match. This does not enlarge any captured seeded roster or determine its
-members, levels, rewards, probabilities, or selection formula.
+The official NPC article establishes capacity for groups up to ten. Ashen
+personal-instance grinding raises the shared `TileNpc`/config/selector limit to
+`1..20` so level-based aggro packs can scale toward high tiers; authored
+Neverlands sample rosters remain evidence-gated. Fight-start rejects packs above
+twenty without a partial match. Ashen outdoor placements use
+`personal_instance` / `respawn_seconds: 0`: every player may start an isolated
+fight on the same cell immediately, bots wear a tier set whose stats drive
+combat, and gear loot is a scarce single piece from that worn set (never a full
+set dump).
 
 ## 7. Authoritative data and presentation model
 
@@ -470,9 +500,9 @@ members, levels, rewards, probabilities, or selection formula.
 | `CombatLogEntry` | Ordered durable event | Source for active and public logs |
 | `Arena::CombatProfile` | Persisted AP/cost/selector snapshot | Explicit captured values override exact AP derivation; reload cannot drift an active fight |
 | `Game::Combat::ActionCatalog` | Attack and exact normal/shield/magic selector identities | Server owns costs, row placement, coverage, and profile availability |
-| `Arena::NpcExperienceAwarder` | Bounded solo encounter XP | Explicit encounter total prevents guessed multi-NPC sums; level cap still applies |
+| `Arena::NpcExperienceAwarder` | Solo / multi-NPC / party XP | Explicit encounter total, or Curves level-delta sum; damage-share party split; level cap |
 | `Arena::EquipmentWearResolver` | Independent post-fight item wear | Exact result chances, one point maximum, Careful Fighter half chance, once-only finalization |
-| `Arena::NpcLootAwarder` | One defeated NPC's typed loot resolution | Participation locks and `loot_resolution` marker make reward persistence retry-safe |
+| `Arena::NpcLootAwarder` | One defeated NPC's typed loot resolution | Formula NV once; luck-scaled chances; rarity fallback; `loot_resolution` marker |
 | `Game::LootEntry` | Shared typed-loot probability normalization | Chance is explicit and valid as `0..1` fraction or `0..100` percent |
 | `Game::World::EncounterRosterSelector` | Fixed or captured-sample wilderness side selection | Server RNG selects one complete validated sample; unknown templates/parameters fail before match creation |
 | `Game::Inventory::Manager` | Atomic item stack/mass addition | Inventory lock plus nested savepoint rolls back every unit when the complete quantity cannot fit |
@@ -641,7 +671,8 @@ loot persists as a wallet balance plus `CurrencyTransaction`, and the NPC
 participation persists its loot-resolution marker. Shell-owned fight/item/NV
 `GameEvent` rows also persist for recent chat-history reloads. A character's `in_combat` flag allows the
 authenticated resume flow to return to an active or unfinished match. Arena
-matches return to Arena after Finish. Wilderness matches retain only a
+hall matches return to the same `arena_room` after Finish (lobby only when the
+match has no room). Wilderness matches retain only a
 server-authored logical return context and fall back to World if it is invalid.
 
 Character metadata separately persists the selected `arena_room` id. Entry and
@@ -1120,6 +1151,71 @@ supplies only authoritative completion/loot facts and stable source keys.
 
 | Date | Change |
 |---|---|
+| 2026-09-23 | Multi-NPC XP uses average-bot pool + efficiency; party XP splits by damage_dealt; Observation drop mult is non-linear by skill bands. |
+| 2026-09-13 | Localized remaining hard-coded arena character-required alerts (`game.flashes.arena_character_required` / `arena_character_required_participate`). |
+| 2026-09-13 | CombatProcessor player-facing reject flashes use `game.fight.errors.*` (turn/AP/target/ally/state). |
+| 2026-09-13 | Arena countdown/timeout broadcast copy uses `game.fight.starts_in*` / `timeout_finish_available` / `turn_timeout_claim` / `turn_ended_by_timeout`. |
+| 2026-09-13 | Combat-log narrative (server broadcaster + Stimulus NPC fallback) uses `game.fight.log.*`. |
+| 2026-09-13 | Arena timer/result overlay Stimulus fallbacks use `game.fight.result_*` / `rewards_title` via `data-arena-match-copy`. |
+| 2026-09-13 | Arena application create/accept/cancel rejects use `game.fight.app_*` (room access, capacity, HP, alignment, ownership). |
+| 2026-09-13 | Turn validation rejects (shape/AP/MP/zones/profile) use `game.fight.turn_*`. |
+| 2026-09-13 | Arena room access hint copy uses `game.fight.room_*` (level/city/alignment/unavailable). |
+| 2026-09-13 | Arena lobby exposes live HP/MP vitals and open-application markers (`data-arena-hp`/`mp`/`apps`/`has-application`) for smoke and HUD clarity. Application cards localize unavailable copy and mark accept readiness (`data-arena-app-acceptable`). Room grid and summary rows expose accessibility (`data-arena-room-accessible`). |
+| 2026-09-13 | Application card expiry/remaining/level-range chrome uses `game.fight.expires_title` / `remaining` / `level_range`. |
+| 2026-09-14 | Arena room alignment restriction and match participant result badges use `game.buildings.law_alignment.*` / `arena.results.*`. |
+| 2026-09-14 | Application create failures surface validation messages without English attribute prefixes. |
+| 2026-09-14 | Fight result table XP column uses `game.sheet.experience`; alignment icon helper uses `game.buildings.law_alignment.*`. |
+| 2026-09-14 | Fight topline trauma uses `trauma_percent` via `game.fight.trauma_value`; VS badge and mana block costs use arena/fight i18n. |
+| 2026-09-14 | Arena Bot/Unknown participant fallbacks and fight action name fallbacks use `arena.bot_fallback` / `arena.unknown` / `game.combat.*`. |
+| 2026-09-14 | Arena recover-HP reject uses ОЗ in RU (`arena.recover_hp`). |
+| 2026-09-14 | Arena NPC application spawn rejects use `game.fight.app_no_npc_for_room` / `app_npc_not_arena_bot` / `app_npc_already_open`. |
+| 2026-09-14 | Arena/fight closed-failure request specs assert via `game.fight.errors.*` / `game.flashes.fight_*` i18n (RU-safe). |
+| 2026-09-14 | Public fight-log and team-lifecycle request specs assert chrome via `game.fight.log` / `no_events` / `participants` / `wait_opponent_turn` (RU-safe). |
+| 2026-09-14 | Public fight-log page title uses `game.fight.log_page_title`; result/finish request specs assert via fight/arena i18n (RU-safe). |
+| 2026-09-14 | Arena live-status request specs assert via `arena.match_status.live` (RU-safe). |
+| 2026-09-14 | Arena lobby application chrome request specs assert via `arena.your_application` / `cancel_application` (RU-safe). |
+| 2026-09-14 | Arena application timeout/trauma inclusion rejects use `game.fight.app_timeout_invalid` / `app_trauma_invalid`. |
+| 2026-09-14 | Arena lobby room-map and fight-type tab request specs assert via `arena.room_map` / `arena.tabs.*` (RU-safe). |
+| 2026-09-14 | Arena application timeout/trauma allowlist rejects add base i18n errors without English attribute prefixes. |
+| 2026-09-14 | Fight match-bar timeout unit uses `game.fight.min`; arena form select system specs assert via `arena.form.*` (RU-safe). |
+| 2026-09-17 | Custom PvP lobby: turn 30/60/90s, lobby wait, trauma Peaceful/Normal/Bloody (0/30/100), team sizes 1–5; match turn timer uses `turn_seconds` when set. |
+| 2026-09-14 | Fight result duration formatting uses `game.fight.duration_*` units (RU-safe). |
+| 2026-09-14 | Fight AP/HP/MP chrome and shell player-sort links use fight/social i18n. |
+| 2026-09-14 | Empty Arena application lists recover to City (`data-arena-apps-empty`); locked rooms show level-gate hint and City recovery (`data-arena-room-locked`). |
+| 2026-09-14 | Smoke asserts Arena apps-empty / locked-room recoveries when those markers render. |
+| 2026-09-14 | Arena room form shows combat-trauma scroll shortage with Infirmary/City recovery (`data-arena-need-scroll`). |
+| 2026-09-14 | Short-landscape Arena match compresses paperdoll/log so fight controls stay reachable (`max-height: 430px`). |
+| 2026-09-14 | ≤360px Arena match further compresses paperdoll and fight selector/result tables. |
+| 2026-09-14 | Coarse-pointer Arena tabs/buttons and fight selects target ~44×44 CSS px (`UI-ADAPT-005`). |
+| 2026-09-14 | Coarse-pointer public fight-log pagination/mode links also target ~44×44 CSS px. |
+| 2026-09-14 | Arena statistics tab and empty recent-fights recover to Duels/City; empty public fight logs link Arena/City. |
+| 2026-09-24 | Soft-launch: PvE (bots/NPC/dungeons) applies **light only** — never medium/heavy/combat. Match `trauma_percent` is legacy display; fight UI shows soft PvE label. HUD injury is a red ✕ right of vitals with hover tip; locator shows ✕ for injured players. RedisConfig/Cable/cache fall back to `REDIS_URL`. |
+| 2026-09-25 | Soft-release economy: Curves XP thresholds; level-delta monster XP; formula NV + luck drop mult + rarity fallback loot. |
+| 2026-09-25 | Soft-launch integrity: arena/shell use `effective_max_hp/mp`; `sync_persisted_base_vitals!` on shell boot; auto-ack stale finished fights (>6h); spawn missing positions; assign_base_vitals no longer clamps below equipment ceiling. |
+| 2026-09-25 | Soft-launch balance: early PvE XP thresholds/caps tightened; shore NPC HP/dmg up; NpcLoadout floor harder; always apply loadout in StartNpcFight; undergear (no chest) vs NPC: −18% outgoing / +45% incoming; starter kit v7 grants equipped `ashen_starter_vest`. Pattern: Mist/Legend early shop armor necessity. |
+| 2026-09-25 | Logic integrity: HospitalRest clears `medium`; starter tools/hooks via `add_essential!`; gather skip fails without timer; dungeon L0 difficulty gate; stale fight ack calls DefeatRecovery; bloody PvP → `combat` trauma; shop buy blocks unmet equipment requirements. |
+| 2026-09-24 | Soft-launch: PvE (bots/NPC/dungeons) applies **light only** — never medium/heavy/combat. Match `trauma_percent` is legacy display; fight UI shows soft PvE label. HUD injury is a red ✕ right of vitals with hover tip; locator shows ✕ for injured players. RedisConfig/Cable/cache fall back to `REDIS_URL`. |
+| 2026-09-18 | Phase 4: PvP trauma owned by assault scrolls (Peaceful/Normal/Bloody); Bloody guarantees heavy on loss; PvE defeat rolls light/medium only; Protection scroll joins live fights as helper A/B; Character inventory scrolls panel for buy/use. |
+| 2026-09-18 | Fight chrome polish: removed disabled Inventory/Mercenary stubs; larger body-part selects and Turn CTA; centered match page. |
+| 2026-09-17 | Ashen grinding rewrite: personal instances (no shared respawn), level-based aggro packs (`AggroPackSize`), set-equipped bot stats (`NpcLoadout`), scarce single `set_piece` loot, AFK 5-minute random-location ambush with off-cell personal fights, character-sheet set hints. |
+| 2026-09-14 | Arena chrome Character/Inventory/City links and recent-empty Duels CTA expose `data-arena-recovery`. |
+| 2026-09-14 | Arena room topline Character/Inventory/Lobby/City links expose `data-arena-recovery`. |
+| 2026-09-15 | Help Hall training dummy soft-release posture: always defend, no injected magic attack keys. |
+| 2026-09-15 | After a lost fight, DefeatRecovery lands in Infirmary with `defeat_recovered=1` soft-release chrome (City / square→Arena CTAs; no gated direct Arena lobby link). |
+| 2026-09-15 | Direct Arena lobby entry without the city hotspot redirects to World with `arena_gate_denied=1` recovery chrome. |
+| 2026-09-15 | Failed arena application create/accept/cancel recovers on the lobby with `application_denied=1` chrome (also shown on room when reachable). |
+| 2026-09-15 | Seeded/migrated Help Hall (`slug: help`, levels `0-5`) so level-zero soft-release characters can enter an Arena room. |
+| 2026-09-15 | Help Hall auto-ensures a training-dummy NPC application so level-zero players can accept a soft-release fight. |
+| 2026-09-15 | Soft-release smoke covers outdoor bait interrupt fight start/finish after the starter quest and gear loop. |
+| 2026-09-15 | Failed fight turn/timeout/premature finish recovers on the match with `match_denied=1` chrome. |
+| 2026-09-15 | Missing arena application accept/cancel redirects to the lobby with `arena_denied=1` recovery chrome. |
+| 2026-09-15 | Creating an application against a missing arena room also recovers with `arena_denied=1` chrome. |
+| 2026-09-15 | Missing arena room ids redirect to the lobby with `arena_denied=1` recovery chrome. |
+| 2026-09-15 | Missing arena match ids redirect to the lobby with `arena_denied=1` recovery chrome. |
+| 2026-09-15 | Level-gated Arena room GETs redirect to lobby with `arena_denied=1` recovery chrome (`data-arena-denied`). |
+| 2026-09-15 | Missing public fight log renders HTML recovery to Arena/City (`data-fight-log-missing`) instead of bare plain text. |
+| 2026-09-14 | Empty public fight log recovers via Arena/City with `data-fight-log-recovery`. |
+| 2026-09-13 | Arena lobby Stimulus client errors/confirm/countdown use `arena.client.*` via `data-arena-copy-value`. |
 | 2026-07-28 | Created the canonical bounded Arena Combat runtime handbook after implementing the full-width source fight hierarchy, shared player/NPC equipment rails, public shell-free fight log, eager-loaded equipment rendering, and responsive tablet/mobile adaptation. |
 | 2026-08-23 | Added the injected handoff of successful NPC loot and final participant results to the Game Shell-owned durable chat event timeline, with deterministic keys and retry coverage while preserving `CombatLogEntry` as the canonical fight log. |
 | 2026-08-23 | Extracted per-NPC typed loot resolution into `Arena::NpcLootAwarder`: item awards persist through Inventory, NV awards through the Economy wallet ledger, one participation marker prevents retry regrants, and only committed successes publish item/money timeline rows. No production NPC money probability was invented from the standalone source row. |

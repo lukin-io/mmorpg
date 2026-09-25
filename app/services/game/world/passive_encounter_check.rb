@@ -8,10 +8,13 @@ module Game
     # time prevents reloads, forged early checks, and overlapping timers from
     # choosing the encounter or accelerating it. Once due, StartNpcFight owns
     # the same locked match creation used by synchronous World interruptions.
+    #
+    # Ashen AFK law: while idle on a hostile outdoor cell, once per 5 minutes a
+    # random bot of this location ambushes the player (personal instance).
     class PassiveEncounterCheck
       SCHEDULE_METADATA_KEY = "world_passive_encounter"
-      MIN_DELAY_SECONDS = 10
-      MAX_DELAY_SECONDS = 30
+      MIN_DELAY_SECONDS = 300
+      MAX_DELAY_SECONDS = 300
       EMPTY_RECHECK_SECONDS = 30
 
       Result = Struct.new(:interrupted, :match, :message, :retry_after_ms, keyword_init: true) do
@@ -34,7 +37,7 @@ module Game
           return Result.new(
             interrupted: true,
             match:,
-            message: "Finish the active fight before continuing."
+            message: I18n.t("game.world.finish_active_fight")
           )
         end
 
@@ -42,13 +45,19 @@ module Game
         return decision if decision.is_a?(Result)
 
         npc = decision.fetch(:npc)
-        match = StartNpcFight.new(character:, tile_npc: npc, return_context:, rng:).call
+        match = StartNpcFight.new(
+          character:,
+          tile_npc: npc,
+          return_context:,
+          rng:,
+          allow_off_cell: decision.fetch(:allow_off_cell, false)
+        ).call
         clear_schedule!
 
         Result.new(
           interrupted: true,
           match:,
-          message: "#{npc.display_name} attacks while you wait."
+          message: I18n.t("game.world.passive_ambush", name: npc.display_name)
         )
       rescue StartNpcFight::FightViolationError
         clear_schedule!
@@ -67,20 +76,21 @@ module Game
             next waiting_result(EMPTY_RECHECK_SECONDS)
           end
           position = character.position
-          npc = hostile_npc_at(position)
+          cell = cell_hostile(position)
+          pool = zone_hostiles(position)
 
-          unless npc
+          unless cell && pool.any?
             remove_schedule_from_locked_character!
             next waiting_result(EMPTY_RECHECK_SECONDS)
           end
 
           now = clock.call
-          fingerprint = schedule_fingerprint(position, npc)
+          fingerprint = schedule_fingerprint(position)
           schedule = character.metadata.to_h[SCHEDULE_METADATA_KEY]
           due_at = parsed_due_at(schedule)
 
           unless schedule_matches?(schedule, fingerprint) && due_at
-            delay = passive_delay_for(npc)
+            delay = passive_delay_for(cell)
             due_at = now + delay
             persist_schedule!(fingerprint.merge("due_at" => due_at.iso8601(6)))
             next waiting_result(delay)
@@ -88,11 +98,18 @@ module Game
 
           next waiting_result((due_at - now).ceil) if now < due_at
 
-          {npc:}
+          npc = pool.fetch(rng.rand(pool.length))
+          {npc:, allow_off_cell: npc.id != cell.id}
         end
       end
 
-      def hostile_npc_at(position)
+      def zone_hostiles(position)
+        return [] unless position&.zone&.outdoor?
+
+        TileNpc.in_zone(position.zone.name).hostile.active.to_a.select(&:alive?)
+      end
+
+      def cell_hostile(position)
         return unless position&.zone&.outdoor?
 
         npc = TileNpcService.new(
@@ -101,21 +118,19 @@ module Game
           x: position.x,
           y: position.y
         ).tile_npc
-
         npc if npc&.alive? && npc.hostile?
       end
 
-      def schedule_fingerprint(position, npc)
+      def schedule_fingerprint(position)
         {
           "zone_id" => position.zone_id,
           "x" => position.x,
-          "y" => position.y,
-          "tile_npc_id" => npc.id
+          "y" => position.y
         }
       end
 
       def passive_delay_for(npc)
-        windows = npc.passive_delay_windows
+        windows = npc&.passive_delay_windows || []
         return rng.rand(MIN_DELAY_SECONDS..MAX_DELAY_SECONDS) if windows.empty?
 
         window = windows.fetch(windows.one? ? 0 : rng.rand(windows.length)).stringify_keys

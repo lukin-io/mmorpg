@@ -3,7 +3,7 @@
 module PlayerProfileHelper
   def profile_location(character)
     position = character.position
-    return "Unknown" unless position
+    return I18n.t("game.profile.unknown_location") unless position
 
     zone_label = position.zone.display_name
     location_label = Game::World::Presence.new(character:, position:).label
@@ -13,7 +13,7 @@ module PlayerProfileHelper
       location_label = active_match.arena_room.name if active_match.arena_room
       first_line.concat([
         " [ ",
-        link_to("in combat", public_fight_log_path(active_match), class: "nl-profile-fight-link"),
+        link_to(I18n.t("game.profile.in_combat"), public_fight_log_path(active_match), class: "nl-profile-fight-link"),
         " ]"
       ])
     end
@@ -55,13 +55,16 @@ module PlayerProfileHelper
   # captured, so it is not invented here.
   def profile_combat_stats(character)
     {
-      "AP per strike" => profile_attack_cost,
-      "Armor class" => character.equipment_effect_value("armor_class"),
-      "Dodge" => "#{character.dodge_bonus}%",
-      "Accuracy" => "#{character.accuracy_bonus}%",
-      "Crushing" => "#{character.equipment_effect_value("crushing")}%",
-      "Fortitude" => "#{character.fortitude_percent}%",
-      "Armor pierce" => "#{character.armor_pierce_percent}%"
+      I18n.t("game.sheet.ap_per_strike") => profile_attack_cost,
+      I18n.t("game.sheet.attack_power") => character.attack_power,
+      I18n.t("game.sheet.defense") => character.defense,
+      I18n.t("game.sheet.accuracy") => "#{character.accuracy_bonus}%",
+      I18n.t("game.sheet.dodge") => "#{character.dodge_bonus}%",
+      I18n.t("game.sheet.dexterity") => character.stats.get(:dexterity).to_i,
+      I18n.t("game.sheet.agility") => character.agility.to_i,
+      I18n.t("game.sheet.luck") => character.stats.get(:luck).to_i,
+      I18n.t("game.sheet.magic_power") => character.magic_power,
+      I18n.t("game.sheet.armor_class") => character.equipment_effect_value("armor_class")
     }
   end
 
@@ -76,7 +79,7 @@ module PlayerProfileHelper
       match = participation.arena_match
       next false unless match
 
-      match.live? || match.pending? || match.matching? || (match.completed? && participation.metadata.to_h["finished_at"].blank?)
+      match.live? || match.pending? || match.matching?
     end&.arena_match
   end
 end

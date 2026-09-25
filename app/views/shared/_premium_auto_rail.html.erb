@@ -1,0 +1,49 @@
+<%#
+  Premium auto-hunt / auto-gather strip — compact, only when the pass is owned.
+  Locked upsell lives on /premium, not as a permanent outdoor banner.
+%>
+<% perks = Game::Shop::PremiumPass.perks_for(current_user) %>
+<% if perks[:auto_combat] || perks[:auto_gather] %>
+  <aside class="nl-premium-rail" data-premium-rail="1" aria-label="<%= t("game.premium_pass.auto_rail_aria") %>">
+    <p class="nl-premium-rail__label"><%= t("game.premium_pass.auto_rail_title") %></p>
+    <% if perks[:auto_combat] %>
+      <% armed = Game::Premium::AutoHunt.new(character: current_character).armed? %>
+      <% if armed %>
+        <%= button_to t("game.premium_pass.auto_hunt_disarm_cta"),
+              world_auto_hunt_path,
+              method: :post,
+              params: {disarm: 1},
+              class: "lbut",
+              form: {data: {turbo: false}} %>
+      <% else %>
+        <%= button_to t("game.premium_pass.auto_hunt_arm_cta"),
+              world_auto_hunt_path,
+              method: :post,
+              params: {arm: 1},
+              class: "lbut",
+              form: {data: {turbo: false}} %>
+      <% end %>
+    <% end %>
+    <% if perks[:auto_gather] %>
+      <%= button_to t("game.premium_pass.auto_gather_dig_cta"),
+            world_auto_gather_path,
+            method: :post,
+            params: {local_action_type: "digging"},
+            class: "lbut",
+            form: {data: {turbo: false}} %>
+      <%= button_to t("game.premium_pass.auto_gather_herb_cta"),
+            world_auto_gather_path,
+            method: :post,
+            params: {local_action_type: "resource_search"},
+            class: "lbut",
+            form: {data: {turbo: false}} %>
+      <%= button_to t("game.premium_pass.auto_gather_fish_cta"),
+            world_auto_gather_path,
+            method: :post,
+            params: {local_action_type: "fishing"},
+            class: "lbut",
+            form: {data: {turbo: false}} %>
+    <% end %>
+    <%= link_to t("game.premium_pass.title"), premium_path, class: "nl-sheet-link" %>
+  </aside>
+<% end %>

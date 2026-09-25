@@ -189,7 +189,7 @@ without partial mutation. No Shop-specific chat event is emitted: the live
 purchase showed catalog/wallet/mass refresh, while existing combat and world
 feedback continue in the shared chat timeline.
 
-Buying checks an explicitly offered, authored positive-priced template, current Shop/location, quote validity, finite stock, NV balance, inventory slots, carried mass, and stack limits. Selling checks current-character ownership, quantity, protected/equipped/bound state, and positive resale value. Unmet equipment requirements remain visible information and are enforced later by the inventory/equipment feature.
+Buying checks an explicitly offered, authored positive-priced template, current Shop/location, quote validity, finite stock, and NV balance. Soft inventory mass and stack counts do not block purchases; overweight only slows wilderness travel. Selling checks current-character ownership, quantity, protected/equipped/bound state, and positive resale value. Unmet equipment requirements remain visible information and are enforced later by the inventory/equipment feature.
 
 ### 4.4 Exit and integration behavior
 
@@ -258,7 +258,7 @@ Catalog order, row position, item label, CSS class, displayed price, and query p
 | Merchant license qualification | `POST /merchant_qualification/accept`, `/pay`, `/complete` | Location-gated steps; payment requires the accepted state | `MerchantQualificationsController`, `Game::Shop::MerchantQualification` |
 | Novice mode | `GET /shop?mode=novice` | Level denial/empty section | No novice capability or purchase |
 | Other captured city counters/interiors | City building routes | Read-only or deferred | City feature |
-| Mine Shop / Resource Exchange lobby sections | Exact-cell linked-location pages | Read-only; economic operations deferred | World owns the shipped lobbies; Economy owns the operation gaps in §6.5 |
+| Mine Shop / Resource Exchange lobby sections | Exact-cell linked-location pages | Exchange sell/buy/storage live at gov prices; mine shop previews still deferred to Shop | World owns lobbies; Economy owns `ResourceExchange` + Numismatics |
 
 ### 6.2 Buying and stock
 
@@ -285,7 +285,9 @@ No cron or background job deletes expired grants. Permission checks reject them
 at the server deadline, and the next Your licenses request omits them while
 retaining their purchase records. An already-open page has no expiry polling;
 its displayed row can remain until navigation or reload without authorizing a
-sale. The exact read/display contract belongs to
+sale. The Sell tab surfaces the active trading-license expiry and, after
+expiry, a reload/buy hint so players are not left guessing. The exact
+read/display contract belongs to
 [Character Progression](character_progression.md#66-purchased-licenses-and-abilities).
 
 Merchant and Healer are selectable source perks #34/#35. The
@@ -297,7 +299,7 @@ profession-specific checks in addition to ordinary transaction eligibility:
 |---|---|---|
 | Trading I–III | `owns_perk?(:merchant)` and `metadata.profession_unlocks.merchant == true` | Merchant qualification below unlocks purchases. No positive numeric Trading prerequisite is imposed. |
 | Doctor I | `owns_perk?(:healer)` | Purchase and timed permission are implemented. This does not provide treatment or medical crafting. |
-| Doctor II–III | `owns_perk?(:healer)` and `metadata.profession_unlocks.traumatologist == true` | Definitions and the completion check exist; normal-play purchase remains blocked because the Traumatologist quest is unimplemented. |
+| Doctor II–III | `owns_perk?(:healer)` and `metadata.profession_unlocks.traumatologist == true` | Ashen Infirmary Traumatologist clearance sets the unlock flag. Neverlands quest dialogue remains deferred. |
 
 The source's 100 Doctor skill threshold governs entry to the Traumatologist
 quest, with equipment contributions allowed. No numeric Doctor quest-entry
@@ -434,9 +436,12 @@ not implement injury treatment and cannot authorize trading. Doctor qualificatio
 quests, renewal/stacking policy and expiry cleanup must not be inferred from a
 card title. Merchant qualification implements the published license-unlock steps
 above; its garment reward and original dialogue/receipt presentation remain
-incomplete. Doctor II/III require the Traumatologist quest, whose playable flow
-is not implemented. An active license blocks another purchase of the same kind,
-including another tier, until source renewal/upgrade behavior is established.
+incomplete. Doctor II/III require Traumatologist clearance: at Coal Infirmary,
+own Healer and complete the sandbox `TraumatologistClearance` step, which sets
+`metadata.profession_unlocks.traumatologist`. This is an explicit Ashen stand-in,
+not Neverlands Traumatologist quest parity. An active license blocks another
+purchase of the same kind, including another tier, until source renewal/upgrade
+behavior is established.
 Novice low-price heuristics and name-inferred license
 rights have been removed. There is no bargain, refund, repair, player order or
 remote-shop flow.
@@ -477,9 +482,10 @@ query. [The World handbook](world.md) remains their runtime owner.
 | Remaining Economy work | Known runtime gap | Evidence needed before implementation |
 |---|---|---|
 | Mine item/license acquisition | `[IMPL]` Purchases, stock changes, NV debit and item/license receipt are absent for this lobby. Main Shop's Licenses mode does not provide them. | `[EVIDENCE]` Capture confirmation, successful acquisition, quantity/stock/funds/capacity/eligibility denials and repeat handling. Displayed prices/durations are already recorded; sampled stock is not a fixed rule. |
-| Exchange queries and listings | `[IMPL]` Choose, populated/empty listing results and listing refresh are absent. Switching a read-only section is not a resource query. | `[EVIDENCE]` Submit the observed selectors and capture actual results, row identities, filtering, refresh and stale state. |
-| Exchange transactions and settlement | `[IMPL]` Orders/trades, settlement and their wallet/resource mutations are absent. | `[EVIDENCE]` Confirm the live operation model, requirements, timing, fees if present, cancellation/expiry, failure and retry outcomes. Older wiki descriptions do not establish current settlement rules. |
-| Exchange storage operations | `[IMPL]` Resource deposit, withdrawal or claiming is absent; the exact operation model is not inferred from the tab name. | `[EVIDENCE]` Observe ownership, quantity/capacity if applicable, success, failure, persistence and repeated requests. |
+| Exchange queries and listings | Live filter + sell/buy/storage rows on the outpost Exchange lobby (`Game::World::ResourceExchange`) | Instant government-price settlement (Викиневер гос.цены). Full 4h auction matching remains deeper parity. |
+| Exchange transactions and settlement | Sell at gov price, buy at 110% markup, deposit/withdraw storage (cap 200) | Wallet + inventory mutate under character lock; failure leaves state unchanged. |
+| Exchange storage operations | Metadata vault `resource_exchange_storage` | Cap enforced; withdraw returns to bag. |
+| Numismatics commodity book | Same gov-price sell board in city Numismatics | Links to Exchange for full filters. |
 
 The canonical [capture backlog](../design/reference/economy/observations/evidence_needed_mine_exchange_operations.md)
 links the preserved live/wiki observations. These are later operation tasks,
@@ -527,7 +533,7 @@ The browser receives calculated rows and submits target IDs, a server-issued act
 
 ### 7.3 Presentation versus authority
 
-Displayed prices, totals, stock, requirements, mass, hidden IDs, confirmation text, filter fields, and saved gameplay-context parameters are presentation/input only. The server recalculates prices and rechecks all mutation invariants, including inventory slot capacity even though it is not displayed in the Shop status strip.
+Displayed prices, totals, stock, requirements, mass, hidden IDs, confirmation text, filter fields, and saved gameplay-context parameters are presentation/input only. The server recalculates prices and rechecks mutation invariants. Soft carried mass and stack counts do not reject Shop buys; NV, stock, and license gates remain hard.
 
 Numeric filters accept bounded nonnegative digit strings. Malformed filter
 values use the corresponding displayed default; they never change price, ownership, stock or wallet state.
@@ -581,7 +587,7 @@ invalid context or offers; it is not a read-only catalog helper.
 
 ### 8.3 Complete, redirect, or hand off
 
-Both mutations use an HTML redirect to the Shop with a notice or alert. Submitted mode/category/filter values are allowlisted into the return URL. Sell forces `mode=sell`. The next GET rebuilds all displayed state from persisted records.
+Both mutations use an HTML redirect to the Shop with a notice or alert. Submitted mode/category/filter values are allowlisted into the return URL. Sell forces `mode=sell`. Failed buy/sell adds `trade_denied=1` so the Shop chrome can show World/Shop recovery links (`data-shop-trade-denied`, `data-shop-recovery`). The next GET rebuilds all displayed state from persisted records.
 
 ### 8.4 Concurrency behavior
 
@@ -1207,6 +1213,49 @@ automated completion results are recorded in
 
 | Date | Change |
 |---|---|
+| 2026-09-24 | Mist shell FOMO: `S`/`W` claim dots (season levels/days, live sieges); Pulse `sector_siege` keeps `/wars` non-empty; handbook `doc/features/season_wars.md`. |
+| 2026-09-23 | Better-than-Mist retention: season convenience shop (time-savers only), daily check-in XP, streak milestones 3/7/14, public `/wars` board, featured stall lots (+12 NV pin). |
+| 2026-09-23 | Mist retention depth: seasonal half-tax on stall demand mats; Activity live Pulse + siege board; Pulse `season_fair` biweekly cadence; tournament scores grant season XP. |
+| 2026-09-23 | Mist craft↔combat soft loop: seasonal `MistCurve` craft demand stacks on Resource Exchange sell prices; Trade Hub bandage soft premium while season active; Activity/Exchange social+crafter FOMO CTAs. |
+| 2026-09-23 | Resource Exchange lobby live: gov-price sell/buy/storage (`Game::World::ResourceExchange`); Numismatics commodity book sells at the same rates; Sale failure coverage for shop_no_nv / shop_full / license. |
+| 2026-09-22 | Auction open-slot limit = 3 + Premium bonus; Infirmary VM desk packs 50/100/250/500 under ALLOW_STUB_IAP; Paid Services live IAP still `[EVIDENCE]`. |
+| 2026-09-22 | Choice packs open into sub-gift vouchers (one picker each); Mist War-style Premium/Gold/Lux/Platinum with auto-hunt/auto-gather gates; premium shop at `/premium` + Inventory CTA; supply/scroll/souvenir prices aligned for soft deficit. |
+| 2026-09-22 | Economy donate tune: gift prices raised for mild NV deficit (~1.4k traveler pack), festive VM packs stop refunding NV, fuse costs 120 NV / 18 VM, daily contracts trimmed. Gift boxes leave inventory after full open/claim. Premium passes (VM, Trade Hub) grant mass/gift discount/stipend/fatigue comfort — Neverlands Paid Services detail remains `[EVIDENCE]`. |
+| 2026-09-22 | Gift shop full loop: inventory CTA, NV/VM packs, social toys/flowers/cards, choice claims allowlist, birthday auto-box, manage enable/disable. Premium rune fuse spends VM. |
+| 2026-09-22 | Gift-box shop (`/gifts`) + Manage constructor: buy with VM, timed unlock, weighted NV/VM/item drops (Ashen Veil epic27 port). |
+| 2026-09-13 | Purchase/Sale success and rejection alerts use `game.shop.*` i18n (ru/en); English copy preserves prior trade vocabulary for specs. |
+| 2026-09-14 | Shop Sell Junk link exposes `data-shop-recovery="junk"`; empty Sell recovers via Inventory; doctor perk step exposes `data-doctor-recovery="perks"`. |
+| 2026-09-17 | Ashen Veil catalog goods activate into Shop by rarity tiers 1–23 with stock rows; catalog row cap raised to 1200. |
+| 2026-09-15 | Soft-release smoke claims Infirmary sandbox VM topup, buys trauma/heal scrolls, asserts HUD chips, and uses `combat_heal_scroll`. |
+| 2026-09-15 | Soft-release smoke accepts Merchant at Market then asserts Shop pay stays blocked under starter NV (<1000). |
+| 2026-09-15 | Soft-release smoke allocates Merchant perk and accepts Market qualification (`data-merchant-status` accepted/collect-shop; pay remains 1000 NV). |
+| 2026-09-15 | Failed Merchant qualification steps recover on World with `merchant_denied=1` chrome. |
+| 2026-09-14 | Sell onboarding Market/Licenses links and expired trading-license hint expose `data-shop-recovery`. |
+| 2026-09-14 | Merchant desk exposes `data-merchant-desk` / `data-merchant-status`; Novice empty/denied recovers via Buy. |
+| 2026-09-14 | Shop request chrome assertions (title/funds/empty section) use RU-default `game.shop.*` / `game.common.*` i18n. |
+| 2026-09-14 | Merchant qualification request specs assert accept/pay/complete buttons via `game.shop.merchant_*_btn` (RU-safe). |
+| 2026-09-14 | Shop Sell without an active trading license shows onboarding steps (`game.shop.sell_onboarding_*`). |
+| 2026-09-14 | Ashen Infirmary Traumatologist clearance unlocks Doctor II–III via `profession_unlocks.traumatologist`. |
+| 2026-09-14 | Sell tab shows active trading-license expiry and an expired reload/buy hint (no polling). |
+| 2026-09-14 | Licenses tab shows Doctor onboarding; blocked license buys surface the denial visibly; Novice below 10 shows sandbox-empty copy. |
+| 2026-09-14 | Empty Licenses section recovers to Buy; Market stalls/Numismatics/Auction lots are explicitly deferred with Shop/Ash Buyer/Bank CTAs. |
+| 2026-09-14 | Merchant qualification off-desk states recover via Market/Shop/Licenses/City links. |
+| 2026-09-14 | Smoke asserts Market merchant desk recovery when `data-merchant-desk` renders. |
+| 2026-09-14 | Smoke asserts Numismatics/Ash Buyer building chrome when those desks open. |
+| 2026-09-14 | Short-NV / district-gated Shop denials recover via Bank, Ash Buyer, or City (`data-shop-recovery`). |
+| 2026-09-14 | Buy desk with nothing affordable shows short-NV next-step (`data-shop-short-nv`) to Bank/Junk/City. |
+| 2026-09-15 | Unaffordable buy desk distinguishes short-NV (`data-shop-short-nv`) from other blocks (`data-shop-buy-blocked` → Inventory/City). |
+| 2026-09-15 | Failed Shop buy/sell redirects with `trade_denied=1` recovery chrome (`data-shop-trade-denied`, `data-shop-recovery`). |
+| 2026-09-15 | Out-of-district Shop denials redirect to World with `shop_denied=1` recovery chrome (`data-shop-denied`, `data-shop-recovery`). |
+| 2026-09-15 | Soft-release smoke buys an affordable knives-row item (prefer durable) before Inventory wear. |
+| 2026-09-18 | Soft inventory capacity: Shop buys are not blocked by slots/mass; NV/stock/licenses remain hard gates. |
+| 2026-09-14 | Doctor onboarding Licenses/City recovery; Infirmary premium short of VM recovers via topup/Bank/City. |
+| 2026-09-14 | Infirmary Traumatologist need-healer state recovers via Perks and City. |
+| 2026-09-14 | Narrow Shop: empty note drops forced 800px min-width; Licenses grid stacks to one column below 520px. |
+| 2026-09-14 | Coarse-pointer Shop tabs/buy controls and empty recoveries target ~44×44 CSS px (`UI-ADAPT-005`). |
+| 2026-09-13 | TradeOffers stale/refresh alerts and LicenseRules purchase blocks use the same `game.shop.*` i18n surface. |
+| 2026-09-13 | Shop Location access and MerchantQualification step/payment alerts use `game.shop.*` / `game.flashes.shop_location_required`. |
+| 2026-09-13 | Shop buy desk exposes wallet/weight and any-affordable markers (`data-shop-wallet`, `data-shop-any-affordable`) plus per-row `data-shop-affordable`; sell mode adds `data-shop-any-sellable` / `data-shop-sellable`. License cards localize duration copy and expose `data-shop-license-affordable`. Sell rows drop hardcoded English quantity/durability chrome. |
 | 2026-09-11 | Audited expiry, sale restrictions and transaction ownership against runtime; completed the final cleaned-layout manual purchase, equipment, removal and resale flow. |
 | 2026-09-10 | Corrected the decorative entrance's frame-relative sizing; shared the entrance component and image specifications; removed duplicate Shop chrome and persistent category labels; aligned filters, economy summary, goods detail panels and license cards to fresh source measurements. Original artwork and settlement rules are preserved. |
 | 2026-09-10 | Clarified license/perk/proficiency/qualification requirements, documented local prerequisite emulation, added seven individual item illustrations shared with Inventory/equipment, verified the buy/wear/remove/resell loop, and rejected sale payouts beyond wallet storage with unchanged-state and exact-boundary coverage. |

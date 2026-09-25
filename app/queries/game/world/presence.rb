@@ -25,7 +25,7 @@ module Game
       end
 
       def call
-        return Result.new(players: [], label: "Unknown", count: 0) unless position
+        return Result.new(players: [], label: I18n.t("game.profile.unknown_location"), count: 0) unless position
 
         scope = online_characters
         if aboard_journey
@@ -45,7 +45,7 @@ module Game
       # Shared location text for map descriptions and profiles. Resolves only
       # the character's cell/room/flight; it never loads or counts an audience.
       def label
-        return "Unknown" unless position
+        return I18n.t("game.profile.unknown_location") unless position
         return aboard_journey.route_label if aboard_journey
         return current_city_room.fetch(:label) if current_city_room
         return entrance&.presence_label || cell_presence_label || position.zone.display_name unless location
@@ -54,8 +54,7 @@ module Game
         when :interior
           location.location_presence_label
         when :shop
-          feature = location.location_features.find { |entry| entry["feature"] == "shop" }
-          feature["presence_label"].presence || feature.fetch("label")
+          I18n.t("game.world.shop_presence")
         else
           location.presence_label
         end
@@ -109,7 +108,7 @@ module Game
         resume = Game::World::ResumeContext.new(character:)
         case context["name"]
         when "shop"
-          {key: "shop", label: "Shop", context: {name: "shop", params: {}}} if resume.shop_available?
+          {key: "shop", label: I18n.t("game.world.shop_presence"), context: {name: "shop", params: {}}} if resume.shop_available?
         when "city_building"
           key = context.dig("params", "building_key")
           if Game::World::CityBuildingCatalog.accessible?(character:, building_key: key)

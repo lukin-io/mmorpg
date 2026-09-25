@@ -1,0 +1,47 @@
+<% hp = current_character.current_hp.to_i %>
+<% max_hp = current_character.effective_max_hp.to_i %>
+<% mp = current_character.current_mp.to_i %>
+<% max_mp = current_character.effective_max_mp.to_i %>
+<% fatigue = Characters::FatigueService.new(character: current_character).current_percent.to_i %>
+<% already_full = hp >= max_hp && mp >= max_mp && fatigue <= 0 %>
+<section class="nl-handbook" aria-label="<%= t("game.buildings.tavern_aria") %>"
+         data-tavern-ready="<%= already_full ? "0" : "1" %>"
+         data-tavern-fatigue="<%= fatigue %>">
+  <h2><%= t("game.buildings.tavern_rest_title") %></h2>
+  <p class="nl-handbook__lead"><%= t("game.buildings.tavern_rest_lead") %></p>
+  <% if params[:rest_denied].to_s == "1" %>
+    <p class="nl-quests-board__meta" data-rest-denied="1">
+      <%= t("game.buildings.rest_denied_next") %>
+      ·
+      <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {tavern_recovery: "world"} %>
+      ·
+      <%= link_to t("game.buildings.tavern_rest_title"), city_building_path("tavern"), class: "nl-sheet-link", data: {tavern_recovery: "tavern"} %>
+    </p>
+  <% end %>
+  <p class="nl-quests-board__meta"
+     data-tavern-vitals="1"
+     data-tavern-hp="<%= hp %>"
+     data-tavern-max-hp="<%= max_hp %>"
+     data-tavern-mp="<%= mp %>"
+     data-tavern-max-mp="<%= max_mp %>">
+    <%= t("game.buildings.tavern_vitals", hp: hp, max_hp: max_hp, mp: mp, max_mp: max_mp, fatigue: fatigue) %>
+  </p>
+  <p>
+    <% if already_full %>
+      <button type="button" class="lbut" disabled title="<%= t("game.buildings.tavern_already_full") %>"><%= t("game.buildings.tavern_rest_cta") %></button>
+      <span class="nl-quests-board__meta" data-tavern-full="1">
+        <%= t("game.buildings.tavern_already_full") %>
+        ·
+        <%= link_to t("arena.nav.city"), world_path, data: {turbo: false, tavern_recovery: "world"} %>
+      </span>
+    <% else %>
+      <%= button_to t("game.buildings.tavern_rest_cta"),
+            city_building_rest_path("tavern"),
+            method: :post,
+            class: "lbut",
+            form: {data: {turbo: false}} %>
+    <% end %>
+  </p>
+</section>
+
+<%= render "city_buildings/landmark", building: building, building_key: "tavern" %>

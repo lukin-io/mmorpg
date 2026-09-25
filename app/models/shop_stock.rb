@@ -28,6 +28,6 @@ class ShopStock < ApplicationRecord
   def current_within_capacity
     return if current.nil? || maximum.nil? || current <= maximum
 
-    errors.add(:current, "cannot exceed maximum")
+    errors.add(:current, I18n.t("manage.stock_exceeds_maximum"))
   end
 end

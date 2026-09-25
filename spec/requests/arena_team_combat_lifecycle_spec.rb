@@ -75,7 +75,7 @@ RSpec.describe "Physical 3x3 team combat lifecycle", type: :request do
         as: :json
 
       expect(response).to have_http_status(:unprocessable_content)
-      expect(response.parsed_body.fetch("error")).to eq("Cannot attack an ally")
+      expect(response.parsed_body.fetch("error")).to eq(I18n.t("game.fight.errors.cannot_attack_ally"))
       expect(@participations.fetch("a").first.reload.metadata["pending_turn"]).to be_blank
     end
 
@@ -103,14 +103,14 @@ RSpec.describe "Physical 3x3 team combat lifecycle", type: :request do
 
         get arena_match_path(@match)
         expect(response).to have_http_status(:ok)
-        expect(response.body).to include("Waiting for opponent turn")
+        expect(response.body).to include(I18n.t("game.fight.wait_opponent_turn"))
         expect(response.body).to include("SyntheticB2")
 
         post action_arena_match_path(@match),
           params: physical_turn(target: side_b[1].fetch(:character), turn_number: 1),
           as: :json
         expect(response).to have_http_status(:unprocessable_content)
-        expect(response.parsed_body.fetch("error")).to eq("Turn already submitted; waiting for opponent")
+        expect(response.parsed_body.fetch("error")).to eq(I18n.t("game.fight.errors.turn_already_submitted"))
       end
     end
 
@@ -129,7 +129,7 @@ RSpec.describe "Physical 3x3 team combat lifecycle", type: :request do
         as: :json
 
       expect(response).to have_http_status(:unprocessable_content)
-      expect(response.parsed_body.fetch("error")).to eq("Fight state changed; refresh and submit the current turn")
+      expect(response.parsed_body.fetch("error")).to eq(I18n.t("game.fight.errors.state_changed"))
       expect(@match.reload.current_turn_number).to eq(2)
       expect(@participations.fetch("a").first.reload.metadata["pending_turn"]).to be_blank
     end
@@ -151,9 +151,9 @@ RSpec.describe "Physical 3x3 team combat lifecycle", type: :request do
     with_signed_in(side_a.first.fetch(:user)) do
       get arena_match_path(@match)
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include("Victory")
+      expect(response.body).to include(I18n.t("game.fight.result_victory"))
       players.each { |player| expect(response.body).to include(player.fetch(:character).name) }
-      expect(response.body).to include("Finish Fight")
+      expect(response.body).to include(I18n.t("game.fight.finish"))
     end
 
     players.each do |player|
@@ -176,7 +176,7 @@ RSpec.describe "Physical 3x3 team combat lifecycle", type: :request do
 
     get public_fight_log_path(@match)
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("Fight participants:")
+    expect(response.body).to include(I18n.t("game.fight.participants"))
     players.each { |player| expect(response.body).to include(player.fetch(:character).name) }
 
     get public_fight_log_path(@match, stat: 1, format: :json)

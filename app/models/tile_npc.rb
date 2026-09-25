@@ -11,7 +11,7 @@
 #
 class TileNpc < ApplicationRecord
   NPC_ROLES = %w[hostile].freeze
-  MAX_ENCOUNTER_SIZE = 10
+  MAX_ENCOUNTER_SIZE = 20
   MAX_ROSTER_SAMPLES = 64
   MAX_ROSTER_WEIGHT = 10_000
   MAX_AUTHORED_LEVEL = 1_000
@@ -44,8 +44,25 @@ class TileNpc < ApplicationRecord
   scope :needs_respawn, -> { where("respawns_at IS NOT NULL AND respawns_at <= ?", Time.current).where.not(defeated_at: nil) }
   scope :hostile, -> { where(npc_role: "hostile") }
 
-  # Check if NPC is alive and interactable
+  # Personal grinding instances never share a defeat lock — every player may
+  # start a fight while the authored placement stays active.
+  def personal_instance?
+    value = metadata.to_h["personal_instance"]
+    return true if value == true || value.to_s == "true"
+
+    metadata.to_h.key?("respawn_seconds") && metadata.to_h["respawn_seconds"].to_i.zero?
+  end
+
+  # Check if NPC is alive and interactable.
+  # Lazy-respawn when the authored timer elapsed so patrol loops work without a worker.
+  # Personal ambush instances must still honor defeated_at / active:false so a
+  # finished fight does not leave a sticky yellow name on the outdoor cell.
   def alive?
+    if personal_instance?
+      return active? && defeated_at.nil?
+    end
+
+    maybe_respawn_if_due!
     active? && defeated_at.nil? && (respawns_at.nil? || respawns_at <= Time.current)
   end
 
@@ -62,19 +79,22 @@ class TileNpc < ApplicationRecord
 
   # Check if NPC is defeated and waiting for respawn
   def defeated?
+    maybe_respawn_if_due!
     defeated_at.present?
   end
 
   # Time until respawn (for display)
   def time_until_respawn
+    maybe_respawn_if_due!
     return 0 if alive?
     return 0 if respawns_at.nil?
 
     [(respawns_at - Time.current).to_i, 0].max
   end
 
-  # Defeat the NPC, start respawn timer
+  # Defeat the NPC, start respawn timer. Personal instances never lock the cell.
   def defeat!(character)
+    return false if personal_instance?
     return false unless alive?
 
     respawn_time = calculate_respawn_time
@@ -86,7 +106,7 @@ class TileNpc < ApplicationRecord
       current_hp: 0
     )
 
-    TileNpcRespawnJob.set(wait: respawn_time).perform_later(id) if respawn_time
+    TileNpcRespawnJob.set(wait: respawn_time).perform_later(id) if respawn_time&.positive?
 
     true
   end
@@ -102,9 +122,16 @@ class TileNpc < ApplicationRecord
     true
   end
 
+  def maybe_respawn_if_due!
+    return false unless defeated_at.present?
+    return false if respawns_at.nil? || respawns_at > Time.current
+
+    respawn!
+  end
+
   # Get display name
   def display_name
-    npc_template&.name || npc_key.titleize
+    npc_template&.name.presence || I18n.t("manage.views.npc_key_fallback", key: npc_key)
   end
 
   # Check if hostile (can be attacked)
@@ -137,8 +164,9 @@ class TileNpc < ApplicationRecord
   # A sampled cell represents a repeatable Neverlands encounter source, not
   # one killable NPC instance. Completing one sampled roster therefore leaves
   # the cell eligible to schedule another independently selected encounter.
+  # Personal instances are always repeatable for concurrent farm.
   def repeatable_encounter_source?
-    encounter_roster_samples.any?
+    personal_instance? || encounter_roster_samples.any?
   end
 
   # HP percentage for display
@@ -153,21 +181,21 @@ class TileNpc < ApplicationRecord
   def self.encounter_policy_errors(metadata)
     errors = []
     if metadata.key?("active") && ![true, false].include?(metadata["active"])
-      errors << "active must be true or false"
+      errors << I18n.t("manage.active_boolean")
     end
     samples = metadata["encounter_rosters"]
     return errors unless samples.is_a?(Array)
 
-    errors << "encounter rosters exceed #{MAX_ROSTER_SAMPLES} entries" if samples.size > MAX_ROSTER_SAMPLES
+    errors << I18n.t("manage.encounter_rosters_exceed", max: MAX_ROSTER_SAMPLES) if samples.size > MAX_ROSTER_SAMPLES
     samples.grep(Hash).each do |sample|
       weight = sample["weight"]
       if sample.key?("weight") && !(weight.is_a?(Integer) && weight.between?(1, MAX_ROSTER_WEIGHT))
-        errors << "encounter roster weight must be between 1 and #{MAX_ROSTER_WEIGHT}"
+        errors << I18n.t("manage.encounter_roster_weight_range", max: MAX_ROSTER_WEIGHT)
       end
       Array(sample["members"]).grep(Hash).each do |member|
         if member.key?("level")
           level = Integer(member["level"].to_s, exception: false)
-          errors << "level must be a non-negative integer" unless level && level >= 0
+          errors << I18n.t("manage.level_non_negative") unless level && level >= 0
         end
         errors.concat(member_level_range_errors(member))
       end
@@ -183,10 +211,10 @@ class TileNpc < ApplicationRecord
     maximum = member["level_max"]
     unless minimum.is_a?(Integer) && maximum.is_a?(Integer) &&
         minimum.between?(0, MAX_AUTHORED_LEVEL) && maximum.between?(minimum, MAX_AUTHORED_LEVEL)
-      errors << "encounter roster level range must have ordered bounds between 0 and #{MAX_AUTHORED_LEVEL}"
+      errors << I18n.t("manage.encounter_level_range_bounds", max: MAX_AUTHORED_LEVEL)
     end
-    errors << "encounter roster member must use either level or level range" if member.key?("level")
-    errors << "encounter roster level range requires explicit hp" unless member["hp"].is_a?(Integer) && member["hp"].positive?
+    errors << I18n.t("manage.encounter_level_or_range") if member.key?("level")
+    errors << I18n.t("manage.encounter_level_range_requires_hp") unless member["hp"].is_a?(Integer) && member["hp"].positive?
     errors
   end
 
@@ -204,13 +232,13 @@ class TileNpc < ApplicationRecord
       Array(sample["members"]).first(MAX_ENCOUNTER_SIZE).grep(Hash).filter_map { |member| member["npc_key"].presence }
     end.uniq
     missing = keys - NpcTemplate.where(npc_key: keys).order(:id).lock("FOR KEY SHARE").pluck(:npc_key)
-    errors.add(:metadata, "encounter roster references unknown NPC templates: #{missing.join(', ')}") if missing.any?
+    errors.add(:metadata, I18n.t("manage.encounter_unknown_templates", keys: missing.join(", "))) if missing.any?
   end
 
   def encounter_size_is_supported
     return if encounter_size.between?(1, MAX_ENCOUNTER_SIZE)
 
-    errors.add(:metadata, "encounter count must be between 1 and #{MAX_ENCOUNTER_SIZE}")
+    errors.add(:metadata, I18n.t("manage.encounter_count_range", max: MAX_ENCOUNTER_SIZE))
   end
 
   def encounter_roster_samples_are_supported
@@ -218,13 +246,13 @@ class TileNpc < ApplicationRecord
 
     samples = metadata.to_h["encounter_rosters"]
     unless samples.is_a?(Array) && samples.size.between?(1, MAX_ROSTER_SAMPLES)
-      errors.add(:metadata, "encounter rosters must be a non-empty array")
+      errors.add(:metadata, I18n.t("manage.encounter_rosters_required"))
       return
     end
 
     sample_keys = samples.filter_map do |raw_sample|
       unless raw_sample.is_a?(Hash)
-        errors.add(:metadata, "encounter roster entries must be objects")
+        errors.add(:metadata, I18n.t("manage.encounter_roster_entry_object"))
         next
       end
 
@@ -233,32 +261,32 @@ class TileNpc < ApplicationRecord
       validate_optional_non_negative_integer(sample, "encounter_experience_reward")
       validate_optional_percent(sample, "trauma_percent")
       key = sample["key"].to_s
-      errors.add(:metadata, "encounter roster key is required") if key.blank?
+      errors.add(:metadata, I18n.t("manage.encounter_roster_key_required")) if key.blank?
       key.presence
     end
 
     if sample_keys.size != sample_keys.uniq.size
-      errors.add(:metadata, "encounter roster keys must be unique")
+      errors.add(:metadata, I18n.t("manage.encounter_roster_keys_unique"))
     end
   end
 
   def validate_roster_members(raw_members)
     unless raw_members.is_a?(Array) && raw_members.size.between?(1, MAX_ENCOUNTER_SIZE)
-      errors.add(:metadata, "encounter roster members must contain between 1 and #{MAX_ENCOUNTER_SIZE} entries")
+      errors.add(:metadata, I18n.t("manage.encounter_roster_members_range", max: MAX_ENCOUNTER_SIZE))
       return
     end
 
     raw_members.each do |raw_member|
       unless raw_member.is_a?(Hash)
-        errors.add(:metadata, "encounter roster members must be objects")
+        errors.add(:metadata, I18n.t("manage.encounter_roster_member_object"))
         next
       end
 
       member = raw_member.stringify_keys
-      errors.add(:metadata, "encounter roster member npc_key is required") if member["npc_key"].blank?
+      errors.add(:metadata, I18n.t("manage.encounter_roster_npc_key_required")) if member["npc_key"].blank?
       validate_optional_positive_integer(member, "hp")
       if member.key?("metadata") && !member["metadata"].is_a?(Hash)
-        errors.add(:metadata, "encounter roster member metadata must be an object")
+        errors.add(:metadata, I18n.t("manage.encounter_roster_member_metadata_object"))
       end
     end
   end
@@ -268,13 +296,13 @@ class TileNpc < ApplicationRecord
 
     windows = metadata.to_h["passive_delay_windows"]
     unless windows.is_a?(Array) && windows.any?
-      errors.add(:metadata, "passive delay windows must be a non-empty array")
+      errors.add(:metadata, I18n.t("manage.passive_delay_windows_required"))
       return
     end
 
     windows.each do |raw_window|
       unless raw_window.is_a?(Hash)
-        errors.add(:metadata, "passive delay windows must contain objects")
+        errors.add(:metadata, I18n.t("manage.passive_delay_window_object"))
         next
       end
 
@@ -284,7 +312,7 @@ class TileNpc < ApplicationRecord
       unless minimum&.positive? && maximum&.between?(minimum, MAX_PASSIVE_DELAY_SECONDS)
         errors.add(
           :metadata,
-          "passive delay window must have positive ordered bounds up to #{MAX_PASSIVE_DELAY_SECONDS} seconds"
+          I18n.t("manage.passive_delay_window_bounds", max: MAX_PASSIVE_DELAY_SECONDS)
         )
       end
     end
@@ -294,7 +322,7 @@ class TileNpc < ApplicationRecord
     return unless data.key?(key)
     return if Integer(data[key], exception: false)&.positive?
 
-    errors.add(:metadata, "#{key} must be a positive integer")
+    errors.add(:metadata, I18n.t("manage.positive_integer_field", key: key))
   end
 
   def validate_optional_non_negative_integer(data, key)
@@ -302,27 +330,33 @@ class TileNpc < ApplicationRecord
     value = Integer(data[key], exception: false)
     return if value && value >= 0
 
-    errors.add(:metadata, "#{key} must be a non-negative integer")
+    errors.add(:metadata, I18n.t("manage.non_negative_integer_field", key: key))
   end
 
   def validate_optional_percent(data, key)
     return unless data.key?(key)
     return if Integer(data[key], exception: false)&.between?(0, 100)
 
-    errors.add(:metadata, "#{key} must be between 0 and 100")
+    errors.add(:metadata, I18n.t("manage.percent_field", key: key))
   end
 
   def calculate_respawn_time
-    return unless template_respawn_seconds
+    seconds = template_respawn_seconds
+    return if seconds.nil? || seconds <= 0
 
     variance_seconds = template_respawn_variance_seconds
     variance = variance_seconds.to_i.positive? ? rand(-variance_seconds..variance_seconds) : 0
-    base = template_respawn_seconds + variance
+    base = seconds + variance
 
     base.clamp(1, 24.hours.to_i)
   end
 
   def template_respawn_seconds
+    if metadata.to_h.key?("respawn_seconds")
+      value = Integer(metadata["respawn_seconds"], exception: false)
+      return value if value && value >= 0
+    end
+
     metadata_respawn_seconds ||
       npc_template&.respawn_seconds
   end

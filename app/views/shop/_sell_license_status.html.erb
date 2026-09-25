@@ -1,0 +1,13 @@
+<% trading_license = @shop_license_rules.active_license(:trading) %>
+<% expired_trading = trading_license ? nil : @shop_license_rules.latest_expired_license(:trading) %>
+<% if trading_license %>
+  <p class="nl-empty-note" data-shop-sell-license-status="active" data-shop-sell-license-expires="<%= trading_license.expires_at.iso8601 %>">
+    <%= t("game.shop.sell_license_active", until: l(trading_license.expires_at, format: :long)) %>
+  </p>
+  <p class="nl-quests-board__meta"><%= t("game.shop.sell_license_no_polling") %></p>
+<% elsif expired_trading %>
+  <p class="nl-empty-note" data-shop-sell-license-status="expired">
+    <%= t("game.shop.sell_license_expired", at: l(expired_trading.expires_at, format: :long)) %>
+    <%= link_to t("game.shop.sell_onboarding_licenses"), shop_path(mode: "licenses"), class: "nl-sheet-link", data: {shop_recovery: "licenses"} %>
+  </p>
+<% end %>

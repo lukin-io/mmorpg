@@ -26,7 +26,7 @@ module Chat
           session&.reload
           unless session&.user_id == viewer.id && session.signed_out_at.nil? &&
               context && channel.metadata.to_h["location_key"] == context.key
-            raise Pundit::NotAuthorizedError, "Chat location or session is no longer available"
+            raise Pundit::NotAuthorizedError, I18n.t("game.chat.session_unavailable")
           end
           @local_started_at = [context.entered_at, session.signed_in_at].max
           read_entries

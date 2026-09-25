@@ -14,19 +14,19 @@ RSpec.describe Game::Shop::LicenseRules do
 
   it "requires the Merchant perk and completed merchant qualification for Trading" do
     template = license_template
-    expect(rules.purchase_block_reason(template)).to eq("Merchant perk required.")
+    expect(rules.purchase_block_reason(template)).to eq(I18n.t("game.shop.merchant_perk_required"))
     character.update!(perks: {"merchant" => true})
-    expect(rules.purchase_block_reason(template)).to eq("Merchant qualification required.")
+    expect(rules.purchase_block_reason(template)).to eq(I18n.t("game.shop.merchant_qualification_required"))
     character.update!(metadata: {"profession_unlocks" => {"merchant" => true}})
     expect(rules.purchase_block_reason(template)).to be_nil
   end
 
   it "requires Healer and the separate Traumatologist qualification for higher Doctor tiers" do
-    expect(rules.purchase_block_reason(license_template(kind: "doctor"))).to eq("Healer perk required.")
+    expect(rules.purchase_block_reason(license_template(kind: "doctor"))).to eq(I18n.t("game.shop.healer_perk_required"))
     character.update!(perks: {"healer" => true})
     expect(rules.purchase_block_reason(license_template(kind: "doctor"))).to be_nil
     [2, 3].each do |tier|
-      expect(rules.purchase_block_reason(license_template(kind: "doctor", tier:))).to eq("Traumatologist quest required.")
+      expect(rules.purchase_block_reason(license_template(kind: "doctor", tier:))).to eq(I18n.t("game.shop.traumatologist_quest_required"))
     end
     character.update!(metadata: {"profession_unlocks" => {"traumatologist" => true}})
     expect(rules.purchase_block_reason(license_template(kind: "doctor", tier: 2))).to be_nil
@@ -39,14 +39,33 @@ RSpec.describe Game::Shop::LicenseRules do
     expect(rules.active?(:trading)).to be(false)
   end
 
+  it "resolves the soonest active license and the latest expired grant" do
+    template = create(:item_template, stack_limit: 1, enhancement_rules: {"license" => {
+      "kind" => "trading", "tier" => 1, "duration_days" => 3
+    }})
+    offer = create(:world_action_offer, character:, action_type: "shop_buy", target: template, status: "completed")
+    expired = CharacterLicense.create!(character:, item_template: template, world_action_offer: offer,
+      kind: "trading", tier: 1, name: "Old", starts_at: 5.days.ago, expires_at: 2.days.ago)
+    active = CharacterLicense.create!(character:, item_template: template, world_action_offer: offer,
+      kind: "trading", tier: 1, name: "Live", starts_at: 1.hour.ago, expires_at: 2.days.from_now)
+
+    scoped = described_class.new(character:, active_licenses: [expired, active])
+    expect(scoped.active_license(:trading)).to eq(active)
+    expect(scoped.latest_expired_license(:trading)).to eq(expired)
+
+    travel 3.days
+    expect(described_class.new(character:).active_license(:trading)).to be_nil
+    expect(described_class.new(character:).latest_expired_license(:trading)).to eq(active)
+  end
+
   it "rejects malformed, mismatched or stacked license definitions" do
     template = license_template
     template.enhancement_rules["license"]["duration_days"] = 300
     expect(described_class.definition(template)).to be_nil
-    expect(rules.purchase_block_reason(template)).to eq("This license is unavailable.")
+    expect(rules.purchase_block_reason(template)).to eq(I18n.t("game.shop.license_unavailable"))
     template = license_template
     template.stack_limit = 2
-    expect(rules.purchase_block_reason(template)).to eq("This license is unavailable.")
+    expect(rules.purchase_block_reason(template)).to eq(I18n.t("game.shop.license_unavailable"))
   end
 
   it "fails closed for unknown kinds, absent periods and coercible noninteger durations" do
@@ -55,7 +74,7 @@ RSpec.describe Game::Shop::LicenseRules do
       *[nil, 0, -3, "3", 3.0].map { |days| {"kind" => "trading", "tier" => 1, "duration_days" => days} }].each do |definition|
       template = build(:item_template, enhancement_rules: {"license" => definition})
       expect(described_class.definition(template)).to be_nil
-      expect(rules.purchase_block_reason(template)).to eq("This license is unavailable.")
+      expect(rules.purchase_block_reason(template)).to eq(I18n.t("game.shop.license_unavailable"))
     end
   end
 

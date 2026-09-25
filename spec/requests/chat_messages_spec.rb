@@ -24,5 +24,16 @@ RSpec.describe "ChatMessages", type: :request do
 
       expect(response).to have_http_status(:unprocessable_entity)
     end
+
+    it "recovers when posting to a missing chat channel" do
+      sign_in user, scope: :user
+
+      post chat_channel_chat_messages_path(999_999_999), params: {chat_message: {body: "stale"}}
+
+      expect(response).to redirect_to(world_path(chat_denied: 1))
+      follow_redirect!
+      expect(response.body).to include('data-chat-denied="1"')
+      expect(response.body).to include('data-chat-recovery="world"')
+    end
   end
 end

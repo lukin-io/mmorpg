@@ -37,14 +37,14 @@ module Arena
     # @param room [ArenaRoom] the arena room
     # @return [Result] result with application or errors
     def create_for_room(room:)
-      npc_config = if room.slug == "training"
+      npc_config = if room.slug.to_s.in?(%w[training help])
         Game::World::ArenaNpcConfig.find_npc("arena_training_dummy")
       else
         Game::World::ArenaNpcConfig.sample_npc(room.slug)
       end
 
       if npc_config.nil?
-        return Result.new(success?: false, errors: ["No NPC available for this room"])
+        return Result.new(success?: false, errors: [I18n.t("game.fight.app_no_npc_for_room")])
       end
 
       npc_template = find_or_create_npc_template(npc_config)
@@ -58,7 +58,7 @@ module Arena
     # @return [Result] result with application or errors
     def create_with_template(room:, npc_template:)
       unless npc_template.arena_bot?
-        return Result.new(success?: false, errors: ["NPC template is not an arena bot"])
+        return Result.new(success?: false, errors: [I18n.t("game.fight.app_npc_not_arena_bot")])
       end
 
       create_application(room: room, npc_template: npc_template)
@@ -84,12 +84,12 @@ module Arena
     def create_application(room:, npc_template:)
       # Check if this NPC already has an open application in this room
       if ArenaApplication.open.exists?(arena_room: room, npc_template: npc_template)
-        return Result.new(success?: false, errors: ["This NPC already has an open application"])
+        return Result.new(success?: false, errors: [I18n.t("game.fight.app_npc_already_open")])
       end
 
       # Check room capacity
       unless room.has_capacity?
-        return Result.new(success?: false, errors: ["Arena room is full"])
+        return Result.new(success?: false, errors: [I18n.t("game.fight.app_room_full")])
       end
 
       application = ArenaApplication.new(
@@ -111,7 +111,7 @@ module Arena
         broadcast_new_application(application)
         Result.new(success?: true, application: application)
       else
-        Result.new(success?: false, errors: application.errors.full_messages)
+        Result.new(success?: false, errors: application.errors.map(&:message))
       end
     end
 
@@ -147,6 +147,9 @@ module Arena
         xp_reward: npc_config[:xp],
         loot_table: npc_config[:loot_table] || npc_config[:loot] || [],
         ai_behavior: npc_config.dig(:metadata, :ai_behavior),
+        defend_hp_below: npc_config.dig(:metadata, :defend_hp_below),
+        defend_chance: npc_config.dig(:metadata, :defend_chance),
+        max_attacks_per_turn: npc_config.dig(:metadata, :max_attacks_per_turn),
         arena_rooms: npc_config.dig(:metadata, :arena_rooms),
         description: npc_config.dig(:metadata, :description),
         avatar: npc_config.dig(:metadata, :avatar),

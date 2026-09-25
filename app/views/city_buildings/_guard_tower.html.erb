@@ -1,0 +1,36 @@
+<section class="nl-handbook" aria-label="<%= t("game.buildings.guard_aria") %>">
+  <h2><%= t("game.buildings.guard_title") %></h2>
+  <p class="nl-handbook__lead"><%= t("game.buildings.guard_lead") %></p>
+  <% here = current_character.position&.zone %>
+  <% if here %>
+    <p class="nl-quests-board__meta" data-guard-here="<%= here.name %>">
+      <%= t("game.buildings.guard_here", place: here.metadata.to_h["title"].presence || here.name) %>
+    </p>
+  <% end %>
+  <% routes = local_assigns.fetch(:routes, []) %>
+  <p class="nl-quests-board__meta" data-guard-routes="<%= routes.size %>">
+    <%= t("game.buildings.guard_routes_count", count: routes.size) %>
+  </p>
+  <% if routes.empty? %>
+    <p class="nl-quests-board__meta" data-guard-empty="1">
+      <%= t("game.buildings.guard_empty") %>
+      <%= link_to t("game.common.city"), world_path, class: "nl-sheet-link", data: {guard_recovery: "world"} %>
+    </p>
+  <% else %>
+    <ul class="nl-city-landmark__notes">
+      <% routes.each do |route| %>
+        <li>
+          <%= button_to route.hotspot.name,
+                interact_hotspot_world_path,
+                method: :post,
+                params: {hotspot_id: route.hotspot.id, action_key: route.offer.action_key},
+                class: "lbut",
+                form: {data: {turbo: false}} %>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+  <p class="nl-quests-board__meta"><%= t("game.buildings.guard_meta") %></p>
+</section>
+
+<%= render "city_buildings/landmark", building: building, building_key: "guard_tower" %>

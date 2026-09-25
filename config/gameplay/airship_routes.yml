@@ -1,6 +1,7 @@
-# Captured Forpost fares. Destinations, explicit dated departures, complete
-# duration, and regional waypoints must be authored before boarding is offered.
-# No Oktal/Telior/Khalgan content or invented repeating timetable is seeded.
+# Soft-release Ashen Veil airship network.
+# Captured Forpost fares stay visible-but-unavailable (no invented Oktal/Telior/Khalgan).
+# Playable Ashen triangle: Площадь ↔ Рынок ↔ Верфь with rolling departures.
+
 forpost_khalgan:
   source_zone: Outpost Residential Quarter
   label: Forpost - Khalgan Fair
@@ -16,3 +17,166 @@ forpost_oktal:
   label: Forpost - Oktal
   route_label: Route Forpost - Oktal
   fare_nv: 150
+
+# Playable Ashen shuttle: Сгоревший Рынок → Верфь Без Колоколов.
+ash_market_to_pier:
+  source_zone: "Сгоревший Рынок"
+  destination_zone: "Верфь Без Колоколов"
+  destination_x: 4
+  destination_y: 4
+  label: "Рынок → Верфь (челнок Завесы)"
+  route_label: "Челнок Пепла: Рынок — Верфь"
+  fare_nv: 40
+  duration_seconds: 90
+  rolling_interval_seconds: 300
+  rolling_count: 12
+  waypoints:
+    - {offset_seconds: 0, zone: "Пепельный Берег", x: 12, y: 10}
+    - {offset_seconds: 45, zone: "Пепельный Берег", x: 18, y: 14}
+    - {offset_seconds: 90, zone: "Пепельный Берег", x: 24, y: 18}
+
+ash_pier_to_market:
+  source_zone: "Верфь Без Колоколов"
+  destination_zone: "Сгоревший Рынок"
+  destination_x: 4
+  destination_y: 4
+  label: "Верфь → Рынок (челнок Завесы)"
+  route_label: "Челнок Пепла: Верфь — Рынок"
+  fare_nv: 40
+  duration_seconds: 90
+  rolling_interval_seconds: 300
+  rolling_count: 12
+  waypoints:
+    - {offset_seconds: 0, zone: "Пепельный Берег", x: 24, y: 18}
+    - {offset_seconds: 45, zone: "Пепельный Берег", x: 18, y: 14}
+    - {offset_seconds: 90, zone: "Пепельный Берег", x: 12, y: 10}
+
+# Plaza hub shuttles.
+ash_plaza_to_market:
+  source_zone: "Город Под Пеплом"
+  destination_zone: "Сгоревший Рынок"
+  destination_x: 4
+  destination_y: 4
+  label: "Площадь → Рынок"
+  route_label: "Челнок Пепла: Площадь — Рынок"
+  fare_nv: 25
+  duration_seconds: 60
+  rolling_interval_seconds: 300
+  rolling_count: 12
+  waypoints:
+    - {offset_seconds: 0, zone: "Пепельный Берег", x: 10, y: 10}
+    - {offset_seconds: 30, zone: "Пепельный Берег", x: 12, y: 10}
+    - {offset_seconds: 60, zone: "Пепельный Берег", x: 14, y: 12}
+
+ash_market_to_plaza:
+  source_zone: "Сгоревший Рынок"
+  destination_zone: "Город Под Пеплом"
+  destination_x: 4
+  destination_y: 4
+  label: "Рынок → Площадь"
+  route_label: "Челнок Пепла: Рынок — Площадь"
+  fare_nv: 25
+  duration_seconds: 60
+  rolling_interval_seconds: 300
+  rolling_count: 12
+  waypoints:
+    - {offset_seconds: 0, zone: "Пепельный Берег", x: 14, y: 12}
+    - {offset_seconds: 30, zone: "Пепельный Берег", x: 12, y: 10}
+    - {offset_seconds: 60, zone: "Пепельный Берег", x: 10, y: 10}
+
+ash_plaza_to_pier:
+  source_zone: "Город Под Пеплом"
+  destination_zone: "Верфь Без Колоколов"
+  destination_x: 4
+  destination_y: 4
+  label: "Площадь → Верфь"
+  route_label: "Челнок Пепла: Площадь — Верфь"
+  fare_nv: 35
+  duration_seconds: 75
+  rolling_interval_seconds: 300
+  rolling_count: 12
+  waypoints:
+    - {offset_seconds: 0, zone: "Пепельный Берег", x: 10, y: 10}
+    - {offset_seconds: 40, zone: "Пепельный Берег", x: 18, y: 14}
+    - {offset_seconds: 75, zone: "Пепельный Берег", x: 24, y: 18}
+
+ash_pier_to_plaza:
+  source_zone: "Верфь Без Колоколов"
+  destination_zone: "Город Под Пеплом"
+  destination_x: 4
+  destination_y: 4
+  label: "Верфь → Площадь"
+  route_label: "Челнок Пепла: Верфь — Площадь"
+  fare_nv: 35
+  duration_seconds: 75
+  rolling_interval_seconds: 300
+  rolling_count: 12
+  waypoints:
+    - {offset_seconds: 0, zone: "Пепельный Берег", x: 24, y: 18}
+    - {offset_seconds: 40, zone: "Пепельный Берег", x: 18, y: 14}
+    - {offset_seconds: 75, zone: "Пепельный Берег", x: 10, y: 10}
+
+# Lighthouse ↔ Market and Cistern ↔ Market (Ashen city graph — not Oktal).
+ash_market_to_lighthouse:
+  source_zone: "Сгоревший Рынок"
+  destination_zone: "Чёрный Маяк"
+  destination_x: 4
+  destination_y: 4
+  label: "Рынок → Маяк"
+  route_label: "Челнок Пепла: Рынок — Маяк"
+  fare_nv: 30
+  duration_seconds: 70
+  rolling_interval_seconds: 300
+  rolling_count: 12
+  waypoints:
+    - {offset_seconds: 0, zone: "Пепельный Берег", x: 12, y: 10}
+    - {offset_seconds: 35, zone: "Пепельный Берег", x: 16, y: 8}
+    - {offset_seconds: 70, zone: "Пепельный Берег", x: 20, y: 6}
+
+ash_lighthouse_to_market:
+  source_zone: "Чёрный Маяк"
+  destination_zone: "Сгоревший Рынок"
+  destination_x: 4
+  destination_y: 4
+  label: "Маяк → Рынок"
+  route_label: "Челнок Пепла: Маяк — Рынок"
+  fare_nv: 30
+  duration_seconds: 70
+  rolling_interval_seconds: 300
+  rolling_count: 12
+  waypoints:
+    - {offset_seconds: 0, zone: "Пепельный Берег", x: 20, y: 6}
+    - {offset_seconds: 35, zone: "Пепельный Берег", x: 16, y: 8}
+    - {offset_seconds: 70, zone: "Пепельный Берег", x: 12, y: 10}
+
+ash_market_to_cistern:
+  source_zone: "Сгоревший Рынок"
+  destination_zone: "Утонувшая Цистерна"
+  destination_x: 4
+  destination_y: 4
+  label: "Рынок → Цистерна"
+  route_label: "Челнок Пепла: Рынок — Цистерна"
+  fare_nv: 30
+  duration_seconds: 70
+  rolling_interval_seconds: 300
+  rolling_count: 12
+  waypoints:
+    - {offset_seconds: 0, zone: "Пепельный Берег", x: 12, y: 10}
+    - {offset_seconds: 35, zone: "Пепельный Берег", x: 14, y: 14}
+    - {offset_seconds: 70, zone: "Пепельный Берег", x: 16, y: 18}
+
+ash_cistern_to_market:
+  source_zone: "Утонувшая Цистерна"
+  destination_zone: "Сгоревший Рынок"
+  destination_x: 4
+  destination_y: 4
+  label: "Цистерна → Рынок"
+  route_label: "Челнок Пепла: Цистерна — Рынок"
+  fare_nv: 30
+  duration_seconds: 70
+  rolling_interval_seconds: 300
+  rolling_count: 12
+  waypoints:
+    - {offset_seconds: 0, zone: "Пепельный Берег", x: 16, y: 18}
+    - {offset_seconds: 35, zone: "Пепельный Берег", x: 14, y: 14}
+    - {offset_seconds: 70, zone: "Пепельный Берег", x: 12, y: 10}

@@ -5,7 +5,7 @@ require "rails_helper"
 RSpec.describe Game::Movement::AcceptMove do
   include ActiveSupport::Testing::TimeHelpers
 
-  let(:zone) { create(:zone, name: "Outpost Surroundings", location_type: "outdoor", width: 10, height: 10) }
+  let(:zone) { create(:zone, name: "Пепельный Берег", location_type: "outdoor", width: 10, height: 10) }
   let(:character) { create(:character) }
   let!(:position) { create(:character_position, character:, zone:, x: 5, y: 5) }
 
@@ -73,7 +73,7 @@ RSpec.describe Game::Movement::AcceptMove do
     expect(result.command.ends_at - result.command.started_at).to eq(30)
     expect {
       described_class.new(character:, action_key: command.action_key, rules:, rng:).call
-    }.to raise_error(Game::Movement::MovementViolationError, /already in progress/)
+    }.to raise_error(Game::Movement::MovementViolationError, I18n.t("game.flashes.movement_in_progress"))
     expect(command.reload.metadata["fatigue_gain"]).to eq(3)
   end
 
@@ -83,7 +83,7 @@ RSpec.describe Game::Movement::AcceptMove do
 
     expect {
       described_class.new(character:, action_key: command.action_key).call
-    }.to raise_error(Game::Movement::MovementViolationError, /fatigued/)
+    }.to raise_error(Game::Movement::MovementViolationError, I18n.t("game.world.movement_too_fatigued"))
     expect(command.reload).to be_offered
   end
 
@@ -94,7 +94,7 @@ RSpec.describe Game::Movement::AcceptMove do
 
     expect {
       described_class.new(character:, action_key: command.action_key).call
-    }.to raise_error(Game::Movement::MovementViolationError, /no longer available/)
+    }.to raise_error(Game::Movement::MovementViolationError, I18n.t("game.world.movement_offer_unavailable"))
 
     expect(command.reload).to be_offered
     expect(position.reload).to have_attributes(zone: new_region, x: 5, y: 5)
@@ -104,7 +104,7 @@ RSpec.describe Game::Movement::AcceptMove do
   it "rejects direction-only movement without a server action key" do
     expect {
       described_class.new(character:, direction: :east).call
-    }.to raise_error(Game::Movement::MovementViolationError, /no longer available/)
+    }.to raise_error(Game::Movement::MovementViolationError, I18n.t("game.world.movement_offer_unavailable"))
   end
 
   it "rejects a direction that does not match the offered action key" do
@@ -112,7 +112,7 @@ RSpec.describe Game::Movement::AcceptMove do
 
     expect {
       described_class.new(character:, action_key: command.action_key, direction: :east).call
-    }.to raise_error(Game::Movement::MovementViolationError, /requested direction/)
+    }.to raise_error(Game::Movement::MovementViolationError, I18n.t("game.world.movement_offer_direction_mismatch"))
   end
 
   it "cancels sibling destination offers when one move is accepted" do
@@ -132,7 +132,7 @@ RSpec.describe Game::Movement::AcceptMove do
 
     expect {
       described_class.new(character:, action_key: command.action_key).call
-    }.to raise_error(Game::Movement::MovementViolationError, /expired/)
+    }.to raise_error(Game::Movement::MovementViolationError, I18n.t("game.world.movement_offer_expired"))
 
     expect(command.reload).to be_offered
   end
@@ -143,7 +143,7 @@ RSpec.describe Game::Movement::AcceptMove do
 
     expect {
       described_class.new(character:, action_key: command.action_key).call
-    }.to raise_error(Game::Movement::MovementViolationError, /current position/)
+    }.to raise_error(Game::Movement::MovementViolationError, I18n.t("game.world.movement_offer_position_mismatch"))
   end
 
   it "rejects movement while another travel command is active" do
@@ -152,7 +152,7 @@ RSpec.describe Game::Movement::AcceptMove do
 
     expect {
       described_class.new(character:, action_key: command.action_key).call
-    }.to raise_error(Game::Movement::MovementViolationError, /already in progress/)
+    }.to raise_error(Game::Movement::MovementViolationError, I18n.t("game.flashes.movement_in_progress"))
   end
 
   it "does not accept a sibling offer after another command has started" do
@@ -163,7 +163,7 @@ RSpec.describe Game::Movement::AcceptMove do
 
     expect {
       described_class.new(character:, action_key: sibling.action_key).call
-    }.to raise_error(Game::Movement::MovementViolationError, /already in progress|no longer available/)
+    }.to raise_error(Game::Movement::MovementViolationError, I18n.t("game.flashes.movement_in_progress"))
     expect(MovementCommand.moving.where(character:).pluck(:id)).to eq([accepted.id])
     expect(sibling.reload).to be_cancelled
   end
@@ -174,7 +174,7 @@ RSpec.describe Game::Movement::AcceptMove do
 
     expect {
       described_class.new(character:, action_key: command.action_key).call
-    }.to raise_error(Game::Movement::MovementViolationError, /passable/)
+    }.to raise_error(Game::Movement::MovementViolationError, I18n.t("game.world.tile_not_passable"))
   end
 
   it "rejects a malformed persisted offer that jumps beyond an adjacent cell" do
@@ -182,7 +182,7 @@ RSpec.describe Game::Movement::AcceptMove do
 
     expect {
       described_class.new(character:, action_key: command.action_key).call
-    }.to raise_error(Game::Movement::MovementViolationError, /adjacent step/)
+    }.to raise_error(Game::Movement::MovementViolationError, I18n.t("game.world.movement_offer_not_adjacent"))
 
     expect(command.reload).to be_offered
     expect([position.reload.x, position.y]).to eq([5, 5])
@@ -196,6 +196,18 @@ RSpec.describe Game::Movement::AcceptMove do
 
     expect(action.reload).to be_cancelled
     expect(command.reload).to be_moving
+  end
+
+  it "starts travel despite a same-cell hostile so the player is not soft-locked" do
+    create(:tile_npc, zone: zone.name, x: 5, y: 5)
+    command = offered_move
+
+    result = described_class.new(character:, action_key: command.action_key).call
+
+    expect(result.interruption).to be_nil
+    expect(result.command.reload).to be_moving
+    expect(ArenaMatch.count).to eq(0)
+    expect(position.reload).to have_attributes(x: 5, y: 5)
   end
 
   it "fails old-region travel before accepting a valid offer for the current region" do
@@ -220,7 +232,7 @@ RSpec.describe Game::Movement::AcceptMove do
 
     expect {
       described_class.new(character: Character.find(character.id), action_key: command.action_key, rng:).call
-    }.to raise_error(Game::Movement::MovementViolationError, /already in progress/)
+    }.to raise_error(Game::Movement::MovementViolationError, I18n.t("game.flashes.movement_in_progress"))
 
     expect(command.reload.attributes.slice("started_at", "ends_at", "metadata")).to eq(original_timing)
   end
@@ -231,7 +243,7 @@ RSpec.describe Game::Movement::AcceptMove do
 
     expect {
       described_class.new(character:, action_key: command.action_key).call
-    }.to raise_error(Game::Movement::MovementViolationError, /unavailable here/)
+    }.to raise_error(Game::Movement::MovementViolationError, I18n.t("game.world.wilderness_unavailable"))
 
     expect(command.reload).to be_offered
   end
@@ -244,7 +256,7 @@ RSpec.describe Game::Movement::AcceptMove do
 
     expect {
       described_class.new(character:, action_key: command.action_key).call
-    }.to raise_error(Game::Movement::MovementViolationError, /local action is already in progress/)
+    }.to raise_error(Game::Movement::MovementViolationError, I18n.t("game.world.local_action_in_progress"))
 
     expect(action.reload).to be_accepted
     expect(command.reload).to be_offered

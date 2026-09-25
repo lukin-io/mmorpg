@@ -6,7 +6,7 @@ RSpec.describe "World Map Navigation", type: :system do
   include Warden::Test::Helpers
 
   let(:user) { create(:user) }
-  let(:zone) { create(:zone, name: "Outpost Surroundings", location_type: "outdoor", width: 50, height: 50) }
+  let(:zone) { create(:zone, name: "Пепельный Берег", location_type: "outdoor", width: 50, height: 50) }
   let(:character) { create(:character, user: user, name: "max_kerby_world", level: 5) }
   let!(:position) { create(:character_position, character: character, zone: zone, x: 25, y: 25) }
 
@@ -39,7 +39,7 @@ RSpec.describe "World Map Navigation", type: :system do
     it "displays the current zone name" do
       visit world_path
 
-      expect(page).to have_content("Outpost Surroundings")
+      expect(page).to have_content("Пепельный Берег")
     end
 
     it "displays the current coordinates" do
@@ -52,7 +52,7 @@ RSpec.describe "World Map Navigation", type: :system do
       visit world_path
 
       within("#location-info") do
-        expect(page).to have_content("Outpost Surroundings [25, 25]")
+        expect(page).to have_content("Пепельный Берег [25, 25]")
         expect(page).not_to have_content("Hostile NPCs may attack")
       end
     end
@@ -150,7 +150,7 @@ RSpec.describe "World Map Navigation", type: :system do
     it "shows zone name" do
       visit world_path
 
-      expect(page).to have_content("Outpost Surroundings")
+      expect(page).to have_content("Пепельный Берег")
     end
 
     it "shows location info" do

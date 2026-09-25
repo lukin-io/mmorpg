@@ -1,7 +1,7 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<%= I18n.locale %>">
   <head>
-    <title><%= content_for(:title) || "World Management" %></title>
+    <title><%= content_for(:title) || t("manage.title") %></title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="theme-color" content="#fcfaf3">
@@ -13,13 +13,13 @@
   <body class="nl-manage-layout">
     <header class="nl-manage-header">
       <div>
-        <%= link_to "World Management", manage_root_path, class: "nl-manage-brand" %>
+        <%= link_to t("manage.title"), manage_root_path, class: "nl-manage-brand" %>
         <span class="nl-manage-user"><%= current_user.profile_name %></span>
       </div>
-      <%= link_to "Return to game", world_path, class: "lbut" %>
+      <%= link_to t("manage.return_to_game"), world_path, class: "lbut" %>
     </header>
 
-    <nav class="nl-manage-nav" aria-label="Management sections">
+    <nav class="nl-manage-nav" aria-label="<%= t("manage.sections_aria") %>">
       <% management_sections.each do |section| %>
         <%= link_to section[:label], section[:path],
               class: management_section_current?(section[:key]) ? "lbutdis" : "lbut",

@@ -1,0 +1,39 @@
+/* Mist-oriented mobile / coarse-pointer shell affordances.
+   Complements feature CSS; keeps Hotwire shell usable on phone. */
+
+@media (pointer: coarse), (max-width: 720px) {
+  .lbut,
+  .nl-arena-small-button,
+  .nl-chat-tool,
+  .nl-nav-link,
+  .nl-sheet-link,
+  .nl-action-panel .lbut {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 0.55rem 0.85rem;
+  }
+
+  .nl-action-panel {
+    max-width: 100%;
+    padding: 0.75rem;
+  }
+
+  .nl-action-panel__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .nl-trade-hub__list .lbut,
+  .nl-clan-form .lbut {
+    min-height: 44px;
+  }
+
+  .LogintextBox4,
+  .nl-chat-input-field,
+  .nl-trade-hub__input,
+  .nl-trade-hub__select {
+    min-height: 44px;
+    font-size: 16px; /* iOS zoom guard */
+  }
+}

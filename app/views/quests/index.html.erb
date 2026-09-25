@@ -1,0 +1,151 @@
+<% content_for :title, t("game.quests.title") %>
+
+<section class="nl-quests">
+  <p class="nl-handbook__banner" data-quests-banner="1">
+    <%= image_tag "cc0/ui/quests-board-banner.png", alt: "", class: "nl-handbook__banner-img", width: 960, height: 540 %>
+  </p>
+  <header class="nl-quests__header">
+    <h1><%= t("game.quests.title") %></h1>
+    <p><%= t("game.quests.hint") %></p>
+    <% if params[:quest_denied].to_s == "1" %>
+      <p class="nl-quests-board__meta" data-quest-denied="1">
+        <%= t("game.quests.denied_next") %>
+        ·
+        <%= link_to t("game.quests.continue_world"), world_path, class: "nl-sheet-link", data: {quest_recovery: "world"} %>
+        <% if Game::World::CityBuildingCatalog.accessible?(character: current_character, building_key: "city_hall") %>
+          ·
+          <%= link_to t("game.quests.board_open_hall"), city_building_path("city_hall"), class: "nl-sheet-link", data: {quest_recovery: "city_hall"} %>
+        <% end %>
+      </p>
+    <% end %>
+    <% if Game::World::CityBuildingCatalog.accessible?(character: current_character, building_key: "city_hall") %>
+      <p class="nl-quests-board__meta" data-quest-hall-link="1">
+        <%= link_to t("game.quests.board_open_hall"), city_building_path("city_hall"), class: "nl-sheet-link", data: {quest_recovery: "city_hall"} %>
+      </p>
+    <% else %>
+      <p class="nl-quests-board__meta" data-quest-hall-link="world">
+        <%= link_to t("game.quests.board_open_hall"), world_path, class: "nl-sheet-link", data: {quest_recovery: "world"} %>
+      </p>
+    <% end %>
+    <% counts = @entries.group_by { |e| e[:status] }.transform_values(&:size) %>
+    <ul class="nl-quests__summary"
+        aria-label="<%= t("game.quests.summary_aria") %>"
+        data-quest-summary="1"
+        data-quest-available="<%= counts.fetch("available", 0) %>"
+        data-quest-active="<%= counts.fetch("active", 0) %>"
+        data-quest-ready-count="<%= @entries.count { |e| e[:status] == "active" && e[:progress].to_i >= e[:target].to_i } %>"
+        data-quest-locked="<%= counts.fetch("locked", 0) %>"
+        data-quest-completed="<%= counts.fetch("completed", 0) %>">
+      <li><span><%= t("game.quests.status.available") %></span> <b><%= counts.fetch("available", 0) %></b></li>
+      <li><span><%= t("game.quests.status.active") %></span> <b><%= counts.fetch("active", 0) %></b></li>
+      <li><span><%= t("game.quests.status.locked") %></span> <b><%= counts.fetch("locked", 0) %></b></li>
+      <li><span><%= t("game.quests.status.completed") %></span> <b><%= counts.fetch("completed", 0) %></b></li>
+    </ul>
+    <p class="nl-quests-board__meta">
+      <%= link_to t("nav.return"), world_path, class: "nl-sheet-link", data: {turbo_frame: "_top"} %>
+    </p>
+  </header>
+
+  <%
+    status_filter = params[:status].to_s.presence
+    statuses = %w[available active ready locked completed]
+  %>
+  <nav class="nl-quests__filters" aria-label="<%= t("game.quests.summary_aria") %>" data-quest-filters="1">
+    <%= link_to t("game.quests.filter_all", default: "Все"),
+          quests_path,
+          class: "lbut#{' lbut--active' if status_filter.blank?}",
+          data: {quest_filter: "all"} %>
+    <% statuses.each do |status| %>
+      <%= link_to t("game.quests.status.#{status}", default: status),
+            quests_path(status:),
+            class: "lbut#{' lbut--active' if status_filter == status}",
+            data: {quest_filter: status} %>
+    <% end %>
+  </nav>
+
+  <div class="nl-quests__list">
+    <% @entries.each do |entry| %>
+      <% quest = entry[:quest] %>
+      <% title = I18n.locale.to_s.start_with?("ru") ? quest["title_ru"] : quest["title_en"] %>
+      <% summary = I18n.locale.to_s.start_with?("ru") ? quest["summary_ru"] : quest["summary_en"] %>
+      <% reward = quest.fetch("reward", {}) %>
+      <% objective = quest.fetch("objective", {}) %>
+      <% ready = entry[:status] == "active" && entry[:progress].to_i >= entry[:target].to_i %>
+      <% dialogue =
+           if entry[:status] == "available"
+             I18n.locale.to_s.start_with?("ru") ? quest["dialogue_accept_ru"] : quest["dialogue_accept_en"]
+           elsif ready || entry[:status] == "completed"
+             I18n.locale.to_s.start_with?("ru") ? quest["dialogue_complete_ru"] : quest["dialogue_complete_en"]
+           elsif entry[:status] == "active"
+             I18n.locale.to_s.start_with?("ru") ? quest["dialogue_accept_ru"] : quest["dialogue_accept_en"]
+           end %>
+      <% row_status = ready ? "ready" : entry[:status] %>
+      <% next if status_filter.present? && row_status != status_filter %>
+      <article class="nl-quests__card nl-quests__card--<%= entry[:status] %><%= ' nl-quests__card--ready' if ready %>"
+               data-quest-key="<%= quest["key"] %>"
+               data-quest-status="<%= entry[:status] %>"
+               data-quest-progress="<%= entry[:progress] %>"
+               data-quest-target="<%= entry[:target] %>"
+               data-quest-ready="<%= ready ? "1" : "0" %>">
+        <div class="nl-quests__card-top">
+          <h2><%= title %></h2>
+          <span class="nl-quests__badge nl-quests__badge--<%= entry[:status] %>">
+            <%= ready ? t("game.quests.status.ready") : t("game.quests.status.#{entry[:status]}") %>
+          </span>
+        </div>
+        <p class="nl-quests__giver"><%= t("game.quests.giver", name: quest["giver"]) %></p>
+        <% if entry[:where].present? %>
+          <p class="nl-quests-board__meta"><%= t("game.quests.where", place: entry[:where]) %></p>
+        <% end %>
+        <% if dialogue.present? %>
+          <blockquote class="nl-quests__dialogue" data-quest-dialogue="1"><%= dialogue %></blockquote>
+        <% end %>
+        <p><%= summary %></p>
+        <div class="nl-quests__formula">
+          <strong><%= t("game.quests.objective_label") %></strong>
+          <span>
+            <%= t("game.quests.objective_#{objective["type"]}", default: objective["type"].to_s) %>
+            · <%= entry[:progress] %> / <%= entry[:target] %>
+          </span>
+        </div>
+        <ul class="nl-quests__rewards">
+          <% if reward["experience"].to_i.positive? %>
+            <li class="nl-quests__chip"><%= t("game.quests.reward_xp", amount: reward["experience"]) %></li>
+          <% end %>
+          <% if reward["currency_nv"].to_i.positive? %>
+            <li class="nl-quests__chip"><%= t("game.quests.reward_nv", amount: reward["currency_nv"]) %></li>
+          <% end %>
+          <% if reward["item_key"].present? %>
+            <% item_name = ItemTemplate.find_by(key: reward["item_key"])&.display_name || reward["item_key"] %>
+            <li class="nl-quests__chip"><%= t("game.quests.reward_item", key: item_name) %></li>
+          <% end %>
+        </ul>
+        <div class="nl-quests__actions">
+          <% if entry[:status] == "available" %>
+            <%= button_to t("game.quests.accept"), accept_quest_path(quest["key"]), method: :post, class: "lbut" %>
+          <% elsif entry[:status] == "active" && ready %>
+            <%= button_to t("game.quests.turn_in"), turn_in_quest_path(quest["key"]), method: :post, class: "lbut" %>
+          <% elsif entry[:status] == "active" %>
+            <button type="button" class="lbut" disabled title="<%= t("game.quests.objective_incomplete") %>"><%= t("game.quests.turn_in") %></button>
+            <span class="nl-quests__done">
+              <%= t("game.quests.objective_incomplete") %>
+              <%= link_to t("game.quests.continue_world"), world_path, class: "nl-sheet-link", data: {quest_recovery: "world"} %>
+            </span>
+          <% elsif entry[:status] == "locked" %>
+            <span class="nl-quests__done" data-quest-locked="1">
+              <%= t("game.quests.locked_hint") %>
+              ·
+              <%= link_to t("game.quests.continue_world"), world_path, class: "nl-sheet-link", data: {quest_recovery: "world"} %>
+            </span>
+          <% else %>
+            <span class="nl-quests__done" data-quest-done="1">
+              <%= t("game.quests.done") %>
+              ·
+              <%= link_to t("game.quests.continue_world"), world_path, class: "nl-sheet-link", data: {quest_recovery: "world"} %>
+            </span>
+          <% end %>
+        </div>
+      </article>
+    <% end %>
+  </div>
+</section>

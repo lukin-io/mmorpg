@@ -53,15 +53,15 @@ module Game
       # @param hotspot_id [Integer] the hotspot to interact with
       # @return [Result]
       def interact!(hotspot_id)
-        return Result.new(success: false, message: "Character is unavailable.") unless character
+        return Result.new(success: false, message: I18n.t("game.world.character_unavailable")) unless character
 
         character.with_lock do
           if character.active_airship_journey
-            next Result.new(success: false, message: "Disembark before entering the city.")
+            next Result.new(success: false, message: I18n.t("game.world.disembark_city"))
           end
 
           unless city_zone? && character.position&.zone_id == zone.id
-            next Result.new(success: false, message: "Location does not match current position.")
+            next Result.new(success: false, message: I18n.t("game.world.location_position_mismatch"))
           end
 
           perform_interaction(hotspot_id)
@@ -76,14 +76,14 @@ module Game
         unless hotspot
           return Result.new(
             success: false,
-            message: "Location not found."
+            message: I18n.t("game.flashes.location_not_found")
           )
         end
 
         unless hotspot.can_interact?(character)
           return Result.new(
             success: false,
-            message: hotspot.interaction_blocked_reason(character) || "You cannot go there.",
+            message: hotspot.interaction_blocked_reason(character) || I18n.t("game.world.cannot_go_there"),
             hotspot: hotspot
           )
         end
@@ -96,7 +96,7 @@ module Game
         else
           Result.new(
             success: false,
-            message: "This area has no action.",
+            message: I18n.t("game.world.area_no_action"),
             hotspot: hotspot
           )
         end
@@ -106,7 +106,7 @@ module Game
         unless hotspot.destination_zone
           return Result.new(
             success: false,
-            message: "Transition is not configured.",
+            message: I18n.t("game.world.transition_not_configured"),
             hotspot: hotspot
           )
         end
@@ -116,7 +116,7 @@ module Game
         unless destination_coordinates_valid?(hotspot.destination_zone, destination_x, destination_y)
           return Result.new(
             success: false,
-            message: "Captured destination coordinates are not configured.",
+            message: I18n.t("game.world.destination_coords_missing"),
             hotspot: hotspot
           )
         end
@@ -134,14 +134,14 @@ module Game
 
           Result.new(
             success: true,
-            message: "Moved to #{hotspot.destination_zone.name}.",
+            message: I18n.t("game.world.moved_to", name: hotspot.destination_zone.name),
             hotspot: hotspot,
             destination_zone: hotspot.destination_zone
           )
         else
           Result.new(
             success: false,
-            message: "Transition unavailable: position not found.",
+            message: I18n.t("game.world.transition_no_position"),
             hotspot: hotspot
           )
         end
@@ -157,7 +157,7 @@ module Game
         unless url
           return Result.new(
             success: false,
-            message: "#{hotspot.name} unavailable.",
+            message: I18n.t("game.world.hotspot_unavailable", name: hotspot.name),
             hotspot: hotspot
           )
         end
@@ -166,7 +166,7 @@ module Game
 
         Result.new(
           success: true,
-          message: "Entered #{hotspot.name}.",
+          message: I18n.t("game.world.entered", name: hotspot.name),
           hotspot: hotspot,
           redirect_url: url
         )

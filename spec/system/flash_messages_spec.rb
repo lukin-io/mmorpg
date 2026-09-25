@@ -70,7 +70,7 @@ RSpec.describe "Shared flash lifecycle", type: :system, js: true do
     find(".nl-chat-input-field").set("%<Someone> private test")
     find(".nl-chat-input-field").send_keys(:enter)
 
-    expect(page).to have_css("#flash [role='alert']", text: "Private messaging is not available here.")
+    expect(page).to have_css("#flash [role='alert']", text: /Private messaging is not available here\.|Личные сообщения здесь недоступны\./)
     expect(page).to have_no_css("#flash [role='status']")
 
     # This is a real unrelated frame refresh. It must not dismiss the error,
@@ -81,7 +81,7 @@ RSpec.describe "Shared flash lifecycle", type: :system, js: true do
       page.evaluate_async_script("const done = arguments[arguments.length - 1]; setTimeout(done, 5100)")
     end
 
-    expect(page).to have_css("#flash [role='alert']", text: "Private messaging is not available here.")
+    expect(page).to have_css("#flash [role='alert']", text: /Private messaging is not available here\.|Личные сообщения здесь недоступны\./)
     find("#flash button[aria-label='Dismiss notification']").send_keys(:enter)
     expect(page).to have_no_css("#flash .nl-flash")
     expect(page).to have_css("#flash", visible: :all)

@@ -4,16 +4,268 @@
   <% end %>
 </div>
 
-<h2>Treatment shop observation</h2>
-<table class="nl-detail-table nl-city-building-table">
-  <thead><tr><th>Item</th><th>Resource</th><th>Price</th><th>Observed stock</th></tr></thead>
-  <tbody>
-    <% building["goods"].each do |name, resource, price, stock| %>
-      <tr><td><%= name %></td><td><%= resource %></td><td><%= number_with_delimiter(price) %> NV</td><td><%= stock %></td></tr>
+<section class="nl-handbook" aria-label="<%= t("game.buildings.hospital_rest_aria") %>">
+  <% hp = current_character.current_hp.to_i %>
+  <% max_hp = current_character.effective_max_hp.to_i %>
+  <% mp = current_character.current_mp.to_i %>
+  <% max_mp = current_character.effective_max_mp.to_i %>
+  <% injuries = Game::Combat::InjuryState.new(character: current_character) %>
+  <% ordinary = injuries.active.any? { |row| %w[light heavy].include?(row["severity"].to_s) } %>
+  <% combat_left = injuries.active.any? { |row| row["severity"].to_s == "combat" } %>
+  <% needs_rest = hp < max_hp || mp < max_mp || ordinary %>
+  <% injury_summary = injuries.summary %>
+  <h2><%= t("game.buildings.hospital_hint") %></h2>
+  <p><%= t("game.buildings.hospital_rest_lead") %></p>
+  <% if params[:defeat_recovered].to_s == "1" %>
+    <p class="nl-quests-board__meta" data-defeat-recovery="1">
+      <%= t("game.buildings.defeat_recovery_next") %>
+      ·
+      <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {defeat_recovery: "world"} %>
+      ·
+      <%= link_to t("game.buildings.defeat_recovery_arena_hint"), world_path, class: "nl-sheet-link", data: {defeat_recovery: "arena_square"} %>
+    </p>
+  <% end %>
+  <% if params[:hospital_denied].to_s == "1" %>
+    <p class="nl-quests-board__meta" data-hospital-denied="1">
+      <%= t("game.buildings.hospital_denied_next") %>
+      ·
+      <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {hospital_recovery: "world"} %>
+      ·
+      <%= link_to t("game.buildings.hospital_title_short"), city_building_path("hospital"), class: "nl-sheet-link", data: {hospital_recovery: "hospital"} %>
+    </p>
+  <% end %>
+  <% if params[:rest_denied].to_s == "1" %>
+    <p class="nl-quests-board__meta" data-rest-denied="1">
+      <%= t("game.buildings.rest_denied_next") %>
+      ·
+      <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {hospital_recovery: "world"} %>
+      ·
+      <%= link_to t("game.buildings.hospital_title_short"), city_building_path("hospital"), class: "nl-sheet-link", data: {hospital_recovery: "hospital"} %>
+    </p>
+  <% end %>
+  <p class="nl-quests-board__meta"><%= t("game.buildings.hospital_combat_rule") %></p>
+  <p class="nl-quests-board__meta" data-hospital-vitals="1" data-hospital-rest-ready="<%= needs_rest ? "1" : "0" %>" data-hospital-combat="<%= combat_left ? "1" : "0" %>">
+    <%= t("game.buildings.hospital_vitals", hp: hp, max_hp: max_hp, mp: mp, max_mp: max_mp) %>
+  </p>
+  <% if injury_summary.present? %>
+    <p class="nl-quests-board__meta" data-hospital-injuries="<%= injuries.active.size %>"><%= injury_summary %></p>
+  <% else %>
+    <p class="nl-quests-board__meta" data-hospital-injuries="0">
+      <%= t("game.buildings.hospital_no_injuries") %>
+      ·
+      <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {hospital_recovery: "world"} %>
+    </p>
+  <% end %>
+  <p>
+    <% if needs_rest %>
+      <%= button_to t("game.buildings.hospital_rest_cta"),
+            city_building_rest_path("hospital"),
+            method: :post,
+            class: "lbut",
+            form: {data: {turbo: false}} %>
+    <% else %>
+      <% blocked = combat_left ? t("game.buildings.hospital_combat_only") : t("game.buildings.hospital_already_full") %>
+      <button type="button" class="lbut" disabled title="<%= blocked %>"><%= t("game.buildings.hospital_rest_cta") %></button>
+      <span class="nl-quests-board__meta" data-hospital-rest-blocked="<%= combat_left ? "combat" : "full" %>">
+        <%= blocked %>
+        <% if combat_left %>
+          <%= link_to t("game.buildings.premium_desk"), "#hospital-premium-desk", class: "nl-sheet-link", data: {hospital_recovery: "premium"} %>
+        <% else %>
+          <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {hospital_recovery: "world"} %>
+        <% end %>
+      </span>
     <% end %>
-  </tbody>
-</table>
+  </p>
+</section>
 
-<h2>Recovery and pharmacy</h2>
-<p>Rest room and hospital bed were observed as "Entry forbidden" for a full-health character.</p>
-<p>The Pharmacy is a resource-processing surface; processing controls remain deferred.</p>
+<% clearance = Game::Shop::TraumatologistClearance.new(character: current_character) %>
+<section class="nl-handbook" aria-label="<%= t("game.shop.traumatologist_title") %>" data-hospital-traumatologist="1">
+  <h2><%= t("game.shop.traumatologist_title") %></h2>
+  <p><%= t("game.shop.traumatologist_lead") %></p>
+  <% if clearance.completed? %>
+    <p class="nl-empty-note" data-hospital-traumatologist-status="done"><%= t("game.shop.traumatologist_done") %></p>
+    <p class="nl-quests-board__meta" data-hospital-traumatologist-next="1">
+      <%= link_to t("game.shop.sell_onboarding_licenses"), shop_path(mode: "licenses"), class: "nl-sheet-link", data: {hospital_recovery: "licenses"} %>
+      ·
+      <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {hospital_recovery: "world"} %>
+    </p>
+  <% elsif clearance.visible? %>
+    <p>
+      <%= button_to t("game.shop.traumatologist_cta"),
+            city_building_traumatologist_path("hospital"),
+            method: :post,
+            class: "lbut",
+            form: {data: {turbo: false}} %>
+    </p>
+  <% else %>
+    <p class="nl-empty-note" data-hospital-traumatologist-status="need-perk"><%= t("game.shop.traumatologist_need_healer") %></p>
+    <p class="nl-quests-board__meta" data-hospital-traumatologist-next="1">
+      <%= link_to t("game.shop.traumatologist_open_perks"), perks_character_path(current_character), class: "nl-sheet-link", data: {hospital_recovery: "perks"} %>
+      ·
+      <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {hospital_recovery: "world"} %>
+    </p>
+  <% end %>
+</section>
+
+<section class="nl-handbook" aria-label="<%= t("game.professions.ash_healer") %>">
+  <h2><%= t("game.professions.ash_healer") %></h2>
+  <p class="nl-handbook__lead">
+    <%= t("game.professions.ash_healer_lead", skill: local_assigns.fetch(:skill, 0)) %>
+  </p>
+  <% inv = current_character.inventory %>
+  <% bag_weight = inv&.current_weight.to_i || 0 %>
+  <% bag_max = inv&.max_weight.to_i || current_character.carrying_capacity.to_i %>
+  <% bag_slots = inv&.inventory_items&.where(equipped: false)&.count.to_i || 0 %>
+  <% bag_slot_cap = inv&.slot_capacity.to_i || 0 %>
+  <% recipes = local_assigns.fetch(:recipes, {}) %>
+  <% skill = local_assigns.fetch(:skill, 0) %>
+  <% any_ready = recipes.any? { |_key, recipe| craft_readiness(recipe, character: current_character, skill: skill)[:ready] } %>
+  <p class="nl-quests-board__meta"
+     data-hospital-mass="<%= bag_weight %>"
+     data-hospital-mass-max="<%= bag_max %>"
+     data-hospital-slots="<%= bag_slots %>"
+     data-hospital-slots-max="<%= bag_slot_cap %>"
+     data-hospital-craft-any-ready="<%= any_ready ? "1" : "0" %>">
+    <%= t("game.professions.bag_capacity", weight: bag_weight, max: bag_max, slots: bag_slots, slot_max: bag_slot_cap) %>
+  </p>
+  <% unless any_ready %>
+    <p class="nl-quests-board__meta" data-hospital-craft-none-ready="1">
+      <%= t("game.professions.hospital_craft_none_ready") %>
+      ·
+      <%= link_to t("game.inventory.title"), inventory_path, data: {turbo: false, hospital_recovery: "inventory"} %>
+      ·
+      <%= link_to t("arena.nav.city"), world_path, data: {turbo: false, hospital_recovery: "world"} %>
+    </p>
+  <% end %>
+  <div class="nl-handbook__grid">
+    <% recipes.each do |key, recipe| %>
+      <% title = I18n.locale.to_s.start_with?("ru") ? recipe["title_ru"] : recipe["title_en"] %>
+      <% summary = I18n.locale.to_s.start_with?("ru") ? recipe["summary_ru"] : recipe["summary_en"] %>
+      <% gate = craft_readiness(recipe, character: current_character, skill: skill) %>
+      <article class="nl-handbook__card"
+               data-hospital-recipe="<%= key %>"
+               data-hospital-craft-ready="<%= gate[:ready] ? "1" : "0" %>">
+        <h3><%= title %></h3>
+        <p><%= summary %></p>
+        <p class="nl-quests-board__meta">
+          <%= t("game.professions.min_skill", amount: recipe.fetch("min_skill", 0)) %>
+          ·
+          <%= t("game.professions.inputs") %>:
+          <%= craft_input_labels(recipe, character: current_character) %>
+        </p>
+        <% if gate[:ready] %>
+          <%= button_to t("game.professions.craft_cta"),
+                city_building_craft_path("hospital"),
+                method: :post,
+                params: {recipe_key: key},
+                class: "lbut",
+                form: {data: {turbo: false}} %>
+        <% else %>
+          <button type="button" class="lbut" disabled title="<%= gate[:reason] %>"><%= t("game.professions.craft_cta") %></button>
+          <p class="nl-quests-board__meta">
+            <%= gate[:reason] %>
+            <%= craft_block_recovery_link(gate) %>
+          </p>
+        <% end %>
+      </article>
+    <% end %>
+  </div>
+</section>
+
+<section class="nl-handbook" id="hospital-premium-desk" aria-label="<%= t("game.buildings.premium_desk") %>">
+  <h2><%= t("game.buildings.premium_desk") %></h2>
+  <% marks = local_assigns.fetch(:veil_marks, 0).to_i %>
+  <% premium_offers = local_assigns.fetch(:premium_offers, {}) %>
+  <% any_premium_affordable = premium_offers.any? { |_key, price| marks >= price.to_i } %>
+  <% topup = Game::Shop::VeilMarksTopUp.new(character: current_character) %>
+  <% topup_wait = topup.seconds_until_ready %>
+  <% topup_ready = topup_wait <= 0 %>
+  <p data-hospital-vm="<%= marks %>"
+     data-hospital-premium-any-affordable="<%= any_premium_affordable ? "1" : "0" %>"
+     data-hospital-topup-ready="<%= topup_ready ? "1" : "0" %>"
+     data-hospital-topup-wait="<%= topup_wait %>">
+    <%= t("game.buildings.premium_lead", marks: marks) %>
+  </p>
+  <% assault_owned = Game::World::StartPlayerAssault.trauma_scroll_quantity(current_character) %>
+  <% heal_owned = Game::Shop::PremiumScrollPurchase.owned_quantity(current_character, "combat_heal_scroll") %>
+  <p class="nl-quests-board__meta"
+     data-hospital-assault="<%= assault_owned %>"
+     data-hospital-heal="<%= heal_owned %>">
+    <%= t("game.world.trauma_scroll_chip", count: assault_owned) %>
+    ·
+    <%= t("game.world.heal_scroll_chip", count: heal_owned) %>
+  </p>
+  <p id="hospital-premium-topup">
+    <% if Game::Shop::PremiumGateway.stub_iap_allowed? %>
+      <% if topup_ready %>
+        <%= button_to t("game.buildings.premium_topup_cta", amount: Game::Shop::VeilMarksTopUp::AMOUNT),
+              city_building_topup_vm_path("hospital"),
+              method: :post,
+              class: "lbut",
+              form: {data: {turbo: false}},
+              title: t("game.buildings.premium_topup_hint") %>
+      <% else %>
+        <% wait_hint = t("game.buildings.premium_topup_wait", minutes: (topup_wait / 60.0).ceil) %>
+        <button type="button" class="lbut" disabled title="<%= wait_hint %>"><%= t("game.buildings.premium_topup_cta", amount: Game::Shop::VeilMarksTopUp::AMOUNT) %></button>
+        <span class="nl-quests-board__meta" data-hospital-topup-wait="1">
+          <%= wait_hint %>
+          ·
+          <%= link_to t("arena.nav.city"), world_path, data: {turbo: false, hospital_recovery: "world"} %>
+        </span>
+      <% end %>
+    <% else %>
+      <p class="nl-quests-board__meta" data-hospital-stub-iap="0">
+        <%= t("game.shop.stub_iap_disabled") %>
+        ·
+        <%= link_to t("game.shop.title"), shop_path, class: "nl-sheet-link", data: {hospital_recovery: "shop"} %>
+      </p>
+    <% end %>
+  </p>
+  <div class="nl-handbook__grid">
+    <% premium_offers.each do |item_key, price| %>
+      <% owned = current_character.inventory&.inventory_items
+           &.joins(:item_template)
+           &.where(item_templates: {key: item_key}, equipped: false)
+           &.sum(:quantity).to_i || 0 %>
+      <% price_i = price.to_i %>
+      <% affordable = marks >= price_i %>
+      <article class="nl-handbook__card"
+               data-hospital-premium-item="<%= item_key %>"
+               data-hospital-premium-affordable="<%= affordable ? "1" : "0" %>">
+        <h3><%= t("game.buildings.premium_item.#{item_key}", default: item_key) %></h3>
+        <p><%= t("game.buildings.premium_item_hint.#{item_key}", default: "") %></p>
+        <p class="nl-quests-board__meta">
+          <%= price_i %> VM
+          ·
+          <%= t("game.buildings.premium_owned", count: owned) %>
+        </p>
+        <% if affordable %>
+          <%= button_to t("game.buildings.premium_buy_cta", amount: price_i),
+                city_building_buy_premium_path("hospital"),
+                method: :post,
+                params: {item_key: item_key},
+                class: "lbut",
+                form: {data: {turbo: false}} %>
+        <% else %>
+          <% short = t("game.buildings.premium_short", amount: price_i) %>
+          <button type="button" class="lbut" disabled title="<%= short %>"><%= t("game.buildings.premium_buy_cta", amount: price_i) %></button>
+          <p class="nl-quests-board__meta">
+            <%= short %>
+            <% if topup_ready %>
+              <%= link_to t("game.buildings.premium_topup_cta", amount: Game::Shop::VeilMarksTopUp::AMOUNT),
+                    "#hospital-premium-topup",
+                    class: "nl-sheet-link",
+                    data: {hospital_recovery: "topup"} %>
+            <% elsif Game::World::CityBuildingCatalog.accessible?(character: current_character, building_key: "bank") %>
+              <%= link_to t("game.shop.open_bank"), city_building_path("bank"), class: "nl-sheet-link", data: {hospital_recovery: "bank"} %>
+            <% else %>
+              <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {hospital_recovery: "world"} %>
+            <% end %>
+          </p>
+        <% end %>
+      </article>
+    <% end %>
+  </div>
+</section>
+
+<%= render "city_buildings/landmark", building: local_assigns.fetch(:building, {}), building_key: "hospital" %>

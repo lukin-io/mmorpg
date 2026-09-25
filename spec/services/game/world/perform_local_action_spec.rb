@@ -5,7 +5,7 @@ require "rails_helper"
 RSpec.describe Game::World::PerformLocalAction do
   include ActiveSupport::Testing::TimeHelpers
 
-  let(:zone) { create(:zone, name: "Outpost Surroundings", location_type: "outdoor") }
+  let(:zone) { create(:zone, name: "Пепельный Берег", location_type: "outdoor", width: 100, height: 100) }
   let(:character) { create(:character) }
   let!(:position) { create(:character_position, character:, zone:, x: 5, y: 5) }
   let(:tile) { create(:map_tile_template, :with_resource_search, zone: zone.name, x: 5, y: 5) }
@@ -26,7 +26,7 @@ RSpec.describe Game::World::PerformLocalAction do
     expect { result }.not_to change(InventoryItem, :count)
 
     expect(result.success).to be true
-    expect(result.message).to eq("There is no useful vegetation in this area.")
+    expect(result.message).to eq(I18n.t("game.world.local_action.resource_search.message"))
     expect(action_offer.reload).to be_accepted
     expect(action_offer.local_action_ends_at).to eq(Time.current + 28.seconds)
     expect(action_offer.local_action_result).to eq(result.message)
@@ -46,7 +46,7 @@ RSpec.describe Game::World::PerformLocalAction do
       )
     )
 
-    expect(result.message).to eq("Nothing was found.")
+    expect(result.message).to eq(I18n.t("game.world.local_action.resource_search.nothing_found"))
   end
 
   it "rejects an inactive local action" do
@@ -59,21 +59,21 @@ RSpec.describe Game::World::PerformLocalAction do
     )
 
     expect(result.success).to be false
-    expect(result.message).to include("no longer available")
+    expect(result.message).to match(/no longer available|больше недоступно/i)
   end
 
   it "rejects a tile outside the character's current position" do
     position.update!(x: 6)
 
     expect(result.success).to be false
-    expect(result.message).to include("current cell")
+    expect(result.message).to match(/current cell|текущей клетке/i)
   end
 
   it "rejects the action when the character has no persisted position" do
     position.destroy!
 
     expect(result.success).to be false
-    expect(result.message).to include("current cell")
+    expect(result.message).to match(/current cell|текущей клетке/i)
   end
 
   it "rejects a null action type" do
@@ -82,7 +82,7 @@ RSpec.describe Game::World::PerformLocalAction do
     expect(null_result.success).to be false
   end
 
-  it "rejects a captured action whose successful flow is still deferred" do
+  it "rejects digging without an accepted action offer" do
     digging_tile = create(:map_tile_template, zone: zone.name, x: 5, y: 5,
       metadata: {"local_actions" => [{"type" => "digging", "source_id" => "dig"}]})
 
@@ -94,7 +94,7 @@ RSpec.describe Game::World::PerformLocalAction do
     ).call
 
     expect(digging_result.success).to be false
-    expect(digging_result.message).to include("not implemented")
+    expect(digging_result.message).to match(/does not match|не совпадает/i)
   end
 
   it "returns the original result and deadline when the same started offer is retried" do
@@ -158,7 +158,7 @@ RSpec.describe Game::World::PerformLocalAction do
     other_result = described_class.new(character:, tile:, local_action_type: "resource_search", action_offer: other_offer).call
 
     expect(other_result.success).to be false
-    expect(other_result.message).to include("still in progress")
+    expect(other_result.message).to match(/still in progress|ещё выполняется/i)
     expect(action_offer.reload.local_action_ends_at).to eq(deadline)
     expect(other_offer.reload.metadata).not_to have_key("local_action_ends_at")
   end
@@ -180,7 +180,7 @@ RSpec.describe Game::World::PerformLocalAction do
     action_offer.update!(target: other_tile)
 
     expect(result.success).to be false
-    expect(result.message).to include("does not match")
+    expect(result.message).to match(/does not match|не совпадает/i)
     expect(action_offer.reload.metadata).not_to have_key("local_action_ends_at")
   end
 
@@ -195,7 +195,7 @@ RSpec.describe Game::World::PerformLocalAction do
 
       expect { result }.not_to change(InventoryItem, :count)
       expect(result.success).to be true
-      expect(result.message).to eq("No bait available.")
+      expect(result.message).to eq(I18n.t("game.world.local_action.fishing.message"))
       expect(action_offer.reload.local_action_ends_at).to eq(Time.current + 30.seconds)
       expect(character.reload.fatigue_percent).to eq(7)
       expect(character.passive_skills).to eq(original_skills)
@@ -203,7 +203,7 @@ RSpec.describe Game::World::PerformLocalAction do
 
       travel 10.seconds
       repeated = described_class.new(character:, tile:, local_action_type:, action_offer:).call
-      expect(repeated.message).to eq("No bait available.")
+      expect(repeated.message).to eq(I18n.t("game.world.local_action.fishing.message"))
       expect(action_offer.reload.local_action_remaining_seconds).to eq(20)
       expect(character.reload.fatigue_percent).to eq(7)
     end
@@ -223,11 +223,11 @@ RSpec.describe Game::World::PerformLocalAction do
       expect { result }.not_to change(InventoryItem, :count)
 
       expect(result.success).to be true
-      expect(result.message).to eq("Everything went well.")
+      expect(result.message).to eq(I18n.t("game.world.local_action.drinking.message"))
       expect(character.reload.fatigue_percent).to eq(5)
       expect(action_offer.reload.local_action_ends_at).to eq(Time.current + 60.seconds)
       expect(action_offer.metadata).to include("fatigue_recovery_points" => 2, "fatigue_recovery_applied" => 2,
-        "fatigue_recovered_at" => Time.current.iso8601(6))
+        "fatigue_recovered_at" => Time.current.iso8601(6), "nature_child" => false)
       expect(Game::World::LocalActionState.new(character:).call).to eq(action_offer)
       expect(position.reload).to have_attributes(x: 5, y: 5)
     end
@@ -258,11 +258,27 @@ RSpec.describe Game::World::PerformLocalAction do
       expect(action_offer.reload.metadata["fatigue_recovery_applied"]).to eq(1)
     end
 
-    it "does not grant an unsupported Nature Child perk from a stored unknown key" do
+    it "recovers four fatigue points when Nature Child is owned" do
       character.update!(perks: {"nature_child" => true})
 
       expect(result.success).to be true
+      expect(character.reload.fatigue_percent).to eq(3)
+      expect(action_offer.reload.metadata).to include(
+        "fatigue_recovery_points" => 4,
+        "fatigue_recovery_applied" => 4,
+        "nature_child" => true
+      )
+    end
+
+    it "ignores an unknown perk key for drinking recovery" do
+      character.update!(perks: {"child_of_nature" => true})
+
+      expect(result.success).to be true
       expect(character.reload.fatigue_percent).to eq(5)
+      expect(action_offer.reload.metadata).to include(
+        "fatigue_recovery_points" => 2,
+        "nature_child" => false
+      )
     end
 
     it "does not recover fatigue after the action is removed" do
@@ -278,7 +294,10 @@ RSpec.describe Game::World::PerformLocalAction do
       action_offer
       allow(MapTileTemplate).to receive(:default_local_action_message).with("drinking").and_return(nil)
 
-      expect { result }.to raise_error(ActiveRecord::RecordInvalid, /local action result/)
+      expect { result }.to raise_error(
+        ActiveRecord::RecordInvalid,
+        /#{Regexp.escape(I18n.t("errors.local_action_result_required"))}/
+      )
       expect(character.reload.fatigue_percent).to eq(7)
       expect(action_offer.reload.local_action_ends_at).to be_nil
     end

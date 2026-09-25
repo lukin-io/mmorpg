@@ -1,0 +1,12 @@
+# Soft-release rarity fallback pools for NPC kills whose loot tables omit rarity tags.
+# Item keys must already exist via professions/world seeds (Ashen shore mats).
+rarity_pools:
+  common:
+    - rat_tail
+    - wood_chips
+  uncommon:
+    - pine_resin
+    - ashen_bandage
+  rare:
+    - ember_cedar_plank
+    - mist_spider_silk

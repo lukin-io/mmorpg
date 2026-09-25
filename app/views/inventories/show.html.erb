@@ -1,4 +1,4 @@
-<% content_for :title, "Inventory" %>
+<% content_for :title, t("game.inventory.title") %>
 
 <%#
   Inventory screen.
@@ -29,7 +29,44 @@
     <% end %>
 
     <main class="nl-inventory-main">
-      <nav class="nl-icon-strip" aria-label="Inventory categories">
+      <% if params[:item_denied].to_s == "1" %>
+        <p class="nl-quests-board__meta" data-inventory-item-denied="1">
+          <%= t("game.inventory.item_denied_next") %>
+          ·
+          <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {inventory_recovery: "world"} %>
+        </p>
+      <% end %>
+      <% if params[:equip_denied].to_s == "1" %>
+        <p class="nl-quests-board__meta" data-inventory-equip-denied="1">
+          <%= t("game.inventory.equip_denied_next") %>
+          ·
+          <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {inventory_recovery: "world"} %>
+        </p>
+      <% end %>
+      <% if params[:use_denied].to_s == "1" %>
+        <p class="nl-quests-board__meta" data-inventory-use-denied="1">
+          <%= t("game.inventory.use_denied_next") %>
+          ·
+          <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {inventory_recovery: "world"} %>
+        </p>
+      <% end %>
+      <% if params[:set_denied].to_s == "1" %>
+        <p class="nl-quests-board__meta" data-inventory-set-denied="1">
+          <%= t("game.inventory.set_denied_next") %>
+          ·
+          <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {inventory_recovery: "world"} %>
+          ·
+          <%= link_to t("game.shop.title"), shop_path(mode: "buy"), class: "nl-sheet-link", data: {inventory_recovery: "shop"} %>
+        </p>
+      <% end %>
+      <% if params[:transfer_denied].to_s == "1" %>
+        <p class="nl-quests-board__meta" data-inventory-transfer-denied="1">
+          <%= t("game.inventory.transfer_denied_next") %>
+          ·
+          <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {inventory_recovery: "world"} %>
+        </p>
+      <% end %>
+      <nav class="nl-icon-strip" aria-label="<%= t("game.inventory.categories_aria") %>">
         <% InventoriesHelper::INVENTORY_FAMILY_STRIP.each do |key| %>
           <% label = inventory_category_label(key) %>
           <% active = @category == key || (key == "things" && @category == "all") %>
@@ -47,36 +84,37 @@
         <span class="nl-icon-strip-gap" aria-hidden="true"></span>
 
         <% if @equipment.values.compact.uniq.any? %>
-          <%= button_to "Strip",
+          <%= button_to t("game.common.strip"),
             unequip_all_inventory_path(category: @category, subcategory: @subcategory, info: @info_mode),
             method: :post,
             class: "nl-icon-strip-item",
-            title: "Remove all gear",
-            aria: {label: "Remove all gear"},
-            form: {class: "nl-icon-strip-form", data: {turbo_confirm: "Remove all equipped items?"}} %>
+            title: t("game.inventory.strip_title"),
+            aria: {label: t("game.inventory.strip_title")},
+            form: {class: "nl-icon-strip-form", data: {turbo_confirm: t("game.inventory.strip_confirm")}} %>
         <% end %>
 
         <% if @info_mode == "short" %>
-          <%= link_to "Full",
+          <%= link_to t("game.common.full"),
             inventory_path(category: @category, subcategory: @subcategory, info: "full"),
             class: "nl-icon-strip-item",
-            title: "Full information" %>
+            title: t("game.inventory.full_info") %>
         <% else %>
-          <%= link_to "Brief",
+          <%= link_to t("game.common.short"),
             inventory_path(category: @category, subcategory: @subcategory, info: "short"),
             class: "nl-icon-strip-item",
-            title: "Short information" %>
+            title: t("game.inventory.short_info") %>
         <% end %>
 
-        <%= link_to "Reset",
+        <%= link_to t("game.common.reset"),
           inventory_path(info: @info_mode),
           class: "nl-icon-strip-item",
-          title: "Reset filter" %>
+          title: t("game.inventory.reset_filter") %>
       </nav>
 
       <% if inventory_equipment_family?(@category) %>
-        <nav class="nl-icon-strip nl-icon-strip--sub" aria-label="Equipment subcategories">
-          <% InventoriesHelper::THINGS_SUBCATEGORIES.each do |key, label| %>
+        <nav class="nl-icon-strip nl-icon-strip--sub" aria-label="<%= t("game.inventory.subcategories_aria") %>">
+          <% InventoriesHelper::THINGS_SUBCATEGORIES.each do |key, _english| %>
+            <% label = t("game.inventory.subcategories.#{key}") %>
             <% if @subcategory == key %>
               <span class="nl-icon-strip-item nl-icon-strip-item--active" title="<%= label %>" aria-current="page"><%= label %></span>
             <% else %>
@@ -89,8 +127,45 @@
         </nav>
       <% end %>
 
-      <div class="nl-inventory-mass">
-        Inventory mass: <b><%= @inventory.current_weight %>/<%= @inventory.max_weight %></b>
+      <% if inventory_equipment_family?(@category) || @category == "all" || @subcategory == "scrolls" %>
+        <%= render "inventories/scrolls_panel" %>
+      <% end %>
+
+      <% bag_slots = @inventory.inventory_items.where(equipped: false).count %>
+      <% bag_slot_cap = @inventory.slot_capacity.to_i %>
+      <div class="nl-inventory-mass"
+           data-inventory-mass="<%= @inventory.current_weight %>"
+           data-inventory-mass-max="<%= @inventory.max_weight %>"
+           data-inventory-slots="<%= bag_slots %>"
+           data-inventory-slots-max="<%= bag_slot_cap %>">
+        <%= t("game.inventory.mass_label") %>: <b><%= @inventory.current_weight %>/<%= @inventory.max_weight %></b>
+        ·
+        <%= t("game.inventory.slots_label", slots: bag_slots, max: bag_slot_cap) %>
+        <% wear = Game::Inventory::EquippedWear.summary_for(current_character) %>
+        <% if wear.worn.positive? %>
+          ·
+          <span class="nl-inventory-wear<%= ' nl-inventory-wear--broken' if wear.broken.positive? %>"
+                data-inventory-wear="<%= wear.worn %>"
+                title="<%= t("game.world.wear_chip_hint") %>">
+            <%= wear.broken.positive? ? t("game.world.wear_chip_broken", count: wear.broken) : t("game.world.wear_chip", count: wear.worn) %>
+          </span>
+        <% end %>
+        <% if @junk_offer_count.to_i.positive? %>
+          ·
+          <% junk_label = t("game.inventory.junk_cta_nv", count: @junk_offer_count, total: @junk_offer_total.to_i) %>
+          <% if Game::World::CityBuildingCatalog.accessible?(character: current_character, building_key: "junk_dealer") %>
+            <%= link_to junk_label,
+                  city_building_path("junk_dealer"),
+                  class: "nl-inventory-junk-link",
+                  data: {inventory_junk_total: @junk_offer_total.to_i} %>
+          <% else %>
+            <span class="nl-inventory-junk-hint"
+                  title="<%= t("game.inventory.junk_hint") %>"
+                  data-inventory-junk-total="<%= @junk_offer_total.to_i %>">
+              <%= junk_label %>
+            </span>
+          <% end %>
+        <% end %>
       </div>
 
       <div id="inventory_grid">

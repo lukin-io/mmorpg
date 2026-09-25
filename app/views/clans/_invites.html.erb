@@ -1,0 +1,30 @@
+<h2><%= t("game.clans.tab_invites") %></h2>
+<% if @invitations.any? %>
+  <ul class="nl-clan-invites">
+    <% @invitations.each do |invite| %>
+      <li>
+        <strong><%= invite.clan.name %></strong> [<%= invite.clan.tag %>]
+        — <%= invite.clan.alignment_label %>
+        · <%= t("game.clans.invite_from", name: invite.inviter_character.name) %>
+        <%= button_to t("game.clans.invite_accept"),
+              respond_invitation_clan_path,
+              method: :post,
+              params: {invitation_id: invite.id, accept: true},
+              class: "lbut" %>
+        <%= button_to t("game.clans.invite_decline"),
+              respond_invitation_clan_path,
+              method: :post,
+              params: {invitation_id: invite.id, accept: false},
+              class: "lbut" %>
+      </li>
+    <% end %>
+  </ul>
+<% else %>
+  <p class="nl-quests-board__meta"><%= t("game.clans.invites_empty") %></p>
+<% end %>
+<% if @clan.blank? %>
+  <p>
+    <%= t("game.clans.create_at_hall") %>
+    <%= link_to t("game.buildings.clan_hall_short"), city_building_path("clan_hall"), class: "lbut", data: {turbo_frame: "_top"} %>
+  </p>
+<% end %>

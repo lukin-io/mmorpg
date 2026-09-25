@@ -1,7 +1,104 @@
 <div class="location-info-panel">
-  <h3>Location</h3>
+  <h3><%= t("game.world.location") %></h3>
 
   <div class="location-description">
     <p><strong><%= location_label %></strong> [<%= position.x %>, <%= position.y %>]</p>
   </div>
+  <% if params[:shop_denied].to_s == "1" %>
+    <p class="nl-quests-board__meta" data-shop-denied="1">
+      <%= t("game.shop.denied_next") %>
+      ·
+      <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {shop_recovery: "world"} %>
+    </p>
+  <% end %>
+  <% if params[:building_denied].to_s == "1" %>
+    <p class="nl-quests-board__meta" data-building-denied="1">
+      <%= t("game.buildings.denied_next") %>
+      ·
+      <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {building_recovery: "world"} %>
+    </p>
+  <% end %>
+  <% if params[:arena_gate_denied].to_s == "1" %>
+    <p class="nl-quests-board__meta" data-arena-gate-denied="1">
+      <%= t("game.world.arena_gate_denied_next") %>
+      ·
+      <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {arena_recovery: "world"} %>
+      ·
+      <%= link_to t("arena.nav.arena"), world_path, class: "nl-sheet-link", data: {arena_recovery: "square"} %>
+    </p>
+  <% end %>
+  <% if params[:assault_denied].to_s == "1" %>
+    <p class="nl-quests-board__meta" data-assault-denied="1">
+      <%= t("game.world.assault_denied_next") %>
+      ·
+      <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {assault_recovery: "world"} %>
+    </p>
+  <% end %>
+  <% if params[:obelisk_denied].to_s == "1" %>
+    <p class="nl-quests-board__meta" data-obelisk-denied="1">
+      <%= t("game.buildings.obelisk_denied_next") %>
+      ·
+      <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {obelisk_recovery: "world"} %>
+    </p>
+  <% end %>
+  <% if params[:hotspot_denied].to_s == "1" %>
+    <p class="nl-quests-board__meta" data-hotspot-denied="1">
+      <%= t("game.world.hotspot_denied_next") %>
+      ·
+      <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {hotspot_recovery: "world"} %>
+    </p>
+  <% end %>
+  <% if params[:action_denied].to_s == "1" %>
+    <p class="nl-quests-board__meta" data-action-denied="1">
+      <%= t("game.world.action_denied_next") %>
+      ·
+      <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {action_recovery: "world"} %>
+    </p>
+  <% end %>
+  <% if params[:merchant_denied].to_s == "1" %>
+    <p class="nl-quests-board__meta" data-merchant-denied="1">
+      <%= t("game.shop.merchant_denied_next") %>
+      ·
+      <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {merchant_recovery: "world"} %>
+    </p>
+  <% end %>
+  <% if params[:location_denied].to_s == "1" %>
+    <p class="nl-quests-board__meta" data-location-denied="1">
+      <%= t("game.locations.denied_next") %>
+      ·
+      <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {location_recovery: "world"} %>
+    </p>
+  <% end %>
+  <% if params[:character_denied].to_s == "1" %>
+    <p class="nl-quests-board__meta" data-character-denied="1">
+      <%= t("game.sheet.denied_next") %>
+      ·
+      <%= link_to t("arena.nav.character"), player_path(name: current_character.name), class: "nl-sheet-link", data: {character_recovery: "sheet"} %>
+      ·
+      <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {character_recovery: "world"} %>
+    </p>
+  <% end %>
+  <% if params[:player_denied].to_s == "1" %>
+    <p class="nl-quests-board__meta" data-player-denied="1">
+      <%= t("game.profile.missing_next") %>
+      ·
+      <%= link_to t("arena.nav.character"), player_path(name: current_character.name), class: "nl-sheet-link", data: {player_recovery: "sheet"} %>
+      ·
+      <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {player_recovery: "world"} %>
+    </p>
+  <% end %>
+  <% if params[:airship_denied].to_s == "1" %>
+    <p class="nl-quests-board__meta" data-airship-denied="1">
+      <%= t("game.airship.denied_next") %>
+      ·
+      <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {airship_recovery: "world"} %>
+    </p>
+  <% end %>
+  <% if params[:chat_denied].to_s == "1" %>
+    <p class="nl-quests-board__meta" data-chat-denied="1">
+      <%= t("game.chat.denied_next") %>
+      ·
+      <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {chat_recovery: "world"} %>
+    </p>
+  <% end %>
 </div>

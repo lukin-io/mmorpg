@@ -29,6 +29,6 @@ RSpec.describe Chat::LocalContext do
   it "does not accept an arbitrary router local key or label" do
     channel = Chat::ChannelRouter.new(user: character.user).resolve(scope: :local, context: {local_key: "remote", name: "Forged"})
     expect(channel.metadata).to eq("location_key" => described_class.new(character:).key)
-    expect(channel.name).to eq("Local")
+    expect(channel.name).to eq(I18n.t("game.chat.local"))
   end
 end

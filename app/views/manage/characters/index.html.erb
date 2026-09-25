@@ -1,0 +1,30 @@
+<% content_for :title, t("manage.characters.title") %>
+<%= render "manage/shared/page_header",
+      title: t("manage.characters.title"),
+      description: t("manage.characters.hint") %>
+
+<%= form_with url: manage_characters_path, method: :get, local: true, class: "nl-inline-action-form" do |f| %>
+  <%= f.text_field :q, value: @query, placeholder: t("manage.characters.search"), class: "LogintextBox4" %>
+  <%= f.submit t("manage.characters.find"), class: "lbut" %>
+<% end %>
+
+<table class="nl-sheet-table">
+  <thead>
+    <tr>
+      <th><%= t("manage.characters.name") %></th>
+      <th><%= t("manage.characters.level") %></th>
+      <th><%= t("manage.characters.rating") %></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @characters.each do |character| %>
+      <tr>
+        <td><%= character.name %></td>
+        <td><%= character.level %></td>
+        <td><%= character.metadata.to_h["combat_rating"].to_i %></td>
+        <td><%= link_to t("manage.characters.open"), manage_character_path(character), class: "nl-sheet-link" %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

@@ -9,7 +9,7 @@ RSpec.describe "Seeded world village resume", type: :system, js: true do
     user = create(:user)
     character = create(:character, user:, level: 10)
     city = Zone.find_by!(name: "Outpost")
-    region = Zone.find_by!(name: "Outpost Surroundings")
+    region = Zone.find_by!(name: "Пепельный Берег")
     position = create(:character_position, character:, zone: city, x: 0, y: 0)
 
     # Keep the real authored route and command lifecycle; shorten only the

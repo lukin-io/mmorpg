@@ -1,0 +1,18 @@
+<% content_for :title, "Edit fortress · Manage" %>
+<%= render "manage/shared/page_header", title: @fortress.name, description: @fortress.fortress_key %>
+<%= form_with model: @fortress, url: manage_world_fortress_path(@fortress), method: :patch, class: "nl-manage-form", local: true do |f| %>
+  <div class="nl-manage-field">
+    <%= f.label :name %>
+    <%= f.text_field :name %>
+  </div>
+  <div class="nl-manage-field">
+    <%= f.label :owner_clan_id, t("manage.views.owner_clan") %>
+    <%= f.collection_select :owner_clan_id, @clans, :id, :name, include_blank: t("manage.views.no_owner") %>
+  </div>
+  <div class="nl-manage-field">
+    <%= f.label :owner_character_id, t("manage.views.owner_character_id") %>
+    <%= f.number_field :owner_character_id, value: @fortress.owner_character_id %>
+  </div>
+  <%= f.submit t("manage.save"), class: "lbut" %>
+  <%= link_to t("manage.back"), manage_world_fortresses_path, class: "lbut" %>
+<% end %>

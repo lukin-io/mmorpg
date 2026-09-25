@@ -5,7 +5,7 @@ require "rails_helper"
 RSpec.describe MapTileTemplate, type: :model do
   describe "presence label" do
     it "accepts a bounded authored label and rejects malformed labels" do
-      expect(build(:map_tile_template, metadata: {"presence_label" => "Outpost Surroundings, Pond"})).to be_valid
+      expect(build(:map_tile_template, metadata: {"presence_label" => "Пепельный Берег, Pond"})).to be_valid
       [nil, "", "  ", 123, {}, "a" * 121].each do |label|
         cell = build(:map_tile_template, metadata: {"presence_label" => label})
         expect(cell).not_to be_valid
@@ -68,7 +68,7 @@ RSpec.describe MapTileTemplate, type: :model do
       tile[:zone] = "#<Zone:0x000012345>"  # Bypass setter to simulate corrupted data
 
       expect(tile).not_to be_valid
-      expect(tile.errors[:zone]).to include("must be a zone name string, not a Zone object")
+      expect(tile.errors[:zone]).to include(I18n.t("manage.zone_must_be_name"))
     end
   end
 
@@ -145,16 +145,14 @@ RSpec.describe MapTileTemplate, type: :model do
       )
 
       expect(tile).not_to be_valid
-      expect(tile.errors[:metadata]).to include("cell_art requires source_map metadata")
+      expect(tile.errors[:metadata]).to include(I18n.t("manage.cell_art_requires_source_map"))
     end
 
     it "rejects an unknown art key" do
       tile = build(:map_tile_template, :with_invalid_cell_art)
 
       expect(tile).not_to be_valid
-      expect(tile.errors[:metadata]).to include(
-        "cell_art must use a configured 100x100 source-backed art slice"
-      )
+      expect(tile.errors[:metadata]).to include(I18n.t("manage.cell_art_slice_invalid"))
     end
 
     it "rejects malformed, null-coordinate, and out-of-bounds art references" do
@@ -175,7 +173,7 @@ RSpec.describe MapTileTemplate, type: :model do
       )
 
       expect(malformed).not_to be_valid
-      expect(malformed.errors[:metadata]).to include("cell_art must be an object")
+      expect(malformed.errors[:metadata]).to include(I18n.t("manage.cell_art_object"))
       expect(null_coordinate).not_to be_valid
       expect(out_of_bounds).not_to be_valid
     end
@@ -234,6 +232,28 @@ RSpec.describe MapTileTemplate, type: :model do
       expect(MapTileTemplate.local_action_implemented?(nil)).to be false
     end
 
+    it "resolves structural default labels and messages through i18n" do
+      expect(MapTileTemplate.player_local_action_label("resource_search", "Look Around"))
+        .to eq(I18n.t("game.world.local_action.resource_search.label"))
+      expect(MapTileTemplate.player_local_action_label("resource_search", "Custom Look"))
+        .to eq("Custom Look")
+      expect(MapTileTemplate.player_local_action_message("fishing", nil))
+        .to eq(I18n.t("game.world.local_action.fishing.message"))
+      expect(MapTileTemplate.player_local_action_message("fishing", "Custom bait note"))
+        .to eq("Custom bait note")
+      expect(MapTileTemplate.player_local_action_message("resource_search", "Nothing found."))
+        .to eq(I18n.t("game.world.local_action.resource_search.nothing_found"))
+      expect(MapTileTemplate.player_local_action_message("resource_search", "Nothing useful here."))
+        .to eq(I18n.t("game.world.local_action.resource_search.message"))
+      expect(MapTileTemplate.player_local_action_description("resource_search", "Search for herbs and local resources."))
+        .to eq(I18n.t("game.world.local_action.resource_search.description"))
+      expect(MapTileTemplate.player_local_action_description("resource_search", "Search this cell for herbs or local resources."))
+        .to eq(I18n.t("game.world.local_action.resource_search.description"))
+      expect(MapTileTemplate.player_local_action_description("resource_search", "Custom scout note"))
+        .to eq("Custom scout note")
+      expect(MapTileTemplate.local_action_type_for_world_action("search_resources")).to eq("resource_search")
+    end
+
     it "does not expose an inactive local action" do
       tile = build(:map_tile_template, :with_inactive_resource_search)
 
@@ -248,7 +268,9 @@ RSpec.describe MapTileTemplate, type: :model do
       )
 
       expect(tile).not_to be_valid
-      expect(tile.errors[:metadata].join).to include("unsupported local action")
+      expect(tile.errors[:metadata]).to include(
+        I18n.t("manage.local_action_unsupported", type: "generic_gather".inspect)
+      )
     end
 
     it "rejects a mismatched Neverlands source id" do
@@ -258,7 +280,9 @@ RSpec.describe MapTileTemplate, type: :model do
       )
 
       expect(tile).not_to be_valid
-      expect(tile.errors[:metadata].join).to include("must use source id look")
+      expect(tile.errors[:metadata]).to include(
+        I18n.t("manage.local_action_source_id", type: "resource_search", source_id: "look")
+      )
     end
 
     it "rejects duplicate action types on one cell" do
@@ -273,21 +297,23 @@ RSpec.describe MapTileTemplate, type: :model do
       )
 
       expect(tile).not_to be_valid
-      expect(tile.errors[:metadata].join).to include("duplicate local action types")
+      expect(tile.errors[:metadata]).to include(
+        I18n.t("manage.local_action_duplicate_types", types: "resource_search")
+      )
     end
 
     it "rejects null and non-object local action entries" do
       tile = build(:map_tile_template, metadata: {"local_actions" => [nil]})
 
       expect(tile).not_to be_valid
-      expect(tile.errors[:metadata]).to include("local action must be an object")
+      expect(tile.errors[:metadata]).to include(I18n.t("manage.local_action_object"))
     end
 
     it "rejects a non-array local action container" do
       tile = build(:map_tile_template, metadata: {"local_actions" => {"type" => "resource_search"}})
 
       expect(tile).not_to be_valid
-      expect(tile.errors[:metadata]).to include("local_actions must be an array")
+      expect(tile.errors[:metadata]).to include(I18n.t("manage.local_actions_array"))
     end
 
     it "allows the zero-coordinate region boundary" do

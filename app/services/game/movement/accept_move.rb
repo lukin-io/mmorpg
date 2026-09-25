@@ -2,8 +2,9 @@
 
 module Game
   module Movement
-    # Validates an owned move before resolving same-cell interruption or starting
-    # timed travel. Both results share the character lock with other World actions.
+    # Validates an owned move before starting timed travel. Same-cell hostiles
+    # do not block leaving the tile (escape); they still interrupt Look/Enter
+    # and shell navigation through InterruptAction.
     class AcceptMove
       Result = Struct.new(:command, :position, :interruption, keyword_init: true)
 
@@ -22,28 +23,29 @@ module Game
         Game::Movement::CompleteMove.new(character:).call
         character.with_lock do
           character.reload
-          raise violation("Disembark before moving on foot") if character.active_airship_journey
+          raise violation(I18n.t("game.world.movement_disembark")) if character.active_airship_journey
 
           position = respawn_service.ensure_position!.reload
-          raise violation("Wilderness movement is unavailable here") unless position.zone.outdoor?
+          raise violation(I18n.t("game.world.wilderness_unavailable")) unless position.zone.outdoor?
           ensure_not_already_moving!
           if Game::World::LocalActionState.new(character:).call
-            raise violation("A local action is already in progress")
+            raise violation(I18n.t("game.world.local_action_in_progress"))
           end
           ensure_not_fatigued!
+          if Game::Combat::InjuryState.new(character:).blocks_movement?
+            raise violation(I18n.t("game.injuries.blocks_movement"))
+          end
 
           command = find_offer!(position)
 
           command.with_lock do
             command.reload
-            raise violation("Movement offer is no longer available") unless command.offered?
+            raise violation(I18n.t("game.world.movement_offer_unavailable")) unless command.offered?
             validate_offer!(command, position)
 
-            interruption = Game::World::InterruptAction.new(character:).call
-            if interruption.interrupted?
-              next Result.new(command:, position:, interruption:)
-            end
-
+            # Escape is always allowed: a same-cell hostile must not soft-lock the
+            # player on the tile. Look / Enter / shell navigation still run
+            # InterruptAction and can open the fight without moving.
             now = Time.current
             command.update!(
               status: :moving,
@@ -66,29 +68,29 @@ module Game
       def ensure_not_fatigued!
         return unless Characters::FatigueService.new(character:, rules:).outdoor_actions_blocked?
 
-        raise violation("Too fatigued to move")
+        raise violation(I18n.t("game.world.movement_too_fatigued"))
       end
 
       def ensure_not_already_moving!
         return unless MovementCommand.moving.where(character:).exists?
 
-        raise violation("Movement already in progress")
+        raise violation(I18n.t("game.flashes.movement_in_progress"))
       end
 
       def find_offer!(position)
         scope = MovementCommand.offered.where(character:, zone: position.zone, action_key:)
         scope = scope.where(target_x:, target_y:) if target_x && target_y
-        scope.order(created_at: :desc).first || raise(violation("Movement offer is no longer available"))
+        scope.order(created_at: :desc).first || raise(violation(I18n.t("game.world.movement_offer_unavailable")))
       end
 
       def validate_offer!(command, position)
-        raise violation("Movement offer has expired") if command.expired_offer?
+        raise violation(I18n.t("game.world.movement_offer_expired")) if command.expired_offer?
         if direction.present? && command.direction != direction.to_s
-          raise violation("Movement offer does not match requested direction")
+          raise violation(I18n.t("game.world.movement_offer_direction_mismatch"))
         end
 
         unless command.zone_id == position.zone_id && command.from_x == position.x && command.from_y == position.y
-          raise violation("Movement offer does not match current position")
+          raise violation(I18n.t("game.world.movement_offer_position_mismatch"))
         end
 
         unless Game::Movement::Directions.matches?(
@@ -98,12 +100,12 @@ module Game
           target_x: command.target_x,
           target_y: command.target_y
         )
-          raise violation("Movement offer is not an adjacent step")
+          raise violation(I18n.t("game.world.movement_offer_not_adjacent"))
         end
 
         provider = Game::Movement::TileProvider.new(zone: position.zone)
         validator = Game::Movement::MovementValidator.new(provider)
-        raise violation("Tile is not passable") unless validator.valid?(command.target_x, command.target_y)
+        raise violation(I18n.t("game.world.tile_not_passable")) unless validator.valid?(command.target_x, command.target_y)
       end
 
       def cancel_sibling_offers!(accepted_command)

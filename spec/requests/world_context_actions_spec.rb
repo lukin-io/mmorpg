@@ -19,6 +19,7 @@ RSpec.describe "World context actions", type: :request do
 
   it "persists inventory as the post-fight destination when an NPC interrupts" do
     create(:tile_npc, :multi_npc_encounter, zone: zone.name, x: 5, y: 5)
+    grant_bait!(character)
 
     expect {
       post world_context_action_path, params: {context: "inventory"}
@@ -65,7 +66,7 @@ RSpec.describe "World context actions", type: :request do
     post world_context_action_path, params: {context: "inventory"}
 
     expect(response).to redirect_to(world_path)
-    expect(flash[:alert]).to include("Movement already in progress")
+    expect(flash[:alert]).to include(I18n.t("game.flashes.movement_in_progress"))
     expect(ArenaMatch.count).to eq(0)
     expect(movement.reload).to be_moving
     expect(position.reload).to have_attributes(x: 5, y: 5)

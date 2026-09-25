@@ -42,7 +42,7 @@ RSpec.describe Game::Shop::Sale do
 
     result = described_class.new(character:, inventory_item: item, action_key: offer.action_key).call
 
-    expect(result).to have_attributes(success: false, message: "Your wallet cannot receive this payment right now.")
+    expect(result).to have_attributes(success: false, message: I18n.t("game.shop.wallet_payment_blocked"))
     expect(wallet.reload.nv_balance).to eq(maximum_balance - BigDecimal("1.39"))
     expect(wallet.currency_transactions).to be_empty
     expect(item.reload.attributes).to eq(original_item)
@@ -66,5 +66,42 @@ RSpec.describe Game::Shop::Sale do
     expect(account.reload.nv_balance).to eq(BigDecimal("998.60"))
     expect(stock.reload.current).to eq(6)
     expect(offer.reload).to be_completed
+  end
+
+  it "rejects when the shop account lacks NV without mutating inventory" do
+    offer = offered_sale
+    account.update!(nv_balance: 0)
+    original_qty = item.quantity
+
+    result = described_class.new(character:, inventory_item: item, action_key: offer.action_key).call
+
+    expect(result).to have_attributes(success: false, message: I18n.t("game.shop.shop_no_nv"))
+    expect(item.reload.quantity).to eq(original_qty)
+    expect(wallet.reload.nv_balance).to eq(100)
+    expect(stock.reload.current).to eq(5)
+  end
+
+  it "rejects when shop stock cannot accept a return" do
+    offer = offered_sale
+    stock.update!(current: stock.maximum)
+
+    result = described_class.new(character:, inventory_item: item, action_key: offer.action_key).call
+
+    expect(result).to have_attributes(success: false, message: I18n.t("game.shop.shop_full"))
+    expect(item.reload).to be_persisted
+    expect(wallet.reload.nv_balance).to eq(100)
+    expect(account.reload.nv_balance).to eq(1_000)
+  end
+
+  it "rejects sales without an active trading license" do
+    CharacterLicense.where(character:).delete_all
+    offer = offered_sale
+
+    result = described_class.new(character:, inventory_item: item, action_key: offer.action_key).call
+
+    expect(result.success).to be(false)
+    expect(result.message).to eq(I18n.t("game.shop.sell_trading_license_required"))
+    expect(item.reload).to be_persisted
+    expect(wallet.reload.nv_balance).to eq(100)
   end
 end

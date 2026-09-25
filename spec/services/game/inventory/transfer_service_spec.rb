@@ -146,7 +146,7 @@ RSpec.describe Game::Inventory::TransferService do
       join_workers([gift_worker, purchase_worker])
 
       expect(gift_results.pop).to have_attributes(success: true)
-      expect(purchase_results.pop).to have_attributes(success: false, message: "Inventory is overloaded")
+      expect(purchase_results.pop).to have_attributes(success: false, message: I18n.t("game.inventory.inventory_overloaded"))
       expect(target_inventory.reload.current_weight).to eq(target_inventory.max_weight)
       expect(target_inventory.inventory_items.sum("weight * quantity")).to eq(target_inventory.current_weight)
       expect(target_inventory.inventory_items.where(item_template: template).count).to eq(1)

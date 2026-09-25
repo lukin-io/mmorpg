@@ -161,22 +161,46 @@ RSpec.describe ArenaHelper, type: :helper do
   end
 
 
-  describe "#arena_attack_options" do
-    it "exposes physical attacks without inventing selector injections" do
-      expect(helper.arena_attack_options(participation).keys).to eq(%w[simple aimed])
-    end
+  describe "#arena_match_trauma_value" do
+    it "renders trauma percent from the match attribute" do
+      arena_match.update!(trauma_percent: 30)
 
-    it "adds attacks injected by the captured fight profile" do
-      arena_match.update!(
-        metadata: {
-          "combat_profile" => {
-            "injected_attack_keys" => %w[spirit_arrow mind_blast]
-          }
-        }
+      expect(helper.arena_match_trauma_value(arena_match)).to eq(
+        I18n.t("game.fight.trauma_value", percent: 30)
       )
+    end
+  end
 
-      expect(helper.arena_attack_options(participation).keys).to eq(
-        %w[simple aimed spirit_arrow mind_blast]
+  describe "#fight_option_cost" do
+    it "appends localized mana when present" do
+      expect(helper.fight_option_cost(2, 5)).to eq(
+        I18n.t("game.fight.option_cost_with_mana", ap: 2, mana: 5)
+      )
+      expect(helper.fight_option_cost(2, 0)).to eq("2")
+    end
+  end
+
+  describe "#fight_action_display_name" do
+    it "falls back to combat attack i18n when name is blank" do
+      I18n.with_locale(:ru) do
+        expect(helper.fight_action_display_name("simple", {})).to eq(
+          I18n.t("game.combat.attack_types.simple")
+        )
+      end
+    end
+  end
+
+  describe "#format_duration" do
+    it "formats durations through fight i18n units" do
+      expect(helper.format_duration(nil)).to eq(I18n.t("game.fight.duration_zero"))
+      expect(helper.format_duration(45)).to eq(I18n.t("game.fight.duration_seconds", count: 45))
+      expect(helper.format_duration(180)).to eq(I18n.t("game.fight.duration_minutes", count: 3))
+      expect(helper.format_duration(195)).to eq(
+        I18n.t("game.fight.duration_minutes_seconds", minutes: 3, seconds: 15)
+      )
+      expect(helper.format_duration(3600)).to eq(I18n.t("game.fight.duration_hours", count: 1))
+      expect(helper.format_duration(3900)).to eq(
+        I18n.t("game.fight.duration_hours_minutes", hours: 1, minutes: 5)
       )
     end
   end

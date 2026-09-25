@@ -228,4 +228,30 @@ RSpec.describe Game::Skills::PassiveSkillRegistry do
       expect(described_class.by_category(:peace_world)).to all(include(pool: :peace))
     end
   end
+
+  describe ".display_name" do
+    it "prefers the captured Russian source label for ru locale" do
+      definition = described_class.find(:wanderer)
+
+      I18n.with_locale(:ru) do
+        expect(described_class.display_name(definition)).to eq("Странник")
+      end
+      I18n.with_locale(:en) do
+        expect(described_class.display_name(definition)).to eq("Wanderer")
+      end
+    end
+  end
+
+  describe ".can_spend?" do
+    it "returns localized rejection reasons" do
+      character = create(:character, combat_skill_points: 0, peace_skill_points: 0)
+
+      I18n.with_locale(:ru) do
+        expect(described_class.can_spend?(:wanderer, character)).to include(
+          allowed: false,
+          reason: I18n.t("game.skills.errors.no_pool_points", pool: I18n.t("game.skills.pools.peace"))
+        )
+      end
+    end
+  end
 end

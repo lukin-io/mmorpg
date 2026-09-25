@@ -115,7 +115,7 @@ class NpcTemplate < ApplicationRecord
 
     current_key = self.class.where(id:).lock.pick(:npc_key)
     if tile_npcs.exists? || roster_reference_exists?(current_key)
-      errors.add(:npc_key, "cannot change while referenced by cell encounters")
+      errors.add(:npc_key, I18n.t("manage.npc_key_referenced"))
     end
   end
 
@@ -123,7 +123,7 @@ class NpcTemplate < ApplicationRecord
     current_key = self.class.where(id:).lock.pick(:npc_key)
     return unless roster_reference_exists?(current_key)
 
-    errors.add(:base, "Cannot delete an NPC template referenced by cell encounter rosters")
+    errors.add(:base, I18n.t("manage.npc_template_roster_referenced"))
     throw(:abort)
   end
 

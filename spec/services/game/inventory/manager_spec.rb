@@ -98,7 +98,7 @@ RSpec.describe Game::Inventory::Manager do
       end
     end
 
-    context "when inventory is full" do
+    context "when many distinct stacks already exist" do
       before do
         inventory.update!(slot_capacity: 1)
         inventory.inventory_items.create!(
@@ -108,14 +108,18 @@ RSpec.describe Game::Inventory::Manager do
         )
       end
 
-      it "raises CapacityExceededError" do
+      it "still accepts a new stack without a hard slot limit" do
+        other = create(:item_template, :material, name: "Extra chips", weight: 1, stack_limit: 10)
+
         expect {
-          manager.add_item!(item_template: item_template, quantity: 1)
-        }.to raise_error(Game::Inventory::Manager::CapacityExceededError)
+          manager.add_item!(item_template: other, quantity: 1)
+        }.not_to raise_error
+
+        expect(inventory.inventory_items.count).to eq(2)
       end
     end
 
-    context "when only part of a multi-stack quantity fits" do
+    context "when only part of a multi-stack quantity fits prior stacks" do
       let(:small_stack_item) do
         create(:item_template, :material, name: "Small stack loot", weight: 1, stack_limit: 10)
       end
@@ -131,28 +135,29 @@ RSpec.describe Game::Inventory::Manager do
         inventory.update!(slot_capacity: 1, current_weight: 8)
       end
 
-      it "rolls back the filled portion and its weight when the next stack cannot be created" do
-        expect {
-          manager.add_item!(item_template: small_stack_item, quantity: 5)
-        }.to raise_error(Game::Inventory::Manager::CapacityExceededError, "No free inventory slots")
+      it "opens another stack when the existing stack is full" do
+        manager.add_item!(item_template: small_stack_item, quantity: 5)
 
-        expect(partial_stack.reload.quantity).to eq(8)
-        expect(inventory.reload.current_weight).to eq(8)
-        expect(inventory.inventory_items.where(item_template: small_stack_item).count).to eq(1)
+        expect(partial_stack.reload.quantity).to eq(10)
+        expect(inventory.reload.current_weight).to eq(13)
+        expect(inventory.inventory_items.where(item_template: small_stack_item).count).to eq(2)
       end
     end
 
-    context "when weight limit would be exceeded" do
+    context "when carried mass exceeds the soft capacity" do
       let(:heavy_item) { create(:item_template, :material, name: "Heavy Wood Chips", weight: 50, stack_limit: 10) }
 
       before do
         inventory.update!(weight_capacity: 60, current_weight: 50)
+        allow(inventory).to receive(:max_weight).and_return(60)
       end
 
-      it "raises CapacityExceededError" do
+      it "still adds the item and records overweight mass" do
         expect {
           manager.add_item!(item_template: heavy_item, quantity: 1)
-        }.to raise_error(Game::Inventory::Manager::CapacityExceededError, "Inventory is overloaded")
+        }.not_to raise_error
+
+        expect(inventory.reload.current_weight).to eq(100)
       end
     end
   end
@@ -192,6 +197,22 @@ RSpec.describe Game::Inventory::Manager do
       expect {
         manager.remove_item!(item_template: item_template, quantity: 15)
       }.to raise_error(Game::Inventory::Manager::InventoryUnderflowError)
+    end
+  end
+
+  describe ".use_item" do
+    it "consumes a potion and applies its timed buff instead of instant healing" do
+      Game::Professions::Templates.ensure_craft_items!
+      potion = ItemTemplate.find_by!(key: "strength_brew")
+      item = manager.add_item!(item_template: potion, quantity: 1)
+      character.update!(current_hp: 1)
+
+      result = described_class.use_item(character, item)
+
+      expect(result[:success]).to be(true)
+      expect(character.reload.current_hp).to eq(1)
+      expect(Game::Characters::TimedBuffs.new(character:).modifier("attack")).to eq(8)
+      expect(item).to be_destroyed
     end
   end
 end

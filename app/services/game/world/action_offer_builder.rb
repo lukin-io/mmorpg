@@ -83,8 +83,10 @@ module Game
             metadata: {
               local_action_type:,
               source_id: local_action["source_id"],
-              label: local_action["label"].presence ||
-                MapTileTemplate.default_local_action_label(local_action_type)
+              label: MapTileTemplate.player_local_action_label(
+                local_action_type,
+                local_action["label"]
+              )
             }
           )
         end

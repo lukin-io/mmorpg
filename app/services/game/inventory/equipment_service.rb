@@ -15,12 +15,12 @@ module Game
       end
 
       def equip!
-        return {success: false, error: "Item not found"} unless item
-        return {success: false, error: "Item is not equipment"} unless item.item_template.equippable?
-        return {success: false, error: "Item is already equipped"} if item.equipped?
+        return {success: false, error: I18n.t("game.inventory.item_not_found")} unless item
+        return {success: false, error: I18n.t("game.inventory.item_not_equipment")} unless item.item_template.equippable?
+        return {success: false, error: I18n.t("game.inventory.item_already_equipped")} if item.equipped?
 
         target_slot = target_slot_for(item)
-        return {success: false, error: "Invalid equipment slot"} unless target_slot
+        return {success: false, error: I18n.t("game.inventory.invalid_equipment_slot")} unless target_slot
 
         requirements = Game::Inventory::RequirementChecker.call(character:, item:)
         return {success: false, error: requirements[:error]} unless requirements[:allowed]
@@ -36,10 +36,10 @@ module Game
       end
 
       def unequip!
-        return {success: false, error: "Slot not specified"} unless slot
+        return {success: false, error: I18n.t("game.inventory.slot_not_specified")} unless slot
 
         existing = equipped_in_slot(slot)
-        return {success: false, error: "No item in slot"} unless existing
+        return {success: false, error: I18n.t("game.inventory.no_item_in_slot")} unless existing
 
         existing.update!(equipped: false, equipment_slot: nil)
         {success: true, unequipped_item: existing}

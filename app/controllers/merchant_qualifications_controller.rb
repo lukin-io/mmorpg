@@ -20,7 +20,11 @@ class MerchantQualificationsController < ApplicationController
   def perform_step(step)
     authorize current_character, :manage_progression?
     result = Game::Shop::MerchantQualification.new(character: current_character).call(action: step)
-    destination = step == :pay ? shop_path(mode: "licenses") : city_building_path("market")
-    redirect_to destination, status: :see_other, **{result.success ? :notice : :alert => result.message}
+    if result.success
+      destination = step == :pay ? shop_path(mode: "licenses") : city_building_path("market")
+      redirect_to destination, status: :see_other, notice: result.message
+    else
+      redirect_to world_path(merchant_denied: 1), status: :see_other, alert: result.message
+    end
   end
 end

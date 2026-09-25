@@ -1,0 +1,40 @@
+<% content_for :title, t("game.trade_hub.title") %>
+
+<section class="nl-trade-hub" data-trade-hub="1" data-trade-hub-tab="<%= @tab %>">
+  <header class="nl-trade-hub__header">
+    <p class="nl-handbook__banner" data-trade-hub-banner="1">
+      <%= image_tag "cc0/ui/trade-hub-banner.png", alt: "", class: "nl-handbook__banner-img", width: 960, height: 540 %>
+    </p>
+    <p class="nl-trade-hub__back">
+      <%= link_to t("nav.return"), world_path, class: "nl-sheet-link", data: {turbo_frame: "_top"} %>
+    </p>
+    <h1><%= t("game.trade_hub.title") %></h1>
+    <p><%= t("game.trade_hub.lead") %></p>
+    <p class="nl-trade-hub__wallet"><%= t("game.trade_hub.wallet", nv: @nv, vm: @vm) %></p>
+    <% if Game::Seasons::Catalog.active? %>
+      <p class="nl-quests-board__meta" data-mist-craft-hint="1" data-season-fomo="1">
+        <%= t("game.economy.combat_needs_crafter") %>
+        · <%= link_to t("game.season.nav"), season_path, class: "nl-sheet-link", data: {turbo_frame: "_top"} %>
+        · <%= link_to t("game.trade_hub.tabs.auction"), trade_hub_path(tab: "auction"), class: "nl-sheet-link" %>
+      </p>
+    <% end %>
+    <p class="nl-trade-hub__clan">
+      <%= link_to t("game.clans.tab_treasury"), clan_path(tab: "treasury"), class: "nl-sheet-link" %>
+      ·
+      <%= link_to t("game.clans.tab_fortresses"), clan_path(tab: "fortresses"), class: "nl-sheet-link" %>
+    </p>
+  </header>
+
+  <nav class="nl-trade-hub__tabs" aria-label="<%= t("game.trade_hub.title") %>">
+    <% TradeHubController::TABS.each do |tab| %>
+      <%= link_to t("game.trade_hub.tabs.#{tab}"),
+            trade_hub_path(tab:),
+            class: "nl-trade-hub__tab#{' is-active' if @tab == tab}",
+            data: {"trade-hub-tab": tab} %>
+    <% end %>
+  </nav>
+
+  <div class="nl-trade-hub__body">
+    <%= render "trade_hub/#{@tab}" %>
+  </div>
+</section>

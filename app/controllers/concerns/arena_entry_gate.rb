@@ -26,16 +26,16 @@ module ArenaEntryGate
     end
 
     respond_to do |format|
-      format.html { redirect_to world_path, alert: "Enter the arena through the city building." }
-      format.turbo_stream { redirect_to world_path, status: :see_other, alert: "Enter the arena through the city building." }
+      format.html { redirect_to world_path(arena_gate_denied: 1), alert: I18n.t("game.flashes.arena_gate") }
+      format.turbo_stream { redirect_to world_path(arena_gate_denied: 1), status: :see_other, alert: I18n.t("game.flashes.arena_gate") }
       format.json do
         render json: {
           success: false,
           error: "arena_city_entry_required",
-          errors: ["Enter the arena through the city building."]
+          errors: [I18n.t("game.flashes.arena_gate")]
         }, status: :forbidden
       end
-      format.any { redirect_to world_path, alert: "Enter the arena through the city building." }
+      format.any { redirect_to world_path(arena_gate_denied: 1), alert: I18n.t("game.flashes.arena_gate") }
     end
   end
 

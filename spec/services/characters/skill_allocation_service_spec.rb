@@ -23,7 +23,7 @@ RSpec.describe Characters::SkillAllocationService do
 
     expect {
       described_class.new(character:).call(allocations: {invented: 1, combat.fetch(:key) => 1})
-    }.to raise_error(described_class::AllocationError, /No allocatable/)
+    }.to raise_error(described_class::AllocationError, I18n.t("game.flashes.alloc_no_allocatable_skills"))
     expect(character.reload.combat_skill_points).to eq(2)
   end
 
@@ -32,11 +32,11 @@ RSpec.describe Characters::SkillAllocationService do
     service = described_class.new(character:)
 
     expect { service.call(allocations: {combat_key => 3}) }
-      .to raise_error(described_class::AllocationError, /combat/)
+      .to raise_error(described_class::AllocationError, I18n.t("game.flashes.alloc_not_enough_combat_points"))
     expect { service.call(allocations: {}) }
-      .to raise_error(described_class::AllocationError, /No skills/)
+      .to raise_error(described_class::AllocationError, I18n.t("game.flashes.alloc_no_skills"))
     expect { service.call(allocations: {combat_key => nil}) }
-      .to raise_error(described_class::AllocationError, /No skills/)
+      .to raise_error(described_class::AllocationError, I18n.t("game.flashes.alloc_no_skills"))
   end
 
   it "reloads under the row lock for stale competing allocations" do
@@ -49,7 +49,7 @@ RSpec.describe Characters::SkillAllocationService do
 
     expect {
       described_class.new(character: stale_second).call(allocations: {combat_key => 1})
-    }.to raise_error(described_class::AllocationError, /combat/)
+    }.to raise_error(described_class::AllocationError, I18n.t("game.flashes.alloc_not_enough_combat_points"))
     expect(character.reload.combat_skill_points).to eq(0)
   end
 end

@@ -31,13 +31,13 @@ end %>
     </span>
     <span class="fighter-level">[<%= p_data.level %>]</span>
     <% if p_data.is_npc %>
-      <span class="fighter-badge fighter-badge--npc">NPC</span>
+      <span class="fighter-badge fighter-badge--npc"><%= t("game.fight.npc") %></span>
     <% end %>
   </div>
 
   <%# HP Bar %>
   <div class="fighter-hp">
-    <div class="fighter-hp-bar" title="HP: <%= p_data.current_hp %>/<%= p_data.max_hp %>">
+    <div class="fighter-hp-bar" title="<%= t("game.fight.hp_title", current: p_data.current_hp, max: p_data.max_hp) %>">
       <div class="fighter-hp-fill fighter-hp-fill--<%= hp_color_class(p_data.hp_percent) %>"
            style="width: <%= p_data.hp_percent %>%"></div>
       <span class="fighter-hp-text"><%= p_data.current_hp %>/<%= p_data.max_hp %></span>
@@ -48,7 +48,7 @@ end %>
   <%# MP Bar (players only) %>
   <% unless p_data.is_npc %>
     <div class="fighter-mp">
-      <div class="fighter-mp-bar" title="MP: <%= p_data.current_mp %>/<%= p_data.max_mp %>">
+      <div class="fighter-mp-bar" title="<%= t("game.fight.mp_title", current: p_data.current_mp, max: p_data.max_mp) %>">
         <div class="fighter-mp-fill" style="width: <%= p_data.mp_percent %>%"></div>
         <span class="fighter-mp-text"><%= p_data.current_mp %>/<%= p_data.max_mp %></span>
       </div>
@@ -63,39 +63,39 @@ end %>
       interactive: false,
       portrait_html: npc_portrait %>
     <% if defeated %>
-      <div class="fighter-defeated-overlay">Defeated</div>
+      <div class="fighter-defeated-overlay"><%= t("game.fight.defeated") %></div>
     <% end %>
   </div>
 
   <div class="fighter-combat-power">
-    <span class="fighter-power" title="Attack uses strength, dexterity, level, and weapon">
-      Attack <%= p_data.attack_power %>
+    <span class="fighter-power" title="<%= t("game.fight.attack_power_hint") %>">
+      <%= t("game.fight.attack_power") %> <%= p_data.attack_power %>
     </span>
-    <span class="fighter-power" title="Defense uses vitality, strength, level, and armor">
-      Defense <%= p_data.defense %>
+    <span class="fighter-power" title="<%= t("game.fight.defense_hint") %>">
+      <%= t("game.fight.defense") %> <%= p_data.defense %>
     </span>
   </div>
 
   <%# Stats (shown for opponent) %>
   <% if show_stats %>
     <div class="fighter-stats fighter-stats--nl">
-      <div>Strength: <b><%= p_data.strength %></b></div>
-      <div>Dexterity: <b><%= p_data.dexterity %></b></div>
-      <div>Luck: <b><%= p_data.luck %></b></div>
-      <div>Knowledge: <b><%= p_data.knowledge %></b></div>
-      <div>Armor Class: <b><%= p_data.armor_class %></b></div>
-      <div>Dodge: <b><%= p_data.evasion %></b></div>
-      <div>Accuracy: <b><%= p_data.accuracy %></b></div>
-      <div>Crushing: <b><%= p_data.crushing %></b></div>
-      <div>Fortitude: <b><%= p_data.endurance %></b></div>
-      <div>Armor Pierce: <b><%= p_data.armor_penetration %></b></div>
+      <div><%= t("game.stats.strength") %>: <b><%= p_data.strength %></b></div>
+      <div><%= t("game.stats.dexterity") %>: <b><%= p_data.dexterity %></b></div>
+      <div><%= t("game.stats.luck") %>: <b><%= p_data.luck %></b></div>
+      <div><%= t("game.stats.knowledge") %>: <b><%= p_data.knowledge %></b></div>
+      <div><%= t("game.sheet.armor_class") %>: <b><%= p_data.armor_class %></b></div>
+      <div><%= t("game.sheet.dodge") %>: <b><%= p_data.evasion %></b></div>
+      <div><%= t("game.sheet.accuracy") %>: <b><%= p_data.accuracy %></b></div>
+      <div><%= t("game.sheet.crushing") %>: <b><%= p_data.crushing %></b></div>
+      <div><%= t("game.sheet.fortitude") %>: <b><%= p_data.endurance %></b></div>
+      <div><%= t("game.sheet.armor_pierce") %>: <b><%= p_data.armor_penetration %></b></div>
     </div>
   <% end %>
 
   <%# Result badge (if match completed) %>
   <% if participation.result.present? && participation.result != "pending" %>
     <div class="fighter-result fighter-result--<%= participation.result %>">
-      <%= { "victory" => "Victory", "defeat" => "Defeat", "draw" => "Draw" }.fetch(participation.result, participation.result) %>
+      <%= { "victory" => t("arena.results.victory"), "defeat" => t("arena.results.defeat"), "draw" => t("arena.results.draw") }.fetch(participation.result, participation.result) %>
     </div>
   <% end %>
 </div>

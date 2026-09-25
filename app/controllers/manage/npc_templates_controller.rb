@@ -23,7 +23,7 @@ module Manage
       attributes = parsed_npc_template_params
 
       if attributes && mutate(@npc_template, operation: :create, attributes:)
-        redirect_to manage_npc_template_path(@npc_template), notice: "NPC template created.", status: :see_other
+        redirect_to manage_npc_template_path(@npc_template), notice: I18n.t("manage.flashes.npc_template_created"), status: :see_other
       else
         render :new, status: :unprocessable_content
       end
@@ -33,7 +33,7 @@ module Manage
       attributes = parsed_npc_template_params
 
       if attributes && mutate(@npc_template, operation: :update, attributes:)
-        redirect_to manage_npc_template_path(@npc_template), notice: "NPC template updated.", status: :see_other
+        redirect_to manage_npc_template_path(@npc_template), notice: I18n.t("manage.flashes.npc_template_updated"), status: :see_other
       else
         render :edit, status: :unprocessable_content
       end
@@ -41,7 +41,7 @@ module Manage
 
     def destroy
       if mutate(@npc_template, operation: :destroy)
-        redirect_to manage_npc_templates_path, notice: "NPC template deleted.", status: :see_other
+        redirect_to manage_npc_templates_path, notice: I18n.t("manage.flashes.npc_template_deleted"), status: :see_other
       else
         redirect_to manage_npc_template_path(@npc_template), alert: @npc_template.errors.full_messages.to_sentence,
           status: :see_other

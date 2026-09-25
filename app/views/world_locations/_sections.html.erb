@@ -1,45 +1,205 @@
 <div class="nl-world-location-sections">
-  <nav class="nl-world-location-tabs" aria-label="Location sections">
+  <nav class="nl-world-location-tabs" aria-label="<%= t("game.locations.you_have") %>">
     <% @building.location_sections.each do |section| %>
-      <%= link_to section.fetch("label"), world_location_path(@building.location_key, section: section.fetch("key")),
+      <%= link_to Game::World::LocationCopy.section_label(section), world_location_path(@building.location_key, section: section.fetch("key")),
           class: "nl-world-location-tab", aria: {current: (@location_section == section ? "page" : nil)},
           data: {turbo_frame: "_top"} %>
     <% end %>
   </nav>
   <% if @building.location_kind == "exchange" %>
-    <p class="nl-world-location-wallet">You have: <b><%= number_with_delimiter(@wallet&.nv_balance || 0) %> NV</b></p>
+    <p class="nl-world-location-wallet"><%= t("game.locations.you_have") %>: <b><%= number_with_delimiter(@wallet&.nv_balance || 0) %> NV</b></p>
   <% end %>
+
+  <% if @building.location_kind == "mine" %>
+    <p class="nl-mine-gallery-vignette" data-mine-lobby-live="1"><%= t("game.locations.lobby_live") %></p>
+    <p class="nl-quests-board__meta" data-location-lobby-next="1">
+      <%= t("game.locations.lobby_next") %>
+      ·
+      <%= link_to t("game.locations.mine_surface_cta"), world_path, data: {turbo: false, location_recovery: "world"} %>
+      ·
+      <%= link_to t("game.locations.mine_exchange_cta"), trade_hub_path(tab: "exchange"), data: {turbo: false, location_recovery: "exchange"} %>
+      ·
+      <%= link_to t("arena.nav.city"), world_path, data: {turbo: false, location_recovery: "world"} %>
+      ·
+      <%= link_to t("game.shop.title"), shop_path, data: {turbo: false, location_recovery: "shop"} %>
+    </p>
+  <% elsif @building.location_kind == "exchange" %>
+    <p class="nl-mine-gallery-vignette" data-location-lobby-live="1"><%= t("game.locations.exchange_live") %></p>
+    <% if Game::Seasons::Catalog.active? %>
+      <p class="nl-quests-board__meta" data-mist-craft-hint="1"><%= Game::Economy::MistCurve.combat_needs_crafter_hint %></p>
+    <% end %>
+    <p class="nl-quests-board__meta" data-location-lobby-next="1">
+      <%= t("game.locations.lobby_next") %>
+      ·
+      <%= link_to t("game.locations.mine_surface_cta"), world_path, data: {turbo: false, location_recovery: "world"} %>
+      ·
+      <%= link_to t("game.locations.mine_exchange_cta"), trade_hub_path(tab: "exchange"), data: {turbo: false, location_recovery: "exchange"} %>
+      ·
+      <%= link_to t("arena.nav.city"), world_path, data: {turbo: false, location_recovery: "world"} %>
+      ·
+      <%= link_to t("game.shop.title"), shop_path, data: {turbo: false, location_recovery: "shop"} %>
+      ·
+      <%= link_to t("game.season.nav"), season_path, data: {turbo: false, location_recovery: "season"} %>
+    </p>
+  <% end %>
+
   <% if @location_section %>
-    <section class="nl-world-location-section" aria-label="<%= @location_section.fetch('label') %>">
-      <% if @building.location_kind == "mine" && @location_section["summary_label"].present? %>
-        <%# Live mine totals describe an underground world that is not part of
-            this lobby implementation. Do not present sampled counts as ours. %>
+    <section class="nl-world-location-section" aria-label="<%= Game::World::LocationCopy.section_label(@location_section) %>">
+      <% if @building.location_kind == "mine" && @location_section["key"] == "gallery" %>
+        <div class="nl-mine-gallery" data-mine-gallery="1">
+          <p class="nl-mine-gallery__vignette"><%= t("game.locations.gallery_vignette") %></p>
+          <% if @in_mine_gallery %>
+            <p class="nl-mine-gallery__status" data-mine-gallery-status="1">
+              <%= t("game.locations.gallery_status", digs: @gallery_state.to_h["digs"].to_i) %>
+            </p>
+            <%= button_to t("game.locations.gallery_dig"), world_location_gallery_dig_path(@building.location_key),
+                method: :post,
+                class: "lbut lbut--primary",
+                form: {class: "nl-mine-gallery__dig-form", data: {turbo: false}} %>
+            <%= button_to t("game.locations.ascend"), world_location_ascend_path(@building.location_key),
+                method: :post,
+                class: "lbut",
+                form: {class: "nl-mine-gallery__ascend-form", data: {turbo: false}} %>
+          <% else %>
+            <%= button_to t("game.locations.descend"), world_location_descend_path(@building.location_key),
+                method: :post,
+                class: "lbut lbut--primary",
+                form: {data: {turbo: false}} %>
+            <p class="nl-quests-board__meta"><%= t("game.locations.descend_hint") %></p>
+          <% end %>
+        </div>
+      <% elsif @building.location_kind == "mine" && @location_section["summary_label"].present? %>
         <table class="nl-world-location-mine-summary">
-          <thead><tr><th>Name</th><th>Available levels</th><th>Available caves</th><th>Resource veins</th></tr></thead>
-          <tbody><tr><td><%= @location_section.fetch("summary_label") %></td><td>—</td><td>—</td><td>—</td></tr></tbody>
+          <thead><tr><th><%= t("game.common.name") %></th><th><%= t("game.locations.available_levels") %></th><th><%= t("game.locations.available_caves") %></th><th><%= t("game.locations.resource_veins") %></th></tr></thead>
+          <tbody><tr><td><%= Game::World::LocationCopy.summary_label(@location_section.fetch("summary_label")) %></td><td>1</td><td>1</td><td>●</td></tr></tbody>
         </table>
-        <button type="button" class="lbut" disabled>Descend into mine</button>
+        <% if @in_mine_gallery %>
+          <%= link_to t("game.locations.gallery_tab"), world_location_path(@building.location_key, section: "gallery"), class: "lbut lbut--primary" %>
+        <% else %>
+          <%= button_to t("game.locations.descend"), world_location_descend_path(@building.location_key),
+              method: :post,
+              class: "lbut lbut--primary",
+              form: {data: {turbo: false}} %>
+        <% end %>
+        <p class="nl-quests-board__meta" data-location-descend-live="1">
+          <%= t("game.locations.descend_hint") %>
+          ·
+          <%= link_to t("arena.nav.city"), world_path, data: {turbo: false, location_recovery: "world"} %>
+        </p>
       <% end %>
       <% if @building.location_resource_categories.any? %>
-        <%# The captured query controls remain unavailable until their actual
-            resource listings and exchange workflow are implemented. %>
-        <div class="nl-world-location-resource-filters">
-          <%= select_tag :resource_type, options_for_select(@building.location_resource_categories), aria: {label: "Resource type"} %>
-          <%= select_tag :resource_kind, options_for_select(["All resources"]), aria: {label: "Resource"} %>
-          <button type="button" class="lbut" disabled>Choose</button>
-        </div>
+        <% category_options = @building.location_resource_categories.map { |cat| [Game::World::LocationCopy.resource_category(cat), cat] } %>
+        <%= form_with url: world_location_path(@building.location_key), method: :get, local: true, class: "nl-world-location-resource-filters", data: {turbo: false} do %>
+          <%= hidden_field_tag :section, @location_section.fetch("key") %>
+          <%= select_tag :resource_type,
+                options_for_select([[t("game.locations.all_resources"), ""]] + category_options, @exchange_category),
+                aria: {label: t("game.locations.resource_type")} %>
+          <%= submit_tag t("game.common.choose"), class: "lbut lbut--primary", data: {location_choose_live: "1"} %>
+        <% end %>
+
+        <% section_key = @location_section.fetch("key") %>
+        <% if section_key == "sell" %>
+          <% if (@exchange_sell_rows || []).any? %>
+            <ul class="nl-trade-hub__list" data-exchange-sell-list="1">
+              <% @exchange_sell_rows.each do |row| %>
+                <li>
+                  <%= row[:name] %> ×<%= row[:quantity] %>
+                  — <%= row[:price_each] %> NV
+                  <%= button_to t("game.common.sell"),
+                        world_location_exchange_path(@building.location_key),
+                        method: :post,
+                        params: {mode: "sell", item_key: row[:item_key], quantity: 1, section: "sell", resource_type: @exchange_category},
+                        class: "lbut",
+                        form: {data: {turbo: false}} %>
+                </li>
+              <% end %>
+            </ul>
+          <% else %>
+            <p class="nl-empty-note" data-exchange-sell-empty="1"><%= t("game.locations.exchange_sell_empty") %></p>
+          <% end %>
+        <% elsif section_key == "buy" %>
+          <% if (@exchange_buy_rows || []).any? %>
+            <ul class="nl-trade-hub__list" data-exchange-buy-list="1">
+              <% @exchange_buy_rows.each do |row| %>
+                <li>
+                  <%= row[:name] %> — <%= row[:price_each] %> NV
+                  <%= button_to t("game.common.buy"),
+                        world_location_exchange_path(@building.location_key),
+                        method: :post,
+                        params: {mode: "buy", item_key: row[:item_key], quantity: 1, section: "buy", resource_type: @exchange_category},
+                        class: "lbut",
+                        form: {data: {turbo: false}} %>
+                </li>
+              <% end %>
+            </ul>
+          <% else %>
+            <p class="nl-empty-note" data-exchange-buy-empty="1"><%= t("game.locations.exchange_buy_empty") %></p>
+          <% end %>
+        <% elsif section_key == "storage" %>
+          <p class="nl-quests-board__meta" data-exchange-storage-cap="1">
+            <%= t("game.locations.exchange_storage_status", used: @exchange_storage_total.to_i, cap: Game::World::ResourceExchange::STORAGE_CAP) %>
+          </p>
+          <% if (@exchange_sell_rows || []).any? %>
+            <h3><%= t("game.locations.exchange_deposit_title") %></h3>
+            <ul class="nl-trade-hub__list" data-exchange-deposit-list="1">
+              <% @exchange_sell_rows.each do |row| %>
+                <li>
+                  <%= row[:name] %> ×<%= row[:quantity] %>
+                  <%= button_to t("game.locations.exchange_deposit_cta"),
+                        world_location_exchange_path(@building.location_key),
+                        method: :post,
+                        params: {mode: "deposit", item_key: row[:item_key], quantity: 1, section: "storage", resource_type: @exchange_category},
+                        class: "lbut",
+                        form: {data: {turbo: false}} %>
+                </li>
+              <% end %>
+            </ul>
+          <% end %>
+          <% if (@exchange_storage || {}).any? %>
+            <h3><%= t("game.locations.exchange_withdraw_title") %></h3>
+            <ul class="nl-trade-hub__list" data-exchange-withdraw-list="1">
+              <% @exchange_storage.each do |key, qty| %>
+                <% template = ItemTemplate.find_by(key: key) %>
+                <li>
+                  <%= template&.display_name || key %> ×<%= qty %>
+                  <%= button_to t("game.locations.exchange_withdraw_cta"),
+                        world_location_exchange_path(@building.location_key),
+                        method: :post,
+                        params: {mode: "withdraw", item_key: key, quantity: 1, section: "storage"},
+                        class: "lbut",
+                        form: {data: {turbo: false}} %>
+                </li>
+              <% end %>
+            </ul>
+          <% else %>
+            <p class="nl-empty-note" data-exchange-storage-empty="1"><%= t("game.locations.exchange_storage_empty_note") %></p>
+          <% end %>
+        <% end %>
       <% end %>
       <% if @location_section["read_only_items"].present? %>
         <div class="nl-world-location-item-previews">
           <% @location_section.fetch("read_only_items").each do |item| %>
+            <% item_name = Game::World::LocationCopy.shop_item_name(item.fetch("name")) %>
             <article class="nl-world-location-item-preview">
-              <h2><%= item.fetch("name") %></h2>
-              <% item.fetch("details").each do |detail| %><p><%= detail %></p><% end %>
-              <input type="number" value="1" min="1" disabled aria-label="Quantity for <%= item.fetch('name') %>">
-              <button type="button" class="lbut" disabled>Buy</button>
+              <h2><%= item_name %></h2>
+              <% Game::World::LocationCopy.shop_item_details(item).each do |detail| %><p><%= detail %></p><% end %>
+              <input type="number" value="1" min="1" disabled aria-label="<%= t("game.locations.quantity_for", name: item_name) %>">
+              <%= link_to t("game.common.buy"), shop_path, class: "lbut", data: {turbo: false, location_recovery: "shop"}, title: t("game.locations.buy_via_shop") %>
             </article>
           <% end %>
         </div>
+        <p class="nl-quests-board__meta" data-location-buy-shop="1">
+          <%= t("game.locations.buy_via_shop") %>
+          ·
+          <%= link_to t("game.shop.title"), shop_path, data: {turbo: false, location_recovery: "shop"} %>
+          <% if Game::World::CityBuildingCatalog.accessible?(character: current_character, building_key: "bank") %>
+            ·
+            <%= link_to t("game.shop.open_bank"), city_building_path("bank"), data: {turbo: false, location_recovery: "bank"} %>
+          <% elsif Game::World::CityBuildingCatalog.accessible?(character: current_character, building_key: "junk_dealer") %>
+            ·
+            <%= link_to t("game.buildings.junk_dealer_link"), city_building_path("junk_dealer"), data: {turbo: false, location_recovery: "junk"} %>
+          <% end %>
+        </p>
       <% end %>
     </section>
   <% end %>

@@ -95,6 +95,6 @@ class Inventory < ApplicationRecord
         end
       end
 
-    raise InsufficientMaterialsError, "Missing #{item_name}" if remaining.positive?
+    raise InsufficientMaterialsError, I18n.t("game.inventory.missing_material", name: item_name) if remaining.positive?
   end
 end

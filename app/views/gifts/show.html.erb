@@ -1,0 +1,143 @@
+<% content_for :title, t("game.gifts.title") %>
+<section class="nl-handbook" data-gifts-live="1">
+  <p class="nl-handbook__banner" data-gifts-banner="1">
+    <%= image_tag "cc0/ui/gifts-board-banner.png", alt: "", class: "nl-handbook__banner-img", width: 960, height: 540 %>
+  </p>
+  <h1><%= t("game.gifts.title") %></h1>
+  <p class="nl-handbook__lead"><%= t("game.gifts.lead") %></p>
+  <p class="nl-quests-board__meta" data-gifts-wallet="1">
+    <%= t("game.gifts.wallet_both", nv: @nv_balance, vm: @veil_marks) %>
+    ·
+    <%= link_to t("game.inventory.title"), inventory_path, class: "nl-sheet-link" %>
+    ·
+    <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link" %>
+  </p>
+
+  <% if params[:gift_denied].to_s == "1" %>
+    <p class="nl-quests-board__meta" data-gift-denied="1"><%= t("game.gifts.denied_hint") %></p>
+  <% end %>
+
+  <h2><%= t("game.gifts.birthday_title") %></h2>
+  <p class="nl-handbook__lead"><%= t("game.gifts.birthday_lead") %></p>
+  <%= form_with url: set_birthday_gifts_path, method: :post, local: true, class: "nl-inline-action-form" do |f| %>
+    <%= f.label :birthday, t("game.gifts.birthday_label") %>
+    <%= f.text_field :birthday, value: @birthday, placeholder: "MM-DD", maxlength: 5, class: "LogintextBox", required: true %>
+    <%= f.submit t("game.gifts.birthday_save"), class: "lbut" %>
+  <% end %>
+  <% if @birthday.present? %>
+    <p class="nl-quests-board__meta"><%= t("game.gifts.birthday_current", date: @birthday) %></p>
+  <% end %>
+
+  <h2><%= t("game.gifts.offers_title") %></h2>
+  <% if @offers.blank? %>
+    <p class="nl-trade-hub__empty" data-gifts-offers-empty="1"><%= t("game.gifts.offers_empty") %></p>
+  <% else %>
+    <ul class="nl-trade-hub__list" data-gifts-offers="<%= @offers.size %>">
+      <% @offers.each do |offer| %>
+        <li data-gift-offer="<%= offer.id %>" data-gift-kind="<%= offer.kind %>">
+          <strong><%= offer.title %></strong>
+          — <%= offer.price_label %>
+          <% if offer.price_nv.to_i.positive? && @premium_perks[:gift_nv_discount_percent].to_i.positive? %>
+            <% paid = Game::Shop::PremiumPass.nv_price_after_discount(current_user, offer.price_nv) %>
+            · <span data-gift-premium-price="<%= paid %>"><%= t("game.premium_pass.gift_price", amount: paid) %></span>
+          <% end %>
+          <% if offer.kind == "festive" %>
+            · <%= t("game.gifts.kind_festive") %>
+          <% elsif offer.kind.start_with?("rune") %>
+            · <%= t("game.gifts.kind_rune") %>
+          <% elsif offer.kind == "social" %>
+            · <%= t("game.gifts.kind_social") %>
+          <% end %>
+          <%= form_with url: buy_gifts_path, method: :post, local: true, class: "nl-inline-action-form", data: {turbo: false} do |f| %>
+            <%= hidden_field_tag :offer_id, offer.id %>
+            <%= text_field_tag :recipient_name, "",
+                  placeholder: t("game.gifts.recipient_placeholder"),
+                  maxlength: 25,
+                  class: "LogintextBox",
+                  disabled: !offer.giftable? %>
+            <%= f.submit t("game.gifts.buy_cta"), class: "lbut" %>
+          <% end %>
+          <p class="nl-quests-board__meta"><%= t("game.gifts.recipient_hint") %></p>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+
+  <h2><%= t("game.gifts.boxes_title") %></h2>
+  <% if @boxes.blank? %>
+    <p class="nl-trade-hub__empty" data-gifts-boxes-empty="1"><%= t("game.gifts.boxes_empty") %></p>
+  <% else %>
+    <ul class="nl-trade-hub__list" data-gifts-boxes="<%= @boxes.size %>">
+      <% @boxes.each do |box| %>
+        <li data-gift-box="<%= box.id %>"
+            data-gift-voucher="<%= box.choice_voucher? ? "1" : "0" %>"
+            data-gift-openable="<%= box.openable? ? "1" : "0" %>"
+            data-gift-claims="<%= box.claims_pending? ? "1" : "0" %>">
+          <% if box.choice_voucher? %>
+            <strong><%= t("game.gifts.voucher_title", label: box.voucher_label) %></strong>
+            · <%= t("game.gifts.source_voucher") %>
+          <% else %>
+            <%= box.gift_box_offer.title %>
+            <% if box.source == "birthday" %>
+              · <%= t("game.gifts.source_birthday") %>
+            <% end %>
+          <% end %>
+          <% if box.choice_voucher? && box.claims_pending? %>
+            — <%= t("game.gifts.choose_loot") %>
+            <%= form_with url: claim_gifts_path, method: :post, local: true, data: {turbo: false} do %>
+              <%= hidden_field_tag :box_id, box.id %>
+              <p>
+                <label>
+                  <%= box.voucher_label %>
+                  <select name="choices[<%= box.voucher_slot %>]" class="LogintextBox" required>
+                    <option value=""><%= t("game.gifts.choose_option") %></option>
+                    <% box.voucher_options.each do |opt| %>
+                      <% tmpl = ItemTemplate.find_by(key: opt["item_key"]) %>
+                      <option value="<%= opt["item_key"] %>">
+                        <%= tmpl ? tmpl.display_name : opt["item_key"] %> ×<%= opt["qty"] %>
+                      </option>
+                    <% end %>
+                  </select>
+                </label>
+              </p>
+              <%= submit_tag t("game.gifts.claim_cta"), class: "lbut" %>
+            <% end %>
+          <% elsif box.claims_pending? && !box.choice_voucher? %>
+            — <%= t("game.gifts.choose_loot") %>
+            <%= form_with url: claim_gifts_path, method: :post, local: true, data: {turbo: false} do %>
+              <%= hidden_field_tag :box_id, box.id %>
+              <% box.gift_box_offer.choice_slots.each do |slot| %>
+                <p>
+                  <label>
+                    <%= slot["label_ru"] %>
+                    <select name="choices[<%= slot["slot"] %>]" class="LogintextBox" required>
+                      <option value=""><%= t("game.gifts.choose_option") %></option>
+                      <% slot["options"].each do |opt| %>
+                        <% tmpl = ItemTemplate.find_by(key: opt["item_key"]) %>
+                        <option value="<%= opt["item_key"] %>">
+                          <%= tmpl ? tmpl.display_name : opt["item_key"] %> ×<%= opt["qty"] %>
+                        </option>
+                      <% end %>
+                    </select>
+                  </label>
+                </p>
+              <% end %>
+              <%= submit_tag t("game.gifts.claim_cta"), class: "lbut" %>
+            <% end %>
+          <% elsif box.opened? %>
+            — <%= t("game.gifts.opened_badge") %>
+          <% elsif box.locked? %>
+            — <%= t("game.gifts.locked_until", at: l(box.unlock_at, format: :short)) %>
+          <% else %>
+            <%= button_to t("game.gifts.open_cta"),
+                  open_gifts_path,
+                  method: :post,
+                  params: {box_id: box.id},
+                  class: "lbut",
+                  form: {data: {turbo: false}} %>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+</section>

@@ -1,0 +1,74 @@
+<section class="nl-handbook" aria-label="<%= t("game.buildings.junk_aria") %>"
+         data-junk-lines="<%= local_assigns.fetch(:offers, []).size %>"
+         data-junk-can-sell="<%= local_assigns.fetch(:offers, []).any? ? "1" : "0" %>">
+  <h2><%= t("game.buildings.junk_title") %></h2>
+  <p class="nl-handbook__lead"><%= t("game.buildings.junk_lead") %></p>
+  <% if params[:junk_denied].to_s == "1" %>
+    <p class="nl-quests-board__meta" data-junk-denied="1">
+      <%= t("game.buildings.junk_denied_next") %>
+      ·
+      <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {junk_recovery: "world"} %>
+      ·
+      <%= link_to t("game.buildings.junk_title"), city_building_path("junk_dealer"), class: "nl-sheet-link", data: {junk_recovery: "junk"} %>
+    </p>
+  <% end %>
+  <% wallet = current_user.currency_wallet || current_user.create_currency_wallet!(nv_balance: 0) %>
+  <% balance = wallet.nv_balance.to_i %>
+  <p class="nl-quests-board__meta" data-junk-wallet="<%= balance %>">
+    <%= t("game.buildings.junk_wallet", amount: balance) %>
+  </p>
+
+  <% rows = local_assigns.fetch(:offers, []) %>
+  <% total = rows.sum { |row| row[:quantity].to_i * row[:price].to_i } %>
+  <% if rows.empty? %>
+    <p class="nl-empty-note" data-junk-total="0">
+      <%= t("game.buildings.junk_empty") %>
+      <%= link_to t("game.shop.open_inventory"), inventory_path, class: "nl-sheet-link", data: {junk_recovery: "inventory"} %>
+    </p>
+  <% else %>
+    <p class="nl-quests-board__meta" data-junk-total="<%= total %>">
+      <%= t("game.buildings.junk_estimate", total: total, lines: rows.size) %>
+    </p>
+    <table class="nl-detail-table nl-city-building-table">
+      <thead>
+        <tr>
+          <th><%= t("game.common.item") %></th>
+          <th><%= t("game.common.quantity") %></th>
+          <th><%= t("game.common.price") %></th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% rows.each do |row| %>
+          <tr data-junk-item="<%= row[:key] %>">
+            <td><%= row[:name] %></td>
+            <td><%= row[:quantity] %></td>
+            <td><%= row[:price] %> NV · <%= row[:quantity].to_i * row[:price].to_i %> NV</td>
+            <td>
+              <%= button_to t("game.buildings.junk_sell_one"),
+                    city_building_sell_path("junk_dealer"),
+                    method: :post,
+                    params: {item_key: row[:key], quantity: 1},
+                    class: "lbut",
+                    form: {data: {turbo: false}} %>
+              <% if row[:quantity].to_i > 1 %>
+                <%= button_to t("game.buildings.junk_sell_all"),
+                      city_building_sell_path("junk_dealer"),
+                      method: :post,
+                      params: {item_key: row[:key], quantity: row[:quantity]},
+                      class: "lbut",
+                      form: {data: {turbo: false}} %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% end %>
+</section>
+
+<% if local_assigns[:with_landmark] %>
+  <%= render "city_buildings/landmark",
+        building: local_assigns.fetch(:building, {}),
+        building_key: local_assigns.fetch(:building_key, "junk_dealer") %>
+<% end %>

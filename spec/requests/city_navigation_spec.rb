@@ -227,7 +227,7 @@ RSpec.describe "City navigation", type: :request do
     post interact_hotspot_world_path, params: action
 
     expect(response).to redirect_to(world_path)
-    expect(flash[:alert]).to eq("Action offer is no longer available")
+    expect(flash[:alert]).to eq(I18n.t("game.world.action_offer_unavailable"))
     expect(first_offer.reload).to be_completed
     expect(next_offer.reload).to be_offered
     expect(position.reload).to have_attributes(zone: central, x: 5, y: 5)
@@ -242,7 +242,7 @@ RSpec.describe "City navigation", type: :request do
     post interact_hotspot_world_path, params: {hotspot_id: shop.id, action_key: offer.action_key}
 
     expect(response).to redirect_to(world_path)
-    expect(flash[:alert]).to eq("Location is currently unavailable.")
+    expect(flash[:alert]).to eq(I18n.t("game.world.location_unavailable"))
     expect(position.reload).to have_attributes(zone: central, x: 5, y: 5)
     expect(offer.reload).to be_failed
   end

@@ -26,7 +26,7 @@ module Game
         template = inventory_item.item_template
 
         unless template.consumable?
-          return {success: false, error: "This item cannot be used"}
+          return {success: false, error: I18n.t("game.inventory.cannot_use")}
         end
 
         requirements = Game::Inventory::RequirementChecker.call(character:, item: inventory_item)
@@ -35,18 +35,18 @@ module Game
         result = apply_item_effect(character, inventory_item)
         return result unless result[:success]
 
-        consume_item_unit!(inventory_item)
+        consume_item_unit!(inventory_item) unless result[:defer_consume]
         result
       end
 
       def self.discard_item(inventory_item)
         if inventory_item.protected_from_discard?
-          return {success: false, error: "This item cannot be discarded"}
+          return {success: false, error: I18n.t("game.inventory.cannot_discard")}
         end
 
         decrement_inventory_weight!(inventory_item.inventory, inventory_item.weight * inventory_item.quantity)
         inventory_item.destroy!
-        {success: true, message: "Item discarded."}
+        {success: true, message: I18n.t("game.inventory.item_discarded")}
       end
 
       def self.consume_item_unit!(inventory_item)
@@ -97,17 +97,73 @@ module Game
       def self.apply_item_effect(character, inventory_item)
         template = inventory_item.item_template
         stats = inventory_item.effect_modifiers
+        notes = []
 
-        if stats["heal_hp"]
+        if truthy_effect?(stats["join_as_protector"]) || template.key.to_s == Game::Combat::AssaultScrolls::PROTECTION_KEY
+          return {
+            success: true,
+            defer_consume: true,
+            redirect: Rails.application.routes.url_helpers.combat_interventions_path,
+            message: I18n.t("game.combat.protector_choose_fight")
+          }
+        end
+
+        if stats["assault_scroll_kind"].present? || truthy_effect?(template.enhancement_rules.to_h["assault_scroll"])
+          kind = Game::Combat::AssaultScrolls.normalize_kind(
+            stats["assault_scroll_kind"].presence || preferred_kind_from_key(template.key)
+          )
+          character.update!(
+            metadata: character.metadata.to_h.merge("preferred_assault_scroll_kind" => kind)
+          )
+          return {
+            success: true,
+            defer_consume: true,
+            message: I18n.t("game.combat.assault_scroll_armed", kind: I18n.t("game.combat.assault_kind.#{kind}"))
+          }
+        end
+
+        if truthy_effect?(stats["clear_light_injury"])
+          removed = Game::Combat::InjuryState.new(character:).clear_light!
+          notes << I18n.t("game.injuries.cleared_light", count: removed) if removed.positive?
+        end
+
+        if stats["clear_injury_tier"].present?
+          tier = stats["clear_injury_tier"].to_s
+          removed = Game::Combat::InjuryState.new(character:).clear_up_to!(tier)
+          notes << I18n.t("game.injuries.cleared_tier", tier: I18n.t("game.injuries.severity.#{tier}", default: tier), count: removed) if removed.positive?
+        end
+
+        buff_mods = stats["buff"].is_a?(Hash) ? stats["buff"] : {}
+        buff_duration = stats["buff_duration_seconds"].to_i
+        if buff_mods.present? || buff_duration.positive?
+          buff_mods = stats.except(
+            "buff", "buff_duration_seconds", "heal_hp", "restore_mp",
+            "clear_light_injury", "clear_injury_tier"
+          ) if buff_mods.blank?
+          Characters::TimedBuffs.new(character:).apply!(
+            key: template.key,
+            label: template.display_name,
+            mods: buff_mods,
+            duration_seconds: buff_duration.positive? ? buff_duration : 1.hour.to_i
+          )
+          minutes = (buff_duration.positive? ? buff_duration : 1.hour.to_i) / 60
+          notes << I18n.t(
+            "game.inventory.buff_applied",
+            name: template.display_name,
+            minutes: minutes
+          )
+        end
+
+        if stats["heal_hp"] && buff_mods.blank? && !buff_duration.positive?
           amount = stats["heal_hp"].to_i
           actual_healed = Characters::VitalsService.new(character).apply_healing(amount, source: template.name)
-          return {success: true, message: "Restored #{actual_healed} HP"}
+          notes << I18n.t("game.inventory.restored_hp", amount: actual_healed)
         end
 
         if stats["restore_mp"]
           amount = stats["restore_mp"].to_i
           actual_restored = Characters::VitalsService.new(character).restore_mana(amount, source: template.name)
-          return {success: true, message: "Restored #{actual_restored} MP"}
+          notes << I18n.t("game.inventory.restored_mp", amount: actual_restored)
         end
 
         if truthy_effect?(stats["reset_allocation"])
@@ -119,11 +175,13 @@ module Game
             peace_skill_points: character.peace_skill_points.to_i + allocated_skill_points(character, :peace)
           )
           character.clear_passive_skill_cache!
-          return {success: true, message: "Parameters, skills, and perks reset."}
+          notes << I18n.t("game.inventory.reset_allocation")
         end
 
+        return {success: true, message: notes.join(" ")} if notes.any?
+
         # Default case - item has no known effect
-        {success: false, error: "No usable effect"}
+        {success: false, error: I18n.t("game.inventory.no_usable_effect")}
       end
 
       def self.decrement_inventory_weight!(inventory, delta)
@@ -140,6 +198,14 @@ module Game
         value == true || value.to_s == "true" || value.to_i == 1
       end
 
+      def self.preferred_kind_from_key(key)
+        case key.to_s
+        when "assault_scroll_peaceful" then "peaceful"
+        when "assault_scroll_bloody", "combat_trauma_scroll" then "bloody"
+        else "normal"
+        end
+      end
+
       def self.allocated_stat_points(character)
         character.allocated_stats.to_h.values.sum(&:to_i)
       end
@@ -150,7 +216,7 @@ module Game
         end
       end
 
-      private_class_method :truthy_effect?, :allocated_stat_points, :allocated_skill_points
+      private_class_method :truthy_effect?, :preferred_kind_from_key, :allocated_stat_points, :allocated_skill_points
 
       def initialize(inventory:)
         @inventory = inventory
@@ -184,7 +250,7 @@ module Game
           stack.destroy if stack.quantity.zero?
         end
 
-        raise InventoryUnderflowError, "Not enough items" if remaining.positive?
+        raise InventoryUnderflowError, I18n.t("game.inventory.not_enough_items") if remaining.positive?
       end
 
       private
@@ -194,6 +260,21 @@ module Game
 
       attr_reader :inventory
 
+      def find_or_build_stack(item_template:)
+        stack = inventory.inventory_items.where(item_template:, equipped: false).order(:created_at).detect do |existing|
+          existing.quantity < item_template.stack_limit
+        end
+        return stack if stack
+
+        # Ashen soft capacity: stack count is unlimited. Mass may exceed
+        # carrying_capacity (overweight slows travel); money/NV gates Shop buys.
+        inventory.inventory_items.build(
+          item_template:,
+          quantity: 0,
+          weight: item_template.weight
+        )
+      end
+
       def persist_item_stacks!(item_template:, quantity:)
         remaining = quantity
         last_stack = nil
@@ -201,17 +282,14 @@ module Game
         while remaining.positive?
           stack = find_or_build_stack(item_template:)
           capacity = item_template.stack_limit - stack.quantity
-          raise CapacityExceededError, "Stack limit exceeded" if capacity <= 0
+          raise CapacityExceededError, I18n.t("game.inventory.stack_limit_exceeded") if capacity <= 0
 
           to_add = [remaining, capacity].min
-          ensure_weight_capacity!(item_template.weight * to_add)
 
           if stack.new_record?
-            # New stack - set quantity directly and save
             stack.quantity = to_add
             stack.save!
           else
-            # Existing stack - increment
             stack.increment!(:quantity, to_add)
           end
           increment_weight!(item_template.weight * to_add)
@@ -220,31 +298,6 @@ module Game
         end
 
         last_stack
-      end
-
-      def find_or_build_stack(item_template:)
-        stack = inventory.inventory_items.where(item_template:, equipped: false).order(:created_at).detect do |existing|
-          existing.quantity < item_template.stack_limit
-        end
-        return stack if stack
-
-        ensure_slot_capacity!
-        # Build (don't save yet) - caller will set quantity and save
-        inventory.inventory_items.build(
-          item_template:,
-          quantity: 0,
-          weight: item_template.weight
-        )
-      end
-
-      def ensure_slot_capacity!
-        used_slots = inventory.inventory_items.count
-        raise CapacityExceededError, "No free inventory slots" if used_slots >= inventory.slot_capacity
-      end
-
-      def ensure_weight_capacity!(delta)
-        projected = inventory.current_weight + delta
-        raise CapacityExceededError, "Inventory is overloaded" if projected > inventory.max_weight
       end
 
       def increment_weight!(delta)

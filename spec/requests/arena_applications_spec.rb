@@ -125,7 +125,7 @@ RSpec.describe "ArenaApplications", type: :request do
       end.not_to change(ArenaApplication, :count)
 
       expect(response).to have_http_status(:unprocessable_content)
-      expect(response.parsed_body.fetch("errors")).to include("You already have an active fight application")
+      expect(response.parsed_body.fetch("errors")).to include(I18n.t("game.fight.app_already_has_application"))
     end
 
     it "rejects a timeout outside the captured allowlist" do
@@ -136,7 +136,18 @@ RSpec.describe "ArenaApplications", type: :request do
       end.not_to change(ArenaApplication, :count)
 
       expect(response).to have_http_status(:unprocessable_content)
-      expect(response.parsed_body.fetch("errors").join(" ")).to include("Timeout seconds is not included")
+      expect(response.parsed_body.fetch("errors")).to include(I18n.t("game.fight.app_timeout_invalid"))
+    end
+
+    it "rejects a trauma percent outside the captured allowlist" do
+      expect do
+        post arena_room_arena_applications_path(arena_room),
+          params: valid_params.deep_merge(arena_application: {trauma_percent: 25}),
+          as: :json
+      end.not_to change(ArenaApplication, :count)
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(response.parsed_body.fetch("errors")).to include(I18n.t("game.fight.app_trauma_invalid"))
     end
   end
 

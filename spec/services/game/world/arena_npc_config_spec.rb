@@ -28,7 +28,7 @@ RSpec.describe Game::World::ArenaNpcConfig do
 
       expect { described_class.config }.to raise_error(
         described_class::InvalidConfigurationError,
-        /NPC invalid loot entry 0: Loot chance is required/
+        /NPC invalid loot entry 0: #{Regexp.escape(I18n.t("manage.loot_chance_required"))}/
       )
     ensure
       described_class.instance_variable_set(:@config, nil)
@@ -85,7 +85,7 @@ RSpec.describe Game::World::ArenaNpcConfig do
       npc = described_class.find_npc(:arena_training_dummy)
 
       expect(npc).to be_present
-      expect(npc[:name]).to eq("Training Dummy")
+      expect(npc[:name]).to eq("Пепельный манекен")
     end
 
     it "returns nil for unknown key" do

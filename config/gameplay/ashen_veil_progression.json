@@ -1,0 +1,99 @@
+{
+  "catalog_version": "gap-closure-4920",
+  "milestone": 50,
+  "safety_ceiling": 200,
+  "level_bands": [
+    {
+      "id": "1-10",
+      "from": 1,
+      "to": 10,
+      "packId": "launch-shore",
+      "content": "live"
+    },
+    {
+      "id": "11-20",
+      "from": 11,
+      "to": 20,
+      "packId": "launch-basins",
+      "content": "live"
+    },
+    {
+      "id": "21-30",
+      "from": 21,
+      "to": 30,
+      "packId": "launch-city",
+      "content": "live"
+    },
+    {
+      "id": "31-40",
+      "from": 31,
+      "to": 40,
+      "packId": "veil-approach",
+      "content": "live"
+    },
+    {
+      "id": "41-50",
+      "from": 41,
+      "to": 50,
+      "packId": "veil-approach",
+      "content": "live"
+    },
+    {
+      "id": "51+",
+      "from": 51,
+      "to": null,
+      "packId": "beyond-milestone",
+      "content": "reserved"
+    }
+  ],
+  "region_packs": [
+    {
+      "id": "launch-shore",
+      "status": "live",
+      "regionIds": [
+        "ashen-shore"
+      ],
+      "levelFrom": 1,
+      "levelTo": 10,
+      "note": "Launch region pack."
+    },
+    {
+      "id": "launch-basins",
+      "status": "live",
+      "regionIds": [
+        "glass-basins"
+      ],
+      "levelFrom": 11,
+      "levelTo": 20,
+      "note": "Launch region pack."
+    },
+    {
+      "id": "launch-city",
+      "status": "live",
+      "regionIds": [
+        "city-under-bell"
+      ],
+      "levelFrom": 21,
+      "levelTo": 30,
+      "note": "Launch region pack."
+    },
+    {
+      "id": "veil-approach",
+      "status": "live",
+      "regionIds": [
+        "city-under-bell"
+      ],
+      "levelFrom": 31,
+      "levelTo": 50,
+      "note": "Late-city / Heart-of-the-Veil approach farm nodes. Not a fourth campaign."
+    },
+    {
+      "id": "beyond-milestone",
+      "status": "reserved",
+      "regionIds": [],
+      "levelFrom": 51,
+      "levelTo": null,
+      "note": "No 51+ content yet. XP formula and bands accept expansion."
+    }
+  ]
+}

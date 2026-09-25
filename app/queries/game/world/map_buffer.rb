@@ -45,7 +45,7 @@ module Game
 
       private
 
-      attr_reader :position, :token, :verifier, :templates, :buildings, :visible_columns, :visible_rows
+      attr_reader :position, :token, :verifier, :templates, :buildings, :tile_npcs, :visible_columns, :visible_rows
 
       def dimension(value, default:, maximum:)
         number = Integer(value.to_s, exception: false)
@@ -77,6 +77,14 @@ module Game
         y_range = ([old_y, position.y].min - y_radius)..([old_y, position.y].max + y_radius)
         @templates = MapTileTemplate.in_zone(zone.name).in_area(x_range, y_range).index_by { |tile| [tile.x, tile.y] }
         @buildings = TileBuilding.active.in_zone(zone.name).where(x: x_range, y: y_range).index_by { |building| [building.x, building.y] }
+        @tile_npcs = TileNpc.active
+          .in_zone(zone.name)
+          .where(x: x_range, y: y_range)
+          .where(defeated_at: nil)
+          .includes(:npc_template)
+          .to_a
+          .select(&:alive?)
+          .group_by { |npc| [npc.x, npc.y] }
       end
 
       def reusable_buffer?(previous)
@@ -117,13 +125,19 @@ module Game
             [x, y, record.attributes]
           end.sort_by { |x, y, _| [y, x] }
         end
-        Digest::SHA256.hexdigest(ActiveSupport::JSON.encode([zone.attributes, records]))
+        npc_layer = tile_npcs.filter_map do |(x, y), npcs|
+          next unless within_buffer?(x, y, center_x, center_y)
+
+          [x, y, npcs.map { |n| [n.id, n.updated_at.to_i, n.display_name, n.active?] }]
+        end.sort_by { |x, y, _| [y, x] }
+        Digest::SHA256.hexdigest(ActiveSupport::JSON.encode([zone.attributes, records, npc_layer]))
       end
 
       def tile_at(x, y)
         in_bounds = x.between?(0, zone.width - 1) && y.between?(0, zone.height - 1)
         template = templates[[x, y]] if in_bounds
         building = buildings[[x, y]] if in_bounds
+        npcs = Array(tile_npcs[[x, y]]) if in_bounds
         metadata = if template
           template.metadata.to_h.deep_dup
         elsif in_bounds
@@ -132,8 +146,59 @@ module Game
           {"out_of_bounds" => true}
         end
         if building
-          metadata["building"] = building.name
+          metadata["building"] = Game::World::LocationCopy.building_name(building)
           metadata["building_kind"] = building.location? ? building.location_kind : building.building_type
+        elsif metadata["landmark"].is_a?(Hash)
+          landmark = metadata["landmark"]
+          raw_name = landmark["name"].presence || metadata["presence_label"]
+          metadata["building"] = Game::World::LocationCopy.presence(raw_name)
+          metadata["building_kind"] = landmark["kind"].presence || "landmark"
+          metadata["landmark_key"] = landmark["key"]
+          metadata["landmark_floors"] = landmark["floors"]
+          metadata["landmark_instance_id"] = landmark["instance_id"]
+        end
+        if npcs.present?
+          entries = npcs.filter_map do |npc|
+            name = npc.display_name.presence || npc.npc_template&.name
+            next if name.blank?
+
+            level = npc.level.presence || npc.npc_template&.level
+            level.present? ? "#{name} [#{level}]" : name
+          end.uniq
+          metadata["npc_labels"] = entries.first(4)
+          metadata["npc_count"] = npcs.size
+        end
+        if template
+          resource_labels = []
+          template.active_resource_groups.each do |group|
+            label = Game::World::ResourceLabel.for_group(group)
+            resource_labels << label if label.present?
+          end
+          regrowth = template.active_resource_groups.filter_map do |group|
+            expires_at = Time.zone.parse(template.metadata.to_h.dig("resource_depletion", group["key"].to_s).to_s)
+            next unless expires_at && expires_at > Time.current
+
+            display = Game::World::ResourceLabel.for_group(group)
+            next if display.blank?
+
+            {
+              "label" => display,
+              "remaining_seconds" => (expires_at - Time.current).ceil
+            }
+          rescue ArgumentError, TypeError
+            nil
+          end
+          metadata["resource_regrowth"] = regrowth if regrowth.any?
+          template.active_local_actions.each do |action|
+            next unless %w[gather mine forage harvest fish dig].include?(action["type"].to_s)
+
+            label = Game::World::ResourceLabel.for_group(
+              "key" => action["type"],
+              "label" => action["label"]
+            )
+            resource_labels << label if label.present?
+          end
+          metadata["resource_labels"] = resource_labels.uniq.first(3) if resource_labels.any?
         end
         OpenStruct.new(
           x:, y:, terrain_type: template&.terrain_type || zone.location_type,

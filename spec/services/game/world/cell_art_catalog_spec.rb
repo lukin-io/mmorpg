@@ -7,7 +7,7 @@ RSpec.describe Game::World::CellArtCatalog do
 
   describe ".resolve_for_tile" do
     let(:zone) do
-      Zone.new(name: "Outpost Surroundings", location_type: "outdoor", width: 1000, height: 1000,
+      Zone.new(name: "Пепельный Берег", location_type: "outdoor", width: 1000, height: 1000,
         metadata: {"source_map" => "m_1001_999"})
     end
 

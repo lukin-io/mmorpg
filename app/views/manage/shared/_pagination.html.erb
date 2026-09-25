@@ -1,15 +1,15 @@
 <% if pagination.total_pages > 1 %>
-  <nav class="nl-manage-pagination" aria-label="Pagination">
+  <nav class="nl-manage-pagination" aria-label="<%= t("manage.pagination_aria") %>">
     <% if pagination.previous_page %>
-      <%= link_to "< Previous", url_for(request.query_parameters.merge(page: pagination.previous_page)), class: "lbut" %>
+      <%= link_to t("manage.previous_page"), url_for(request.query_parameters.merge(page: pagination.previous_page)), class: "lbut" %>
     <% else %>
-      <span class="lbutdis" aria-disabled="true">&lt; Previous</span>
+      <span class="lbutdis" aria-disabled="true"><%= t("manage.previous_page") %></span>
     <% end %>
-    <span>Page <%= pagination.page %> of <%= pagination.total_pages %> · <%= pagination.total_count %> records</span>
+    <span><%= t("manage.page_of", page: pagination.page, total: pagination.total_pages, count: pagination.total_count) %></span>
     <% if pagination.next_page %>
-      <%= link_to "Next >", url_for(request.query_parameters.merge(page: pagination.next_page)), class: "lbut" %>
+      <%= link_to t("manage.next_page"), url_for(request.query_parameters.merge(page: pagination.next_page)), class: "lbut" %>
     <% else %>
-      <span class="lbutdis" aria-disabled="true">Next &gt;</span>
+      <span class="lbutdis" aria-disabled="true"><%= t("manage.next_page") %></span>
     <% end %>
   </nav>
 <% end %>

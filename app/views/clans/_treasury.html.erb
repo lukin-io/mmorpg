@@ -1,0 +1,70 @@
+<% if @clan.blank? %>
+  <p class="nl-quests-board__meta"><%= t("game.clans.treasury_need_clan") %></p>
+<% else %>
+  <h2><%= t("game.clans.tab_treasury") %></h2>
+  <p>
+    <%= t("game.clans.treasury_nv_balance", amount: @clan.treasury_nv.to_i) %>
+    ·
+    <%= t(@clan.treasury_locked? ? "game.clans.treasury_status_locked" : "game.clans.treasury_status_open") %>
+  </p>
+
+  <% if @clan.can_lock_treasury?(current_character) %>
+    <% if @clan.treasury_locked? %>
+      <%= button_to t("game.clans.treasury_unlock_cta"), treasury_lock_clan_path, method: :post, params: {locked: false}, class: "lbut" %>
+    <% else %>
+      <%= button_to t("game.clans.treasury_lock_cta"), treasury_lock_clan_path, method: :post, params: {locked: true}, class: "lbut" %>
+    <% end %>
+  <% end %>
+
+  <h3><%= t("game.clans.treasury_donate_title") %></h3>
+  <%= form_with url: treasury_transfer_clan_path, method: :post, local: true, class: "nl-clan-form" do |f| %>
+    <%= f.hidden_field :treasury_action, value: "donate_nv" %>
+    <%= f.number_field :amount_nv, min: 1, step: 1, placeholder: "NV", class: "LogintextBox4" %>
+    <%= f.submit t("game.clans.treasury_donate_nv_cta"), class: "lbut" %>
+  <% end %>
+
+  <% if @deposit_options.any? %>
+    <ul class="nl-clan-treasury-donate">
+      <% @deposit_options.each do |name, key, qty| %>
+        <li>
+          <%= name %> ×<%= qty %>
+          <%= button_to t("game.clans.treasury_donate_item_cta"),
+                treasury_transfer_clan_path,
+                method: :post,
+                params: {treasury_action: "donate_item", item_key: key, quantity: 1},
+                class: "lbut" %>
+        </li>
+      <% end %>
+    </ul>
+  <% else %>
+    <p class="nl-quests-board__meta"><%= t("game.clans.treasury_no_items") %></p>
+  <% end %>
+
+  <h3><%= t("game.clans.treasury_stock_title") %></h3>
+  <% if @treasury_items.any? %>
+    <ul class="nl-clan-treasury-stock">
+      <% @treasury_items.each do |row| %>
+        <li>
+          <%= row.item_template.display_name %> ×<%= row.quantity %>
+          <% if @clan.can_withdraw_treasury?(current_character) %>
+            <%= button_to t("game.clans.treasury_withdraw_item_cta"),
+                  treasury_transfer_clan_path,
+                  method: :post,
+                  params: {treasury_action: "withdraw_item", treasury_item_id: row.id, quantity: 1},
+                  class: "lbut" %>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  <% else %>
+    <p class="nl-quests-board__meta"><%= t("game.clans.treasury_empty") %></p>
+  <% end %>
+
+  <% if @clan.can_withdraw_treasury?(current_character) && @clan.treasury_nv.positive? %>
+    <%= form_with url: treasury_transfer_clan_path, method: :post, local: true, class: "nl-clan-form" do |f| %>
+      <%= f.hidden_field :treasury_action, value: "withdraw_nv" %>
+      <%= f.number_field :amount_nv, min: 1, max: @clan.treasury_nv.to_i, step: 1, class: "LogintextBox4" %>
+      <%= f.submit t("game.clans.treasury_withdraw_nv_cta"), class: "lbut" %>
+    <% end %>
+  <% end %>
+<% end %>

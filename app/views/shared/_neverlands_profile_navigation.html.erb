@@ -1,24 +1,24 @@
 <% current_section ||= nil %>
 
-<nav class="nl-profile-tabs" aria-label="Character sections">
+<nav class="nl-profile-tabs" aria-label="<%= t("game.profile.sections") %>" data-profile-tabs="1">
   <% if current_section.nil? %>
-    <span class="lbutdis" aria-current="page">Overview</span>
+    <span class="lbutdis" aria-current="page"><%= t("game.profile.overview") %></span>
   <% else %>
-    <%= link_to "Overview", player_path(name: character.name), class: "lbut" %>
+    <%= link_to t("game.profile.overview"), player_path(name: character.name), class: "lbut", data: {profile_recovery: "overview"} %>
   <% end %>
   <% if current_section == :skills %>
-    <span class="lbutdis" aria-current="page">Skills</span>
+    <span class="lbutdis" aria-current="page"><%= t("game.profile.skills") %></span>
   <% else %>
-    <%= link_to "Skills", skills_character_path(character), class: "lbut" %>
+    <%= link_to t("game.profile.skills"), skills_character_path(character), class: "lbut", data: {profile_recovery: "skills"} %>
   <% end %>
   <% if current_section == :perks %>
-    <span class="lbutdis" aria-current="page">Perks</span>
+    <span class="lbutdis" aria-current="page"><%= t("game.profile.perks") %></span>
   <% else %>
-    <%= link_to "Perks", perks_character_path(character), class: "lbut" %>
+    <%= link_to t("game.profile.perks"), perks_character_path(character), class: "lbut", data: {profile_recovery: "perks"} %>
   <% end %>
   <% if current_section == :licenses %>
-    <span class="lbutdis" aria-current="page">Your licenses</span>
+    <span class="lbutdis" aria-current="page"><%= t("game.common.licenses") %></span>
   <% else %>
-    <%= link_to "Your licenses", character_licenses_path, class: "lbut" %>
+    <%= link_to t("game.common.licenses"), character_licenses_path, class: "lbut", data: {profile_recovery: "licenses"} %>
   <% end %>
 </nav>

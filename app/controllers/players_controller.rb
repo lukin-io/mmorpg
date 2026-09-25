@@ -5,7 +5,7 @@ class PlayersController < ApplicationController
 
   skip_before_action :authenticate_user!
   skip_before_action :ensure_device_identifier
-  before_action :set_character
+  before_action :set_character, only: :show
   around_action :with_available_outdoor_actions, if: :own_html_profile?
 
   def show
@@ -13,6 +13,7 @@ class PlayersController < ApplicationController
     @own_profile = @viewer_character.present? && @viewer_character.id == @character.id
     @character = @viewer_character if @own_profile
     @equipment = equipped_items_for(@character)
+    @character_online = @character.online?
 
     if @own_profile
       @stats_data = build_stats_data
@@ -25,10 +26,27 @@ class PlayersController < ApplicationController
     end
   end
 
+  # GET /players/find?name=Nick — open another character sheet in the same surface.
+  def find
+    name = params[:name].to_s.strip
+    if name.blank?
+      redirect_back fallback_location: root_path, alert: I18n.t("game.flashes.player_missing")
+      return
+    end
+
+    target = Character.find_by("LOWER(characters.name) = ?", name.downcase)
+    unless target
+      redirect_back fallback_location: root_path, alert: I18n.t("game.flashes.player_missing")
+      return
+    end
+
+    redirect_to player_path(name: target.name), status: :see_other
+  end
+
   private
 
   def own_html_profile?
-    request.format.html? && current_character&.id == @character.id
+    request.format.html? && @character.present? && current_character&.id == @character.id
   end
 
   def build_stats_data
@@ -49,6 +67,17 @@ class PlayersController < ApplicationController
     @character = Character
       .includes(:user, {inventory: {inventory_items: :item_template}}, {position: :zone})
       .find_by!("LOWER(characters.name) = ?", params[:name].to_s.downcase)
+  rescue ActiveRecord::RecordNotFound
+    respond_to do |format|
+      format.html do
+        if user_signed_in?
+          redirect_to world_path(player_denied: 1), alert: I18n.t("game.flashes.player_missing") and return
+        end
+
+        render "missing", status: :not_found
+      end
+      format.json { render json: {error: I18n.t("game.flashes.player_missing")}, status: :not_found }
+    end
   end
 
   def equipped_items_for(character)
@@ -66,6 +95,7 @@ class PlayersController < ApplicationController
         id: @character.id,
         name: @character.name,
         level: @character.level,
+        online: @character.online?,
         experience: @character.experience,
         experience_to_next_level: @character.experience_to_next_level,
         location: location_payload,
@@ -82,13 +112,13 @@ class PlayersController < ApplicationController
 
   def location_payload
     position = @character.position
-    return {label: "Unknown"} unless position
+    return {label: I18n.t("game.profile.unknown_location")} unless position
     label = Game::World::Presence.new(character: @character, position:).label
 
     if (match = active_arena_match_for(@character))
       sublocation = match.arena_room&.name || label
       return {
-        label: "#{sublocation} [in combat]",
+        label: I18n.t("game.profile.location_in_combat", place: sublocation),
         zone: position.zone&.name,
         x: position.x,
         y: position.y,
@@ -133,7 +163,11 @@ class PlayersController < ApplicationController
   def public_perks
     @character.owned_perk_keys.map do |key|
       definition = Game::Skills::PerkRegistry.find(key)
-      {key: key, name: definition[:name], source_id: definition[:source_id]}
+      {
+        key: key,
+        name: Game::Skills::PerkRegistry.display_name(definition),
+        source_id: definition[:source_id]
+      }
     end
   end
 

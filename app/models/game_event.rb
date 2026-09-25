@@ -33,20 +33,20 @@ class GameEvent < ApplicationRecord
   end
 
   def destroy
-    raise ActiveRecord::ReadOnlyRecord, "game events are immutable"
+    raise ActiveRecord::ReadOnlyRecord, I18n.t("errors.game_events_immutable")
   end
 
   private
 
   def payload_must_be_an_object
-    errors.add(:payload, "must be an object") unless payload.is_a?(Hash)
+    errors.add(:payload, I18n.t("errors.payload_must_be_object")) unless payload.is_a?(Hash)
   end
 
   def audience_must_match_event_type
     if world_announcement? && recipient.present?
-      errors.add(:recipient, "must be empty for world announcements")
+      errors.add(:recipient, I18n.t("errors.recipient_must_be_empty_for_world"))
     elsif !world_announcement? && recipient.nil?
-      errors.add(:recipient, "is required for personal game events")
+      errors.add(:recipient, I18n.t("errors.recipient_required_for_personal"))
     end
   end
 

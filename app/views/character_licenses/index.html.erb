@@ -1,6 +1,6 @@
-<% content_for :title, "Your licenses - #{@character.name}" %>
+<% content_for :title, t("game.profile.licenses_title", name: @character.name) %>
 
-<section class="nl-character-page" aria-label="Abilities">
+<section class="nl-character-page" aria-label="<%= t("nav.abilities") %>">
   <div class="nl-character-page-grid">
     <aside class="nl-character-page-aside">
       <%= render "shared/neverlands_character_sheet",
@@ -13,18 +13,22 @@
     <main class="nl-character-page-main">
       <%= render "shared/neverlands_profile_navigation", character: @character, current_section: :licenses %>
       <section class="nl-panel nl-allocation-frame" aria-labelledby="character-licenses-heading">
-        <h2 id="character-licenses-heading">Your licenses</h2>
+        <h2 id="character-licenses-heading"><%= t("game.profile.licenses") %></h2>
         <% if @licenses.empty? %>
-          <p class="nl-empty-note">You have no licenses.</p>
+          <p class="nl-empty-note" data-licenses-empty="1">
+            <%= t("game.licenses.empty") %>
+            ·
+            <%= link_to t("game.shop.modes.licenses"), shop_path(mode: "licenses"), class: "nl-sheet-link", data: {licenses_recovery: "shop"} %>
+          </p>
         <% else %>
           <ul class="nl-profile-license-list">
             <% @licenses.each do |license| %>
               <li id="<%= dom_id(license) %>">
                 <strong><%= license.name %></strong>
                 <dl class="nl-profile-license-details">
-                  <div><dt>Type:</dt><dd><%= license.kind.humanize %></dd></div>
-                  <div><dt>Level:</dt><dd><%= license.tier %></dd></div>
-                  <div><dt>Valid until:</dt><dd><time datetime="<%= license.expires_at.iso8601 %>"><%= l(license.expires_at, format: :long) %></time></dd></div>
+                  <div><dt><%= t("game.licenses.type") %>:</dt><dd><%= t("game.licenses.kinds.#{license.kind}", default: license.kind.to_s) %></dd></div>
+                  <div><dt><%= t("game.common.level") %>:</dt><dd><%= license.tier %></dd></div>
+                  <div><dt><%= t("game.licenses.valid_until") %>:</dt><dd><time datetime="<%= license.expires_at.iso8601 %>"><%= l(license.expires_at, format: :long) %></time></dd></div>
                 </dl>
               </li>
             <% end %>

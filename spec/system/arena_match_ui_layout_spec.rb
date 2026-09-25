@@ -253,7 +253,7 @@ RSpec.describe "Arena Match UI Layout", type: :system do
 
     it "shows fight-start message for live match" do
       visit arena_match_path(match)
-      expect(page).to have_css(".combat-log-entry", text: "Fight started")
+      expect(page).to have_css(".combat-log-entry", text: /Fight started|Бой начат/)
     end
   end
 

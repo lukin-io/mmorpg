@@ -1,0 +1,469 @@
+# Ashen sandbox professions / workshop recipes.
+# Intentionally authored for playable loop; balance is tunable after playtests.
+
+professions:
+  tar_smith:
+    title_ru: "Смолокур"
+    title_en: "Tar Smith"
+    summary_ru: "Плавка смолы и полевые наборы в Смоляной Кузнице."
+    summary_en: "Tar work and field kits at the Pitch Forge."
+    skill_key: tar_smith
+    building_key: workshop
+
+  ash_healer:
+    title_ru: "Лекарь Угля"
+    title_en: "Ash Healer"
+    summary_ru: "Сумки лечения травм в Лазарете Угля."
+    summary_en: "Injury healer bags at Coal Infirmary."
+    skill_key: ash_healer
+    building_key: hospital
+
+  ash_herbalist:
+    title_ru: "Травник Пепла"
+    title_en: "Ash Herbalist"
+    summary_ru: "Часовые настои из трав, грибов, цветов и рыбьего масла."
+    summary_en: "One-hour brews from herbs, mushrooms, flowers, and fish oils."
+    skill_key: ashen_herbalism
+    building_key: hospital
+
+recipes:
+  ashen_bandage:
+    profession: tar_smith
+    title_ru: "Пепельный бинт"
+    title_en: "Ashen Bandage"
+    summary_ru: "Смола сосны (или щепа) + хвост клеща → бинт (+40 HP, снимает лёгкие травмы)."
+    summary_en: "Pine resin (or chips) + mite tail → bandage (+40 HP, clears light injuries)."
+    inputs:
+      pine_resin: 1
+      rat_tail: 1
+    output:
+      item_key: ashen_bandage
+      quantity: 1
+    skill_gain: 1
+    min_skill: 0
+
+  ashen_bandage_chips:
+    profession: tar_smith
+    title_ru: "Пепельный бинт (щепа)"
+    title_en: "Ashen Bandage (chips)"
+    summary_ru: "Запасной рецепт: 2 щепы + хвост, если нет смолы сосны."
+    summary_en: "Fallback: 2 chips + tail when pine resin is missing."
+    inputs:
+      wood_chips: 2
+      rat_tail: 1
+    output:
+      item_key: ashen_bandage
+      quantity: 1
+    skill_gain: 1
+    min_skill: 0
+
+  veil_field_kit:
+    profession: tar_smith
+    title_ru: "Полевой набор Завесы"
+    title_en: "Veil Field Kit"
+    summary_ru: "2 бинта + приманка + доска дуба → набор (+80 HP)."
+    summary_en: "2 bandages + bait + oak plank → field kit (+80 HP)."
+    inputs:
+      ashen_bandage: 2
+      ashen_bait: 1
+      ash_oak_plank: 1
+    output:
+      item_key: veil_field_kit
+      quantity: 1
+    skill_gain: 2
+    min_skill: 3
+
+  tar_lure_pack:
+    profession: tar_smith
+    title_ru: "Пачка смоляных приманок"
+    title_en: "Tar Lure Pack"
+    summary_ru: "3 приманки + сок берёзы → 5 приманок."
+    summary_en: "3 bait + birch sap → 5 bait."
+    inputs:
+      ashen_bait: 3
+      soot_birch_sap: 1
+    output:
+      item_key: ashen_bait
+      quantity: 5
+    skill_gain: 1
+    min_skill: 1
+
+  healer_bag_light:
+    profession: ash_healer
+    title_ru: "Сумка новичка-лекаря"
+    title_en: "Novice Healer Bag"
+    summary_ru: "Бинт + трава + кора ивы → сумка (лёгкие травмы)."
+    summary_en: "Bandage + herb + willow bark → bag (light injuries)."
+    inputs:
+      ashen_bandage: 1
+      ash_herb: 2
+      veil_willow_bark: 1
+    output:
+      item_key: healer_bag_light
+      quantity: 1
+    skill_gain: 1
+    min_skill: 0
+
+  ash_tonic:
+    profession: ash_healer
+    title_ru: "Отвар Пепла"
+    title_en: "Ash Tonic"
+    summary_ru: "Мох + кора ивы → простой отвар (+25 HP)."
+    summary_en: "Moss + willow bark → simple tonic (+25 HP)."
+    inputs:
+      dust_moss: 2
+      veil_willow_bark: 1
+    output:
+      item_key: ash_tonic
+      quantity: 1
+    skill_gain: 1
+    min_skill: 0
+
+  healer_bag_heavy:
+    profession: ash_healer
+    title_ru: "Сумка опытного лекаря"
+    title_en: "Adept Healer Bag"
+    summary_ru: "2 бинта + 3 травы + хвост → сумка (лёгкие и тяжёлые)."
+    summary_en: "2 bandages + 3 herbs + tail → bag (light and heavy)."
+    inputs:
+      ashen_bandage: 2
+      ash_herb: 3
+      rat_tail: 1
+    output:
+      item_key: healer_bag_heavy
+      quantity: 1
+    skill_gain: 2
+    min_skill: 3
+
+  healer_bag_combat:
+    profession: ash_healer
+    title_ru: "Сумка мастера-лекаря"
+    title_en: "Master Healer Bag"
+    summary_ru: "Сумка опытного + полевой набор + 4 травы → сумка (включая боевые травмы)."
+    summary_en: "Adept bag + field kit + 4 herbs → bag (including combat trauma)."
+    inputs:
+      healer_bag_heavy: 1
+      veil_field_kit: 1
+      ash_herb: 4
+    output:
+      item_key: healer_bag_combat
+      quantity: 1
+    skill_gain: 3
+    min_skill: 8
+
+  grilled_ash_perch:
+    profession: tar_smith
+    title_ru: "Жареный окунь"
+    title_en: "Grilled Ash Perch"
+    summary_ru: "Окунь + щепа → еда (+20 HP)."
+    summary_en: "Perch + chips → food (+20 HP)."
+    inputs:
+      ash_perch: 1
+      wood_chips: 1
+    output:
+      item_key: grilled_ash_perch
+      quantity: 1
+    skill_gain: 1
+    min_skill: 0
+
+  veil_fish_stew:
+    profession: tar_smith
+    title_ru: "Уха Завесы"
+    title_en: "Veil Fish Stew"
+    summary_ru: "Угорь + карп + трава → уха (+55 HP)."
+    summary_en: "Eel + carp + herb → stew (+55 HP)."
+    inputs:
+      veil_eel: 1
+      salt_carp: 1
+      ash_herb: 1
+    output:
+      item_key: veil_fish_stew
+      quantity: 1
+    skill_gain: 2
+    min_skill: 2
+
+  cedar_field_brace:
+    profession: tar_smith
+    title_ru: "Кедровый полевой набор"
+    title_en: "Cedar Field Brace"
+    summary_ru: "Доска кедра + бинт + хвоя → набор (+80 HP)."
+    summary_en: "Cedar plank + bandage + needle → kit (+80 HP)."
+    inputs:
+      ember_cedar_plank: 1
+      ashen_bandage: 1
+      tar_needle: 2
+    output:
+      item_key: veil_field_kit
+      quantity: 1
+    skill_gain: 2
+    min_skill: 2
+
+  alder_bait_batch:
+    profession: tar_smith
+    title_ru: "Пачка ольховых приманок"
+    title_en: "Alder Bait Batch"
+    summary_ru: "Ольха + корюшка → 4 приманки."
+    summary_en: "Alder + smelt → 4 bait."
+    inputs:
+      drift_alder_wood: 1
+      drift_smelt: 1
+    output:
+      item_key: ashen_bait
+      quantity: 4
+    skill_gain: 1
+    min_skill: 0
+
+  salt_elixir:
+    profession: ash_healer
+    title_ru: "Соляной эликсир"
+    title_en: "Salt Elixir"
+    summary_ru: "Шалфей + карп → эликсир (+40 HP)."
+    summary_en: "Sage + carp → elixir (+40 HP)."
+    inputs:
+      salt_sage: 2
+      salt_carp: 1
+    output:
+      item_key: salt_elixir
+      quantity: 1
+    skill_gain: 1
+    min_skill: 0
+
+  ember_salve:
+    profession: ash_healer
+    title_ru: "Угольная мазь"
+    title_en: "Ember Salve"
+    summary_ru: "Папоротник + корень → мазь (+35 HP, лёгкие травмы)."
+    summary_en: "Fern + root → salve (+35 HP, light injuries)."
+    inputs:
+      ember_fern: 2
+      cinder_root: 1
+    output:
+      item_key: ember_salve
+      quantity: 1
+    skill_gain: 1
+    min_skill: 0
+
+  bloom_tonic:
+    profession: ash_healer
+    title_ru: "Отвар цветка Завесы"
+    title_en: "Veil Bloom Tonic"
+    summary_ru: "Цветок + туманный лист + мох → отвар (+25 HP)."
+    summary_en: "Bloom + mist leaf + moss → tonic (+25 HP)."
+    inputs:
+      veil_bloom: 1
+      mist_leaf: 1
+      dust_moss: 1
+    output:
+      item_key: ash_tonic
+      quantity: 1
+    skill_gain: 1
+    min_skill: 0
+
+  nightshade_bag:
+    profession: ash_healer
+    title_ru: "Сумка паслёна"
+    title_en: "Nightshade Bag"
+    summary_ru: "Паслён + лишайник + бинт → сумка новичка."
+    summary_en: "Nightshade + lichen + bandage → novice bag."
+    inputs:
+      nightshade_ash: 2
+      glow_lichen: 1
+      ashen_bandage: 1
+    output:
+      item_key: healer_bag_light
+      quantity: 1
+    skill_gain: 1
+    min_skill: 1
+
+  trout_tonic:
+    profession: ash_healer
+    title_ru: "Форелевый отвар"
+    title_en: "Trout Tonic"
+    summary_ru: "Форель + кора ивы → отвар (+25 HP)."
+    summary_en: "Trout + willow bark → tonic (+25 HP)."
+    inputs:
+      ember_trout: 1
+      veil_willow_bark: 1
+    output:
+      item_key: ash_tonic
+      quantity: 1
+    skill_gain: 1
+    min_skill: 0
+
+  smoked_cinder_pike:
+    profession: tar_smith
+    title_ru: "Копчёная угольная щука"
+    title_en: "Smoked Cinder Pike"
+    summary_ru: "Щука + щепа → копчёная еда (+40 HP)."
+    summary_en: "Pike + chips → smoked food (+40 HP)."
+    inputs:
+      cinder_pike: 1
+      wood_chips: 2
+    output:
+      item_key: smoked_cinder_pike
+      quantity: 1
+    skill_gain: 2
+    min_skill: 1
+
+  mist_roach_cakes:
+    profession: tar_smith
+    title_ru: "Лепёшки из пескаря"
+    title_en: "Mist Roach Cakes"
+    summary_ru: "2 пескаря + щепа → лепёшки (+15 HP)."
+    summary_en: "2 roach + chips → cakes (+15 HP)."
+    inputs:
+      mist_roach: 2
+      wood_chips: 1
+    output:
+      item_key: mist_roach_cakes
+      quantity: 1
+    skill_gain: 1
+    min_skill: 0
+
+  pike_broth:
+    profession: ash_healer
+    title_ru: "Уха из щуки"
+    title_en: "Pike Broth"
+    summary_ru: "Щука + трава + мох → лечебный бульон (+30 HP)."
+    summary_en: "Pike + herb + moss → healing broth (+30 HP)."
+    inputs:
+      cinder_pike: 1
+      ash_herb: 1
+      dust_moss: 1
+    output:
+      item_key: pike_broth
+      quantity: 1
+    skill_gain: 2
+    min_skill: 1
+
+  roach_tonic:
+    profession: ash_healer
+    title_ru: "Отвар пескаря"
+    title_en: "Roach Tonic"
+    summary_ru: "Пескарь + кора ивы → отвар (+25 HP)."
+    summary_en: "Roach + willow bark → tonic (+25 HP)."
+    inputs:
+      mist_roach: 1
+      veil_willow_bark: 1
+    output:
+      item_key: ash_tonic
+      quantity: 1
+    skill_gain: 1
+    min_skill: 0
+
+  strength_brew:
+    profession: ash_herbalist
+    title_ru: "Отвар силы"
+    title_en: "Strength Brew"
+    inputs: {cinder_root: 2, ember_cap: 2, ash_herb: 2}
+    output: {item_key: strength_brew, quantity: 1}
+    skill_gain: 2
+    min_skill: 0
+
+  ironbark_elixir:
+    profession: ash_herbalist
+    title_ru: "Эликсир железной коры"
+    title_en: "Ironbark Elixir"
+    inputs: {veil_willow_bark: 2, ash_oak_plank: 1, dust_moss: 2}
+    output: {item_key: ironbark_elixir, quantity: 1}
+    skill_gain: 2
+    min_skill: 2
+
+  hunter_eye_draught:
+    profession: ash_herbalist
+    title_ru: "Настой глаза охотника"
+    title_en: "Hunter Eye Draught"
+    inputs: {silver_thistle: 2, mist_leaf: 2, ember_trout: 1}
+    output: {item_key: hunter_eye_draught, quantity: 1}
+    skill_gain: 3
+    min_skill: 5
+
+  mist_step_tonic:
+    profession: ash_herbalist
+    title_ru: "Тоник туманного шага"
+    title_en: "Mist Step Tonic"
+    inputs: {moon_orchid: 1, glow_lichen: 2, mist_roach: 2}
+    output: {item_key: mist_step_tonic, quantity: 1}
+    skill_gain: 3
+    min_skill: 6
+
+  veil_vigor_elixir:
+    profession: ash_herbalist
+    title_ru: "Эликсир бодрости Завесы"
+    title_en: "Veil Vigor Elixir"
+    inputs: {nightshade_ash: 2, veil_bloom: 2, cinder_pike: 1}
+    output: {item_key: veil_vigor_elixir, quantity: 1}
+    skill_gain: 4
+    min_skill: 10
+
+  gather_tonic:
+    profession: ash_herbalist
+    title_ru: "Тоник собирателя"
+    title_en: "Gather Tonic"
+    inputs: {tar_needle: 2, salt_sage: 2, ember_cap: 1}
+    output: {item_key: gather_tonic, quantity: 1}
+    skill_gain: 2
+    min_skill: 3
+
+  fisher_oil:
+    profession: ash_herbalist
+    title_ru: "Рыбацкое масло"
+    title_en: "Fisher Oil"
+    inputs: {veil_eel: 1, drift_smelt: 2, salt_sage: 1}
+    output: {item_key: fisher_oil, quantity: 1}
+    skill_gain: 2
+    min_skill: 4
+
+  ash_ranger_jacket:
+    profession: tar_smith
+    title_ru: "Куртка пепельного следопыта"
+    title_en: "Ash Ranger Jacket"
+    inputs: {ash_wolf_pelt: 3, mist_spider_silk: 2, ember_cedar_plank: 3}
+    output: {item_key: ash_ranger_jacket, quantity: 1}
+    skill_gain: 5
+    min_skill: 12
+
+  ash_ranger_boots:
+    profession: tar_smith
+    title_ru: "Сапоги пепельного следопыта"
+    title_en: "Ash Ranger Boots"
+    inputs: {ash_wolf_pelt: 2, mist_spider_silk: 1, drift_alder_wood: 3}
+    output: {item_key: ash_ranger_boots, quantity: 1}
+    skill_gain: 4
+    min_skill: 10
+
+  ash_warden_blade:
+    profession: tar_smith
+    title_ru: "Клинок хранителя Пепла"
+    title_en: "Ash Warden Blade"
+    inputs: {cinder_drake_scale: 3, iron_ore: 8, ember_cedar_plank: 4}
+    output: {item_key: ash_warden_blade, quantity: 1}
+    skill_gain: 7
+    min_skill: 20
+
+  ash_forager_gloves:
+    profession: tar_smith
+    title_ru: "Перчатки собирателя Пепла"
+    title_en: "Ash Forager Gloves"
+    inputs: {veil_boar_hide: 2, mist_spider_silk: 2, tar_needle: 6}
+    output: {item_key: ash_forager_gloves, quantity: 1}
+    skill_gain: 4
+    min_skill: 8
+
+  ash_battle_helm:
+    profession: tar_smith
+    title_ru: "Боевой шлем Пепла"
+    title_en: "Ash Battle Helm"
+    inputs: {cinder_drake_scale: 2, veil_boar_hide: 2, iron_ore: 6}
+    output: {item_key: ash_battle_helm, quantity: 1}
+    skill_gain: 6
+    min_skill: 18
+
+  ash_battle_mail:
+    profession: tar_smith
+    title_ru: "Боевая кольчуга Пепла"
+    title_en: "Ash Battle Mail"
+    inputs: {cinder_drake_scale: 4, veil_boar_hide: 4, iron_ore: 10, ash_oak_plank: 4}
+    output: {item_key: ash_battle_mail, quantity: 1}
+    skill_gain: 8
+    min_skill: 25

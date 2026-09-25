@@ -17,31 +17,31 @@ module Game
       end
 
       def call
-        return failure("Sell one item at a time.") unless quantity.to_s == "1"
-        return failure("Item not found.") unless inventory_item && inventory_item.inventory_id == character.inventory&.id
+        return failure(I18n.t("game.shop.sell_one_at_a_time")) unless quantity.to_s == "1"
+        return failure(I18n.t("game.inventory.item_not_found")) unless inventory_item && inventory_item.inventory_id == character.inventory&.id
 
         offers = TradeOffers.new(character:)
         offers.perform(action_key:, action: :sell, target: inventory_item) do |offer, account|
           template.lock!
           stock = account.shop_stocks.lock.find_by(item_template: template)
-          reject!("This shop does not accept this item.") unless stock
-          reject!("The shop has enough of this item.") unless stock.accepts_return?
+          reject!(I18n.t("game.shop.not_accepted")) unless stock
+          reject!(I18n.t("game.shop.shop_full")) unless stock.accepts_return?
           inventory.lock!
           inventory_item.lock!
           wallet.lock!
-          reject!("A trading license is required to sell items to the shop.") unless LicenseRules.new(character:).active?(:trading)
-          reject!("Item not found.") unless inventory_item.inventory_id == inventory.id
-          reject!("Not enough items in stack.") unless inventory_item.quantity.positive?
-          reject!("This item cannot be sold.") if inventory_item.protected_from_discard?
-          reject!("This item has invalid durability and cannot be sold.") unless inventory_item.valid_sale_durability?
-          reject!("Broken items cannot be sold.") if inventory_item.broken?
+          reject!(I18n.t("game.shop.sell_trading_license_required")) unless LicenseRules.new(character:).active?(:trading)
+          reject!(I18n.t("game.inventory.item_not_found")) unless inventory_item.inventory_id == inventory.id
+          reject!(I18n.t("game.shop.not_enough_in_stack")) unless inventory_item.quantity.positive?
+          reject!(I18n.t("game.shop.cannot_be_sold")) if inventory_item.protected_from_discard?
+          reject!(I18n.t("game.shop.invalid_sale_durability")) unless inventory_item.valid_sale_durability?
+          reject!(I18n.t("game.shop.broken_cannot_sell")) if inventory_item.broken?
           offers.validate_target!(offer, inventory_item)
           trading_skill = LicenseRules.trading_skill(character)
           unit_price = Catalog.sale_price_for_item(inventory_item, trading_skill:)
-          reject!("This item cannot be sold.") unless unit_price.positive?
-          reject!("The shop does not have enough NV.") if account.nv_balance < unit_price
+          reject!(I18n.t("game.shop.cannot_be_sold")) unless unit_price.positive?
+          reject!(I18n.t("game.shop.shop_no_nv")) if account.nv_balance < unit_price
           if wallet.nv_balance + unit_price >= CurrencyWallet::NV_STORAGE_LIMIT
-            reject!("Your wallet cannot receive this payment right now.")
+            reject!(I18n.t("game.shop.wallet_payment_blocked"))
           end
 
           offers.validate_deadline!(offer)
@@ -83,11 +83,11 @@ module Game
           stock.update!(current: stock.current + 1)
         end
 
-        Result.new(success: true, message: "Sold: #{template.name}.", item: inventory_item)
+        Result.new(success: true, message: I18n.t("game.shop.sold", name: template.name), item: inventory_item)
       rescue TradeOffers::Unavailable => e
         failure(e.message)
       rescue ActiveRecord::RecordNotFound
-        failure("This item is no longer available.")
+        failure(I18n.t("game.shop.item_unavailable"))
       end
 
       private

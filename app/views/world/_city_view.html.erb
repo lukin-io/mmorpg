@@ -19,6 +19,136 @@
   <% if image_asset %>
     <h1 class="nl-visually-hidden city-name"><%= current_zone.display_name %></h1>
   <% end %>
+  <%= render "shared/premium_auto_rail" %>
+  <% if WorldLiveEvent.active.of_kind("city_attack").exists? %>
+    <p class="nl-world-city-defense" data-city-defense="1">
+      <strong class="game-event-attention"><%= t("game.world.city_defense_hint") %></strong>
+      <%= button_to t("game.world.city_defense_cta"),
+            world_city_defense_path,
+            method: :post,
+            class: "lbut",
+            form: {data: {turbo: false}},
+            title: t("game.world.city_defense_hint") %>
+    </p>
+  <% end %>
+  <% if node_key.to_s == "main" %>
+    <p class="nl-starter-tip" role="note"><%= t("game.world.starter_tip") %></p>
+  <% elsif current_zone&.city? %>
+    <p class="nl-starter-tip" role="note"><%= t("game.world.district_help_tip") %></p>
+  <% end %>
+  <% if params[:shop_denied].to_s == "1" %>
+    <p class="nl-quests-board__meta" data-shop-denied="1">
+      <%= t("game.shop.denied_next") %>
+      ·
+      <%= link_to t("game.trade_hub.title"), trade_hub_path(tab: "supply"), class: "nl-sheet-link", data: {shop_recovery: "trade_hub"} %>
+      ·
+      <% if hotspots.any? { |hotspot| hotspot.action_params.to_h["feature"] == "shop" && hotspot.can_interact?(current_character) } %>
+        <%= link_to t("game.shop.title"), shop_path, class: "nl-sheet-link", data: {shop_recovery: "shop"} %>
+      <% elsif hotspots.any? { |hotspot| hotspot.key.to_s == "go_main" } %>
+        <span data-shop-recovery="main"><%= t("game.shop.denied_use_main") %></span>
+      <% else %>
+        <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {shop_recovery: "world"} %>
+      <% end %>
+    </p>
+  <% end %>
+  <% if params[:building_denied].to_s == "1" %>
+    <p class="nl-quests-board__meta" data-building-denied="1">
+      <%= t("game.buildings.denied_next") %>
+      ·
+      <% if hotspots.any? { |hotspot| hotspot.key.to_s == "go_main" } %>
+        <span data-building-recovery="main"><%= t("game.buildings.denied_use_main") %></span>
+      <% else %>
+        <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {building_recovery: "world"} %>
+      <% end %>
+    </p>
+  <% end %>
+  <% if params[:arena_gate_denied].to_s == "1" %>
+    <p class="nl-quests-board__meta" data-arena-gate-denied="1">
+      <%= t("game.world.arena_gate_denied_next") %>
+      ·
+      <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {arena_recovery: "world"} %>
+      ·
+      <% if hotspots.any? { |hotspot| hotspot.key.to_s == "arena" } %>
+        <span data-arena-recovery="square"><%= t("arena.nav.arena") %></span>
+      <% else %>
+        <%= link_to t("arena.nav.arena"), world_path, class: "nl-sheet-link", data: {arena_recovery: "square"} %>
+      <% end %>
+    </p>
+  <% end %>
+  <% if params[:assault_denied].to_s == "1" %>
+    <p class="nl-quests-board__meta" data-assault-denied="1">
+      <%= t("game.world.assault_denied_next") %>
+      ·
+      <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {assault_recovery: "world"} %>
+    </p>
+  <% end %>
+  <% if params[:obelisk_denied].to_s == "1" %>
+    <p class="nl-quests-board__meta" data-obelisk-denied="1">
+      <%= t("game.buildings.obelisk_denied_next") %>
+      ·
+      <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {obelisk_recovery: "world"} %>
+    </p>
+  <% end %>
+  <% if params[:hotspot_denied].to_s == "1" %>
+    <p class="nl-quests-board__meta" data-hotspot-denied="1">
+      <%= t("game.world.hotspot_denied_next") %>
+      ·
+      <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {hotspot_recovery: "world"} %>
+    </p>
+  <% end %>
+  <% if params[:action_denied].to_s == "1" %>
+    <p class="nl-quests-board__meta" data-action-denied="1">
+      <%= t("game.world.action_denied_next") %>
+      ·
+      <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {action_recovery: "world"} %>
+    </p>
+  <% end %>
+  <% if params[:merchant_denied].to_s == "1" %>
+    <p class="nl-quests-board__meta" data-merchant-denied="1">
+      <%= t("game.shop.merchant_denied_next") %>
+      ·
+      <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {merchant_recovery: "world"} %>
+    </p>
+  <% end %>
+  <% if params[:location_denied].to_s == "1" %>
+    <p class="nl-quests-board__meta" data-location-denied="1">
+      <%= t("game.locations.denied_next") %>
+      ·
+      <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {location_recovery: "world"} %>
+    </p>
+  <% end %>
+  <% if params[:character_denied].to_s == "1" %>
+    <p class="nl-quests-board__meta" data-character-denied="1">
+      <%= t("game.sheet.denied_next") %>
+      ·
+      <%= link_to t("arena.nav.character"), player_path(name: current_character.name), class: "nl-sheet-link", data: {character_recovery: "sheet"} %>
+      ·
+      <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {character_recovery: "world"} %>
+    </p>
+  <% end %>
+  <% if params[:player_denied].to_s == "1" %>
+    <p class="nl-quests-board__meta" data-player-denied="1">
+      <%= t("game.profile.missing_next") %>
+      ·
+      <%= link_to t("arena.nav.character"), player_path(name: current_character.name), class: "nl-sheet-link", data: {player_recovery: "sheet"} %>
+      ·
+      <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {player_recovery: "world"} %>
+    </p>
+  <% end %>
+  <% if params[:airship_denied].to_s == "1" %>
+    <p class="nl-quests-board__meta" data-airship-denied="1">
+      <%= t("game.airship.denied_next") %>
+      ·
+      <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {airship_recovery: "world"} %>
+    </p>
+  <% end %>
+  <% if params[:chat_denied].to_s == "1" %>
+    <p class="nl-quests-board__meta" data-chat-denied="1">
+      <%= t("game.chat.denied_next") %>
+      ·
+      <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {chat_recovery: "world"} %>
+    </p>
+  <% end %>
 
   <div class="nl-city-viewport<%= ' nl-city-viewport--pending' unless image_asset %>"
        data-controller="<%= 'nl-scene-size nl-city-map' if image_asset %>"
@@ -39,10 +169,10 @@
                     style: "left: #{image_x}px; top: #{image_y}px;" %>
       <% else %>
         <h1 class="nl-city-pending-title city-name"><%= current_zone.display_name %></h1>
-        <p class="nl-city-pending-notice">This quarter is not ready yet.</p>
+        <p class="nl-city-pending-notice"><%= t("game.world.quarter_pending") %></p>
       <% end %>
 
-      <nav class="nl-city-hotspots" aria-label="City buildings">
+      <nav class="nl-city-hotspots" aria-label="<%= t("game.world.city_buildings") %>">
         <% hotspots.each_with_index do |hotspot, index| %>
           <% next if hotspot.hotspot_type == "district" %>
           <%= render "world/city_action", hotspot:, index:, node_key:, image_asset:, tooltip_actions:, offers_by_hotspot_id: %>
@@ -50,7 +180,7 @@
       </nav>
 
       <% if image_asset %>
-      <div class="nl-city-landmarks" aria-label="City landmarks">
+      <div class="nl-city-landmarks" aria-label="<%= t("game.world.city_landmarks") %>">
         <% presentation.fetch("landmarks", {}).each do |landmark_key, landmark| %>
           <% left, top, width, height = landmark.fetch("box") %>
           <span class="nl-city-hotspot nl-city-hotspot--landmark"
@@ -70,10 +200,18 @@
     </div>
     </div>
     <% if hotspots.any? { |hotspot| hotspot.hotspot_type == "district" } %>
-    <nav class="nl-city-routes" aria-label="City quarter routes">
+    <nav class="nl-city-routes" aria-label="<%= t("game.world.city_routes") %>">
       <% hotspots.each_with_index do |hotspot, index| %>
         <% next unless hotspot.hotspot_type == "district" %>
         <%= render "world/city_action", hotspot:, index:, node_key:, image_asset:, tooltip_actions:, offers_by_hotspot_id: %>
+      <% end %>
+    </nav>
+    <% end %>
+    <% building_hotspots = hotspots.reject { |hotspot| hotspot.hotspot_type == "district" } %>
+    <% if building_hotspots.any? %>
+    <nav class="nl-city-building-controls" aria-label="<%= t("game.world.city_building_controls") %>" data-city-building-controls="1">
+      <% building_hotspots.each_with_index do |hotspot, index| %>
+        <%= render "world/city_action", hotspot:, index:, node_key:, image_asset:, tooltip_actions:, offers_by_hotspot_id:, named_layout: true %>
       <% end %>
     </nav>
     <% end %>

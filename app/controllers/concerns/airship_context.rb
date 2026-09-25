@@ -7,7 +7,7 @@
 module AirshipContext
   extend ActiveSupport::Concern
 
-  GROUND_CONTROLLERS = %w[world world_locations city_buildings shop arena arena_rooms].freeze
+  GROUND_CONTROLLERS = %w[world world_locations city_buildings shop arena arena_rooms instances activity].freeze
 
   private
 
@@ -26,7 +26,7 @@ module AirshipContext
     @position = current_character.position
     if @active_airship_journey && airship_ground_request?
       respond_to do |format|
-        format.json { render json: {error: "Disembark before entering the ground location."}, status: :conflict }
+        format.json { render json: {error: I18n.t("game.flashes.disembark_first")}, status: :conflict }
         format.any { redirect_to airship_path, status: :see_other }
       end
     else

@@ -1,0 +1,141 @@
+<% stored = local_assigns[:stored_item] %>
+<% deposit_options = local_assigns.fetch(:deposit_options, []) %>
+<section class="nl-handbook" aria-label="<%= t("game.buildings.bank_aria") %>"
+         data-bank-locker="<%= stored.present? ? "occupied" : "empty" %>"
+         data-bank-wallet="<%= local_assigns.fetch(:wallet_nv, 0) %>"
+         data-bank-vault="<%= local_assigns.fetch(:vault_nv, 0) %>"
+         data-bank-vm="<%= local_assigns.fetch(:veil_marks, 0) %>"
+         data-bank-can-deposit="<%= local_assigns.fetch(:wallet_nv, 0).to_i.positive? ? "1" : "0" %>"
+         data-bank-can-withdraw="<%= local_assigns.fetch(:vault_nv, 0).to_i.positive? ? "1" : "0" %>"
+         data-bank-can-store="<%= stored.blank? && deposit_options.any? ? "1" : "0" %>"
+         data-bank-can-retrieve="<%= stored.present? ? "1" : "0" %>"
+         data-bank-item-options="<%= deposit_options.size %>">
+  <h2><%= t("game.buildings.bank_title") %></h2>
+  <p class="nl-handbook__lead">
+    <%= t("game.buildings.bank_lead",
+          wallet: local_assigns.fetch(:wallet_nv, 0),
+          vault: local_assigns.fetch(:vault_nv, 0)) %>
+  </p>
+  <% if params[:bank_denied].to_s == "1" %>
+    <p class="nl-quests-board__meta" data-bank-denied="1">
+      <%= t("game.buildings.bank_denied_next") %>
+      ·
+      <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {bank_recovery: "world"} %>
+      ·
+      <%= link_to t("game.buildings.bank_title"), city_building_path("bank"), class: "nl-sheet-link", data: {bank_recovery: "bank"} %>
+    </p>
+  <% end %>
+  <p class="nl-quests-board__meta" data-bank-vm-line="1">
+    <%= t("game.buildings.bank_vm", amount: local_assigns.fetch(:veil_marks, 0)) %>
+    <% if Game::World::CityBuildingCatalog.accessible?(character: current_character, building_key: "hospital") %>
+      · <%= link_to t("game.sheet.veil_marks_open_cta"), city_building_path("hospital"), class: "nl-sheet-link", data: {bank_recovery: "hospital"} %>
+    <% else %>
+      · <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {bank_recovery: "world"} %>
+    <% end %>
+  </p>
+  <div class="nl-handbook__grid">
+    <article class="nl-handbook__card">
+      <h3><%= t("game.buildings.bank_deposit") %></h3>
+      <% wallet_nv = local_assigns.fetch(:wallet_nv, 0).to_i %>
+      <%= form_with url: city_building_bank_path("bank"), method: :post, data: {turbo: false} do |f| %>
+        <%= f.hidden_field :bank_action, value: "deposit" %>
+        <%= f.number_field :amount,
+              value: wallet_nv.positive? ? [10, wallet_nv].min : 1,
+              min: 1,
+              max: [wallet_nv, 1].max,
+              class: "nl-bank-amount" %>
+        <%= f.submit t("game.buildings.bank_deposit_cta"), class: "lbut", disabled: wallet_nv <= 0 %>
+      <% end %>
+      <% if wallet_nv <= 0 %>
+        <p class="nl-quests-board__meta" data-bank-wallet-empty="1">
+          <%= t("game.buildings.bank_wallet_empty") %>
+          <% if Game::World::CityBuildingCatalog.accessible?(character: current_character, building_key: "junk_dealer") %>
+            <%= link_to t("game.buildings.junk_dealer_link"), city_building_path("junk_dealer"), class: "nl-sheet-link", data: {bank_recovery: "junk"} %>
+          <% elsif Game::World::CityBuildingCatalog.accessible?(character: current_character, building_key: "shop") %>
+            <%= link_to t("game.shop.title"), shop_path(mode: "sell"), class: "nl-sheet-link", data: {bank_recovery: "shop"} %>
+          <% else %>
+            <%= link_to t("game.common.city"), world_path, class: "nl-sheet-link", data: {bank_recovery: "city"} %>
+          <% end %>
+        </p>
+      <% end %>
+      <% if wallet_nv.positive? %>
+        <%= button_to t("game.buildings.bank_deposit_all_cta", amount: wallet_nv),
+              city_building_bank_path("bank"),
+              method: :post,
+              params: {bank_action: "deposit", amount: wallet_nv},
+              class: "lbut",
+              form: {data: {turbo: false, bank_quick: "deposit_all"}} %>
+      <% end %>
+    </article>
+    <article class="nl-handbook__card">
+      <h3><%= t("game.buildings.bank_withdraw") %></h3>
+      <% vault_nv = local_assigns.fetch(:vault_nv, 0).to_i %>
+      <%= form_with url: city_building_bank_path("bank"), method: :post, data: {turbo: false} do |f| %>
+        <%= f.hidden_field :bank_action, value: "withdraw" %>
+        <%= f.number_field :amount,
+              value: vault_nv.positive? ? [10, vault_nv].min : 1,
+              min: 1,
+              max: [vault_nv, 1].max,
+              class: "nl-bank-amount" %>
+        <%= f.submit t("game.buildings.bank_withdraw_cta"), class: "lbut", disabled: vault_nv <= 0 %>
+      <% end %>
+      <% if vault_nv <= 0 %>
+        <p class="nl-quests-board__meta" data-bank-vault-empty="1">
+          <%= t("game.buildings.bank_vault_empty") %>
+          <% if wallet_nv <= 0 %>
+            ·
+            <% if Game::World::CityBuildingCatalog.accessible?(character: current_character, building_key: "junk_dealer") %>
+              <%= link_to t("game.buildings.junk_dealer_link"), city_building_path("junk_dealer"), class: "nl-sheet-link", data: {bank_recovery: "junk"} %>
+            <% else %>
+              <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {bank_recovery: "world"} %>
+            <% end %>
+          <% end %>
+        </p>
+      <% end %>
+      <% if vault_nv.positive? %>
+        <%= button_to t("game.buildings.bank_withdraw_all_cta", amount: vault_nv),
+              city_building_bank_path("bank"),
+              method: :post,
+              params: {bank_action: "withdraw", amount: vault_nv},
+              class: "lbut",
+              form: {data: {turbo: false, bank_quick: "withdraw_all"}} %>
+      <% end %>
+    </article>
+  </div>
+
+  <h3><%= t("game.buildings.bank_item_title") %></h3>
+  <p class="nl-quests-board__meta"><%= t("game.buildings.bank_item_lead") %></p>
+  <% if stored.present? %>
+    <p data-bank-item="<%= stored["item_key"] %>">
+      <%= t("game.buildings.bank_item_stored", name: stored["name"], qty: stored["quantity"]) %>
+      <%= button_to t("game.buildings.bank_item_withdraw_cta"),
+            city_building_bank_item_path("bank"),
+            method: :post,
+            params: {bank_item_action: "withdraw"},
+            class: "lbut",
+            form: {data: {turbo: false}} %>
+    </p>
+  <% else %>
+    <% if deposit_options.empty? %>
+      <p class="nl-quests-board__meta" data-bank-item-empty="1">
+        <%= t("game.buildings.bank_item_no_bags") %>
+        ·
+        <%= link_to t("game.shop.open_inventory"), inventory_path, class: "nl-sheet-link", data: {bank_recovery: "inventory"} %>
+      </p>
+    <% else %>
+      <% deposit_options.each do |name, key, qty| %>
+        <p>
+          <%= name %> ×<%= qty %>
+          <%= button_to t("game.buildings.bank_item_deposit_cta"),
+                city_building_bank_item_path("bank"),
+                method: :post,
+                params: {bank_item_action: "deposit", item_key: key, quantity: 1},
+                class: "lbut",
+                form: {data: {turbo: false}} %>
+        </p>
+      <% end %>
+    <% end %>
+  <% end %>
+</section>
+
+<%= render "city_buildings/landmark", building: local_assigns.fetch(:building, {}), building_key: "bank" %>

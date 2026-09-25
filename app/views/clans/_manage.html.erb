@@ -1,0 +1,86 @@
+<% if @clan.blank? %>
+  <p class="nl-quests-board__meta"><%= t("game.clans.manage_need_clan") %></p>
+<% elsif !@clan.can_manage?(current_character) && @membership&.role != "treasurer" %>
+  <p class="nl-quests-board__meta"><%= t("game.clans.manage_denied") %></p>
+<% else %>
+  <h2><%= t("game.clans.tab_manage") %></h2>
+  <p class="nl-quests-board__meta"><%= t("game.clans.manage_lead") %></p>
+
+  <% if @clan.can_invite?(current_character) %>
+    <h3><%= t("game.clans.invite_title") %></h3>
+    <%= form_with url: invite_clan_path, method: :post, local: true, class: "nl-clan-form" do |f| %>
+      <%= f.text_field :target_name, placeholder: t("game.clans.invite_placeholder"), required: true, class: "LogintextBox4" %>
+      <%= f.submit t("game.clans.invite_cta"), class: "lbut" %>
+    <% end %>
+  <% end %>
+
+  <% if @clan.can_manage?(current_character) %>
+    <h3><%= t("game.clans.alliance_title") %></h3>
+    <p class="nl-quests-board__meta"><%= t("game.clans.alliance_lead") %></p>
+    <%= form_with url: alliance_propose_clan_path, method: :post, local: true, class: "nl-clan-form", data: {turbo: false} do |f| %>
+      <%= f.text_field :target_tag, placeholder: t("game.clans.alliance_tag_hint"), required: true, class: "LogintextBox4", maxlength: 6 %>
+      <%= f.submit t("game.clans.alliance_propose_cta"), class: "lbut" %>
+    <% end %>
+    <% alliance = @alliance || {accepted: [], incoming: [], outgoing: []} %>
+    <% if alliance[:incoming].any? %>
+      <ul class="nl-trade-hub__list" data-alliance-incoming="1">
+        <% alliance[:incoming].each do |id, tag, name| %>
+          <li>
+            <%= tag %> — <%= name %>
+            <%= button_to t("game.clans.alliance_accept_cta"),
+                  alliance_accept_clan_path,
+                  method: :post,
+                  params: {from_clan_id: id},
+                  class: "lbut",
+                  form: {data: {turbo: false}} %>
+          </li>
+        <% end %>
+      </ul>
+    <% end %>
+    <% if alliance[:accepted].any? %>
+      <ul class="nl-trade-hub__list" data-alliance-accepted="1">
+        <% alliance[:accepted].each do |id, tag, name| %>
+          <li>
+            <%= tag %> — <%= name %>
+            <%= button_to t("game.clans.alliance_break_cta"),
+                  alliance_break_clan_path,
+                  method: :post,
+                  params: {other_clan_id: id},
+                  class: "lbut",
+                  form: {data: {turbo: false}} %>
+          </li>
+        <% end %>
+      </ul>
+    <% end %>
+  <% end %>
+
+  <% if @clan.can_lock_treasury?(current_character) %>
+    <h3><%= t("game.clans.treasury_lock_title") %></h3>
+    <p>
+      <%= t(@clan.treasury_locked? ? "game.clans.treasury_status_locked" : "game.clans.treasury_status_open") %>
+    </p>
+    <% if @clan.treasury_locked? %>
+      <%= button_to t("game.clans.treasury_unlock_cta"),
+            treasury_lock_clan_path,
+            method: :post,
+            params: {locked: false},
+            class: "lbut" %>
+    <% else %>
+      <%= button_to t("game.clans.treasury_lock_cta"),
+            treasury_lock_clan_path,
+            method: :post,
+            params: {locked: true},
+            class: "lbut" %>
+    <% end %>
+  <% end %>
+
+  <% if @membership&.role == "leader" %>
+    <h3><%= t("game.clans.dissolve_title") %></h3>
+    <p class="nl-quests-board__meta"><%= t("game.clans.dissolve_lead") %></p>
+    <%= button_to t("game.clans.dissolve_cta"),
+          dissolve_clan_path,
+          method: :post,
+          class: "lbut",
+          form: {data: {turbo_confirm: t("game.clans.dissolve_confirm")}} %>
+  <% end %>
+<% end %>

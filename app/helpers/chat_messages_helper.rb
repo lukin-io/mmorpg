@@ -22,10 +22,10 @@ module ChatMessagesHelper
   end
 
   def chat_message_sender_name(message)
-    return "System" if message.system?
+    return I18n.t("game.chat.system_sender") if message.system?
 
     sender = message.sender
-    return message.metadata&.dig("sender_name") || "Unknown" unless sender
+    return message.metadata&.dig("sender_name") || I18n.t("game.chat.unknown_sender") unless sender
 
     character = if sender.association(:characters).loaded?
       sender.characters.min_by(&:created_at)

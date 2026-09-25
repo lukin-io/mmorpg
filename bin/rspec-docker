@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Permanent local/CI-friendly RSpec runner via docker compose (no host Ruby gems required).
+set -euo pipefail
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$ROOT"
+export RSPEC_ARGS="${*:-spec/services/game/world/gather_fishing_mail_spec.rb}"
+# Rewrite the compose command args by env is awkward on Windows; pass through service env.
+docker compose -f docker-compose.test.yml run --rm -e "RSPEC_ARGS=$RSPEC_ARGS" rspec \
+  "set -euo pipefail; export DEBIAN_FRONTEND=noninteractive; apt-get update -qq; apt-get install -y -qq build-essential libpq-dev libyaml-dev git postgresql-client > /dev/null; bundle install --quiet; bundle exec rails db:prepare; bundle exec rspec $RSPEC_ARGS"

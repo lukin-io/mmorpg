@@ -22,12 +22,12 @@ RSpec.describe "World drinking", type: :system, js: true do
 
   it "shows immediate success, retains the sip lock through dismissal/reload, and restores actions on time" do
     visit world_path
-    click_button "Drink"
+    click_button I18n.t("game.world.local_action.drinking.label")
 
-    expect(page).to have_css("dialog[open][aria-label='Action result']", text: "Everything went well.")
-    expect(page).to have_button("Drink", disabled: true)
-    expect(page).to have_button("Fish", disabled: true)
-    expect(page).to have_button("Look Around", disabled: true)
+    expect(page).to have_css("dialog[open][aria-label='Action result']", text: I18n.t("game.world.local_action.drinking.message"))
+    expect(page).to have_button(I18n.t("game.world.local_action.drinking.label"), disabled: true)
+    expect(page).to have_button(I18n.t("game.world.local_action.fishing.label"), disabled: true)
+    expect(page).to have_button(I18n.t("game.world.local_action.resource_search.label"), disabled: true)
     expect(page).to have_button("Inventory", disabled: true)
     expect(page).to have_button("Your character", disabled: true)
     expect(page).to have_no_css(".nl-tile-clickable--available")
@@ -39,9 +39,9 @@ RSpec.describe "World drinking", type: :system, js: true do
     within("dialog") { find("button[aria-label='Close result']").click }
     page.refresh
     expect(page).to have_no_css("dialog")
-    expect(page).to have_button("Drink", disabled: true)
-    expect(page).to have_button("Fish", disabled: true)
-    expect(page).to have_button("Look Around", disabled: true)
+    expect(page).to have_button(I18n.t("game.world.local_action.drinking.label"), disabled: true)
+    expect(page).to have_button(I18n.t("game.world.local_action.fishing.label"), disabled: true)
+    expect(page).to have_button(I18n.t("game.world.local_action.resource_search.label"), disabled: true)
     expect(offer.reload.local_action_ends_at).to eq(deadline)
     expect(character.reload.fatigue_percent).to eq(5)
 
@@ -51,9 +51,9 @@ RSpec.describe "World drinking", type: :system, js: true do
       Date.now = () => originalNow() + 61000
     JS
     expect(page).to have_css(".nl-map-container[data-nl-world-map-work-active-value='false']")
-    expect(page).to have_button("Drink", disabled: false)
-    expect(page).to have_button("Fish", disabled: false)
-    expect(page).to have_button("Look Around", disabled: false)
+    expect(page).to have_button(I18n.t("game.world.local_action.drinking.label"), disabled: false)
+    expect(page).to have_button(I18n.t("game.world.local_action.fishing.label"), disabled: false)
+    expect(page).to have_button(I18n.t("game.world.local_action.resource_search.label"), disabled: false)
     expect(page).to have_button("Inventory", disabled: false)
     expect(offer.reload).to be_completed
     expect(character.reload.fatigue_percent).to eq(5)

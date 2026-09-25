@@ -59,7 +59,7 @@ RSpec.describe "Incremental World map updates", type: :request do
   end
 
   it "renders the western survey margin in a wider viewport without importing or extending gameplay cells" do
-    zone.update!(name: "Outpost Surroundings", metadata: {"source_map" => "m_1001_999"})
+    zone.update!(name: "Пепельный Берег", metadata: {"source_map" => "m_1001_999"})
     position.update!(x: 6, y: 8)
     existing_tiles = MapTileTemplate.order(:id).map(&:attributes)
     existing_zone = zone.attributes
@@ -83,7 +83,7 @@ RSpec.describe "Incremental World map updates", type: :request do
   end
 
   it "withholds movement into painted western cells and rejects a stale offer targeting outside the region" do
-    zone.update!(name: "Outpost Surroundings", metadata: {"source_map" => "m_1001_999"})
+    zone.update!(name: "Пепельный Берег", metadata: {"source_map" => "m_1001_999"})
     position.update!(x: 0, y: 8)
 
     get world_path, params: viewport
@@ -100,7 +100,7 @@ RSpec.describe "Incremental World map updates", type: :request do
     expect(position.reload).to have_attributes(x: 0, y: 8)
     expect(invalid_offer.reload).to be_cancelled
     expect(MovementCommand.moving.where(character:)).to be_empty
-    expect(response.body).to include("Tile is not passable")
+    expect(response.body).to include(I18n.t("game.world.tile_not_passable"))
   end
 
   it "returns zero terrain cells on acceptance and only seven entering cells after an east step completes" do

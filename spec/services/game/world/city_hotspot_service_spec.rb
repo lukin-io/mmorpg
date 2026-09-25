@@ -6,7 +6,7 @@ RSpec.describe Game::World::CityHotspotService do
   let(:user) { create(:user) }
   let(:character) { create(:character, user: user, level: 10) }
   let(:city_zone) { create(:zone, name: "Outpost", location_type: "city", width: 20, height: 20) }
-  let(:destination_zone) { create(:zone, name: "Outpost Surroundings", location_type: "outdoor", width: 20, height: 20) }
+  let(:destination_zone) { create(:zone, name: "Пепельный Берег", location_type: "outdoor", width: 20, height: 20) }
   let!(:position) { create(:character_position, character: character, zone: city_zone, x: 5, y: 5) }
 
   subject { described_class.new(character: character, zone: city_zone) }

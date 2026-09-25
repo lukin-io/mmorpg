@@ -1,14 +1,15 @@
 <% if @building["kind"] == "airship" %>
   <div class="nl-airship-station-page" data-building-key="<%= @building_key %>">
-    <h1 class="nl-visually-hidden"><%= @building["title"] %></h1>
-    <%= render "city_buildings/airship", routes: @airship_routes %>
+    <header class="nl-city-building-header">
+      <div>
+        <h1><%= @building["title"] %></h1>
+        <p><%= @building["summary"] %></p>
+      </div>
+      <%= link_to t("arena.nav.city"), world_path, class: "lbut", data: {turbo: false, building_recovery: "world"} %>
+    </header>
+    <%= render "city_buildings/airship", routes: @airship_routes, building: @building %>
   </div>
 <% else %>
-<%#
-  City building interior. Navigation away from the building is owned
-  by the shell header, as in the source, so this page adds no second context
-  strip of its own.
-%>
 <div class="nl-city-building-page" data-building-key="<%= @building_key %>">
     <section class="nl-city-building-frame">
       <header class="nl-city-building-header">
@@ -16,27 +17,176 @@
           <h1><%= @building["title"] %></h1>
           <p><%= @building["summary"] %></p>
         </div>
-        <%= link_to "City", world_path, class: "lbut", data: {turbo: false} %>
+        <%= link_to t("arena.nav.city"), world_path, class: "lbut", data: {turbo: false, building_recovery: "world"} %>
       </header>
 
-      <p class="nl-city-building-notice">
+      <p class="nl-city-building-notice"<% if @building["kind"] == "market" %> data-market-notice="1"<% end %>>
         <% if @building["kind"] == "market" %>
-          Stall rentals and player listings are read-only.
+          <%= t("game.buildings.market_notice") %>
+        <% elsif @building["kind"] == "workshop" %>
+          <%= t("game.professions.workshop_notice") %>
+        <% elsif @building["kind"] == "junk_buyback" %>
+          <%= t("game.buildings.junk_lead") %>
+        <% elsif @building["kind"] == "guard" %>
+          <%= t("game.buildings.guard_lead") %>
+        <% elsif @building["kind"] == "law" %>
+          <%= t(
+                "game.buildings.law_lead",
+                current: t("game.buildings.law_alignment.#{current_character.alignment}"),
+                amount: Game::World::LawAlignmentPledge::CHANGE_COST
+              ) %>
+        <% elsif @building["kind"] == "obelisk" %>
+          <%= t("game.buildings.obelisk_lead", amount: Game::World::ObeliskRecall::RECALL_COST) %>
+        <% elsif @building["kind"] == "souvenir" %>
+          <%= t("game.buildings.souvenir_lead") %>
+        <% elsif @building["kind"] == "post" %>
+          <%= t("game.buildings.post_lead") %>
+        <% elsif @building["kind"] == "auction" %>
+          <%= t("game.buildings.auction_live_lead") %>
+        <% elsif @building["kind"] == "numismatics" %>
+          <%= t("game.buildings.numismatics_live_lead") %>
+        <% elsif @building["kind"] == "bank" %>
+          <%= t("game.buildings.bank_lead", wallet: @bank_wallet_nv, vault: @bank_vault_nv) %>
+        <% elsif @building["kind"] == "temple" %>
+          <%= t("game.buildings.temple_rite_lead", amount: Game::World::TempleBlessing::COST_NV) %>
+        <% elsif @building["kind"] == "tavern" %>
+          <%= t("game.buildings.tavern_rest_lead") %>
+        <% elsif @building["kind"] == "landmark" %>
+          <%= t("game.buildings.landmark_open_lead") %>
+        <% elsif @building["kind"] == "hospital" %>
+          <%= t("game.buildings.hospital_rest_lead") %>
+          <% if @injury_summary.present? %>
+            <br><strong><%= @injury_summary %></strong>
+          <% end %>
         <% else %>
-        This source-captured surface is read-only for MVP. No purchase, sale,
-        processing, healing, or rental action is exposed.
+          <%= t("game.buildings.landmark_readonly_lead") %>
         <% end %>
       </p>
 
       <% case @building["kind"] %>
       <% when "market" %>
-        <%= render "city_buildings/market", building: @building %>
+        <%= render "city_buildings/market",
+              building: @building,
+              offers: @junk_offers,
+              stall_listings: @stall_listings,
+              stall_listable: @stall_listable,
+              stall_lease: @stall_lease,
+              stall_mass_used: @stall_mass_used %>
       <% when "shop_shell" %>
-        <%= render "city_buildings/shop_shell", building: @building %>
+        <%= render "city_buildings/shop_shell", building: @building, building_key: @building_key %>
+      <% when "junk_buyback" %>
+        <%= render "city_buildings/junk_buyback",
+              offers: @junk_offers,
+              building: @building,
+              building_key: @building_key,
+              with_landmark: true %>
       <% when "numismatics" %>
         <%= render "city_buildings/numismatics", building: @building %>
+        <%= render "city_buildings/landmark", building: @building, building_key: @building_key %>
       <% when "hospital" %>
-        <%= render "city_buildings/hospital", building: @building %>
+        <%= render "city_buildings/hospital",
+              building: @building,
+              recipes: @profession_recipes,
+              skill: @ash_healer_skill,
+              veil_marks: @veil_marks,
+              wallet_nv: @wallet_nv,
+              premium_offers: @premium_offers %>
+      <% when "workshop" %>
+        <%= render "city_buildings/workshop",
+              building: @building,
+              recipes: @profession_recipes,
+              skill: @tar_smith_skill,
+              repairable_items: @repairable_items %>
+      <% when "tavern" %>
+        <%= render "city_buildings/tavern", building: @building %>
+      <% when "temple" %>
+        <%= render "city_buildings/temple", building: @building %>
+      <% when "bank" %>
+        <%= render "city_buildings/bank",
+              building: @building,
+              wallet_nv: @bank_wallet_nv,
+              vault_nv: @bank_vault_nv,
+              veil_marks: @veil_marks,
+              stored_item: @bank_item,
+              deposit_options: @bank_deposit_options %>
+      <% when "post" %>
+        <%= render "city_buildings/post", building: @building, note: @post_note, inbox: @post_inbox %>
+      <% when "auction" %>
+        <%= render "city_buildings/auction", building: @building %>
+      <% when "souvenir" %>
+        <%= render "city_buildings/souvenir_shop", building: @building %>
+      <% when "obelisk" %>
+        <%= render "city_buildings/obelisk", building: @building, bound: @obelisk_bound %>
+      <% when "law" %>
+        <%= render "city_buildings/law_abode", building: @building %>
+      <% when "guard" %>
+        <%= render "city_buildings/guard_tower", building: @building, routes: @guard_routes %>
+      <% when "landmark" %>
+        <%= render "city_buildings/landmark", building: @building, building_key: @building_key %>
+      <% end %>
+
+      <% if @building_key == "city_hall" %>
+        <% quest_journal = Game::Quests::Journal.new(character: current_character) %>
+        <% quest_entries = quest_journal.entries %>
+        <% quest_counts = quest_entries.group_by { |e| e[:status] }.transform_values(&:size) %>
+        <% hall_wallet = current_user.currency_wallet || current_user.create_currency_wallet!(nv_balance: 0) %>
+        <% hall_vault = Game::World::BankVault.balance_for(current_character) %>
+        <% ready_count = quest_entries.count { |e| e[:status] == "active" && e[:progress].to_i >= e[:target].to_i } %>
+        <section class="nl-quests-board" aria-label="<%= t("game.buildings.city_hall_treasury_aria") %>"
+                 data-city-hall-wallet="<%= hall_wallet.nv_balance.to_i %>"
+                 data-city-hall-vault="<%= hall_vault %>"
+                 data-city-hall-vm="<%= hall_wallet.veil_marks.to_i %>">
+          <h2><%= t("game.buildings.city_hall_treasury_title") %></h2>
+          <p class="nl-quests-board__meta">
+            <%= t(
+                  "game.buildings.city_hall_treasury_lead",
+                  wallet: hall_wallet.nv_balance.to_i,
+                  vault: hall_vault,
+                  marks: hall_wallet.veil_marks.to_i
+                ) %>
+          </p>
+          <p>
+            <% if Game::World::CityBuildingCatalog.accessible?(character: current_character, building_key: "bank") %>
+              <%= link_to t("game.buildings.bank_title"), city_building_path("bank"), class: "lbut", data: {city_hall_recovery: "bank"} %>
+            <% end %>
+            <% if Game::World::CityBuildingCatalog.accessible?(character: current_character, building_key: "hospital") %>
+              <%= link_to t("game.buildings.hospital_title_short"), city_building_path("hospital"), class: "lbut", data: {city_hall_recovery: "hospital"} %>
+            <% end %>
+            <% if Game::World::CityBuildingCatalog.accessible?(character: current_character, building_key: "post") %>
+              <%= link_to t("game.buildings.post_title"), city_building_path("post"), class: "lbut", data: {city_hall_recovery: "post"} %>
+            <% end %>
+            <% if Game::World::CityBuildingCatalog.accessible?(character: current_character, building_key: "clan_hall") %>
+              <%= link_to t("game.buildings.clan_hall_short"), city_building_path("clan_hall"), class: "lbut", data: {city_hall_recovery: "clan_hall"} %>
+            <% end %>
+            <% if Game::World::CityBuildingCatalog.accessible?(character: current_character, building_key: "junk_dealer") %>
+              <%= link_to t("game.buildings.junk_dealer_link"), city_building_path("junk_dealer"), class: "lbut", data: {city_hall_recovery: "junk"} %>
+            <% end %>
+          </p>
+        </section>
+        <section class="nl-quests-board"
+                 data-city-hall-quest-ready="<%= ready_count %>">
+          <h2><%= t("game.quests.board_title") %></h2>
+          <p><%= t("game.quests.hint") %></p>
+          <% if (chip = quest_journal.active_chip).present? %>
+            <p class="nl-quests-board__active<%= " nl-quests-board__active--ready" if quest_journal.active_chip_ready? %>"
+               data-city-hall-chip-ready="<%= quest_journal.active_chip_ready? ? "1" : "0" %>">
+              <%= link_to chip, quests_path, data: {city_hall_recovery: "quests"} %>
+            </p>
+          <% end %>
+          <ul class="nl-quests__summary" aria-label="<%= t("game.quests.summary_aria") %>"
+              data-city-hall-quest-active="<%= quest_counts.fetch("active", 0) %>"
+              data-city-hall-quest-available="<%= quest_counts.fetch("available", 0) %>"
+              data-city-hall-quest-locked="<%= quest_counts.fetch("locked", 0) %>"
+              data-city-hall-quest-completed="<%= quest_counts.fetch("completed", 0) %>">
+            <li><span><%= t("game.quests.status.active") %></span> <b><%= quest_counts.fetch("active", 0) %></b></li>
+            <li data-city-hall-ready-count="<%= ready_count %>"><span><%= t("game.quests.status.ready") %></span> <b><%= ready_count %></b></li>
+            <li><span><%= t("game.quests.status.available") %></span> <b><%= quest_counts.fetch("available", 0) %></b></li>
+            <li><span><%= t("game.quests.status.locked") %></span> <b><%= quest_counts.fetch("locked", 0) %></b></li>
+            <li><span><%= t("game.quests.status.completed") %></span> <b><%= quest_counts.fetch("completed", 0) %></b></li>
+          </ul>
+          <%= link_to t("game.quests.board_open"), quests_path, class: "lbut", data: {city_hall_recovery: "quests"} %>
+          <p class="nl-quests-board__meta"><%= t("game.quests.board_meta") %></p>
+        </section>
       <% end %>
     </section>
 </div>

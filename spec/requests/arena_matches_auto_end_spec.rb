@@ -53,7 +53,7 @@ RSpec.describe "ArenaMatches Auto-End on View", type: :request do
 
       it "displays live status" do
         get arena_match_path(match)
-        expect(response.body).to include("Live")
+        expect(response.body).to include(I18n.t("arena.match_status.live"))
       end
     end
 
@@ -75,12 +75,12 @@ RSpec.describe "ArenaMatches Auto-End on View", type: :request do
 
       it "displays completed status" do
         get arena_match_path(match)
-        expect(response.body).to include("Finished")
+        expect(response.body).to include(I18n.t("arena.match_status.completed"))
       end
 
       it "displays victory overlay for winner" do
         get arena_match_path(match)
-        expect(response.body).to include("Victory")
+        expect(response.body).to include(I18n.t("game.fight.result_victory"))
       end
     end
 
@@ -102,7 +102,7 @@ RSpec.describe "ArenaMatches Auto-End on View", type: :request do
 
       it "displays defeat overlay for loser" do
         get arena_match_path(match)
-        expect(response.body).to include("Defeat")
+        expect(response.body).to include(I18n.t("game.fight.result_defeat"))
       end
     end
 
@@ -125,7 +125,7 @@ RSpec.describe "ArenaMatches Auto-End on View", type: :request do
       it "displays completed status after timeout" do
         travel_to(match.started_at + 15.minutes) do
           get arena_match_path(match)
-          expect(response.body).to include("Finished")
+          expect(response.body).to include(I18n.t("arena.match_status.completed"))
         end
       end
     end
@@ -142,7 +142,7 @@ RSpec.describe "ArenaMatches Auto-End on View", type: :request do
           expect(response).to have_http_status(:success)
           expect(match.reload).to be_completed
           expect(match).to be_timed_out
-          expect(response.body).to include("Finished")
+          expect(response.body).to include(I18n.t("arena.match_status.completed"))
         end
       end
     end
@@ -183,7 +183,7 @@ RSpec.describe "ArenaMatches Auto-End on View", type: :request do
 
       it "displays match ended instead of victory/defeat" do
         get arena_match_path(match)
-        expect(response.body).to include("Fight finished")
+        expect(response.body).to include(I18n.t("game.flashes.fight_finished").delete_suffix("."))
       end
     end
   end

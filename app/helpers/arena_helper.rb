@@ -3,53 +3,26 @@
 module ArenaHelper
   include AlignmentHelper
 
-  # Room type labels
-  ROOM_TYPE_CONFIG = {
-    help: {label: "Help Hall", description: "0-5"},
-    training: {label: "Training Hall", description: "Training hall"},
-    trial: {label: "Trial Hall", description: "5-33"},
-    initiation: {label: "Initiation Hall", description: "9-33"},
-    patron: {label: "Patron Hall", description: "16-33"},
-    law: {label: "Law Hall", description: "Alignment: Law"},
-    light: {label: "Light Hall", description: "Alignment: Light"},
-    balance: {label: "Balance Hall", description: "Alignment: Balance"},
-    chaos: {label: "Chaos Hall", description: "Alignment: Chaos"},
-    dark: {label: "Dark Hall", description: "Alignment: Dark"}
-  }.freeze
-
-  # Fight type configuration
-  FIGHT_TYPE_CONFIG = {
-    duel: {label: "Duels"},
-    team_battle: {label: "Team Battles"},
-    sacrifice: {label: "Sacrifice"}
-  }.freeze
-
-  # Fight kind configuration
-  FIGHT_KIND_CONFIG = {
-    no_weapons: {label: "No Weapons"},
-    free: {label: "Free"},
-    alignment_vs_alignment: {label: "Alignment vs Alignment"},
-    no_artifacts: {label: "No Artifacts"},
-    limited_artifacts: {label: "Limited Artifacts"}
-  }.freeze
-
-  # Match status labels
-  MATCH_STATUS_CONFIG = {
-    pending: {label: "Waiting", css: "pending"},
-    matching: {label: "Finding Opponent", css: "matching"},
-    countdown: {label: "Starting Soon", css: "countdown"},
-    live: {label: "Live", css: "live"},
-    completed: {label: "Finished", css: "completed"},
-    cancelled: {label: "Canceled", css: "cancelled"}
+  ROOM_TYPES = %i[help training trial initiation patron law light balance chaos dark].freeze
+  FIGHT_TYPES = %i[duel team_battle sacrifice].freeze
+  FIGHT_KINDS = %i[no_weapons free alignment_vs_alignment no_artifacts limited_artifacts].freeze
+  MATCH_STATUS_CSS = {
+    pending: "pending",
+    matching: "matching",
+    countdown: "countdown",
+    live: "live",
+    completed: "completed",
+    cancelled: "cancelled"
   }.freeze
 
   def room_type_icon(room_type)
-    ROOM_TYPE_CONFIG.dig(room_type.to_sym, :label) || "Arena"
+    I18n.t("arena.rooms.#{room_type}.label", default: I18n.t("arena.title"))
   end
 
   def room_type_badge(room_type)
-    config = ROOM_TYPE_CONFIG[room_type.to_sym] || {label: room_type.to_s.humanize}
-    content_tag(:span, config[:label], class: "room-type-badge room-type-#{room_type}", title: config[:description])
+    label = I18n.t("arena.rooms.#{room_type}.label", default: room_type.to_s.tr("_", " "))
+    description = I18n.t("arena.rooms.#{room_type}.description", default: "")
+    content_tag(:span, label, class: "room-type-badge room-type-#{room_type}", title: description)
   end
 
   # Check if current user is participating in the match
@@ -76,31 +49,25 @@ module ArenaHelper
     participation.result.in?(%w[victory defeat draw]) ? participation.result : "ended"
   end
 
-  # Format fight type for display with icon
   def fight_type_label(fight_type)
-    config = FIGHT_TYPE_CONFIG[fight_type.to_sym]
-    config ? config[:label] : fight_type.to_s.humanize
+    I18n.t("arena.fight_types.#{fight_type}", default: fight_type.to_s.tr("_", " "))
   end
 
   def fight_type_with_icon(fight_type)
-    config = FIGHT_TYPE_CONFIG[fight_type.to_sym] || {label: fight_type.to_s.humanize}
-    config[:label]
+    fight_type_label(fight_type)
   end
 
-  # Format fight kind for display with icon
   def fight_kind_label(fight_kind)
-    config = FIGHT_KIND_CONFIG[fight_kind.to_sym]
-    config ? config[:label] : fight_kind.to_s.humanize
+    I18n.t("arena.fight_kinds.#{fight_kind}", default: fight_kind.to_s.tr("_", " "))
   end
 
   def fight_kind_with_icon(fight_kind)
-    config = FIGHT_KIND_CONFIG[fight_kind.to_sym] || {label: fight_kind.to_s.humanize}
-    config[:label]
+    fight_kind_label(fight_kind)
   end
 
   def arena_application_rule_label(application)
     rule_value = application.metadata.to_h["neverlands_rule_value"]
-    return "rule #{rule_value}" if rule_value.present?
+    return I18n.t("arena.rule", value: rule_value) if rule_value.present?
 
     fight_kind_label(application.fight_kind)
   end
@@ -110,28 +77,27 @@ module ArenaHelper
     max = application.metadata.to_h["npc_side_level_max"] || application.enemy_level_max
     return "" if min.blank? && max.blank?
 
-    "levels #{min || 0}-#{max || 33}"
+    I18n.t("arena.levels", min: min || 0, max: max || 33)
   end
 
   def arena_application_open_side_level_gate(application)
     min = application.team_level_min || application.arena_room.level_min
     max = application.team_level_max || application.arena_room.level_max
 
-    "levels #{min}-#{max}"
+    I18n.t("arena.levels", min: min, max: max)
   end
 
-  # Match status badge
   def arena_match_status_badge(status)
-    config = MATCH_STATUS_CONFIG[status.to_sym] || {label: status.to_s.humanize, css: "unknown"}
-    content_tag(:span, config[:label], class: "match-status match-status--#{config[:css]}")
+    label = I18n.t("arena.match_status.#{status}", default: status.to_s.tr("_", " "))
+    css = MATCH_STATUS_CSS[status.to_sym] || "unknown"
+    content_tag(:span, label, class: "match-status match-status--#{css}")
   end
 
-  # Application status tag
   def arena_room_status_tag(room)
     if room.has_capacity?
-      content_tag(:span, "Open", class: "room-status room-status--open")
+      content_tag(:span, I18n.t("arena.open"), class: "room-status room-status--open")
     else
-      content_tag(:span, "Full", class: "room-status room-status--full")
+      content_tag(:span, I18n.t("arena.full"), class: "room-status room-status--full")
     end
   end
 
@@ -156,7 +122,7 @@ module ArenaHelper
 
   # Opponent display with alignment
   def opponent_display(character, current_character)
-    return "Waiting for opponent..." unless character
+    return I18n.t("arena.waiting_opponent") unless character
 
     alignment_class = (character.alignment == current_character&.alignment) ? "ally" : "enemy"
 
@@ -169,16 +135,35 @@ module ArenaHelper
     end
   end
 
-  # Format level range for display
   def level_range_display(room)
     min = room.respond_to?(:level_min) ? room.level_min : room.min_level
     max = room.respond_to?(:level_max) ? room.level_max : room.max_level
 
-    if min == max
-      "Lvl. #{min}"
-    else
-      "Lvl. #{min}-#{max}"
-    end
+    I18n.t("arena.levels", min: min, max: max)
+  end
+
+  def arena_match_trauma_value(match)
+    percent = match.try(:trauma_percent).presence || match.metadata.to_h["trauma_percent"].presence
+    return I18n.t("game.fight.trauma_value", percent:) if percent.present?
+
+    I18n.t("game.fight.trauma_unknown")
+  end
+
+  def fight_option_cost(action_cost, mana_cost = 0)
+    mana = mana_cost.to_i
+    return action_cost.to_s if mana <= 0
+
+    I18n.t("game.fight.option_cost_with_mana", ap: action_cost, mana:)
+  end
+
+  def fight_action_display_name(key, config = {})
+    explicit = config.is_a?(Hash) ? config["name"].presence || config[:name].presence : nil
+    return explicit if explicit.present?
+
+    I18n.t(
+      "game.combat.attack_types.#{key}",
+      default: I18n.t("game.combat.block_types.#{key}", default: key.to_s.tr("_", " "))
+    )
   end
 
   # ===========================================================================
@@ -204,32 +189,40 @@ module ArenaHelper
   # @param match [ArenaMatch] the arena match
   # @return [String] winner's name
   def winner_name(match)
-    return "Draw" unless match.winning_team
+    return I18n.t("arena.draw") unless match.winning_team
 
     names = match.arena_participations
       .where(team: match.winning_team)
       .includes(:character, :npc_template)
       .map(&:participant_name)
 
-    names.presence&.join(", ") || "Unknown"
+    names.presence&.join(", ") || I18n.t("arena.unknown")
   end
 
   # Format duration in human-readable format
   # @param seconds [Integer] duration in seconds
   # @return [String] formatted duration
   def format_duration(seconds)
-    return "0s" unless seconds&.positive?
+    return I18n.t("game.fight.duration_zero") unless seconds&.positive?
 
     if seconds < 60
-      "#{seconds}s"
+      I18n.t("game.fight.duration_seconds", count: seconds)
     elsif seconds < 3600
       minutes = seconds / 60
       secs = seconds % 60
-      secs.positive? ? "#{minutes}m #{secs}s" : "#{minutes}m"
+      if secs.positive?
+        I18n.t("game.fight.duration_minutes_seconds", minutes:, seconds: secs)
+      else
+        I18n.t("game.fight.duration_minutes", count: minutes)
+      end
     else
       hours = seconds / 3600
       minutes = (seconds % 3600) / 60
-      minutes.positive? ? "#{hours}h #{minutes}m" : "#{hours}h"
+      if minutes.positive?
+        I18n.t("game.fight.duration_hours_minutes", hours:, minutes:)
+      else
+        I18n.t("game.fight.duration_hours", count: hours)
+      end
     end
   end
 
@@ -529,28 +522,21 @@ module ArenaHelper
 
     content_tag(:div, class: "turn-timeout #{css_class}") do
       safe_join([
-        content_tag(:span, "Timeout: ", class: "timeout-label"),
+        content_tag(:span, "#{I18n.t("arena.timeout_label")}: ", class: "timeout-label"),
         content_tag(:span, time_str, class: "timeout-value",
           data: {controller: "countdown", countdown_seconds_value: remaining})
       ])
     end
   end
 
-  # ===========================================================================
-  # HP Recovery Gate Display
-  # ===========================================================================
-
-  # Check if character can fight and return reason if not
-  # @param character [Character] the character
-  # @return [String, nil] reason why can't fight, or nil if can
   def arena_access_reason(character)
-    return "No character" unless character
+    return I18n.t("arena.no_character") unless character
 
     hp_percent = (character.current_hp.to_f / character.max_hp * 100).round
     min_hp = ArenaApplication::MIN_HP_PERCENT_FOR_ARENA
 
     if hp_percent < min_hp
-      "Recover before fighting: #{hp_percent}% HP, need #{min_hp}%"
+      I18n.t("arena.recover_hp", hp: hp_percent, min: min_hp)
     end
   end
 
@@ -577,7 +563,7 @@ module ArenaHelper
 
     content_tag(:div, class: "arena-warning arena-warning--hp") do
       safe_join([
-        content_tag(:span, "Warning: ", class: "warning-icon"),
+        content_tag(:span, "#{I18n.t("arena.warning")}: ", class: "warning-icon"),
         content_tag(:span, reason, class: "warning-message")
       ])
     end

@@ -9,9 +9,9 @@
             data-target-y="<%= destination.target_y %>"
             data-action-key="<%= destination.action_key %>"
             data-travel-seconds="<%= destination.travel_seconds %>"
-            aria-label="Move <%= destination.direction %>">
+            aria-label="<%= t("game.world.move") %> <%= destination.direction %>">
       <span class="nl-destination-marker" aria-hidden="true"></span>
-      <span class="nl-visually-hidden">Move <%= destination.direction %></span>
+      <span class="nl-visually-hidden"><%= t("game.world.move") %> <%= destination.direction %></span>
     </button>
   <% elsif is_player %>
     <div class="nl-tile-player" aria-hidden="true"></div>

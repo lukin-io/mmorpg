@@ -15,7 +15,7 @@ RSpec.describe ArenaRoom do
     CharacterPosition.find(position.id).update!(zone: create(:zone, :city))
 
     expect(room).not_to be_accessible_by(character)
-    expect(room.access_requirement_text(character)).to eq("Room is in another city")
+    expect(room.access_requirement_text(character)).to eq(I18n.t("game.fight.room_other_city"))
   end
 
   it "rejects a bound room with no position or character" do

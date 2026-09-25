@@ -36,14 +36,14 @@ module Game
         return unless template.enhancement_rules.to_h.key?("license")
 
         license = self.class.definition(template)
-        return "This license is unavailable." unless license && template.stack_limit == 1
-        return "Merchant perk required." if license["kind"] == "trading" && !character.owns_perk?(:merchant)
-        return "Merchant qualification required." if license["kind"] == "trading" && !profession_unlocked?("merchant")
-        return "Healer perk required." if license["kind"] == "doctor" && !character.owns_perk?(:healer)
+        return I18n.t("game.shop.license_unavailable") unless license && template.stack_limit == 1
+        return I18n.t("game.shop.merchant_perk_required") if license["kind"] == "trading" && !character.owns_perk?(:merchant)
+        return I18n.t("game.shop.merchant_qualification_required") if license["kind"] == "trading" && !profession_unlocked?("merchant")
+        return I18n.t("game.shop.healer_perk_required") if license["kind"] == "doctor" && !character.owns_perk?(:healer)
         if license["kind"] == "doctor" && license["tier"] > 1 && !profession_unlocked?("traumatologist")
-          return "Traumatologist quest required."
+          return I18n.t("game.shop.traumatologist_quest_required")
         end
-        return "You already have an active #{license['kind']} license." if active?(license["kind"])
+        return I18n.t("game.shop.active_license_exists", kind: license["kind"]) if active?(license["kind"])
 
         nil
       end
@@ -56,6 +56,21 @@ module Game
         end
 
         CharacterLicense.active_at(at).exists?(character:, kind: kind.to_s)
+      end
+
+      def active_license(kind, at: Time.current)
+        kind = kind.to_s
+        if active_licenses
+          return active_licenses
+            .select { |license| license.character_id == character.id && license.kind == kind && license.active?(at:) }
+            .min_by(&:expires_at)
+        end
+
+        CharacterLicense.active_at(at).where(character:, kind:).order(:expires_at, :id).first
+      end
+
+      def latest_expired_license(kind, at: Time.current)
+        CharacterLicense.where(character:, kind: kind.to_s).where(expires_at: ..at).order(expires_at: :desc, id: :desc).first
       end
 
       # Called inside the purchase transaction instead of inventory acquisition.

@@ -18,7 +18,7 @@ RSpec.describe "Physical wilderness NPC combat lifecycle", type: :request do
   let(:zone) do
     create(
       :zone,
-      name: "Outpost Surroundings",
+      name: "Пепельный Берег",
       location_type: "outdoor",
       width: 1_000,
       height: 1_000
@@ -146,7 +146,7 @@ RSpec.describe "Physical wilderness NPC combat lifecycle", type: :request do
       as: :json
 
     expect(response).to have_http_status(:unprocessable_content)
-    expect(response.parsed_body["error"]).to eq("Fight state changed; refresh and submit the current turn")
+    expect(response.parsed_body["error"]).to eq(I18n.t("game.fight.errors.state_changed"))
     expect(match.combat_log_entries.count).to eq(first_turn_log_count)
     expect(npcs.second.reload.current_hp).to eq(5)
 
@@ -181,7 +181,7 @@ RSpec.describe "Physical wilderness NPC combat lifecycle", type: :request do
 
     result_table = Nokogiri::HTML(response.body).at_css(".nl-fight-result-table")
     expect(result_table.text.squish).to include("RatHunter[4] 10(2) 10(2) 35")
-    expect(response.body).to include("Finish Fight")
+    expect(response.body).to include(I18n.t("game.fight.finish"))
 
     post finish_arena_match_path(match)
 

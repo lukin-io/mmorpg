@@ -1,8 +1,19 @@
-#!/bin/bash -e
+#!/bin/bash
+set -e
 
-# If running the rails server then create or migrate existing database
-if [ "${@: -2:1}" == "./bin/rails" ] && [ "${@: -1:1}" == "server" ]; then
-  ./bin/rails db:prepare
+./bin/rails db:prepare
+if [ "${SANDBOX_OPEN_AUTH}" = "1" ]; then
+  # Universe seed must not block boot forever if a non-fatal conflict appears;
+  # log and continue so /up stays healthy while operators reseed.
+  ./bin/rails db:seed || echo "WARNING: db:seed exited non-zero; continuing boot"
+  # Soft-release outdoor landmarks/approaches/gather nodes (idempotent).
+  # Railway SSH often hangs; boot-time rebuild is the reliable apply path.
+  # Status is cached for Manage confirmation (no SSH needed).
+  ./bin/rails runner '
+    result = Game::World::PlayableRegionBuilder.new.call
+    status = Game::World::PlayableRegionStatus.record!(result: result, source: "boot")
+    puts "PlayableRegionBuilder boot: #{status.inspect}"
+  ' || echo "WARNING: PlayableRegionBuilder exited non-zero; continuing boot"
 fi
 
-exec "${@}"
+exec "$@"

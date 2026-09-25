@@ -108,7 +108,7 @@ The current slice contains:
 - A generic town grid, city movement timer, pathfinding avatar, or inferred reverse routes.
 - Copying Neverlands city/Shop images, tooltips as bitmaps, logos, or identity prose.
 - Treating presentation geometry, arrow visibility, or labels as authorization.
-- Inventing services for Auction, Bank, Clan Hall, schools, prison, temple, or other landmarks.
+- Inventing Auction lot trading or Neverlands repair formulas without authenticated evidence.
 - Assigning an unobserved outdoor destination to another city exit.
 - Preserving the superseded nine-node `city2_*` topology as current Forpost behavior.
 
@@ -232,10 +232,12 @@ Missing-art content uses the fallback described in section 4.2.
   duplicate route form is introduced.
 
 The named coarse-pointer alternative currently covers district routes only.
-Building and exit masks still shrink with the scene and have no equivalent
-always-visible named control outside it. Full coarse-pointer compliance for
-small building targets under `UI-ADAPT-005` remains an `[IMPL]` gap; the recorded
-phone-width pointer checks do not establish that broader requirement.
+Building and exit masks still shrink with the scene. At `(max-width: 700px)` or
+`(pointer: coarse)`, named building controls also reflow below the illustrated
+scene with a 48px minimum height (`nl-city-building-controls`), closing the
+`UI-ADAPT-005` gap for small building targets. Scene masks remain for fine-pointer
+desktop use. Phone-width pointer checks and the coarse-route system coverage
+remain the acceptance baseline for route taps.
 
 #### 4.3.1 Hotspot geometry and highlight algorithm
 
@@ -452,11 +454,11 @@ The directionality is explicit. Code must not infer a reverse link, shortest pat
 
 | District | Observed landmark identities | Current local presentation |
 |---|---|---|
-| Central | Tavern, Workshop, Guard Tower | Hover/focus only |
-| Residential | Clan Hall, Post Office, City Hall | Hover/focus only |
-| Knowledge | Magic School, Library, General School, Military School | Hover/focus only |
-| Business | Auction, Souvenir Shop, Dealer House, Obelisk, Temple of Ilana, Bank | Hover/focus only |
-| Law | Law Abode, Prison, Gallows | Hover/focus only |
+| Central | Tavern (rest/fatigue), Workshop (craft), Guard Tower (live routes), Hospital/Shop/Arena hotspots | Entered service interiors |
+| Residential | Clan Hall (presence/Assault meetup), Post, City Hall treasury/quest links | Entered interiors |
+| Knowledge | Library handbook; Magic/General/Military schools show live skill snapshots (allocation still on the character sheet) | Entered interiors |
+| Business | Auction treasury snapshot + Shop/Buyer links; Souvenir Shop; Dealer House → Buyer; Obelisk; Bank; Temple | Mixed: services + orientation |
+| Law | Law Abode (alignment), Prison/Gallows handbooks, east gate outdoor handoff | Entered interiors |
 
 These labels preserve RPG-domain meaning but do not copy source-platform identity text. No mutation or interior is implied.
 
@@ -1138,6 +1140,174 @@ Final rerun results are in the
 
 ## 18. Version history
 
+- 2026-09-13: Coal Tide Tavern table rest restores HP/MP without clearing injuries; rumor board is localized (`data-tavern-rumors`).
+- 2026-09-13: Black Bell Temple light rite clears light injuries for 5 NV; desk separates wallet affordability (`data-temple-can-afford`) from rite readiness (`data-temple-rite-ready`).
+- 2026-09-13: Pitch Bank NV vault deposit/withdraw on character metadata.
+- 2026-09-13: Ashen Post personal note (single metadata memo).
+- 2026-09-13: Relic stall sells bait/chips/herbs for NV without a license.
+- 2026-09-15: Relic stall also sells mite tails (`rat_tail`) so Tar Smith field-kit mats are reachable without invented drops.
+- 2026-09-15: Soft-release smoke restocks Relic mats, crafts `veil_field_kit` (skill ≥3), and turns in `tar_field_kit_contract`.
+- 2026-09-13: Salt Market building notice is localized (`data-market-notice`); stall rent/player lots remain view-only.
+- 2026-09-13: Veil Obelisk bind/recall (`POST .../obelisk`): stores coordinates in character metadata and recalls for 15 NV; desk exposes `data-obelisk-can-bind` / `data-obelisk-can-recall` / unbound marker.
+- 2026-09-13: Outdoor Obelisk recall chip plus Tavern table fatigue clear alongside HP/MP.
+- 2026-09-15: DefeatRecovery Infirmary landings expose `defeat_recovered=1` soft-release chrome (`data-defeat-recovery` City / square→Arena CTAs; Arena lobby stays hotspot-gated).
+- 2026-09-15: Soft-release smoke follows outdoor bait-fight DefeatRecovery Infirmary → City CTA.
+- 2026-09-15: Soft-release smoke opens Coal Tide Tavern and rests after outdoor DefeatRecovery return.
+- 2026-09-15: Soft-release smoke sells one junk-accepted bag item at the Ash Buyer after logout/login restore.
+- 2026-09-15: Soft-release smoke buys one affordable Relic Shop souvenir after Ash Buyer junk buyback.
+- 2026-09-15: Soft-release smoke deposits 10 NV into Bank of Resin after local chat.
+- 2026-09-15: Soft-release smoke withdraws 5 NV from Bank of Resin after deposit.
+- 2026-09-15: Soft-release smoke saves a personal note at the Post after bank withdraw.
+- 2026-09-15: Soft-release smoke clears the personal Post note after save.
+- 2026-09-15: Soft-release smoke stores then retrieves one bag stack in the Bank item locker.
+- 2026-09-15: Soft-release smoke returns via east gate after pond Fish and binds at the Veil Obelisk.
+- 2026-09-15: Soft-release smoke posts Infirmary rest after outdoor DefeatRecovery before City return (clears heavy injury movement lock).
+- 2026-09-15: Soft-release smoke recalls to the Obelisk bind via World shell after leaving Business Quarter.
+- 2026-09-15: Soft-release smoke pledges free first alignment (`balance`) at Law Abode after Obelisk recall.
+- 2026-09-15: Soft-release smoke spends one combat skill point on Unarmed Combat after Law pledge.
+- 2026-09-15: Soft-release smoke opens Black Bell Temple from Business Quarter after Nature Child perk.
+- 2026-09-15: Soft-release smoke opens Clan Hall from Trade Quarter after Temple.
+- 2026-09-15: Soft-release smoke opens Library handbook from Knowledge Quarter after Clan Hall.
+- 2026-09-15: Soft-release smoke opens Military School board from Knowledge Quarter after Library.
+- 2026-09-15: Soft-release smoke allocates Merchant perk and accepts Market qualification (pay deferred — 1000 NV).
+- 2026-09-15: Soft-release smoke opens General School board from Knowledge Quarter after Merchant accept.
+- 2026-09-15: Soft-release smoke opens Magic School board from Knowledge Quarter after General School.
+- 2026-09-15: Soft-release smoke opens Salt Auction treasury desk from Business Quarter after Magic School (lots deferred).
+- 2026-09-15: Soft-release smoke opens Airship Station routes desk from Trade Quarter after Auction.
+- 2026-09-15: Soft-release smoke opens City Hall quest board from Trade Quarter after Airship Station.
+- 2026-09-15: Soft-release smoke opens Guard Tower from Central Square after City Hall.
+- 2026-09-15: Soft-release smoke opens Pitch Forge workshop desk from Central Square after Guard Tower.
+- 2026-09-15: Soft-release smoke opens Coal Infirmary from Central Square after workshop.
+- 2026-09-15: Soft-release smoke opens Arena lobby from Central Square after Infirmary.
+- 2026-09-15: Soft-release smoke opens Tavern from Central Square after Arena lobby.
+- 2026-09-15: Soft-release smoke opens Shop from Central Square after Tavern.
+- 2026-09-15: Soft-release smoke opens Pitch Bank vault desk from Business Quarter after Shop.
+- 2026-09-15: Soft-release smoke opens Relic souvenir shop from Business Quarter after Bank.
+- 2026-09-15: Soft-release smoke opens Prison from Law Quarter after souvenir shop.
+- 2026-09-15: Soft-release smoke opens Law Abode from Law Quarter after Prison.
+- 2026-09-15: Soft-release smoke opens Inventory and character licenses pages after Law Abode.
+- 2026-09-15: Soft-release smoke opens Quests journal after licenses.
+- 2026-09-15: Soft-release smoke opens Dealer House landmark from Business Quarter after Quests.
+- 2026-09-15: Soft-release smoke opens player profile and World shell after Dealer House.
+- 2026-09-15: Soft-release smoke re-drinks at the pond after Nature Child perk (post-perk outdoor Drink).
+- 2026-09-15: Soft-release smoke re-checks Merchant collect-shop status after outdoor Drink and asserts 1000 NV pay stays blocked.
+- 2026-09-15: Soft-release smoke claims Infirmary sandbox VM topup, buys trauma/heal scrolls, asserts HUD chips, and uses `combat_heal_scroll` from Inventory.
+- 2026-09-15: Soft-release smoke walks west gate → Frontier Village square (Trading Post) plus Podgorny Mine / Resource Exchange deferred lobbies.
+- 2026-09-15: Soft-release smoke returns from the east-gate pond path and binds at the Veil Obelisk.
+- 2026-09-15: Bank item locker chrome exposes stored item_key via data-bank-item (was empty key).
+- 2026-09-15: Failed outdoor `POST /world/obelisk` recovers on World with `obelisk_denied=1` chrome.
+- 2026-09-14: Manage index titles/empty rows/pagination and NPC state labels use `manage.*` i18n.
+- 2026-09-14: Manage building/hotspot show+form destination labels and NPC template key fallback use `manage.views.*` i18n.
+- 2026-09-14: Narrow/coarse city building controls reflow below the scene (`nl-city-building-controls`, `UI-ADAPT-005`).
+- 2026-09-14: Coarse-pointer city desk buttons/tabs and handbook CTAs target ~44×44 CSS px.
+- 2026-09-14: Manage world-cell resource groups, local-action toggles, and NPC encounter roster form chrome use `manage.views.*` i18n.
+- 2026-09-14: Manage NPC template detail Attack/Dialogue/Metadata labels use `manage.views.*` i18n.
+- 2026-09-14: Manage world-cell/NPC/audit show detail rows use `manage.views.*` i18n.
+- 2026-09-14: Manage boolean cells use `manage.yes` / `manage.no`.
+- 2026-09-14: Manage form help blurbs use `manage.views.help_*` i18n.
+- 2026-09-14: Manage form field labels use `manage.views.attr_*` / shared `col_*` i18n.
+- 2026-09-14: Manage city location type and tile NPC key fallbacks use `manage.views.location_types.*` / `npc_key_fallback`.
+- 2026-09-14: Manage enum selects/tables use `manage.views.enums.*` via `management_enum_label`.
+- 2026-09-14: Manage form error banner uses `manage.views.errors_prevented`.
+- 2026-09-14: Manage audit action/record/source labels use `manage.views.audit_*`; offer cancel copy uses `game.world.managed_content_changed`.
+- 2026-09-14: Manage JSON parse and destroy failures use `manage.json_invalid` / `manage.cannot_destroy`.
+- 2026-09-14: NPC template reference guards use `manage.npc_key_referenced` / `npc_template_roster_referenced`; UI humanize fallbacks use underscore spacing.
+- 2026-09-14: Manage content validations for equipment slots, shop catalog/stock, arena level range, hotspot polygons, presence labels, zone name, and cell coordinates use `manage.*` i18n.
+- 2026-09-14: World-cell metadata validations (cell_art, local_actions, resource_groups) use `manage.cell_art_*` / `local_action_*` / `resource_group_*` i18n.
+- 2026-09-14: Tile-building location configuration validations use `manage.location_*` i18n.
+- 2026-09-14: Character/offer coordinate bounds reuse `manage.coord_outside_zone`; character limit, ignore-self, and local-action offer metadata use `errors.*` i18n.
+- 2026-09-14: Arena application/participation model validations use `arena.validations.*` i18n.
+- 2026-09-14: Airship journey model validations use `game.airship.validations.*` i18n.
+- 2026-09-14: Game event, shop account, and license validations use `errors.*` i18n.
+- 2026-09-14: Tile NPC encounter/roster/passive-delay validations use `manage.encounter_*` / related `manage.*` i18n.
+- 2026-09-14: Zone city polygon, airship station title, and populated-name guards use `manage.city_polygon_invalid` / `airship_station_title_invalid` / `zone_name_populated`.
+- 2026-09-14: Resume/stat/movement ArgumentErrors use `game.flashes.*` i18n (`building_not_found`, `location_gone`, `alloc_*`, `unknown_direction`, `airship_journey_required`).
+- 2026-09-14: Loot entry and fatigue service errors use `manage.loot_*` / `errors.fatigue_*` i18n.
+- 2026-09-14: Gameplay context, fight-return, and chat-scope ArgumentErrors use `errors.unsupported_*` / `unknown_chat_scope` i18n.
+- 2026-09-14: EN Infirmary building title uses `game.buildings.hospital_title` ("Infirmary") instead of leftover observation copy.
+- 2026-09-14: Arena NPC loot awarder errors use `arena.validations.loot_*` i18n.
+- 2026-09-14: Injury severity, money currency, and manage mutation ArgumentErrors use `errors.*` / `manage.unsupported_operation` i18n.
+- 2026-09-14: Chat event publisher / whisper channel / immutable game-event errors use `errors.item_name_required` and related keys.
+- 2026-09-14: Wallet insufficient-funds / zero-amount and quest delivery shortages use `game.shop.not_enough_nv` / `errors.insufficient_veil_marks` / `game.quests.missing_delivery_items`.
+- 2026-09-14: Encounter roster selector closed failures use `manage.roster_*` i18n.
+- 2026-09-13: Infirmary healer craft exposes recipe readiness (`data-hospital-craft-any-ready` / `data-hospital-recipe` / `data-hospital-craft-ready`).
+- 2026-09-13: Law Abode alignment pledge/change (first free, later 25 NV); desk exposes `data-law-can-afford` and per-choice `data-law-choice-ready`.
+- 2026-09-13: Fatigue HUD chip; Prison/Gallows handbooks link to Law Abode (`data-prison` / `data-gallows` / `data-gallows-east`). HUD trauma/heal/fatigue chips expose counts (`data-trauma-scrolls` / `data-heal-scrolls` / `data-fatigue-pct`); wear chip exposes `data-wear-worn` / `data-wear-broken` when present; injury chip uses `data-injury-chip` / `data-injury-blocks`; alignment prompt uses `data-alignment-chip`. Landmark/read-only intros are localized (`landmark_open_lead` / `landmark_readonly_lead` / `landmark_inspect_lead`). Numismatics empty commodity book exposes `data-numismatics` / `data-numismatics-listings="0"` when the district hotspot is present (otherwise city access gate redirects to `/world`). Presence panel exposes cell count / total online (`data-presence-count` / `data-online-total`). Captured shop-shell modes expose `data-shop-shell-modes` when that kind renders. Market stall table exposes rent affordability (`data-market-stalls` / `data-market-any-stall-affordable`). Active quest HUD chip exposes `data-quest-chip` beside ready flag.
+- 2026-09-13: Watchtower directory posts live district offers from the current node; square overview board is localized (`data-guard-square`) and rendered from the guard desk.
+- 2026-09-13: Pitch Forge landmark showcase/repair cards are localized (`data-workshop-landmark`) and rendered under the craft desk.
+- 2026-09-13: Watchtower shows current district (“you are here”); west-gate outdoor Enter round-trip covered in smoke.
+- 2026-09-13: Relic stall shows owned bag counts per offer; inventory mass row shows equipped wear.
+- 2026-09-13: Temple shows live injury status (Hospital link for heavy/combat); Dealer House shows junk buyback estimate; Inventory junk CTA mirrors count + estimated NV (`data-inventory-junk-total`); Ash Buyer desk shows live wallet NV (`data-junk-wallet`) and sell readiness (`data-junk-can-sell`).
+- 2026-09-13: Salt Auction shows wallet/vault/VM treasury snapshot with Shop/Buyer/Bank links (lots still deferred; `data-auction-wallet`/`vault`/`vm` / `data-auction-lots="deferred"` / `data-auction-can-list="0"` / `data-auction-can-bid="0"`); smoke also asserts landmark-inside. Library repair card corrected to deferred `[EVIDENCE]`.
+- 2026-09-13: Dealer House mirrors Ash Buyer wallet NV beside buyback estimate (`data-dealer-wallet`); sell readiness via `data-dealer-can-sell`; offer line count via `data-dealer-offer-lines`; smoke also asserts landmark-inside.
+- 2026-09-13: Clan Hall embeds the colocated Presence/Assault list for meetup PvP; shows live Assault/Heal scroll bag totals (`data-clan-hall-assault`/`heal`); presence count via `data-clan-hall-presence-count`.
+- 2026-09-13: Knowledge Quarter schools show a live skill/profession snapshot board (no invented training formulas); unspent points link to allocate stats/skills (`data-school-unspent`); allocate readiness exposed as `data-school-can-allocate` / `data-school-can-allocate-stats` / `data-school-can-allocate-skills`.
+- 2026-09-13: Law Abode notes Cistern east-gate outdoor handoff; smoke covers east exit and Enter back.
+- 2026-09-13: Law Abode shows wallet NV and greys out paid alignment changes when short on NV; explicit first-free vs paid mode markers (`data-law-first-pledge`).
+- 2026-09-13: Temple rite greys out without light injuries or NV; shows wallet + injury markers; `data-temple-rite-ready` mirrors the gate.
+- 2026-09-13: Coal Tide Tavern shows live HP/MP/fatigue and disables rest when already full; vitals expose `data-tavern-hp`/`mp` markers.
+- 2026-09-13: Veil Obelisk shows wallet NV and greys out recall when unbound or short on fare; `data-obelisk-can-recall` mirrors the gate.
+- 2026-09-13: Relic stall shows wallet NV and greys out unaffordable buys (`data-souvenir-affordable`); also `data-souvenir-any-affordable`.
+- 2026-09-13: Shared landmark chrome exposes `data-landmark-inside`; Captured shop-shell desks also render landmark exit notes; smoke checks hospital, Coal Tide Tavern, City Hall, Market, Post, Clan Hall, Airship Station, Library, schools, Law Abode, Prison, Gallows, Guard Tower, Workshop, Salt Auction, Dealer House, Temple, Bank, Relic stall, and Obelisk for the marker.
+- 2026-09-13: Market, Ash Buyer, Airship Station, and Numismatics desks also render shared landmark chrome; Market keeps a single landmark after stalls (embedded junk desk does not duplicate it).
+- 2026-09-13: City building access/not-found flashes are localized (`game.flashes.building_not_found` / `building_district_required`).
+- 2026-09-15: Failed Tavern/Infirmary rest redirects with `rest_denied=1` recovery chrome (`data-rest-denied`).
+- 2026-09-15: Failed Pitch Forge craft redirects with `craft_denied=1` recovery chrome (`data-craft-denied`, `data-workshop-recovery`).
+- 2026-09-15: Failed Infirmary traumatologist/premium/VM actions redirect with `hospital_denied=1` recovery chrome (`data-hospital-denied`, `data-hospital-recovery`).
+- 2026-09-15: Failed Law Abode alignment pledges redirect with `law_denied=1` recovery chrome (`data-law-denied`, `data-law-recovery`).
+- 2026-09-15: Failed city Obelisk desk bind/recall redirects with `obelisk_desk_denied=1` recovery chrome (`data-obelisk-desk-denied`, `data-obelisk-recovery`).
+- 2026-09-15: Failed Temple rite redirects with `temple_denied=1` recovery chrome (`data-temple-denied`, `data-temple-recovery`).
+- 2026-09-15: Failed Ash Buyer buyback redirects with `junk_denied=1` recovery chrome (`data-junk-denied`, `data-junk-recovery`).
+- 2026-09-15: Failed Relic stall purchases redirect with `souvenir_denied=1` recovery chrome (`data-souvenir-denied`, `data-souvenir-recovery`).
+- 2026-09-15: Failed Post Office note save/clear redirects with `post_denied=1` recovery chrome (`data-post-denied`, `data-post-recovery`).
+- 2026-09-15: Failed Pitch Bank vault/item locker transfers redirect with `bank_denied=1` recovery chrome (`data-bank-denied`, `data-bank-recovery`).
+- 2026-09-14: Soft-release recovery CTAs across city desks: school spent→World, Clan Hall trauma-scroll→Infirmary, Auction/Market/Numismatics deferred honesty, library/post/fallback landmark next steps, tavern-full/airship-unavailable/mine-lobby loops, hospital rest-full→World, temple/quest-lock/bank-vault empty recovery.
+- 2026-09-14: Airship Station blank route list recovers to City (`data-airship-routes-empty`).
+- 2026-09-14: Infirmary premium short of Veil Marks recovers via topup anchor, Bank, or City.
+- 2026-09-14: Market stall-rent deferred note and village shop-shell stock note recover via Shop/Junk/City.
+- 2026-09-14: Infirmary “no injuries” note recovers to City.
+- 2026-09-14: Infirmary Traumatologist need-healer state recovers via Perks and City.
+- 2026-09-14: Infirmary Traumatologist completed state recovers via Licenses and City.
+- 2026-09-14: Bank empty item-locker note recovers to Inventory (`data-bank-recovery="inventory"`).
+- 2026-09-14: Salt Auction deferred lots recover via Shop/Junk/Bank with `data-auction-recovery`; Pitch Forge deferred repair Inventory link exposes `data-workshop-recovery="inventory"`.
+- 2026-09-14: Library next / Clan Hall desk / Dealer House buyback / landmark fallback CTAs expose `data-library-recovery`, `data-clan-hall-recovery`, `data-dealer-recovery`, and `data-landmark-recovery`.
+- 2026-09-14: Owner sheet Vault/VM open CTAs expose `data-sheet-recovery`; Bank VM desk Infirmary link exposes `data-bank-recovery="hospital"`.
+- 2026-09-14: Smoke asserts Temple/Guard/Tavern-rumors/school-spent recovery markers already present on desks.
+- 2026-09-14: Smoke asserts Law current-choice / Prison / Gallows desk recoveries.
+- 2026-09-14: Coal Hall treasury/quest desk links expose `data-city-hall-recovery`.
+- 2026-09-14: Coal Hall landmark chrome points to the on-page board (`data-city-hall-landmark`) instead of the unfinished-landmark fallback.
+- 2026-09-14: Building chrome City exit exposes `data-building-recovery="world"`; Market top Shop/Junk and school profile/allocate links expose recovery markers.
+- 2026-09-14: Smoke asserts Infirmary building chrome `data-building-recovery="world"`.
+- 2026-09-14: Smoke asserts Tavern/Forge building chrome City recoveries.
+- 2026-09-14: Smoke asserts Guard Tower building chrome City recovery.
+- 2026-09-14: Smoke asserts Pitch Bank building chrome City recovery.
+- 2026-09-14: Smoke asserts Temple/Relic Stall building chrome City recoveries.
+- 2026-09-14: Smoke asserts Market/Auction/Dealer House/Obelisk building chrome City recoveries.
+- 2026-09-14: Smoke asserts Coal Hall/Post/Clan Hall/Airship building chrome City recoveries.
+- 2026-09-14: Smoke asserts Library and school building chrome City recoveries.
+- 2026-09-14: Smoke asserts Law Abode/Prison/Gallows building chrome City recoveries.
+- 2026-09-14: Smoke asserts Numismatics/Ash Buyer building chrome City recoveries when those desks open.
+- 2026-09-14: Shop sell Junk link and doctor/perk onboarding expose `data-shop-recovery` / `data-doctor-recovery`; Airship short-NV Junk/Shop links expose `data-airship-recovery`.
+- 2026-09-14: Obelisk bind-first note recovers to City (`data-obelisk-recovery="world"`).
+- 2026-09-14: Law Abode current-alignment state recovers to City.
+- 2026-09-14: Gallows east-gate note recovers to City.
+- 2026-09-14: Prison/Gallows Law desk links fall back to City when Law Abode is out of district.
+- 2026-09-14: Post landmark chrome recovers via City/Hall.
+- 2026-09-14: Smoke asserts Post desk / empty-note `data-post-recovery` markers.
+- 2026-09-14: Guard Tower, Pitch Forge landmark, and Tavern rumors recover via City/Market/Shop/Inventory/Hall CTAs.
+- 2026-09-15: Out-of-district building GETs redirect to World with `building_denied=1` recovery chrome (`data-building-denied`, `data-building-recovery`).
+- 2026-09-15: Unknown city building keys also redirect to World with `building_denied=1` recovery chrome.
+- 2026-09-15: Wrong-building city POSTs (rest/craft/bank/etc.) also recover with `building_denied=1` chrome.
+- 2026-09-14: Numismatics deferred desk recovers via Shop/Junk with `data-numismatics-recovery`; exchange buy-deferred lobby also offers Bank/Junk when accessible.
+- 2026-09-13: Infirmary, Pitch Bank, Law Abode, and Veil Obelisk desks also render the shared landmark chrome (inside lead + exit notes) for consistent exit affordances.
+- 2026-09-13: Infirmary premium desk shows live Assault/Heal scroll bag totals matching HUD chips; greys out VM buys when short (`data-hospital-premium-affordable`); also `data-hospital-premium-any-affordable` and sandbox top-up readiness (`data-hospital-topup-ready` / `data-hospital-topup-wait`); rest desk lists live injury summary (`data-hospital-injuries`); healer craft shows bag mass/slots (`data-hospital-mass`); rest readiness exposed as `data-hospital-rest-ready`.
+- 2026-09-13: Pitch Bank adds deposit-all / withdraw-all CTAs plus locker/wallet/vault data markers; shows VM with Infirmary link (`data-bank-vm`); deposit/withdraw readiness via `data-bank-can-deposit` / `data-bank-can-withdraw`; item locker readiness via `data-bank-can-store` / `data-bank-can-retrieve` / `data-bank-item-options`.
+- 2026-09-13: Ashen Post shows used/max character count (`data-post-remaining` / `data-post-max`) and prefills the editor with the saved note; empty/clear readiness marked (`data-post-empty` / `data-post-can-clear`).
+- 2026-09-13: Library equipment card documents Inventory wear/broken badges and deferred forge repair; Ashen handbook chrome/cards are localized (`data-library-handbook` / `landmark_inside_lead`).
+- 2026-09-13: Airship Station greys out board when wallet cannot cover fare (`data-airship-affordable`); station also exposes `data-airship-any-affordable` / `data-airship-routes` / `data-airship-can-board`.
+- 2026-09-13: Owner character sheet shows Pitch Bank vault NV and item-locker occupancy (private; Bank link when colocated); also private Veil Marks with Infirmary link (`data-sheet-vm`).
+- 2026-09-13: City Hall treasury exposes wallet/vault/VM data markers; quest board shows ready-to-turn-in count plus status counts (`data-city-hall-quest-active` / `available` / `locked` / `completed`); smoke also asserts landmark-inside chrome.
+- 2026-09-13: Bank item locker (one unequipped stack) plus alignment on the character sheet.
 - 2026-07-29: fixed existing-database City Exit interaction by making the one seed pipeline reconcile the complete historical `city2_*` graph, retire stale hotspots/offers/gates, preserve retained-node positions, recover removed-node positions to Central Square, and prove convergence plus idempotency.
 - 2026-07-29: added admin-only responsive City node/action CRUD, dependency-safe atomic audit records, stale-offer cancellation, runtime precedence for managed `Zone` scene metadata plus `CityHotspot` geometry/direction, and the task-oriented cross-feature management-guide link. `CityCatalog` remains the source-backed seed declaration, not a parallel runtime graph.
 - 2026-07-28: replaced the stale nine-node/760 × 255 model with the freshly observed five-district/1250 × 600 Forpost graph; moved Shop/Hospital to Central and Market/Airship to Residential; removed stale Arena and South/East gate assumptions; added exact pixel hotspots, presentation landmarks, CSS hover crops, large route arrows, centered responsive panning, Shop scene/control alignment, seed cleanup, tests, and updated evidence.

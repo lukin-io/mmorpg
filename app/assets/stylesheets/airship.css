@@ -109,3 +109,28 @@
   outline: 2px solid #9b2020;
   outline-offset: 2px;
 }
+
+@media (max-width: 360px) {
+  .nl-airship-station,
+  .nl-airship-pan,
+  .nl-airship-viewport {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .nl-airship-routes {
+    width: 100%;
+  }
+}
+
+@media (pointer: coarse) {
+  .nl-airship-actions button,
+  .nl-airship-station .lbut,
+  .nl-airship-station .nl-sheet-link {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 8px 10px;
+    font-size: 12px;
+    line-height: 1.25;
+  }
+}

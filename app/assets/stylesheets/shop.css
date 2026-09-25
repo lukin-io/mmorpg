@@ -234,9 +234,59 @@
 .nl-shop-license__quantity { width: 23px; padding: 1px 2px; background: #fff; }
 .nl-shop-license__buy { padding: 1px 6px; background: #e0e0e0; cursor: pointer; }
 .nl-shop-license__buy:disabled { cursor: default; }
-.nl-shop-empty { min-width: 800px; margin: 0; padding: 5px 0; color: #333; font-size: 12px; text-align: center; }
+.nl-shop-empty { min-width: 0; margin: 0; padding: 5px 0; color: #333; font-size: 12px; text-align: center; }
 .nl-shop-qualification { margin: 8px 0; }
 
 @media (max-width: 520px) {
   .nl-shop-tab { font-size: 10px; line-height: 12px; }
+
+  .nl-shop-licenses {
+    grid-template-columns: 1fr;
+    min-width: 0;
+  }
+
+  .nl-shop-status-row {
+    min-width: 0;
+  }
+}
+
+@media (pointer: coarse) {
+  .nl-shop-tab,
+  .nl-shop-license__buy,
+  .nl-shop-empty .nl-sheet-link,
+  .nl-shop-status-row .nl-sheet-link,
+  .nl-shop-junk-link,
+  .nl-shop .lbut,
+  .nl-shop .invbut {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 8px 10px;
+    font-size: 12px;
+    line-height: 1.25;
+  }
+
+  .nl-shop-license__quantity {
+    min-height: 44px;
+    min-width: 44px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 360px) {
+  .nl-shop-page,
+  .nl-shop-frame,
+  .nl-shop-table-viewport,
+  .nl-shop-filter-viewport {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .nl-shop-status-row {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .nl-shop-categories {
+    overflow-x: auto;
+  }
 }

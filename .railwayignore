@@ -1,0 +1,14 @@
+tmp/
+log/
+storage/
+node_modules/
+vendor/bundle/
+.git/
+coverage/
+spec/
+doc/
+docs/
+*.log
+.byebug_history
+.env*
+tmp_*.py

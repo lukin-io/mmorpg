@@ -21,6 +21,6 @@ class UserSessionsController < Devise::SessionsController
     # A stale cookie can also replace the anonymous session that issued the
     # form's token. Keep CSRF rejection: no credentials are replayed or saved.
     redirect_to new_user_session_path, status: :see_other,
-      alert: "Your sign-in form expired. Please enter your details again."
+      alert: I18n.t("game.flashes.sign_in_expired")
   end
 end

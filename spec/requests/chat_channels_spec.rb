@@ -30,7 +30,7 @@ RSpec.describe "ChatChannels", type: :request do
       get chat_channel_path(channel), headers: {"Turbo-Frame" => "chat_messages"}
 
       expect(response).to have_http_status(:success)
-      expect(response.body).to include("The outpost is under attack.", "Fight finished.")
+      expect(response.body).to include("The outpost is under attack.", I18n.t("game.events.fight_finished"))
       expect(response.body).not_to include("Private result", "Ready to defend")
       expect(response.body.index(world_event.body)).to be < response.body.index(own_event.body)
       expect(response.body).to include('id="chat_timeline"')

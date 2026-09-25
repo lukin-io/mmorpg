@@ -22,18 +22,18 @@ module Game
         character.with_lock do
           character.reload
           if character.active_airship_journey
-            raise ActionViolationError, "Disembark before interacting with the ground"
+            raise ActionViolationError, I18n.t("game.flashes.disembark_first")
           end
 
           @position = character.position&.reload
           if MovementCommand.moving.where(character:).exists?
-            raise ActionViolationError, "Movement already in progress"
+            raise ActionViolationError, I18n.t("game.flashes.movement_in_progress")
           end
           if LocalActionState.new(character:).call
-            raise ActionViolationError, "A local action is already in progress"
+            raise ActionViolationError, I18n.t("game.world.local_action_in_progress")
           end
           if character.arena_participations.joins(:arena_match).merge(ArenaMatch.active).exists?
-            raise ActionViolationError, "Finish the active fight before continuing"
+            raise ActionViolationError, I18n.t("game.world.finish_active_fight")
           end
 
           offer = find_offer
@@ -57,27 +57,27 @@ module Game
           .offered
           .where(character:, action_key:)
           .order(created_at: :desc)
-          .first || raise(ActionViolationError, "Action offer is no longer available")
+          .first || raise(ActionViolationError, I18n.t("game.world.action_offer_unavailable"))
       end
 
       def validate!(offer)
-        raise ActionViolationError, "Action offer is no longer available" unless offer.offered?
-        raise ActionViolationError, "Action offer has expired" if offer.expired?
-        raise ActionViolationError, "Action offer does not match current position" unless offer.matches_position?(position)
+        raise ActionViolationError, I18n.t("game.world.action_offer_unavailable") unless offer.offered?
+        raise ActionViolationError, I18n.t("game.world.action_offer_expired") if offer.expired?
+        raise ActionViolationError, I18n.t("game.world.action_offer_position_mismatch") unless offer.matches_position?(position)
 
         if action_type.present? && offer.action_type != action_type
-          raise ActionViolationError, "Action offer does not match requested action"
+          raise ActionViolationError, I18n.t("game.world.action_offer_action_mismatch")
         end
 
         if position&.zone&.outdoor? && FATIGUE_LOCKED_ACTIONS.include?(offer.action_type) &&
             Characters::FatigueService.new(character:).outdoor_actions_blocked?
-          raise ActionViolationError, "Too fatigued for this action"
+          raise ActionViolationError, I18n.t("game.world.action_too_fatigued")
         end
 
         return unless target
 
         unless offer.target_type == target.class.base_class.name && offer.target_id == target.id
-          raise ActionViolationError, "Action offer does not match requested target"
+          raise ActionViolationError, I18n.t("game.world.action_offer_target_mismatch")
         end
       end
     end

@@ -7,46 +7,140 @@ module Game
     class CityBuildingCatalog
       BUILDINGS = {
         "market" => {
-          "title" => "Market",
+          "title" => "Соляной Базар",
           "kind" => "market",
-          "summary" => "Player listings and rented stalls.",
+          "summary" => "Игровые лоты и аренда прилавков.",
           "stall_tiers" => [
-            ["Newspaper display", 0, 100, 400, "15%"],
-            ["Small", 200, 250, 500, "5%"],
-            ["Medium", 400, 450, 750, "4%"],
-            ["Spacious", 600, 700, 1000, "3%"],
-            ["Large", 800, 1000, 1250, "2%"],
-            ["Huge", 1000, 2000, 1500, "1%"]
+            ["Витрина угля", 0, 100, 400, "15%"],
+            ["Малый", 200, 250, 500, "5%"],
+            ["Средний", 400, 450, 750, "4%"],
+            ["Просторный", 600, 700, 1000, "3%"],
+            ["Большой", 800, 1000, 1250, "2%"],
+            ["Огромный", 1000, 2000, 1500, "1%"]
           ]
         },
         "junk_dealer" => {
-          "title" => "Junk Dealer",
-          "kind" => "shop_shell",
-          "summary" => "Captured shop shell; stock was not loaded.",
-          "modes" => ["Buy goods", "Licenses", "Sell goods", "For beginners"]
+          "title" => "Скупщик Пепла",
+          "kind" => "junk_buyback",
+          "summary" => "Скупает щепу, хвосты, приманки и бинты за NV без лицензии."
         },
         "numismatics" => {
-          "title" => "Numismatics Shop",
+          "title" => "Нумизматика Завесы",
           "kind" => "numismatics",
-          "summary" => "Single-commodity player listing book.",
-          "commodity" => "Ancient Alvian Coin"
+          "summary" => "Книга лотов одной валюты.",
+          "commodity" => "Древняя монета Альвии"
         },
         "airship_station" => {
-          "title" => "Airship Station",
+          "title" => "Станция Разломов",
           "kind" => "airship",
-          "summary" => "Scheduled airship routes."
+          "summary" => "Маршруты дирижаблей по разломам."
         },
         "hospital" => {
-          "title" => "Hospital",
+          "title" => "Лазарет Угля",
           "kind" => "hospital",
-          "summary" => "Treatment shop, restricted recovery rooms, and pharmacy processing.",
-          "tabs" => ["Shop", "Rest room", "Hospital bed", "Pharmacy"],
+          "summary" => "Лечение, покой и аптека.",
+          "tabs" => ["Лавка", "Комната отдыха", "Койка", "Аптека"],
           "goods" => [
-            ["Beginner healer bag", "10 light injuries", 300, 33],
-            ["Skilled healer bag", "10 medium injuries", 750, 28],
-            ["Experienced healer bag", "10 heavy injuries", 1500, 143],
-            ["Combat first-aid kit", "1 combat injury", 7000, 1]
+            ["Сумка новичка-лекаря", "10 лёгких травм", 300, 33],
+            ["Сумка опытного лекаря", "10 средних травм", 750, 28],
+            ["Сумка мастера-лекаря", "10 тяжёлых травм", 1500, 143],
+            ["Боевая аптечка", "1 боевая травма", 7000, 1]
           ]
+        },
+        "tavern" => {
+          "title" => "Таверна Угольного Прилива",
+          "kind" => "tavern",
+          "summary" => "Еда, слухи и отдых угля: HP/MP сразу. Травмы — в Лазарете."
+        },
+        "workshop" => {
+          "title" => "Смоляная Кузница",
+          "kind" => "workshop",
+          "summary" => "Крафт Смолокура: бинты, наборы, приманки."
+        },
+        "guard_tower" => {
+          "title" => "Башня Дозора",
+          "kind" => "guard",
+          "summary" => "Живые переходы в соседние кварталы с текущей площади."
+        },
+        "city_hall" => {
+          "title" => "Ратуша Угля",
+          "kind" => "landmark",
+          "summary" => "Указы города и доска стартовых договоров Пепельной Завесы."
+        },
+        "clan_hall" => {
+          "title" => "Зал Клана Пепла",
+          "kind" => "landmark",
+          "summary" => "Клановый хаб. Войны секторов — отдельной системой."
+        },
+        "post" => {
+          "title" => "Пепельная Почта",
+          "kind" => "post",
+          "summary" => "Личная записка персонажа. Межгородская почта — позже."
+        },
+        "magic_school" => {
+          "title" => "Школа Завесы",
+          "kind" => "landmark",
+          "summary" => "Обучение магии и знаниям."
+        },
+        "library" => {
+          "title" => "Архив Колоколов",
+          "kind" => "landmark",
+          "summary" => "Справочник механик Пепельной Завесы — как библиотека Mist War, но наш лор."
+        },
+        "general_school" => {
+          "title" => "Общая Школа",
+          "kind" => "landmark",
+          "summary" => "Базовые умения и профессии."
+        },
+        "military_school" => {
+          "title" => "Школа Клинка",
+          "kind" => "landmark",
+          "summary" => "Оружейные школы и строевая подготовка."
+        },
+        "dealer_house" => {
+          "title" => "Дом Скупщика",
+          "kind" => "landmark",
+          "summary" => "Скупка трофеев. Рабочий прилавок — Скупщик Пепла на Рынке."
+        },
+        "souvenir_shop" => {
+          "title" => "Лавка Реликвий",
+          "kind" => "souvenir",
+          "summary" => "Приманка, щепа и трава за NV без лицензии."
+        },
+        "auction" => {
+          "title" => "Аукцион Соли",
+          "kind" => "landmark",
+          "summary" => "Игровой аукцион. Лоты подключим после экономики."
+        },
+        "obelisk" => {
+          "title" => "Обелиск Завесы",
+          "kind" => "obelisk",
+          "summary" => "Привязка координат и возврат за NV."
+        },
+        "bank" => {
+          "title" => "Банк Смолы",
+          "kind" => "bank",
+          "summary" => "Сейф NV и одна ячейка предмета вне кармана."
+        },
+        "temple" => {
+          "title" => "Храм Чёрного Колокола",
+          "kind" => "temple",
+          "summary" => "Лёгкий обряд за NV снимает лёгкие травмы. Тяжёлые и боевые — в Лазарете."
+        },
+        "law_abode" => {
+          "title" => "Обитель Закона",
+          "kind" => "law",
+          "summary" => "Объявление и смена склонности персонажа."
+        },
+        "prison" => {
+          "title" => "Тюрьма Цистерны",
+          "kind" => "landmark",
+          "summary" => "Камеры для нарушителей порядка."
+        },
+        "gallows" => {
+          "title" => "Виселица Пепла",
+          "kind" => "landmark",
+          "summary" => "Показательные казни — визуальный лор района."
         }
       }.freeze
 
@@ -56,7 +150,7 @@ module Game
           return building unless building_key.to_s == "airship_station" && zone&.city?
 
           title = zone.airship_station_title ||
-            (zone.metadata.to_h["city_key"] == "forpost" ? "Forpost Airship Station" : "Airship Station")
+            (zone.metadata.to_h["city_key"] == "forpost" ? "Станция Разломов" : "Станция Разломов")
           building.merge("title" => title)
         end
 

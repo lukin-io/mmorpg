@@ -19,7 +19,7 @@ module Manage
     end
 
     def call
-      raise ArgumentError, "unsupported management operation" unless OPERATIONS.include?(operation)
+      raise ArgumentError, I18n.t("manage.unsupported_operation") unless OPERATIONS.include?(operation)
 
       ApplicationRecord.transaction do
         case operation
@@ -62,7 +62,7 @@ module Manage
       statuses = WorldActionOffer.statuses.values_at("offered", "accepted")
       WorldActionOffer.where(target: record, status: statuses).update_all(
         status: WorldActionOffer.statuses.fetch("cancelled"),
-        error_message: "Managed world content changed.",
+        error_message: I18n.t("game.world.managed_content_changed"),
         updated_at: Time.current
       )
     end

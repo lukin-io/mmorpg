@@ -25,12 +25,12 @@
     </div>
 
     <div class="arena-bars">
-      <div class="arena-hp-bar" title="HP: <%= p_data.current_hp %>/<%= p_data.max_hp %>">
+      <div class="arena-hp-bar" title="<%= t("game.fight.hp_title", current: p_data.current_hp, max: p_data.max_hp) %>">
         <div class="arena-hp-fill" style="width: <%= p_data.hp_percent %>%"></div>
         <span class="arena-hp-text"><%= p_data.current_hp %>/<%= p_data.max_hp %></span>
       </div>
       <% unless p_data.is_npc %>
-        <div class="arena-mp-bar" title="MP: <%= p_data.current_mp %>/<%= p_data.max_mp %>">
+        <div class="arena-mp-bar" title="<%= t("game.fight.mp_title", current: p_data.current_mp, max: p_data.max_mp) %>">
           <div class="arena-mp-fill" style="width: <%= p_data.mp_percent %>%"></div>
           <span class="arena-mp-text"><%= p_data.current_mp %>/<%= p_data.max_mp %></span>
         </div>
@@ -45,7 +45,7 @@
 
   <% if participation.result.present? && participation.result != "pending" %>
     <span class="arena-result-badge arena-result-badge--<%= participation.result %>">
-      <%= participation.result.humanize %>
+      <%= t("arena.results.#{participation.result}", default: participation.result.to_s.tr("_", " ")) %>
     </span>
   <% end %>
 </div>

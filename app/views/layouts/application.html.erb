@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<%= I18n.locale %>">
   <head>
-    <title><%= content_for(:title) || "RPG" %></title>
+    <title><%= content_for(:title) || t("app.title") %></title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <meta name="theme-color" content="#fcfaf3">
+    <meta name="theme-color" content="#1a1410">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
     <%= yield :head %>
@@ -18,6 +18,10 @@
   </head>
 
   <body class="nl-public-layout<%= " #{content_for(:body_class)}" if content_for?(:body_class) %>">
+    <div class="nl-public-topbar">
+      <div class="nl-public-brand"><%= t("app.title") %></div>
+      <%= render "shared/locale_switcher" %>
+    </div>
     <div id="flash" class="nl-public-flash">
       <% flash.each do |type, message| %>
         <%= render "shared/flash", type:, message: %>

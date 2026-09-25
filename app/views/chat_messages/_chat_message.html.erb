@@ -11,7 +11,7 @@
             data-action="click->chat#clickUsername contextmenu->chat#showUserMenu"
             data-username="<%= chat_message.sender.profile_name %>"
             data-user-id="<%= chat_message.sender_id %>"
-            title="Private message">
+            title="<%= t("game.chat.private") %>">
         <%= chat_message_sender_name(chat_message) %>
       </span>
 

@@ -1,0 +1,15 @@
+<div class="nl-trade-hub__grid" data-trade-hub-supply="1">
+  <% @supply_offers.each do |key, offer| %>
+    <% template = ItemTemplate.find_by(key:) %>
+    <% next unless template %>
+    <article class="nl-trade-hub__card">
+      <h2><%= template.name %></h2>
+      <p><%= t("game.trade_hub.supply_qty_price", qty: offer[:quantity], price: offer[:price]) %></p>
+      <%= button_to t("game.common.buy", default: "Buy"),
+            buy_supply_trade_hub_path,
+            method: :post,
+            params: {item_key: key},
+            class: "lbut" %>
+    </article>
+  <% end %>
+</div>

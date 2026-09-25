@@ -7,8 +7,13 @@
   <% items.each do |item| %>
     <% action_availability = inventory_action_availability(item) %>
     <% requirements_allowed = action_availability.fetch(:allowed) %>
-    <div class="inventory-slot filled nl-inventory-item"
+    <% durable = item.durable? %>
+    <% broken = item.broken? %>
+    <% durability_pct = inventory_item_durability_percent(item) %>
+    <div class="inventory-slot filled nl-inventory-item<%= ' nl-inventory-item--broken' if broken %>"
          data-item-id="<%= item.id %>"
+         data-item-key="<%= item.item_template.key %>"
+         <% if durable %>data-inventory-broken="<%= broken ? "1" : "0" %>"<% end %>
          data-action="click->inventory#selectItem">
       <div class="nl-inventory-item-icon">
         <% if artwork = item_artwork_path(item.item_template) %>
@@ -19,78 +24,91 @@
         <% if item.quantity > 1 %>
           <strong><%= item.quantity %></strong>
         <% end %>
-        <div class="nl-durability-bar">
-          <span style="width: <%= inventory_item_durability_percent(item) %>%"></span>
-        </div>
+        <% if durable %>
+          <div class="nl-durability-bar<%= ' nl-durability-bar--broken' if broken %><%= ' nl-durability-bar--low' if !broken && durability_pct <= 25 %>">
+            <span style="width: <%= durability_pct %>%"></span>
+          </div>
+        <% end %>
       </div>
 
       <div class="nl-inventory-item-body">
         <div class="nl-inventory-item-actions">
           <% if item.item_template.equippable? && !item.equipped? %>
             <% if requirements_allowed %>
-              <%= button_to "Wear", equip_inventory_path(item_id: item.id, category: category, subcategory: subcategory, info: info_mode), method: :post, class: "invbut", data: {turbo: true} %>
+              <%= button_to t("game.common.wear"), equip_inventory_path(item_id: item.id, category: category, subcategory: subcategory, info: info_mode), method: :post, class: "invbut", data: {turbo: true} %>
             <% end %>
           <% end %>
           <% if item.item_template.consumable? %>
             <% if requirements_allowed %>
-              <%= button_to "Use", use_inventory_path(item_id: item.id, category: category, subcategory: subcategory, info: info_mode), method: :post, class: "invbut", data: {turbo: true} %>
+              <%= button_to t("game.common.use"), use_inventory_path(item_id: item.id, category: category, subcategory: subcategory, info: info_mode), method: :post, class: "invbut", data: {turbo: true} %>
             <% end %>
           <% end %>
           <% unless item.equipped? || item.protected_from_discard? %>
             <details class="nl-inline-action">
-              <summary class="invbut">Transfer</summary>
+              <summary class="invbut"><%= t("game.common.transfer") %></summary>
               <%= form_with url: transfer_item_inventory_path, method: :post, class: "nl-inline-action-form" do |f| %>
                 <%= f.hidden_field :item_id, value: item.id %>
                 <%= f.hidden_field :category, value: category %>
                 <%= f.hidden_field :subcategory, value: subcategory %>
                 <%= f.hidden_field :info, value: info_mode %>
-                <%= f.text_field :recipient_name, placeholder: "Recipient", maxlength: 25, class: "LogintextBox" %>
+                <%= f.text_field :recipient_name, placeholder: t("game.common.recipient"), maxlength: 25, class: "LogintextBox" %>
                 <%= f.number_field :quantity, value: 1, min: 1, max: item.quantity, class: "LogintextBox2" %>
-                <%= f.submit "Transfer", class: "lbut" %>
+                <%= f.submit t("game.common.transfer"), class: "lbut" %>
               <% end %>
             </details>
             <details class="nl-inline-action">
-              <summary class="invbut">Gift</summary>
+              <summary class="invbut"><%= t("game.common.gift") %></summary>
               <%= form_with url: gift_item_inventory_path, method: :post, class: "nl-inline-action-form" do |f| %>
                 <%= f.hidden_field :item_id, value: item.id %>
                 <%= f.hidden_field :category, value: category %>
                 <%= f.hidden_field :subcategory, value: subcategory %>
                 <%= f.hidden_field :info, value: info_mode %>
-                <%= f.text_field :recipient_name, placeholder: "Recipient", maxlength: 25, class: "LogintextBox" %>
+                <%= f.text_field :recipient_name, placeholder: t("game.common.recipient"), maxlength: 25, class: "LogintextBox" %>
                 <%= f.number_field :quantity, value: 1, min: 1, max: item.quantity, class: "LogintextBox2" %>
-                <%= f.submit "Gift", class: "lbut" %>
+                <%= f.submit t("game.common.gift"), class: "lbut" %>
               <% end %>
             </details>
-            <details class="nl-inline-action">
-              <summary class="invbut">Sell</summary>
-              <%= form_with url: sell_to_player_inventory_path, method: :post, class: "nl-inline-action-form" do |f| %>
-                <%= f.hidden_field :item_id, value: item.id %>
-                <%= f.hidden_field :category, value: category %>
-                <%= f.hidden_field :subcategory, value: subcategory %>
-                <%= f.hidden_field :info, value: info_mode %>
-                <%= f.text_field :recipient_name, placeholder: "Recipient", maxlength: 25, class: "LogintextBox" %>
-                <%= f.number_field :price, placeholder: "NV", min: 0.01, step: 0.01, class: "LogintextBox2" %>
-                <%= f.number_field :quantity, value: 1, min: 1, max: item.quantity, class: "LogintextBox2" %>
-                <%= f.submit "Sell", class: "lbut" %>
-              <% end %>
+            <details class="nl-inline-action" data-inventory-player-sell="deferred">
+              <summary class="invbut"><%= t("game.common.sell") %></summary>
+              <p class="nl-empty-note"><%= t("game.inventory.player_sales_unavailable") %></p>
+              <p class="nl-quests-board__meta"><%= t("game.inventory.player_sales_shop_hint") %></p>
+              <p class="nl-quests-board__meta">
+                <%= link_to t("game.inventory.player_sales_shop_cta"), shop_path(mode: "sell"), class: "nl-sheet-link", data: {inventory_recovery: "shop_sell"} %>
+              </p>
             </details>
           <% end %>
           <% unless item.protected_from_discard? %>
-            <%= button_to "Delete",
+            <%= button_to t("game.common.delete"),
               inventory_item_path(item, category: category, subcategory: subcategory, info: info_mode),
               method: :delete,
               class: "invbut invbut--danger",
-              form: {class: "nl-inventory-discard", data: {turbo_confirm: "Delete #{item.item_template.name}?"}} %>
+              form: {class: "nl-inventory-discard", data: {turbo_confirm: t("game.inventory.delete_confirm", name: item.item_template.display_name)}} %>
           <% end %>
         </div>
 
         <div class="nl-inventory-item-details">
           <section>
-            <h3>Properties</h3>
+            <h3><%= t("game.common.properties") %></h3>
             <table class="nl-detail-table">
               <tr>
-                <th>Name</th>
-                <td><%= item.item_template.name %></td>
+                <th><%= t("game.common.name") %></th>
+                <td>
+                  <%= item.item_template.display_name %>
+                  <% if broken %>
+                    <span class="nl-inventory-broken-badge"><%= t("game.inventory.item_broken") %></span>
+                    <div class="nl-inventory-broken-hint" data-inventory-repair="deferred">
+                      <% if Game::World::CityBuildingCatalog.accessible?(character: current_character, building_key: "workshop") %>
+                        <%= link_to t("game.inventory.repair_deferred_cta"), city_building_path("workshop"), data: {turbo: false, inventory_recovery: "workshop"} %>
+                      <% else %>
+                        <%= t("game.inventory.repair_deferred_hint") %>
+                        ·
+                        <%= link_to t("arena.nav.city"), world_path, data: {turbo: false, inventory_recovery: "world"} %>
+                      <% end %>
+                    </div>
+                  <% elsif durable && (label = inventory_item_durability(item)).present? %>
+                    <span class="nl-inventory-durability-label"><%= label %></span>
+                  <% end %>
+                </td>
               </tr>
               <% if info_mode == "full" %>
                 <% inventory_item_properties(item).each do |label, value| %>
@@ -104,7 +122,7 @@
           </section>
 
           <section class="<%= 'nl-inventory-details--compact' if info_mode == 'short' %>">
-            <h3>Requirements</h3>
+            <h3><%= t("game.common.requirements") %></h3>
             <table class="nl-detail-table">
               <% inventory_requirement_rows(item).each do |row| %>
                 <tr class="<%= 'nl-requirement-missing' unless row[:met] %>">
@@ -114,8 +132,8 @@
               <% end %>
               <% unless requirements_allowed %>
                 <tr class="nl-requirement-missing">
-                  <th>Action</th>
-                  <td><%= action_availability[:error].presence || "Unavailable until requirements are met" %></td>
+                  <th><%= t("game.common.action") %></th>
+                  <td><%= action_availability[:error].presence || t("game.inventory.req_blocked") %></td>
                 </tr>
               <% end %>
             </table>
@@ -126,7 +144,24 @@
   <% end %>
 
   <% if items.empty? %>
-    <p class="nl-empty-note"><%= inventory_empty_message(category) %></p>
+    <p class="nl-empty-note" data-inventory-grid-empty="1"><%= inventory_empty_message(category) %></p>
+    <% case category.to_s
+       when "all", "things", "elixirs" %>
+      <p class="nl-quests-board__meta" data-inventory-empty-hint="shop">
+        <%= t("game.inventory.empty_hint_shop") %>
+        <%= link_to t("game.shop.modes.buy"), shop_path(mode: "buy"), class: "nl-sheet-link", data: {inventory_recovery: "shop"} %>
+      </p>
+    <% when "quests" %>
+      <p class="nl-quests-board__meta" data-inventory-empty-hint="quests">
+        <%= t("game.inventory.empty_hint_quests") %>
+        <%= link_to t("nav.quests"), quests_path, class: "nl-sheet-link", data: {inventory_recovery: "quests"} %>
+      </p>
+    <% else %>
+      <p class="nl-quests-board__meta" data-inventory-empty-hint="world">
+        <%= t("game.inventory.empty_hint_world") %>
+        <%= link_to t("nav.world"), world_path, class: "nl-sheet-link", data: {inventory_recovery: "world"} %>
+      </p>
+    <% end %>
   <% end %>
 
 </div>

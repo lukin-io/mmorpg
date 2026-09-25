@@ -1,4 +1,4 @@
-<% content_for :title, "#{@chat_channel.name} - Chat" %>
+<% content_for :title, t("game.chat.page_title", name: @chat_channel.name) %>
 <% content_for :hide_shell_chat_composer, true %>
 <% content_for :hide_shell_chat_history, true %>
 
@@ -23,7 +23,7 @@
   <div class="chat-header">
     <div class="chat-header-info">
       <h1><%= @chat_channel.name %></h1>
-      <span class="badge badge--<%= @chat_channel.channel_type %>"><%= @chat_channel.channel_type.humanize %></span>
+      <span class="badge badge--<%= @chat_channel.channel_type %>"><%= t("game.chat.types.#{@chat_channel.channel_type}", default: @chat_channel.channel_type.to_s.tr("_", " ")) %></span>
     </div>
   </div>
 
@@ -36,8 +36,12 @@
          class="chat-messages-container">
 
       <% if @chat_entries.empty? %>
-        <div class="chat-empty">
-          <p>No messages yet.</p>
+        <div class="chat-empty" data-chat-empty="1">
+          <p><%= t("game.chat.empty") %></p>
+          <p class="nl-quests-board__meta">
+            <%= link_to t("nav.world"), world_path, class: "nl-sheet-link", data: {chat_recovery: "world"} %>
+          </p>
+        </div>
         </div>
       <% else %>
         <%= render "chat_channels/timeline_entries", entries: @chat_entries %>

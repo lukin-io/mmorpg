@@ -1,33 +1,63 @@
 <% qualification = Game::Shop::MerchantQualification.new(character: current_character) %>
 <% if qualification.visible_at?(location) %>
-  <section class="nl-panel" aria-label="Merchant qualification">
-    <h2>Merchant qualification</h2>
+  <section class="nl-panel" aria-label="<%= t("game.shop.merchant_title") %>" data-merchant-desk="1">
+    <h2><%= t("game.shop.merchant_title") %></h2>
     <% case qualification.status %>
     <% when "completed" %>
-      <p class="nl-empty-note">Merchant qualification completed. Trading licenses are available in the Shop.</p>
+      <p class="nl-empty-note" data-merchant-status="completed">
+        <%= t("game.shop.merchant_done") %>
+        ·
+        <%= link_to t("game.shop.modes.licenses"), shop_path(mode: "licenses"), class: "nl-sheet-link", data: {merchant_recovery: "licenses"} %>
+      </p>
     <% when "not_started" %>
       <% if location == :market %>
-        <p class="nl-empty-note">Accept qualification, collect a receipt for 1,000 NV at the Shop, then return here.</p>
-        <%= button_to "Accept Merchant qualification", accept_merchant_qualification_path, class: "lbut" %>
+        <p class="nl-empty-note" data-merchant-status="not_started"><%= t("game.shop.merchant_accept") %></p>
+        <%= button_to t("game.shop.merchant_accept_btn"), accept_merchant_qualification_path, class: "lbut" %>
       <% else %>
-        <p class="nl-empty-note">Accept Merchant qualification at the Market first.</p>
+        <p class="nl-empty-note" data-merchant-status="market-first">
+          <%= t("game.shop.merchant_market_first") %>
+          <% if Game::World::CityBuildingCatalog.accessible?(character: current_character, building_key: "market") %>
+            ·
+            <%= link_to t("game.buildings.market_short"), city_building_path("market"), class: "nl-sheet-link", data: {merchant_recovery: "market"} %>
+          <% else %>
+            ·
+            <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {merchant_recovery: "world"} %>
+          <% end %>
+        </p>
       <% end %>
     <% when "accepted" %>
       <% if location == :shop %>
-        <p class="nl-empty-note">Collect the qualification receipt for 1,000 NV, then return to the Market.</p>
-        <%= button_to "Pay 1,000 NV and collect receipt", pay_merchant_qualification_path, class: "lbut" %>
+        <p class="nl-empty-note" data-merchant-status="collect-shop-pay"><%= t("game.shop.merchant_collect_market") %></p>
+        <%= button_to t("game.shop.merchant_pay_btn"), pay_merchant_qualification_path, class: "lbut" %>
       <% else %>
-        <p class="nl-empty-note">Collect the receipt from the Shop for 1,000 NV, then return here.</p>
+        <p class="nl-empty-note" data-merchant-status="collect-shop">
+          <%= t("game.shop.merchant_collect_shop") %>
+          ·
+          <%= link_to t("game.shop.title"), shop_path(mode: "licenses"), class: "nl-sheet-link", data: {merchant_recovery: "shop"} %>
+        </p>
       <% end %>
     <% when "paid" %>
       <% if location == :market %>
-        <p class="nl-empty-note">Your paid receipt is ready.</p>
-        <%= button_to "Complete Merchant qualification", complete_merchant_qualification_path, class: "lbut" %>
+        <p class="nl-empty-note" data-merchant-status="receipt-ready"><%= t("game.shop.merchant_receipt_ready") %></p>
+        <%= button_to t("game.shop.merchant_complete_btn"), complete_merchant_qualification_path, class: "lbut" %>
       <% else %>
-        <p class="nl-empty-note">Receipt received. Return to the Market.</p>
+        <p class="nl-empty-note" data-merchant-status="receipt-market">
+          <%= t("game.shop.merchant_receipt_done") %>
+          <% if Game::World::CityBuildingCatalog.accessible?(character: current_character, building_key: "market") %>
+            ·
+            <%= link_to t("game.buildings.market_short"), city_building_path("market"), class: "nl-sheet-link", data: {merchant_recovery: "market"} %>
+          <% else %>
+            ·
+            <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {merchant_recovery: "world"} %>
+          <% end %>
+        </p>
       <% end %>
     <% else %>
-      <p class="nl-empty-note">Qualification progress is unavailable.</p>
+      <p class="nl-empty-note" data-merchant-status="unavailable">
+        <%= t("game.shop.merchant_unavailable") %>
+        ·
+        <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {merchant_recovery: "world"} %>
+      </p>
     <% end %>
   </section>
 <% end %>

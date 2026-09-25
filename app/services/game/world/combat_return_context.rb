@@ -24,7 +24,7 @@ module Game
         end.to_s
         name = "world" if name.blank?
 
-        raise UnsupportedContextError, "Unsupported fight return context." unless CONTEXTS.include?(name)
+        raise UnsupportedContextError, I18n.t("errors.unsupported_fight_return_context") unless CONTEXTS.include?(name)
 
         {"name" => name}
       end

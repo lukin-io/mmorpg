@@ -1,0 +1,24 @@
+<% content_for :title, t("manage.idle_ticks.title") %>
+<%= render "manage/shared/page_header",
+      title: t("manage.idle_ticks.title"),
+      description: t("manage.idle_ticks.hint") %>
+
+<section class="nl-manage-note" data-idle-tick-status="1">
+  <p><strong><%= t("manage.idle_ticks.armed_label") %>:</strong> <%= @status[:armed] ? t("manage.yes") : t("manage.no") %></p>
+  <p><strong><%= t("manage.idle_ticks.tick_ms") %>:</strong> <%= @status[:tick_ms] %></p>
+  <p><strong><%= t("manage.idle_ticks.batch") %>:</strong> <%= @status[:batch] %></p>
+  <p><strong><%= t("manage.idle_ticks.last_tick") %>:</strong> <%= @status[:last_tick_at] || "—" %></p>
+  <p><strong><%= t("manage.idle_ticks.last_ran") %>:</strong> <%= @status[:last_ran] %> / err <%= @status[:last_errors] %></p>
+  <p><strong><%= t("manage.idle_ticks.circuit") %>:</strong> <%= @status[:circuit_open] ? t("manage.yes") : t("manage.no") %></p>
+
+  <div class="nl-manage-actions">
+    <%= form_with url: arm_manage_idle_tick_path, method: :post, local: true do |f| %>
+      <%= f.number_field :tick_ms, value: @status[:tick_ms], min: 15000, max: 600000 %>
+      <%= f.number_field :batch, value: @status[:batch], min: 1, max: 200 %>
+      <%= f.submit t("manage.idle_ticks.arm"), class: "nl-arena-small-button" %>
+    <% end %>
+    <%= button_to t("manage.idle_ticks.disarm"), disarm_manage_idle_tick_path, method: :post, class: "nl-arena-small-button" %>
+    <%= button_to t("manage.idle_ticks.run_once"), run_once_manage_idle_tick_path, method: :post, class: "nl-arena-small-button" %>
+    <%= button_to t("manage.catalog_activation.run"), manage_catalog_activation_path, method: :post, class: "nl-arena-small-button" %>
+  </div>
+</section>

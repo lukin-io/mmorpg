@@ -33,13 +33,13 @@ RSpec.describe "Public fight logs", type: :request do
     get public_fight_log_path(match)
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("Fight Log ##{match.id}")
+    expect(response.body).to include(I18n.t("game.fight.log_page_title", id: match.id))
     expect(Nokogiri::HTML(response.body).text.squish).to include("max_kerby hits Training Dummy")
     expect(response.body).to include("nl-public-layout--fight-log")
     expect(response.body).not_to include("nl-game-layout")
     expect(response.body).not_to include("Neverlands administration")
     expect(response.body).not_to include("assets/neverlands")
-    expect(response.body).to include("Statistics")
+    expect(response.body).to include(I18n.t("game.fight.statistics"))
   end
 
   it "exports log entries as JSON" do
@@ -57,7 +57,7 @@ RSpec.describe "Public fight logs", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("max_kerby")
     expect(response.body).to include("<td>6</td>")
-    expect(response.body).to include("Fight log")
+    expect(response.body).to include(I18n.t("game.fight.log"))
   end
 
   it "paginates the durable chronological stream at fifty entries" do
@@ -94,8 +94,8 @@ RSpec.describe "Public fight logs", type: :request do
     get public_fight_log_path(empty_match, p: 0)
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("No fight events recorded.")
-    expect(response.body).to include("Fight participants:")
+    expect(response.body).to include(I18n.t("game.fight.no_events"))
+    expect(response.body).to include(I18n.t("game.fight.participants"))
 
     get public_fight_log_path(empty_match, p: -4, format: :json)
     expect(response.parsed_body.fetch("current_page")).to eq(1)
@@ -107,7 +107,7 @@ RSpec.describe "Public fight logs", type: :request do
 
     get public_fight_log_path(missing_id)
     expect(response).to have_http_status(:not_found)
-    expect(response.body).to eq("Fight log not found")
+    expect(response.body).to eq(I18n.t("game.flashes.fight_log_missing"))
 
     get public_fight_log_path(missing_id, format: :json)
     expect(response).to have_http_status(:not_found)

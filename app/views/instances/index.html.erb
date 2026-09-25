@@ -1,0 +1,49 @@
+<% content_for :title, t("game.instances.title") %>
+
+<section class="nl-quests" data-instances-tab="<%= @tab %>">
+  <header class="nl-quests__header">
+    <h1><%= t("game.instances.title") %></h1>
+    <p><%= t("game.instances.hint") %></p>
+    <ul class="nl-quests__summary" aria-label="<%= t("game.instances.tabs_aria") %>">
+      <li>
+        <%= link_to t("game.instances.tab_dungeons"), instances_path(tab: "dungeon"),
+              class: "nl-sheet-link",
+              data: {turbo_frame: "_top", instances_tab: "dungeon"} %>
+        <b><%= Game::Instances::Catalog.dungeons.size %></b>
+      </li>
+      <li>
+        <%= link_to t("game.instances.tab_raids"), instances_path(tab: "raid"),
+              class: "nl-sheet-link",
+              data: {turbo_frame: "_top", instances_tab: "raid"} %>
+        <b><%= Game::Instances::Catalog.raids.size %></b>
+      </li>
+    </ul>
+  </header>
+
+  <div class="nl-quests__list">
+    <% if @entries.empty? %>
+      <p class="nl-quests-board__meta"><%= t("game.instances.empty") %></p>
+    <% else %>
+      <% @entries.each do |entry| %>
+        <article class="nl-quests__card nl-quests__card--available"
+                 data-instance-id="<%= entry.id %>"
+                 data-instance-kind="<%= entry.kind %>">
+          <div class="nl-quests__card-top">
+            <h2><%= entry.name %></h2>
+            <span class="nl-quests__badge nl-quests__badge--available">
+              <%= entry.kind == "raid" ? t("game.instances.badge_raid") : t("game.instances.badge_dungeon") %>
+            </span>
+          </div>
+          <p class="nl-quests-board__meta">
+            <%= t("game.instances.meta", enemies: entry.enemy_count, attempts: entry.attempts) %>
+          </p>
+          <%= button_to t("game.instances.launch"),
+                launch_instance_path(kind: entry.kind, id: entry.id),
+                method: :post,
+                class: "nl-arena-small-button",
+                form: {data: {turbo: false}} %>
+        </article>
+      <% end %>
+    <% end %>
+  </div>
+</section>

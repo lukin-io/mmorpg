@@ -22,26 +22,26 @@ RSpec.describe "Characters Skills", type: :request do
 
       it "displays skill names" do
         get skills_character_path(character)
-        expect(response.body).to include("Wanderer")
-        expect(response.body).to include("Unarmed Combat")
-        expect(response.body).to include("Self-Healing")
+        expect(response.body).to include(Game::Skills::PassiveSkillRegistry.display_name(Game::Skills::PassiveSkillRegistry.find(:wanderer)))
+        expect(response.body).to include(Game::Skills::PassiveSkillRegistry.display_name(Game::Skills::PassiveSkillRegistry.find(:unarmed_combat)))
+        expect(response.body).to include(Game::Skills::PassiveSkillRegistry.display_name(Game::Skills::PassiveSkillRegistry.find(:self_healing)))
       end
 
       it "displays combat skill points" do
         get skills_character_path(character)
-        expect(response.body).to include("Combat points:")
+        expect(response.body).to include(I18n.t("game.profile.combat_points"))
       end
 
       it "displays peace skill points" do
         get skills_character_path(character)
-        expect(response.body).to include("Peace points:")
+        expect(response.body).to include(I18n.t("game.profile.peace_points"))
       end
 
       it "displays skill categories" do
         get skills_character_path(character)
-        expect(response.body).to include("Combat Skills")
-        expect(response.body).to include("Magic")
-        expect(response.body).to include("Peace Skills")
+        expect(response.body).to include(Game::Skills::PassiveSkillRegistry.categories.fetch(:combat).fetch(:name))
+        expect(response.body).to include(Game::Skills::PassiveSkillRegistry.categories.fetch(:magic).fetch(:name))
+        expect(response.body).to include(Game::Skills::PassiveSkillRegistry.categories.fetch(:peace_world).fetch(:name))
       end
 
       it "displays skill level format" do

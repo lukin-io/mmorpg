@@ -1,36 +1,36 @@
-<% content_for :title, "World Cells · Management" %>
+<% content_for :title, "#{t('manage.views.world_cells_title')} · #{t('manage.title')}" %>
 <%= render "manage/shared/page_header",
-      title: "World Cells and Resources",
-      description: "Sparse outdoor cell overrides, passability, art references, and local resource actions.",
+      title: t("manage.views.world_cells_title"),
+      description: t("manage.views.world_cells_hint"),
       new_path: new_manage_world_cell_path,
-      new_label: "Create world cell" %>
+      new_label: t("manage.views.create_world_cell") %>
 
 <%= form_with url: manage_world_cells_path, method: :get, class: "nl-manage-filter", local: true do |form| %>
-  <%= form.label :zone, "Outdoor zone" %>
-  <%= form.select :zone, options_from_collection_for_select(@zones, :name, :name, params[:zone]), include_blank: "All zones" %>
-  <%= form.submit "Filter", class: "lbut" %>
-  <%= link_to "Clear", manage_world_cells_path, class: "lbut" %>
+  <%= form.label :zone, t("manage.views.outdoor_zone") %>
+  <%= form.select :zone, options_from_collection_for_select(@zones, :name, :name, params[:zone]), include_blank: t("manage.views.all_zones") %>
+  <%= form.submit t("manage.filter"), class: "lbut" %>
+  <%= link_to t("manage.clear"), manage_world_cells_path, class: "lbut" %>
 <% end %>
 
 <div class="nl-manage-table-wrap">
   <table class="nl-manage-table">
-    <thead><tr><th>Zone</th><th>Cell</th><th>Terrain</th><th>Passable</th><th>Resources</th><th>Updated</th><th>Actions</th></tr></thead>
+    <thead><tr><th><%= t("manage.views.col_zone") %></th><th><%= t("manage.views.col_cell") %></th><th><%= t("manage.views.col_terrain") %></th><th><%= t("manage.views.col_passable") %></th><th><%= t("manage.views.col_resources") %></th><th><%= t("manage.views.col_updated") %></th><th><%= t("manage.views.col_actions") %></th></tr></thead>
     <tbody>
       <% @world_cells.each do |cell| %>
         <tr>
           <td><%= cell.zone %></td>
           <td>[<%= cell.x %>, <%= cell.y %>]</td>
-          <td><%= cell.terrain_type %></td>
+          <td><%= management_enum_label(:terrain_type, cell.terrain_type) %></td>
           <td><%= management_boolean(cell.passable?) %></td>
           <td><%= cell.local_actions.map { |action| action["label"].presence || action["type"] }.join(", ").presence || "—" %></td>
           <td><%= l(cell.updated_at, format: :short) %></td>
           <td class="nl-manage-table-actions">
-            <%= link_to "View", manage_world_cell_path(cell) %>
-            <%= link_to "Edit", edit_manage_world_cell_path(cell) %>
+            <%= link_to t("manage.view"), manage_world_cell_path(cell) %>
+            <%= link_to t("manage.edit"), edit_manage_world_cell_path(cell) %>
           </td>
         </tr>
       <% end %>
-      <% if @world_cells.empty? %><tr><td colspan="7" class="nl-manage-empty">No world cells found.</td></tr><% end %>
+      <% if @world_cells.empty? %><tr><td colspan="7" class="nl-manage-empty"><%= t("manage.views.empty_world_cells") %></td></tr><% end %>
     </tbody>
   </table>
 </div>

@@ -61,7 +61,7 @@ RSpec.describe "World", type: :request do
 
   describe "GET /world" do
     let(:user) { create(:user) }
-    let(:zone) { create(:zone, name: "Outpost Surroundings", location_type: "outdoor", width: 20, height: 20) }
+    let(:zone) { create(:zone, name: "Пепельный Берег", location_type: "outdoor", width: 20, height: 20) }
     let(:character) { create(:character, user: user) }
     let!(:position) { create(:character_position, character: character, zone: zone, x: 5, y: 5) }
 
@@ -87,7 +87,7 @@ RSpec.describe "World", type: :request do
 
       it "displays the zone name" do
         get world_path
-        expect(response.body).to include("Outpost Surroundings")
+        expect(response.body).to include("Пепельный Берег")
       end
 
       it "displays the player coordinates" do
@@ -141,7 +141,7 @@ RSpec.describe "World", type: :request do
         get world_path
 
         expect(response).to have_http_status(:success)
-        expect(response.body).to include("Move, Look, and Enter are unavailable")
+        expect(response.body).to include(I18n.t("game.world.actions_unavailable_title"))
         expect(response.body).not_to include("nl-tile-clickable--available")
         expect(MovementCommand.offered.where(character:)).to be_empty
       end
@@ -258,7 +258,7 @@ RSpec.describe "World", type: :request do
 
   describe "POST /world/move" do
     let(:user) { create(:user) }
-    let(:zone) { create(:zone, name: "Outpost Surroundings", location_type: "outdoor", width: 20, height: 20) }
+    let(:zone) { create(:zone, name: "Пепельный Берег", location_type: "outdoor", width: 20, height: 20) }
     let(:character) { create(:character, user: user) }
     let!(:position) { create(:character_position, character: character, zone: zone, x: 5, y: 5) }
 
@@ -286,14 +286,14 @@ RSpec.describe "World", type: :request do
     end
 
     context "with valid movement offer" do
-      it "lets a same-cell hostile NPC interrupt movement before travel starts" do
+      it "allows escape travel even when a same-cell hostile is present" do
         create(:tile_npc, :multi_npc_encounter, zone: zone.name, x: 5, y: 5)
         command = movement_offer(:north)
 
-        expect { post_offer(command) }.to change(ArenaMatch, :count).by(1)
+        expect { post_offer(command) }.not_to change(ArenaMatch, :count)
 
-        expect(response).to redirect_to(arena_match_path(ArenaMatch.last))
-        expect(command.reload).to be_offered
+        expect(response).to redirect_to(world_path)
+        expect(command.reload).to be_moving
         expect(position.reload).to have_attributes(x: 5, y: 5)
       end
 
@@ -331,7 +331,7 @@ RSpec.describe "World", type: :request do
 
         expect(response).to redirect_to(world_path)
         follow_redirect!
-        expect(response.body).to include("Move started.")
+        expect(response.body).to include(I18n.t("game.flashes.move_started"))
       end
 
       it "returns turbo stream movement state" do
@@ -393,7 +393,7 @@ RSpec.describe "World", type: :request do
           post move_world_path, params: {direction: "north", target_x: 5, target_y: 4, action_key: "bad-key"}
         }.not_to change(ArenaMatch, :count)
 
-        expect(response).to redirect_to(world_path)
+        expect(response).to redirect_to(world_path(action_denied: 1))
         expect(MovementCommand.moving).to be_empty
         expect(position.reload).to have_attributes(x: 5, y: 5)
       end
@@ -405,7 +405,7 @@ RSpec.describe "World", type: :request do
 
         expect { post_offer(command) }.not_to change(ArenaMatch, :count)
 
-        expect(response).to redirect_to(world_path)
+        expect(response).to redirect_to(world_path(action_denied: 1))
         expect(command.reload).to be_offered
         expect(position.reload).to have_attributes(x: 5, y: 5)
       end
@@ -413,7 +413,7 @@ RSpec.describe "World", type: :request do
       it "rejects movement without a valid action key" do
         post move_world_path, params: {direction: "north", target_x: 5, target_y: 4, action_key: "bad-key"}
 
-        expect(response).to redirect_to(world_path)
+        expect(response).to redirect_to(world_path(action_denied: 1))
         expect(MovementCommand.moving).to be_empty
         expect(position.reload.y).to eq(5)
       end
@@ -429,7 +429,7 @@ RSpec.describe "World", type: :request do
             action_key: command.action_key
           }
 
-        expect(response).to redirect_to(world_path)
+        expect(response).to redirect_to(world_path(action_denied: 1))
         expect(MovementCommand.moving).to be_empty
         expect(position.reload.y).to eq(5)
       end
@@ -439,7 +439,7 @@ RSpec.describe "World", type: :request do
 
         post move_world_path, params: {direction: "north"}
 
-        expect(response).to redirect_to(world_path)
+        expect(response).to redirect_to(world_path(action_denied: 1))
         expect(MovementCommand.moving).to be_empty
         expect(position.reload.y).to eq(0)
       end
@@ -673,8 +673,8 @@ RSpec.describe "World", type: :request do
       get world_path
 
       expect(response).to have_http_status(:success)
-      expect(response.body).to include("Look Around")
-      expect(response.body).to include("Search for herbs and local resources")
+      expect(response.body).to include(I18n.t("game.world.local_action.resource_search.label"))
+      expect(response.body).to include(I18n.t("game.world.local_action.resource_search.description"))
       expect(response.body).to include('name="action_key"')
     end
 
@@ -687,7 +687,7 @@ RSpec.describe "World", type: :request do
       expect(offer.reload).to be_accepted
       expect(offer.local_action_ends_at).to be_within(1.second).of(Time.current + 28.seconds)
       follow_redirect!
-      expect(response.body).to include("There is no useful vegetation in this area.")
+      expect(response.body).to include(I18n.t("game.world.local_action.resource_search.message"))
       expect(offer.reload).to be_accepted
       expect(position.reload).to have_attributes(x: 5, y: 5)
     end
@@ -825,6 +825,7 @@ RSpec.describe "World", type: :request do
         current_hp: 40,
         max_hp: 40
       )
+      grant_bait!(character)
       offer = local_action_offer
 
       expect { post_local_action(offer) }.to change(ArenaMatch, :count).by(1)
@@ -852,6 +853,7 @@ RSpec.describe "World", type: :request do
         max_hp: 40
       )
       offer = local_action_offer
+      grant_bait!(character)
       allow_any_instance_of(Game::World::StartNpcFight).to receive(:call)
         .and_raise(Game::World::StartNpcFight::FightViolationError, "Combat startup failed.")
 
@@ -951,7 +953,7 @@ RSpec.describe "World", type: :request do
   # ===========================================================================
   describe "POST /world/enter_building" do
     let(:user) { create(:user) }
-    let(:source_zone) { create(:zone, name: "Outpost Surroundings", location_type: "outdoor", width: 20, height: 20) }
+    let(:source_zone) { create(:zone, name: "Пепельный Берег", location_type: "outdoor", width: 20, height: 20) }
     let(:destination_zone) { create(:zone, name: "Outpost", location_type: "city", width: 10, height: 10) }
     let(:character) { create(:character, user: user, level: 10) }
     let!(:position) { create(:character_position, character: character, zone: source_zone, x: 5, y: 5) }
@@ -1067,6 +1069,7 @@ RSpec.describe "World", type: :request do
 
       it "lets a same-cell hostile NPC interrupt entry without moving the character" do
         create(:tile_npc, :multi_npc_encounter, zone: source_zone.name, x: 5, y: 5)
+        grant_bait!(character)
         offer = world_action_offer_for(
           character: character,
           position: position,
@@ -1089,7 +1092,7 @@ RSpec.describe "World", type: :request do
 
         expect(response).to redirect_to(world_path)
         follow_redirect!
-        expect(response.body).to include("Action offer")
+        expect(response.body).to include(I18n.t("game.world.action_offer_unavailable"))
         expect(position.reload.zone).to eq(source_zone)
       end
 
@@ -1133,7 +1136,7 @@ RSpec.describe "World", type: :request do
 
         expect(response).to redirect_to(world_path)
         follow_redirect!
-        expect(response.body).to include("Entrance is currently unavailable.")
+        expect(response.body).to include(I18n.t("game.world.entrance_unavailable"))
         expect(position.reload).to have_attributes(zone: source_zone, x: 5, y: 5)
       end
     end
@@ -1145,9 +1148,10 @@ RSpec.describe "World", type: :request do
       it "returns alert for non-existent building" do
         post enter_building_world_path, params: {building_id: 99999}
 
-        expect(response).to redirect_to(world_path)
+        expect(response).to redirect_to(world_path(building_denied: 1))
         follow_redirect!
-        expect(response.body).to include("Building not found.")
+        expect(response.body).to include(I18n.t("game.flashes.building_not_found"))
+        expect(response.body).to include('data-building-denied="1"')
       end
 
       it "returns turbo stream error for non-existent building" do
@@ -1176,9 +1180,9 @@ RSpec.describe "World", type: :request do
       it "returns alert when not at building location" do
         post_building_entry(distant_building)
 
-        expect(response).to redirect_to(world_path)
+        expect(response).to redirect_to(world_path(building_denied: 1))
         follow_redirect!
-        expect(response.body).to include("There is no city entrance on this cell.")
+        expect(response.body).to include(I18n.t("game.world.no_city_entrance"))
       end
 
       it "does not move character" do
@@ -1207,9 +1211,9 @@ RSpec.describe "World", type: :request do
       it "returns alert for inactive building" do
         post_building_entry(inactive_building)
 
-        expect(response).to redirect_to(world_path)
+        expect(response).to redirect_to(world_path(building_denied: 1))
         follow_redirect!
-        expect(response.body).to include("Entrance is currently unavailable.")
+        expect(response.body).to include(I18n.t("game.world.entrance_unavailable"))
       end
 
       it "does not move character" do
@@ -1245,9 +1249,9 @@ RSpec.describe "World", type: :request do
       it "returns alert for inaccessible building" do
         post_building_entry(no_dest_building)
 
-        expect(response).to redirect_to(world_path)
+        expect(response).to redirect_to(world_path(building_denied: 1))
         follow_redirect!
-        expect(response.body).to include("Entrance is currently unavailable.")
+        expect(response.body).to include(I18n.t("game.world.entrance_unavailable"))
       end
 
       it "does not move character" do
@@ -1265,9 +1269,9 @@ RSpec.describe "World", type: :request do
       it "returns alert for missing building" do
         post enter_building_world_path, params: {building_id: nil}
 
-        expect(response).to redirect_to(world_path)
+        expect(response).to redirect_to(world_path(building_denied: 1))
         follow_redirect!
-        expect(response.body).to include("Building not found.")
+        expect(response.body).to include(I18n.t("game.flashes.building_not_found"))
       end
     end
 
@@ -1275,9 +1279,9 @@ RSpec.describe "World", type: :request do
       it "returns alert for missing building" do
         post enter_building_world_path, params: {building_id: ""}
 
-        expect(response).to redirect_to(world_path)
+        expect(response).to redirect_to(world_path(building_denied: 1))
         follow_redirect!
-        expect(response.body).to include("Building not found.")
+        expect(response.body).to include(I18n.t("game.flashes.building_not_found"))
       end
     end
 
@@ -1285,9 +1289,9 @@ RSpec.describe "World", type: :request do
       it "returns alert for missing building" do
         post enter_building_world_path
 
-        expect(response).to redirect_to(world_path)
+        expect(response).to redirect_to(world_path(building_denied: 1))
         follow_redirect!
-        expect(response.body).to include("Building not found.")
+        expect(response.body).to include(I18n.t("game.flashes.building_not_found"))
       end
     end
 
@@ -1308,16 +1312,16 @@ RSpec.describe "World", type: :request do
       it "returns alert when building is in different zone" do
         post_building_entry(other_zone_building)
 
-        expect(response).to redirect_to(world_path)
+        expect(response).to redirect_to(world_path(building_denied: 1))
         follow_redirect!
-        expect(response.body).to include("There is no city entrance on this cell.")
+        expect(response.body).to include(I18n.t("game.world.no_city_entrance"))
       end
     end
   end
 
   describe "TileBuilding display on map" do
     let(:user) { create(:user) }
-    let(:zone) { create(:zone, name: "Outpost Surroundings", location_type: "outdoor", width: 20, height: 20) }
+    let(:zone) { create(:zone, name: "Пепельный Берег", location_type: "outdoor", width: 20, height: 20) }
     let(:destination_zone) { create(:zone, name: "Outpost", location_type: "city") }
     let(:character) { create(:character, user: user) }
     let!(:position) { create(:character_position, character: character, zone: zone, x: 10, y: 10) }
@@ -1404,7 +1408,7 @@ RSpec.describe "World", type: :request do
 
   describe "TileBuilding actions panel display" do
     let(:user) { create(:user) }
-    let(:zone) { create(:zone, name: "Outpost Surroundings", location_type: "outdoor", width: 20, height: 20) }
+    let(:zone) { create(:zone, name: "Пепельный Берег", location_type: "outdoor", width: 20, height: 20) }
     let(:destination_zone) { create(:zone, name: "Outpost", location_type: "city") }
     let(:character) { create(:character, user: user, level: 5) }
     let!(:position) { create(:character_position, character: character, zone: zone, x: 5, y: 5) }
@@ -1463,7 +1467,7 @@ RSpec.describe "World", type: :request do
       it "shows blocked reason instead of enter button" do
         get world_path
 
-        expect(response.body).to include("Entrance is currently unavailable.")
+        expect(response.body).to include(I18n.t("game.world.entrance_unavailable"))
         expect(response.body).to include("building-blocked")
       end
     end
@@ -1492,7 +1496,7 @@ RSpec.describe "World", type: :request do
   describe "POST /world/interact_hotspot" do
     let(:user) { create(:user) }
     let(:city_zone) { create(:zone, name: "Hotspot Test City", location_type: "city", width: 20, height: 20) }
-    let(:destination_zone) { create(:zone, name: "Outpost Surroundings", location_type: "outdoor", width: 20, height: 20) }
+    let(:destination_zone) { create(:zone, name: "Пепельный Берег", location_type: "outdoor", width: 20, height: 20) }
     let(:character) { create(:character, user: user, level: 10) }
     let!(:position) { create(:character_position, character: character, zone: city_zone, x: 5, y: 5) }
     before { sign_in user, scope: :user }
@@ -1554,7 +1558,7 @@ RSpec.describe "World", type: :request do
             params: city_action_params(arena_hotspot),
             headers: {"Accept" => "text/vnd.turbo-stream.html"}
 
-          expect(flash[:notice]).to include("Entered")
+          expect(flash[:notice]).to eq(I18n.t("game.world.entered", name: arena_hotspot.name))
         end
       end
     end
@@ -1639,9 +1643,10 @@ RSpec.describe "World", type: :request do
       it "redirects with alert for HTML format" do
         post interact_hotspot_world_path, params: {hotspot_id: 99999}
 
-        expect(response).to redirect_to(world_path)
+        expect(response).to redirect_to(world_path(hotspot_denied: 1))
         follow_redirect!
         expect(response.body).to include("not found")
+        expect(response.body).to include('data-hotspot-denied="1"')
       end
 
       it "returns turbo stream error for Turbo format" do
@@ -1667,7 +1672,7 @@ RSpec.describe "World", type: :request do
       it "redirects with alert for HTML format" do
         post interact_hotspot_world_path, params: city_action_params(high_level_hotspot)
 
-        expect(response).to redirect_to(world_path)
+        expect(response).to redirect_to(world_path(hotspot_denied: 1))
         follow_redirect!
         expect(response.body).to include("level 50")
       end
@@ -1692,7 +1697,7 @@ RSpec.describe "World", type: :request do
       it "redirects with alert for HTML format" do
         post interact_hotspot_world_path, params: city_action_params(inactive_hotspot)
 
-        expect(response).to redirect_to(world_path)
+        expect(response).to redirect_to(world_path(hotspot_denied: 1))
         follow_redirect!
         expect(response.body).to include("unavailable")
       end
@@ -1719,7 +1724,7 @@ RSpec.describe "World", type: :request do
       it "returns failure when hotspot zone doesn't match character zone" do
         post interact_hotspot_world_path, params: {hotspot_id: other_hotspot.id}
 
-        expect(response).to redirect_to(world_path)
+        expect(response).to redirect_to(world_path(hotspot_denied: 1))
         follow_redirect!
         expect(response.body).to include("not found")
       end
@@ -1762,6 +1767,14 @@ RSpec.describe "World", type: :request do
         expect(response.body).to include("interact_hotspot")
         expect(response.body).to include(arena.id.to_s)
         expect(response.body).to include(shop.id.to_s)
+      end
+
+      it "renders named building controls beside scene hotspots" do
+        get world_path
+
+        expect(response.body).to include('data-city-building-controls="1"')
+        expect(response.body).to include(I18n.t("game.world.city_building_controls"))
+        expect(response.body.scan(/nl-city-hotspot--named/).size).to be >= 2
       end
 
       it "arena hotspot navigates to arena page" do
@@ -1852,7 +1865,7 @@ RSpec.describe "World", type: :request do
 
       expect(response).to have_http_status(:success)
       expect(response.body).to include("PresenceOwner", 'data-player-list-count="1"')
-      expect(response.body).not_to include("No players nearby", "AlphaNearby", "ZuluNearby")
+      expect(response.body).not_to include(I18n.t("game.world.no_players_nearby"), "AlphaNearby", "ZuluNearby")
     end
 
     it "requires authentication" do

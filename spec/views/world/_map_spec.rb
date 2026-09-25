@@ -160,7 +160,7 @@ RSpec.describe "world/_map.html.erb", type: :view do
 
   describe "tile rendering" do
     it "paints the captured western margin while keeping outside cells inactive and farther cells unillustrated" do
-      zone.update!(name: "Outpost Surroundings", width: 1000, height: 1000, metadata: {"source_map" => "m_1001_999"})
+      zone.update!(name: "Пепельный Берег", width: 1000, height: 1000, metadata: {"source_map" => "m_1001_999"})
       position.update!(x: 0, y: 8)
       assign(:movement_destinations, [OpenStruct.new(direction: "west", target_x: -1, target_y: 8,
         action_key: "unavailable-west", travel_seconds: 30)])
@@ -186,7 +186,7 @@ RSpec.describe "world/_map.html.erb", type: :view do
     end
 
     it "renders a continuous eastern-gate neighborhood around sparse content without materializing gameplay cells" do
-      zone.update!(name: "Outpost Surroundings", width: 1000, height: 1000, metadata: {"source_map" => "m_1001_999"})
+      zone.update!(name: "Пепельный Берег", width: 1000, height: 1000, metadata: {"source_map" => "m_1001_999"})
       position.update!(x: 11, y: 9)
       create(:map_tile_template, zone: zone.name, x: 11, y: 9,
         metadata: {"source_map" => "m_1005_1001", "cell_art" => {"key" => "forpost_starter", "column" => 11, "row" => 7}})
@@ -258,7 +258,7 @@ RSpec.describe "world/_map.html.erb", type: :view do
     end
 
     it "uses generic cell CSS when a starter PNG is missing, without loading either full atlas" do
-      zone.update!(name: "Outpost Surroundings", width: 1000, height: 1000, metadata: {"source_map" => "m_1001_999"})
+      zone.update!(name: "Пепельный Берег", width: 1000, height: 1000, metadata: {"source_map" => "m_1001_999"})
       allow(Game::World::CellArtCatalog).to receive(:asset_exists?).and_call_original
       allow(Game::World::CellArtCatalog).to receive(:asset_exists?).with("world/cells/forpost-starter/11_7.png").and_return(false)
       tiles = [[OpenStruct.new(x: 11, y: 9, terrain_type: "outdoor", walkable: true, metadata: {})]]
@@ -272,7 +272,7 @@ RSpec.describe "world/_map.html.erb", type: :view do
     end
 
     it "offers aligned city images at 1x and 2x while keeping a 100px background" do
-      zone.update!(name: "Outpost Surroundings", width: 1000, height: 1000, metadata: {"source_map" => "m_1001_999"})
+      zone.update!(name: "Пепельный Берег", width: 1000, height: 1000, metadata: {"source_map" => "m_1001_999"})
       tiles = [[OpenStruct.new(x: 6, y: 8, terrain_type: "outdoor", walkable: true, metadata: {})]]
 
       render partial: "world/map", locals: {position:, nearby_tiles: tiles, zone:, tile_data: {}}
@@ -285,7 +285,7 @@ RSpec.describe "world/_map.html.erb", type: :view do
     end
 
     it "renders only the matching 1x city image when its optional 2x alternative is absent" do
-      zone.update!(name: "Outpost Surroundings", width: 1000, height: 1000, metadata: {"source_map" => "m_1001_999"})
+      zone.update!(name: "Пепельный Берег", width: 1000, height: 1000, metadata: {"source_map" => "m_1001_999"})
       allow(Game::World::CellArtCatalog).to receive(:asset_exists?).and_call_original
       allow(Game::World::CellArtCatalog).to receive(:asset_exists?).with("world/cells/forpost-starter-2x/6_6.png").and_return(false)
       tiles = [[OpenStruct.new(x: 6, y: 8, terrain_type: "outdoor", walkable: true, metadata: {})]]
@@ -298,7 +298,7 @@ RSpec.describe "world/_map.html.erb", type: :view do
     end
 
     it "leaves a missing western slice inert without substituting the master or another cell" do
-      zone.update!(name: "Outpost Surroundings", width: 1000, height: 1000, metadata: {"source_map" => "m_1001_999"})
+      zone.update!(name: "Пепельный Берег", width: 1000, height: 1000, metadata: {"source_map" => "m_1001_999"})
       allow(Game::World::CellArtCatalog).to receive(:asset_exists?).and_call_original
       allow(Game::World::CellArtCatalog).to receive(:asset_exists?).with("world/cells/forpost-starter-west/2_7.png").and_return(false)
       tiles = [[OpenStruct.new(x: -1, y: 9, terrain_type: "outdoor", walkable: false, metadata: {"out_of_bounds" => true})]]

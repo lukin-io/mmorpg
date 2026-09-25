@@ -6,6 +6,7 @@ class ArenaRoomsController < ApplicationController
   before_action :require_character
   around_action :with_city_arena_entry
   before_action :set_room, only: :show
+  rescue_from ActiveRecord::RecordNotFound, with: :room_missing
 
   # GET /arena_rooms/:id
   def show
@@ -17,13 +18,13 @@ class ArenaRoomsController < ApplicationController
 
     if active_participation
       redirect_to arena_match_path(active_participation.arena_match),
-        notice: "You already have an active fight."
+        notice: I18n.t("game.flashes.active_fight")
       return
     end
 
     context = Game::World::ResumeContext.new(character: current_character)
     unless context.arena_room_available?(room: @room)
-      redirect_to arena_index_path, alert: "This arena room is unavailable."
+      redirect_to arena_index_path(arena_denied: 1), alert: I18n.t("game.flashes.arena_room_unavailable")
       return
     end
 
@@ -32,6 +33,8 @@ class ArenaRoomsController < ApplicationController
       .includes(:applicant, :npc_template)
       .order(created_at: :asc)
 
+    ensure_soft_release_npc_application!
+
     # Only show open applications as "my application", not matched ones
     @my_application = current_character.arena_applications.open.first
     @active_matches = @room.arena_matches.active.includes(:arena_participations)
@@ -39,7 +42,7 @@ class ArenaRoomsController < ApplicationController
     respond_to do |format|
       format.html do
         unless context.remember_arena_room!(room: @room)
-          redirect_to arena_index_path, alert: "This arena room is unavailable."
+          redirect_to arena_index_path(arena_denied: 1), alert: I18n.t("game.flashes.arena_room_unavailable")
           next
         end
         prepare_presence_context
@@ -54,9 +57,26 @@ class ArenaRoomsController < ApplicationController
     @room = ArenaRoom.find(params[:id])
   end
 
+  def ensure_soft_release_npc_application!
+    return unless @room.slug.to_s.in?(%w[help training])
+    return if ArenaApplication.open.from_npcs.where(arena_room: @room).exists?
+
+    Arena::NpcApplicationService.new.create_for_room(room: @room)
+    @applications = @room.arena_applications
+      .open
+      .includes(:applicant, :npc_template)
+      .order(created_at: :asc)
+  end
+
+  def room_missing
+    redirect_to arena_index_path(arena_denied: 1),
+      alert: I18n.t("game.flashes.arena_room_missing"),
+      status: :see_other
+  end
+
   def require_character
     unless current_character
-      redirect_to root_path, alert: "A character is required to enter the arena."
+      redirect_to root_path, alert: I18n.t("game.flashes.arena_character_required")
     end
   end
 

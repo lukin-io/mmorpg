@@ -1,21 +1,54 @@
 <div class="players-panel">
-  <h3>Players on this tile</h3>
+  <h3><%= t("game.world.players_here") %></h3>
   <% if players.any? %>
-    <ul class="players-list">
+    <ul class="players-list" data-controller="chat" data-chat-ignore-url-value="<%= ignore_list_entry_path %>">
       <% players.each do |pos| %>
         <li class="player-item">
           <span class="player-avatar">&gt;</span>
           <div class="player-info">
-            <span class="player-name"><%= pos.character.name %></span>
+            <a href="<%= player_path(name: pos.character.name) %>"
+               class="player-name chat-msg-sender"
+               data-action="contextmenu->chat#showUserMenu"
+               data-username="<%= pos.character.name %>"
+               data-character-name="<%= pos.character.name %>"
+               data-character-id="<%= pos.character.id %>"
+               title="<%= t("game.chat.nick_hint") %>"><%= pos.character.name %></a>
             <span class="player-level">[<%= pos.character.level %>]</span>
           </div>
           <div class="player-actions">
-            <%= link_to "Info", player_path(name: pos.character.name), title: "Character" %>
+            <%= link_to t("game.common.info"), player_path(name: pos.character.name), title: t("nav.your_character") %>
+            <% player = pos.character %>
+            <% if defined?(current_character) && current_character.present? && current_character.id != player.id %>
+              <% if Game::World::StartPlayerAssault.offerable?(attacker: current_character, defender: player) %>
+                <% if Game::World::StartPlayerAssault.has_trauma_scroll?(current_character) %>
+                  <% preferred = current_character.metadata.to_h["preferred_assault_scroll_kind"].presence || "normal" %>
+                  <%= button_to t("game.world.assault_cta"),
+                        world_assault_path,
+                        method: :post,
+                        params: {defender_id: player.id, assault_scroll_kind: preferred},
+                        class: "nl-assault-btn",
+                        form: {class: "nl-assault-form", data: {turbo: false}} %>
+                <% else %>
+                  <button type="button" class="nl-assault-btn nl-assault-btn--blocked" disabled
+                          title="<%= t("game.world.assault_need_scroll") %>"><%= t("game.world.assault_cta") %></button>
+                <% end %>
+              <% end %>
+              <%= button_to t("game.parties.invite_cta"),
+                    world_party_invite_path,
+                    method: :post,
+                    params: {target_id: player.id},
+                    class: "nl-assault-btn",
+                    form: {data: {turbo: false}} %>
+            <% end %>
           </div>
         </li>
       <% end %>
     </ul>
   <% else %>
-    <p class="text-muted text-sm">No players nearby.</p>
+    <p class="text-muted text-sm" data-presence-empty="1">
+      <%= t("game.world.no_players") %>
+      ·
+      <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {presence_recovery: "world"} %>
+    </p>
   <% end %>
 </div>

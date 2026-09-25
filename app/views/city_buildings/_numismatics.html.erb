@@ -1,5 +1,51 @@
-<h2>Commodity book</h2>
-<table class="nl-detail-table nl-city-building-table">
-  <thead><tr><th>Commodity</th><th>Count</th><th>Unit price</th><th>Total</th></tr></thead>
-  <tbody><tr><td><%= building["commodity"] %></td><td colspan="3">No MVP listings</td></tr></tbody>
-</table>
+<section class="nl-handbook" aria-label="<%= t("game.buildings.commodity_book") %>" data-numismatics="1" data-numismatics-live="1">
+  <h2><%= t("game.buildings.commodity_book") %></h2>
+  <p class="nl-handbook__lead"><%= t("game.buildings.numismatics_live_lead") %></p>
+  <% rows = @numismatics_rows || [] %>
+  <% if rows.any? %>
+    <table class="nl-detail-table nl-city-building-table" data-numismatics-listings="<%= rows.size %>">
+      <thead>
+        <tr>
+          <th><%= t("game.common.commodity") %></th>
+          <th><%= t("game.common.count") %></th>
+          <th><%= t("game.common.unit_price") %></th>
+          <th><%= t("game.common.total") %></th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% rows.each do |row| %>
+          <tr>
+            <td><%= row[:name] %></td>
+            <td><%= row[:quantity] %></td>
+            <td><%= row[:price_each] %> NV</td>
+            <td><%= row[:total] %> NV</td>
+            <td>
+              <%= button_to t("game.common.sell"),
+                    city_building_numismatics_path("numismatics"),
+                    method: :post,
+                    params: {item_key: row[:item_key], quantity: 1},
+                    class: "lbut",
+                    form: {data: {turbo: false}} %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <table class="nl-detail-table nl-city-building-table" data-numismatics-listings="0">
+      <thead><tr><th><%= t("game.common.commodity") %></th><th><%= t("game.common.count") %></th><th><%= t("game.common.unit_price") %></th><th><%= t("game.common.total") %></th></tr></thead>
+      <tbody><tr data-numismatics-empty="1"><td colspan="4"><%= t("game.buildings.no_listings") %></td></tr></tbody>
+    </table>
+  <% end %>
+  <p class="nl-quests-board__meta">
+    <%= t("game.buildings.numismatics_hint") %>
+    ·
+    <%= link_to t("game.locations.buildings.resource_exchange"), world_path, class: "nl-sheet-link", data: {numismatics_recovery: "world"} %>
+    ·
+    <%= link_to t("game.shop.title"), shop_path, class: "nl-sheet-link", data: {numismatics_recovery: "shop"} %>
+    <% if Game::World::CityBuildingCatalog.accessible?(character: current_character, building_key: "junk_dealer") %>
+      · <%= link_to t("game.buildings.junk_dealer_link"), city_building_path("junk_dealer"), class: "nl-sheet-link", data: {numismatics_recovery: "junk"} %>
+    <% end %>
+  </p>
+</section>

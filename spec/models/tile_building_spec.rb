@@ -3,7 +3,7 @@
 require "rails_helper"
 
 RSpec.describe TileBuilding, type: :model do
-  let(:source_zone) { create(:zone, name: "Outpost Surroundings", location_type: "outdoor") }
+  let(:source_zone) { create(:zone, name: "Пепельный Берег", location_type: "outdoor") }
   let(:destination_zone) { create(:zone, name: "Outpost", location_type: "city") }
   let(:location_metadata) { build(:tile_building, :world_location).metadata }
 
@@ -71,7 +71,7 @@ RSpec.describe TileBuilding, type: :model do
       )
 
       expect(building).not_to be_valid
-      expect(building.errors[:metadata]).to include("location feature destination is unsupported")
+      expect(building.errors[:metadata]).to include(I18n.t("manage.location_feature_destination_unsupported"))
     end
 
     it "rejects an unsupported location kind" do
@@ -80,7 +80,7 @@ RSpec.describe TileBuilding, type: :model do
 
       expect(location).not_to be_valid
       expect(location).not_to be_accessible
-      expect(location.errors[:metadata]).to include("location kind is unsupported")
+      expect(location.errors[:metadata]).to include(I18n.t("manage.location_kind_unsupported"))
     end
 
     it "accepts captured lobbies without granting their deferred gameplay operations" do
@@ -103,7 +103,7 @@ RSpec.describe TileBuilding, type: :model do
 
       location.active = true
       expect(location).not_to be_valid
-      expect(location.errors[:metadata]).to include("location features must be a non-empty array")
+      expect(location.errors[:metadata]).to include(I18n.t("manage.location_features_required"))
     end
 
     it "rejects malformed lobby presentation and unsafe asset paths" do
@@ -160,7 +160,7 @@ RSpec.describe TileBuilding, type: :model do
       [nil, "", " ", 3, []].each do |invalid_label|
         building.metadata = {"presence_label" => invalid_label}
         expect(building).not_to be_valid
-        expect(building.errors[:metadata]).to include("presence label must be a non-empty string")
+        expect(building.errors[:metadata]).to include(I18n.t("manage.presence_label_blank"))
       end
     end
 
@@ -172,8 +172,8 @@ RSpec.describe TileBuilding, type: :model do
 
         expect(location).not_to be_valid
         expect(location.errors[:metadata]).to include(
-          "location presence label must be a non-empty string",
-          "location feature presence label must be a non-empty string"
+          I18n.t("manage.location_presence_label_blank"),
+          I18n.t("manage.location_feature_presence_label_blank")
         )
       end
     end

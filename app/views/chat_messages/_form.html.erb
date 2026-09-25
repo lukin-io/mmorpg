@@ -18,13 +18,13 @@
   <div class="chat-input-wrapper">
     <%= form.text_field :body,
         class: "chat-input",
-        placeholder: "Type a message...",
+        placeholder: t("game.chat.placeholder"),
         autocomplete: "off",
         data: {
           chat_target: "input",
           action: "keydown->chat#handleKeydown"
         } %>
 
-    <%= form.submit "Send", class: "btn-primary chat-send-btn" %>
+    <%= form.submit t("game.common.send"), class: "btn-primary chat-send-btn" %>
   </div>
 <% end %>

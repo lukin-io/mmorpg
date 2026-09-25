@@ -14,9 +14,8 @@ module Game
       POOL_COMBAT = :combat
       POOL_PEACE = :peace
 
-      # Player-facing labels are English (launch principle: English-only).
-      # The original Neverlands Russian source label is preserved alongside for
-      # traceability back to the capture.
+      # Player-facing labels prefer the captured Russian source name for :ru
+      # and the English name for :en. Source labels stay in SKILL_ROWS for evidence.
       CATEGORIES = {
         combat: {name: "Combat Skills", pool: POOL_COMBAT},
         resistance: {name: "Resistances", pool: POOL_COMBAT},
@@ -122,7 +121,11 @@ module Game
         end
 
         def categories
-          CATEGORIES
+          CATEGORIES.each_with_object({}) do |(key, info), memo|
+            memo[key] = info.merge(
+              name: I18n.t("game.skills.categories.#{key}", default: info[:name])
+            )
+          end
         end
 
         def grouped_by_category
@@ -138,17 +141,42 @@ module Game
           {met: true, missing: []}
         end
 
+        def display_name(definition)
+          return nil if definition.blank?
+
+          if russian_locale?
+            definition[:source_name].presence || definition[:name]
+          else
+            definition[:name]
+          end
+        end
+
+        def display_description(definition)
+          return nil if definition.blank?
+          return "" if russian_locale?
+
+          definition[:description]
+        end
+
         def can_spend?(skill_key, character)
           skill = find(skill_key)
-          return {allowed: false, reason: "Skill not found"} unless skill
+          return {allowed: false, reason: I18n.t("game.skills.errors.not_found")} unless skill
 
           pool = skill[:pool]
           available = character.available_skill_points_for_pool(pool)
-          return {allowed: false, reason: "No #{pool} skill points available"} if available <= 0
+          if available <= 0
+            return {
+              allowed: false,
+              reason: I18n.t(
+                "game.skills.errors.no_pool_points",
+                pool: I18n.t("game.skills.pools.#{pool}", default: pool.to_s)
+              )
+            }
+          end
 
           current_level = character.passive_skill_level(skill_key)
           max = skill[:max_level] || MAX_LEVEL
-          return {allowed: false, reason: "Skill is at maximum level"} if current_level >= max
+          return {allowed: false, reason: I18n.t("game.skills.errors.at_maximum")} if current_level >= max
 
           {allowed: true, reason: nil}
         end
@@ -159,6 +187,12 @@ module Game
 
         def locked_skills_for(_character)
           []
+        end
+
+        private
+
+        def russian_locale?
+          I18n.locale.to_s.start_with?("ru")
         end
       end
     end

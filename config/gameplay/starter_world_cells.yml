@@ -4,7 +4,7 @@
 # Herb groups are identities, NOT quantities, yields, or skill thresholds.
 # This catalog provides no terrain/art, gameplay actions, HP, or probabilities.
 # Source: doc/design/reference/world/observations/2026-09-09_starter_atlas.md
-zone_name: Outpost Surroundings
+zone_name: "Пепельный Берег"
 source_origin: [994, 992]
 source_bounds:
   x: [994, 1014]

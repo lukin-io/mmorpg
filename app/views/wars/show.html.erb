@@ -1,0 +1,53 @@
+<% content_for :title, t("game.wars.title") %>
+<section class="nl-handbook" data-wars-board="1" data-wars-sieges="<%= @sieges.size %>">
+  <p class="nl-handbook__banner" data-wars-banner="1">
+    <%= image_tag "cc0/ui/wars-clan-crest.png", alt: "", class: "nl-handbook__banner-img nl-handbook__banner-img--emblem", width: 256, height: 256 %>
+  </p>
+  <h1><%= t("game.wars.title") %></h1>
+  <p class="nl-handbook__lead"><%= t("game.wars.lead") %></p>
+  <p class="nl-quests-board__meta">
+    <%= t("game.wars.window", open: WorldFortress::SIEGE_OPEN_HOUR, close: WorldFortress::SIEGE_CLOSE_HOUR) %>
+    · <%= link_to t("game.clans.tab_fortresses"), clan_path(tab: "fortresses"), class: "nl-sheet-link", data: {turbo_frame: "_top"} %>
+    · <%= link_to t("game.season.nav"), season_path, class: "nl-sheet-link", data: {turbo_frame: "_top"} %>
+    · <%= link_to t("nav.return"), world_path, class: "nl-sheet-link", data: {turbo_frame: "_top"} %>
+  </p>
+
+  <% if @sieges.any? %>
+    <h2><%= t("game.wars.live_title") %></h2>
+    <ul class="nl-trade-hub__list" data-wars-live="1">
+      <% @sieges.each do |row| %>
+        <li data-wars-siege-key="<%= row.key %>">
+          <strong><%= row.name %></strong>
+          (<%= row.zone %> · <%= row.x %>,<%= row.y %>)
+          · <%= t("game.buildings.clan_hall_wars_score", attack: row.attack_score, defense: row.defense_score) %>
+          <% if row.siege_ends_at.present? %>
+            · <%= t("game.buildings.clan_hall_wars_ends", time: l(row.siege_ends_at, format: "%H:%M")) %>
+          <% end %>
+          · <%= link_to t("game.wars.goto_cta"), world_path, class: "lbut", data: {turbo_frame: "_top"} %>
+        </li>
+      <% end %>
+    </ul>
+  <% else %>
+    <p class="nl-quests-board__meta" data-wars-live-empty="1"><%= t("game.wars.live_empty") %></p>
+  <% end %>
+
+  <h2><%= t("game.wars.all_title") %></h2>
+  <ul class="nl-trade-hub__list" data-wars-all="<%= @rows.size %>">
+    <% @rows.each do |row| %>
+      <li data-wars-key="<%= row.key %>" data-wars-siege="<%= row.under_siege ? "1" : "0" %>">
+        <strong><%= row.name %></strong>
+        (<%= row.x %>,<%= row.y %>)
+        —
+        <% if row.owner_name.present? %>
+          <%= t("game.buildings.clan_hall_wars_owner", name: row.owner_name) %>
+        <% else %>
+          <%= t("game.buildings.clan_hall_wars_free") %>
+        <% end %>
+        <% if row.under_siege %>
+          · <em><%= t("game.buildings.clan_hall_wars_siege") %></em>
+        <% end %>
+        <%= nl_info_tip(row.flavor.to_s) if respond_to?(:nl_info_tip) %>
+      </li>
+    <% end %>
+  </ul>
+</section>

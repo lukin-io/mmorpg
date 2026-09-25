@@ -1,32 +1,32 @@
-<% content_for :title, "Fight Log ##{@arena_match.id}" %>
+<% content_for :title, t("game.fight.log_page_title", id: @arena_match.id) %>
 <% content_for :body_class, "nl-public-layout--fight-log" %>
 
 <section class="combat-log-viewer nl-public-fight-log">
-  <h1 class="nl-visually-hidden">Fight Log #<%= @arena_match.id %></h1>
+  <h1 class="nl-visually-hidden"><%= t("game.fight.log_page_title", id: @arena_match.id) %></h1>
 
-  <nav class="fight-log-modes" aria-label="Fight log view">
+  <nav class="fight-log-modes" aria-label="<%= t("game.fight.log") %>">
     <% if @view_mode == :log %>
-      <span aria-current="page">Fight log</span>
+      <span aria-current="page"><%= t("game.fight.log") %></span>
     <% else %>
-      <%= link_to "Fight log", public_fight_log_path(@arena_match) %>
+      <%= link_to t("game.fight.log"), public_fight_log_path(@arena_match) %>
     <% end %>
     <% if @view_mode == :statistics %>
-      <span aria-current="page">Statistics</span>
+      <span aria-current="page"><%= t("game.fight.statistics") %></span>
     <% else %>
-      <%= link_to "Statistics", public_fight_log_path(@arena_match, stat: 1) %>
+      <%= link_to t("game.fight.statistics"), public_fight_log_path(@arena_match, stat: 1) %>
     <% end %>
   </nav>
 
   <% if @view_mode == :statistics %>
-    <% part_labels = {"head" => "Head", "torso" => "Torso", "stomach" => "Abdomen", "legs" => "Legs"} %>
+    <% part_labels = {"head" => t("game.fight.head"), "torso" => t("game.fight.torso"), "stomach" => t("game.fight.abdomen"), "legs" => t("game.fight.legs")} %>
     <div class="combat-log-content">
       <table class="nl-detail-table nl-fight-stat-table">
         <thead>
           <tr>
-            <th>Participant</th>
-            <th>Side</th>
-            <th>Damage</th>
-            <th>Hits</th>
+            <th><%= t("game.fight.participant") %></th>
+            <th><%= t("game.fight.side") %></th>
+            <th><%= t("game.fight.damage") %></th>
+            <th><%= t("game.fight.hits") %></th>
           </tr>
         </thead>
         <tbody>
@@ -44,10 +44,10 @@
       <table class="nl-detail-table nl-fight-stat-table">
         <thead>
           <tr>
-            <th>Zone</th>
-            <th>Attacks</th>
-            <th>Damage</th>
-            <th>Blocks</th>
+            <th><%= t("game.fight.zone") %></th>
+            <th><%= t("game.fight.attacks") %></th>
+            <th><%= t("game.fight.damage") %></th>
+            <th><%= t("game.fight.blocks") %></th>
           </tr>
         </thead>
         <tbody>
@@ -76,7 +76,7 @@
                   <div class="entry-content">
                     <span class="raw-message"><%= public_fight_log_message(entry, team_a: @team_a, team_b: @team_b) %></span>
                     <% if entry.damage_amount.positive? %>
-                      <span class="damage"><%= entry.damage_amount %> damage</span>
+                      <span class="damage"><%= entry.damage_amount %> <%= t("game.fight.damage").downcase %></span>
                     <% end %>
                   </div>
                 </div>
@@ -84,7 +84,13 @@
             </div>
           <% end %>
         <% else %>
-          <p class="fight-log-empty" role="status">No fight events recorded.</p>
+          <p class="fight-log-empty" role="status" data-fight-log-empty="1">
+            <%= t("game.fight.no_events") %>
+            ·
+            <%= link_to t("arena.nav.arena"), arena_index_path, class: "nl-sheet-link", data: {fight_log_recovery: "arena"} %>
+            ·
+            <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {fight_log_recovery: "city"} %>
+          </p>
         <% end %>
       </div>
 
@@ -92,7 +98,7 @@
   <% end %>
 
   <div class="fight-participants">
-    <span class="participants-label">Fight participants:</span>
+    <span class="participants-label"><%= t("game.fight.participants") %>:</span>
     <span class="team team-alpha">
       <% @team_a.each_with_index do |participant, index| %>
         <span class="participant nl-log-name--alpha <%= participant.current_hp.positive? ? 'alive' : 'dead' %>">
@@ -101,7 +107,7 @@
         </span><%= index < @team_a.length - 1 ? ", " : "" %>
       <% end %>
     </span>
-    <span class="vs">against</span>
+    <span class="vs"><%= t("game.fight.against") %></span>
     <span class="team team-beta">
       <% @team_b.each_with_index do |participant, index| %>
         <span class="participant nl-log-name--beta <%= participant.current_hp.positive? ? 'alive' : 'dead' %>">
@@ -113,8 +119,8 @@
   </div>
 
   <% if @view_mode == :log && @total_pages && @total_pages > 1 %>
-    <nav class="log-pagination" aria-label="Fight log pages">
-      <span class="page-label">Pages:</span>
+    <nav class="log-pagination" aria-label="<%= t("game.fight.log") %> pages">
+      <span class="page-label"><%= t("game.fight.pages") %>:</span>
       <% (1..@total_pages).each do |page| %>
         <% if page == @page %>
           <span class="current-page"><%= page %></span>

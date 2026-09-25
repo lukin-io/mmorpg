@@ -67,13 +67,13 @@ module Game
           context = Location.new(character:).call
           location = context.fingerprint
           account = context.account
-          raise Unavailable, "This shop is not trading right now." unless account
+          raise Unavailable, I18n.t("game.shop.shop_not_trading") unless account
 
           offer = WorldActionOffer.offered.where(character:, action_type: "shop_#{action}", action_key: action_key.to_s).lock.first
           unless offer && !offer.expired? && offer.matches_position?(character.position) &&
               offer.target_type == target.class.base_class.name && offer.target_id == target.id &&
               offer.metadata["shop_location"] == location && offer.metadata["shop_account_id"] == account.id
-            raise Unavailable, "Shop action is no longer available. Refresh the shop."
+            raise Unavailable, I18n.t("game.shop.shop_action_stale")
           end
 
           account.lock!
@@ -89,7 +89,7 @@ module Game
       def validate_target!(offer, target)
         return if offer.metadata["target_state"] == target_state(target)
 
-        raise Unavailable, "This item has changed. Refresh the shop."
+        raise Unavailable, I18n.t("game.shop.item_changed_refresh")
       end
 
       # Lock waits can outlive a capability that was valid on request arrival.
@@ -98,7 +98,7 @@ module Game
       def validate_deadline!(offer)
         return unless offer.expired?
 
-        raise Unavailable, "Shop action is no longer available. Refresh the shop."
+        raise Unavailable, I18n.t("game.shop.shop_action_stale")
       end
 
       private

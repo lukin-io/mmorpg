@@ -66,10 +66,10 @@ class TileBuilding < ApplicationRecord
   # @param character [Character] the character trying to enter
   # @return [String, nil] error message or nil if can enter
   def entry_blocked_reason(character)
-    return "Entrance is currently unavailable." unless accessible?
-    return "Character is unavailable." unless character&.position
-    return "Disembark before entering this location." if character.active_airship_journey
-    return "Entrance is not on your current cell." unless on_current_cell?(character.position)
+    return I18n.t("game.world.entrance_unavailable") unless accessible?
+    return I18n.t("game.world.character_unavailable") unless character&.position
+    return I18n.t("game.world.disembark_location") if character.active_airship_journey
+    return I18n.t("game.world.entrance_wrong_cell") unless on_current_cell?(character.position)
 
     nil
   end
@@ -192,7 +192,7 @@ class TileBuilding < ApplicationRecord
     return unless metadata.to_h.key?("presence_label")
 
     label = metadata["presence_label"]
-    errors.add(:metadata, "presence label must be a non-empty string") unless label.is_a?(String) && label.present?
+    errors.add(:metadata, I18n.t("manage.presence_label_blank")) unless label.is_a?(String) && label.present?
   end
 
   def location_configuration_must_be_valid
@@ -204,43 +204,43 @@ class TileBuilding < ApplicationRecord
   def location_configuration_errors
     definition = location_definition
     errors = []
-    errors << "location definition is required" if definition.empty?
+    errors << I18n.t("manage.location_definition_required") if definition.empty?
 
     kind = definition["kind"].to_s
-    errors << "location kind is unsupported" unless LOCATION_KINDS.include?(kind)
+    errors << I18n.t("manage.location_kind_unsupported") unless LOCATION_KINDS.include?(kind)
     # Managers may keep a planned inactive mine marker before authoring its
     # scene. Activation always requires the complete location contract below.
     return errors if kind == "mine" && !active? && definition["features"].blank?
     if definition.key?("presence_label") && (!definition["presence_label"].is_a?(String) || definition["presence_label"].blank?)
-      errors << "location presence label must be a non-empty string"
+      errors << I18n.t("manage.location_presence_label_blank")
     end
 
     width, height = location_scene_size
-    errors << "location scene width must be positive" unless width.positive?
-    errors << "location scene height must be positive" unless height.positive?
+    errors << I18n.t("manage.location_scene_width_positive") unless width.positive?
+    errors << I18n.t("manage.location_scene_height_positive") unless height.positive?
     image = location_scene["image"]
-    errors << "location lobby scene image is required" if %w[mine exchange].include?(kind) && image.blank?
+    errors << I18n.t("manage.location_lobby_image_required") if %w[mine exchange].include?(kind) && image.blank?
     if image.present?
       if !image.is_a?(String) || !image.match?(%r{\Aworld/(?:[a-zA-Z0-9_-]+/)*[a-zA-Z0-9_-]+\.(?:png|jpe?g|webp|gif)\z})
-        errors << "location scene image must be a project world asset"
+        errors << I18n.t("manage.location_scene_image_asset")
       elsif !Rails.root.join("app/assets/images", image).file?
-        errors << "location scene image must exist"
+        errors << I18n.t("manage.location_scene_image_missing")
       end
     end
     errors.concat(location_section_errors(definition))
 
     features = Array(definition["features"])
-    errors << "location features must be a non-empty array" unless definition["features"].is_a?(Array) && features.any?
+    errors << I18n.t("manage.location_features_required") unless definition["features"].is_a?(Array) && features.any?
     normalized_features = features.filter_map do |feature|
       unless feature.respond_to?(:deep_stringify_keys)
-        errors << "location feature must be an object"
+        errors << I18n.t("manage.location_feature_object")
         next
       end
 
       feature.deep_stringify_keys
     end
     duplicate_keys = normalized_features.pluck("key").compact.tally.select { |_, count| count > 1 }.keys
-    errors << "location feature keys must be unique" if duplicate_keys.any?
+    errors << I18n.t("manage.location_feature_keys_unique") if duplicate_keys.any?
     normalized_features.each do |feature|
       errors.concat(location_feature_errors(feature, width:, height:))
     end
@@ -252,19 +252,19 @@ class TileBuilding < ApplicationRecord
     errors = []
     key = feature["key"].to_s
     action_type = feature["action_type"].to_s
-    errors << "location feature key is invalid" unless key.match?(LOCATION_KEY_FORMAT)
-    errors << "location feature label is required" if feature["label"].blank?
+    errors << I18n.t("manage.location_feature_key_invalid") unless key.match?(LOCATION_KEY_FORMAT)
+    errors << I18n.t("manage.location_feature_label_required") if feature["label"].blank?
     if feature.key?("presence_label") && (!feature["presence_label"].is_a?(String) || feature["presence_label"].blank?)
-      errors << "location feature presence label must be a non-empty string"
+      errors << I18n.t("manage.location_feature_presence_label_blank")
     end
-    errors << "location feature action type is invalid" unless LOCATION_ACTION_TYPES.include?(action_type)
+    errors << I18n.t("manage.location_feature_action_invalid") unless LOCATION_ACTION_TYPES.include?(action_type)
     if action_type == "open_feature" && CityHotspot.feature_route(feature["feature"]).blank?
-      errors << "location feature destination is unsupported"
+      errors << I18n.t("manage.location_feature_destination_unsupported")
     end
     placement = feature.fetch("placement", "scene")
-    errors << "location feature placement is invalid" unless %w[scene navigation].include?(placement)
+    errors << I18n.t("manage.location_feature_placement_invalid") unless %w[scene navigation].include?(placement)
     unless placement == "navigation" || valid_location_polygon?(feature["polygon"], width:, height:)
-      errors << "location feature polygon is invalid"
+      errors << I18n.t("manage.location_feature_polygon_invalid")
     end
     errors
   end
@@ -277,18 +277,18 @@ class TileBuilding < ApplicationRecord
         section.is_a?(Hash) && section["key"].to_s.match?(LOCATION_KEY_FORMAT) &&
           section["label"].is_a?(String) && section["label"].present?
       end
-      errors << "location sections must have valid keys and labels" unless valid
-      errors << "location section keys must be unique" if valid && sections.pluck("key").uniq.size != sections.size
+      errors << I18n.t("manage.location_sections_invalid") unless valid
+      errors << I18n.t("manage.location_section_keys_unique") if valid && sections.pluck("key").uniq.size != sections.size
       if valid
         sections.each do |section|
           if section.key?("summary_label") && (!section["summary_label"].is_a?(String) || section["summary_label"].blank?)
-            errors << "location section summary label must be a non-empty string"
+            errors << I18n.t("manage.location_section_summary_blank")
           end
           next unless section.key?("read_only_items")
 
           items = section["read_only_items"]
           unless items.is_a?(Array) && items.all? { |item| valid_location_item_preview?(item) }
-            errors << "location item previews must have a name and detail labels"
+            errors << I18n.t("manage.location_item_previews_invalid")
           end
         end
       end
@@ -298,7 +298,7 @@ class TileBuilding < ApplicationRecord
 
       values = definition[key]
       unless values.is_a?(Array) && values.all? { |value| value.is_a?(String) && value.present? }
-        errors << "location #{key} must be an array of labels"
+        errors << I18n.t("manage.location_label_array_invalid", key: key)
       end
     end
     errors

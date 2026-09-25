@@ -18,7 +18,7 @@ RSpec.describe "Arena application room-region authority" do
     expect do
       result = handler.create(character:, room:, params: {})
       expect(result).not_to be_success
-      expect(result.errors).to include("This arena room is unavailable")
+      expect(result.errors).to include(I18n.t("game.fight.app_room_unavailable"))
     end.not_to change(ArenaApplication, :count)
   end
 
@@ -44,7 +44,7 @@ RSpec.describe "Arena application room-region authority" do
     expect do
       result = handler.accept(application:, acceptor: character)
       expect(result).not_to be_success
-      expect(result.errors).to include("This arena room is unavailable")
+      expect(result.errors).to include(I18n.t("game.fight.app_room_unavailable"))
     end.not_to change(ArenaMatch, :count)
 
     expect(application.reload).to be_open

@@ -23,7 +23,7 @@ RSpec.describe "Repaired eastern gate and pond route", type: :system, js: true d
     create(:zone, :city_node, name: "Outpost")
     law = create(:zone, :city, name: "Outpost Law Quarter",
       metadata: {"city_key" => "forpost", "city_node_key" => "forpost4", "title" => "Law Quarter"})
-    outdoors = create(:zone, :mvp_outdoor_region, name: "Outpost Surroundings",
+    outdoors = create(:zone, :mvp_outdoor_region, name: "Пепельный Берег",
       metadata: {"source_map" => "m_1001_999"})
     Seeds::ForpostGateRepair.new.call
     user = create(:user)
@@ -46,8 +46,8 @@ RSpec.describe "Repaired eastern gate and pond route", type: :system, js: true d
     expect_world_location("Outpost, East Gate")
     within("#available-actions") do
       expect(page).to have_button("Enter")
-      expect(page).to have_no_button("Drink")
-      expect(page).to have_no_button("Fish")
+      expect(page).to have_no_button(I18n.t("game.world.local_action.drinking.label"))
+      expect(page).to have_no_button(I18n.t("game.world.local_action.fishing.label"))
     end
 
     expect(page).to have_css(".nl-map-container[data-viewport-ready='true']")
@@ -66,42 +66,42 @@ RSpec.describe "Repaired eastern gate and pond route", type: :system, js: true d
       )
     end
     expect_idle_cell(12, 10)
-    expect_world_location("Outpost Surroundings")
+    expect_world_location("Пепельный Берег")
     within("#available-actions") do
-      expect(page).to have_button("Look Around")
+      expect(page).to have_button(I18n.t("game.world.local_action.resource_search.label"))
       expect(page).to have_no_button("Enter")
-      expect(page).to have_no_button("Drink")
-      expect(page).to have_no_button("Fish")
+      expect(page).to have_no_button(I18n.t("game.world.local_action.drinking.label"))
+      expect(page).to have_no_button(I18n.t("game.world.local_action.fishing.label"))
     end
 
     click_button "Move east"
     expect_idle_cell(13, 10)
-    expect_world_location("Outpost Surroundings, Pond")
+    expect_world_location("Пепельный Берег, Pond")
     expect(position.reload).to have_attributes(zone: outdoors, x: 13, y: 10)
     within("#available-actions") do
-      expect(page).to have_button("Look Around")
-      expect(page).to have_button("Drink")
-      expect(page).to have_button("Fish")
+      expect(page).to have_button(I18n.t("game.world.local_action.resource_search.label"))
+      expect(page).to have_button(I18n.t("game.world.local_action.drinking.label"))
+      expect(page).to have_button(I18n.t("game.world.local_action.fishing.label"))
       expect(page).to have_no_button("Enter")
     end
 
     click_button "Your character"
     expect(page).to have_current_path(player_path(name: character.name))
-    expect(page).to have_css(".nl-character-page-aside .nl-profile-location", text: "Outpost Surroundings, Pond")
+    expect(page).to have_css(".nl-character-page-aside .nl-profile-location", text: "Пепельный Берег, Pond")
     expect(find(".nl-profile-location").text).not_to include("[13, 10]")
     page.refresh
-    expect(page).to have_css(".nl-profile-location", text: "Outpost Surroundings, Pond")
+    expect(page).to have_css(".nl-profile-location", text: "Пепельный Берег, Pond")
     expect(position.reload).to have_attributes(zone: outdoors, x: 13, y: 10)
     visit world_path
     expect_idle_cell(13, 10)
-    expect_world_location("Outpost Surroundings, Pond")
+    expect_world_location("Пепельный Берег, Pond")
 
     click_button "Move west"
     expect_idle_cell(12, 10)
-    expect_world_location("Outpost Surroundings")
+    expect_world_location("Пепельный Берег")
     within("#available-actions") do
-      expect(page).to have_no_button("Drink")
-      expect(page).to have_no_button("Fish")
+      expect(page).to have_no_button(I18n.t("game.world.local_action.drinking.label"))
+      expect(page).to have_no_button(I18n.t("game.world.local_action.fishing.label"))
     end
     click_button "Move northwest"
     expect_idle_cell(11, 9)

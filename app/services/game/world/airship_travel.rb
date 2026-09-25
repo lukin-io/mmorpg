@@ -50,7 +50,7 @@ module Game
       def board!(action_key:)
         character.with_lock do
           offer = WorldActionOffer.where(character:, action_type: "board_airship", action_key: action_key.to_s).lock.first
-          raise TravelViolationError, "Flight offer is unavailable." unless offer
+          raise TravelViolationError, I18n.t("game.airship.flight_offer_unavailable") unless offer
 
           existing = AirshipJourney.find_by(character:, boarding_offer: offer)
           next existing if existing
@@ -58,11 +58,11 @@ module Game
           now = clock.call
           position = character.position&.reload
           unless offer.offered? && offer.expires_at > now && offer.matches_position?(position) && position&.active? && !busy?
-            raise TravelViolationError, "Flight offer is unavailable."
+            raise TravelViolationError, I18n.t("game.airship.flight_offer_unavailable")
           end
           route = routes.for_station(character:, position:, at: now).find { |entry| entry.key == offer.metadata["route_key"] }
           unless route&.available? && offer.metadata == offer_metadata(route)
-            raise TravelViolationError, "Flight route or departure is no longer available."
+            raise TravelViolationError, I18n.t("game.airship.flight_route_unavailable")
           end
 
           offer.accept!
@@ -111,11 +111,11 @@ module Game
           now = clock.call
           reconcile_locked!(at: now)
           journey = AirshipJourney.where(character:, id: journey_id).lock.first
-          raise TravelViolationError, "Flight is unavailable." unless journey
+          raise TravelViolationError, I18n.t("game.airship.flight_unavailable") unless journey
           next journey unless journey.aboard?
 
           phase = journey.phase(at: now)
-          raise TravelViolationError, "Disembarkation is unavailable during flight." if phase == :in_flight
+          raise TravelViolationError, I18n.t("game.airship.disembark_during_flight") if phase == :in_flight
 
           zone, x, y = if phase == :waiting
             [journey.source_zone, journey.source_x, journey.source_y]
@@ -123,7 +123,7 @@ module Game
             [journey.destination_zone, journey.destination_x, journey.destination_y]
           end
           unless routes.station_available?(zone, character) && x.between?(0, zone.width - 1) && y.between?(0, zone.height - 1)
-            raise TravelViolationError, "Arrival station is unavailable."
+            raise TravelViolationError, I18n.t("game.airship.arrival_unavailable")
           end
           character.position.lock!.update!(zone:, x:, y:, last_action_at: now)
           journey.update!(status: phase == :waiting ? :cancelled : :disembarked, disembarked_at: now)
@@ -144,12 +144,12 @@ module Game
         position = character.position&.lock!
         unless position&.active? && [position.zone_id, position.x, position.y] ==
             [journey.last_position_zone_id, journey.last_position_x, journey.last_position_y]
-          fail_journey!(journey, "Position changed outside the accepted flight.")
+          fail_journey!(journey, I18n.t("game.airship.position_changed"))
           return
         end
         path_zones = valid_path_zones(journey)
         unless path_zones
-          fail_journey!(journey, "Accepted flight path is no longer available.")
+          fail_journey!(journey, I18n.t("game.airship.path_unavailable"))
           return
         end
         unless journey.phase(at: at) == :waiting

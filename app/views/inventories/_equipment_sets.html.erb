@@ -1,12 +1,12 @@
 <div class="nl-panel nl-equipment-sets">
-  <h2>Equipment Sets</h2>
+  <h2><%= t("game.inventory.equipment_sets") %></h2>
 
   <%= form_with url: save_equipment_set_inventory_path, method: :post, class: "nl-inline-action-form" do |f| %>
     <%= f.hidden_field :category, value: @category %>
     <%= f.hidden_field :subcategory, value: @subcategory %>
     <%= f.hidden_field :info, value: @info_mode %>
-    <%= f.text_field :set_name, placeholder: "Set name", maxlength: 30, class: "LogintextBox4" %>
-    <%= f.submit "Remember", class: "lbut" %>
+    <%= f.text_field :set_name, placeholder: t("game.common.set_name"), maxlength: 30, class: "LogintextBox4", data: {equipment_set_name: "1"} %>
+    <%= f.submit t("game.common.remember"), class: "lbut" %>
   <% end %>
 
   <% if inventory_equipment_sets.any? %>
@@ -15,22 +15,26 @@
         <tr>
           <th><%= name %></th>
           <td>
-            <%= button_to "Wear",
+            <%= button_to t("game.common.wear"),
               wear_equipment_set_inventory_path(set_name: name, category: @category, subcategory: @subcategory, info: @info_mode),
               method: :post,
               class: "invbut" %>
           </td>
           <td>
-            <%= button_to "Delete",
+            <%= button_to t("game.common.delete"),
               delete_equipment_set_inventory_path(set_name: name, category: @category, subcategory: @subcategory, info: @info_mode),
               method: :delete,
               class: "invbut invbut--danger",
-              data: {turbo_confirm: "Delete equipment set #{name}?"} %>
+              data: {turbo_confirm: t("game.inventory.delete_confirm", name: name)} %>
           </td>
         </tr>
       <% end %>
     </table>
   <% else %>
-    <p class="nl-empty-note">No saved equipment sets.</p>
+    <p class="nl-empty-note" data-equipment-sets-empty="1">
+      <%= t("game.inventory.no_equipment_sets") %>
+      ·
+      <%= link_to t("game.shop.title"), shop_path(mode: "buy"), class: "nl-sheet-link", data: {inventory_recovery: "shop"} %>
+    </p>
   <% end %>
 </div>

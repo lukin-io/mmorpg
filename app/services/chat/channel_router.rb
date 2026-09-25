@@ -18,7 +18,7 @@ module Chat
       when :private, :whisper
         whisper_channel(context)
       else
-        raise ArgumentError, "Unknown chat scope: #{scope}"
+        raise ArgumentError, I18n.t("errors.unknown_chat_scope", scope: scope)
       end
     end
 
@@ -28,7 +28,7 @@ module Chat
 
     def global_channel
       ChatChannel.find_or_create_by!(slug: "global") do |channel|
-        channel.name = "Global"
+        channel.name = I18n.t("game.chat.global")
         channel.channel_type = :global
         channel.system_owned = true
       end
@@ -36,14 +36,14 @@ module Chat
 
     def local_channel(_context)
       local = LocalContext.new(character: user.character).synchronize!
-      raise Pundit::NotAuthorizedError, "Current location required" unless local
+      raise Pundit::NotAuthorizedError, I18n.t("game.chat.location_required") unless local
 
       slug = "local-#{local.key}"
       existing = ChatChannel.find_by(slug:)
       return existing if existing
 
       ChatChannel.create_or_find_by!(slug:) do |channel|
-        channel.name = "Local"
+        channel.name = I18n.t("game.chat.local")
         channel.channel_type = :local
         channel.system_owned = true
         channel.metadata = {"location_key" => local.key}
@@ -57,12 +57,12 @@ module Chat
     def whisper_channel(context)
       participant_ids = Array(context[:participant_ids]).map(&:to_i).sort
       unless participant_ids.size == 2 && participant_ids.include?(user.id)
-        raise ArgumentError, "private channels require exactly two participants"
+        raise ArgumentError, I18n.t("errors.private_channel_two_participants")
       end
 
       slug = "whisper-#{participant_ids.join("-")}"
       ChatChannel.find_or_create_by!(slug:) do |channel|
-        channel.name = "Private Whisper"
+        channel.name = I18n.t("game.chat.whisper_channel")
         channel.channel_type = :whisper
         channel.system_owned = false
         channel.metadata = {"participant_ids" => participant_ids}
@@ -80,7 +80,7 @@ module Chat
       slug = "arena-#{match_id}"
 
       ChatChannel.find_or_create_by!(slug:) do |channel|
-        channel.name = "Arena Match ##{match_id}"
+        channel.name = I18n.t("game.chat.arena_channel", id: match_id)
         channel.channel_type = :arena
         channel.system_owned = true
         channel.metadata = {

@@ -1,4 +1,4 @@
-<% content_for :title, "Fight ##{@arena_match.id}" %>
+<% content_for :title, t("game.fight.page_title", id: @arena_match.id) %>
 
 <%
   # Get complete side rosters (a/alpha vs b/beta).
@@ -33,7 +33,7 @@
   attack_options = arena_attack_options(current_participation, combat_config)
   block_options = arena_block_options(current_participation, combat_config)
   magic_options = combat_config["magic_types"] || {}
-  body_parts = [["head", "Head"], ["torso", "Torso"], ["stomach", "Abdomen"], ["legs", "Legs"]]
+  body_parts = [["head", I18n.t("game.fight.head")], ["torso", I18n.t("game.fight.torso")], ["stomach", I18n.t("game.fight.abdomen")], ["legs", I18n.t("game.fight.legs")]]
   block_parts = body_parts
 %>
 
@@ -47,24 +47,55 @@
      data-arena-match-turn-number-value="<%= @arena_match.current_turn_number.to_i %>"
      data-arena-match-waiting-value="<%= current_user_pending_arena_turn? %>"
      data-arena-match-selected-target-id-value="<%= participant_data(target_participation).id if target_participation %>"
-     data-arena-match-starts-at-value="<%= @arena_match.scheduled_start_at&.iso8601 %>">
+     data-arena-match-starts-at-value="<%= @arena_match.scheduled_start_at&.iso8601 %>"
+     data-arena-match-copy-value="<%= {
+       opponent: t("game.fight.log.opponent"),
+       someone: t("game.fight.log.someone"),
+       attacks_fallback: t("game.fight.log.attacks_fallback"),
+       action_rejected: t("game.fight.log.action_rejected"),
+       fight_started: t("game.fight.fight_started"),
+       turn_ended_by_timeout: t("game.fight.turn_ended_by_timeout"),
+       timeout_finish_available: t("game.fight.timeout_finish_available"),
+       victory: t("game.fight.result_victory"),
+       defeat: t("game.fight.result_defeat"),
+       draw: t("game.fight.result_draw"),
+       fight_finished: t("game.flashes.fight_finished"),
+       rewards: t("game.fight.rewards_title"),
+       npc_hit: t("game.fight.log.npc_hit", actor: "%{actor}", target: "%{target}", part: "%{part}", damage: "%{damage}", crit: "%{crit}"),
+       npc_crit: t("game.fight.log.npc_crit"),
+       npc_miss: t("game.fight.log.npc_miss", actor: "%{actor}", target: "%{target}", part: "%{part}"),
+       npc_dodge: t("game.fight.log.npc_dodge", actor: "%{actor}", target: "%{target}", part: "%{part}"),
+       npc_blocked: t("game.fight.log.npc_blocked", actor: "%{actor}", target: "%{target}", part: "%{part}"),
+       npc_defend: t("game.fight.log.npc_defend", actor: "%{actor}"),
+       npc_acts: t("game.fight.log.npc_acts", actor: "%{actor}")
+     }.to_json %>">
 
   <div class="nl-fight-topline fighttxt">
     <span><b><%= fight_type_label(@arena_match.match_type) %></b></span>
     <span class="badge badge--<%= @arena_match.status %>"><%= arena_match_status_badge(@arena_match.status) %></span>
-    <span>Turn timeout: <b><%= (@arena_match.turn_timeout_seconds || 300) / 60 %> min</b></span>
-    <span>Trauma: <b><%= @arena_match.metadata.to_h.fetch("trauma", "normal") %></b></span>
-    <%= link_to "Inventory", inventory_path, class: "fr_but" %>
-    <span class="fr_but_dis">Mercenary</span>
-    <%= link_to "Fight log", public_fight_log_path(@arena_match), class: "fr_but" %>
-    <button type="button" class="fr_but" data-action="click->arena-match#requestMatchState">Refresh</button>
+    <span><%= t("game.fight.turn_timeout") %>: <b><%= (@arena_match.turn_timeout_seconds || 300) / 60 %> <%= t("game.fight.min") %></b></span>
+    <span><%= t("game.fight.trauma") %>: <b><%= arena_match_trauma_value(@arena_match) %></b></span>
+    <%= link_to t("game.fight.log"), public_fight_log_path(@arena_match), class: "fr_but" %>
+    <span class="fr_but fr_but_dis" title="<%= t("game.fight.inventory_locked") %>"><%= t("nav.inventory") %></span>
+    <span class="fr_but_dis"><%= t("game.fight.mercenary") %></span>
+    <button type="button" class="fr_but" data-action="click->arena-match#requestMatchState"><%= t("game.fight.refresh") %></button>
     <button type="button"
             class="fr_but"
             data-action="click->arena-match#switchOpponent"
             <%= "disabled" unless current_user_participating? && target_candidates.many? %>>
-      Switch opponent
+      <%= t("game.fight.switch_opponent") %>
     </button>
   </div>
+
+  <% if params[:match_denied].to_s == "1" %>
+    <p class="nl-quests-board__meta" data-match-denied="1">
+      <%= t("game.fight.match_denied_next") %>
+      ·
+      <%= link_to t("arena.nav.arena"), arena_index_path, class: "nl-sheet-link", data: {match_recovery: "lobby"} %>
+      ·
+      <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {turbo: false, match_recovery: "city"} %>
+    </p>
+  <% end %>
 
   <%# Main combat layout: Player | Actions+Log | Opponent %>
   <div class="arena-fight-layout">
@@ -81,13 +112,13 @@
           <% end %>
         </div>
       <% else %>
-        <div class="arena-fighter-empty">Waiting for opponent...</div>
+        <div class="arena-fighter-empty"><%= t("arena.waiting_opponent") %></div>
       <% end %>
     </div>
 
     <%# Center: VS + Actions + Combat Log %>
     <div class="arena-center">
-      <div class="arena-vs-badge">VS</div>
+      <div class="arena-vs-badge"><%= t("arena.form.vs") %></div>
 
       <%# Turn timeout display %>
       <% if @arena_match.live? && @arena_match.current_turn_started_at %>
@@ -99,22 +130,22 @@
       <%# Combat action buttons (only for living participants in live match) %>
       <% if @arena_match.live? && current_user_participating? && !current_user_active_arena_participant? %>
         <div class="arena-action-panel nl-fight-wait-panel">
-          <div class="nl-fight-wait-state"><b>You are defeated. Waiting for fight result.</b></div>
+          <div class="nl-fight-wait-state"><b><%= t("game.fight.defeated_wait") %></b></div>
         </div>
       <% elsif @arena_match.live? && current_user_participating? && current_user_pending_arena_turn? %>
         <div class="arena-action-panel nl-fight-wait-panel">
           <div class="nl-fight-wait-state">
-            <b>Waiting for opponent turn</b>
+            <b><%= t("game.fight.wait_opponent_turn") %></b>
           </div>
 
           <% if arena_timeout_claim_available? %>
             <div class="nl-fight-wait-actions">
-              <%= button_to "Timeout Victory",
+              <%= button_to t("game.fight.timeout_victory"),
                   claim_timeout_arena_match_path(@arena_match),
                   method: :post,
                   params: {mode: "victory"},
                   class: "nl-arena-small-button" %>
-              <%= button_to "Accept Draw",
+              <%= button_to t("game.fight.accept_draw"),
                   claim_timeout_arena_match_path(@arena_match),
                   method: :post,
                   params: {mode: "draw"},
@@ -122,20 +153,20 @@
             </div>
           <% end %>
           <div class="nl-fight-wait-actions">
-            <%= button_to "Surrender",
+            <%= button_to t("game.fight.surrender"),
                 action_arena_match_path(@arena_match),
                 method: :post,
                 params: {action_type: "surrender"},
                 class: "nl-arena-small-button nl-arena-surrender-button",
                 form: {class: "nl-inline-control-form"},
-                data: {turbo_confirm: "Surrender this fight?"} %>
+                data: {turbo_confirm: t("game.fight.surrender_confirm")} %>
           </div>
         </div>
       <% elsif @arena_match.live? && current_user_participating? %>
         <div class="arena-action-panel" data-arena-match-target="actionButtons">
           <%# AP Bar %>
           <div class="arena-ap-bar" data-arena-match-target="apBar">
-            <span class="ap-label">AP:</span>
+            <span class="ap-label"><%= t("game.fight.ap_label") %></span>
             <div class="ap-bar-container">
               <div class="ap-bar-fill" style="width: 100%"></div>
             </div>
@@ -143,43 +174,43 @@
           </div>
 
           <div class="nl-fight-controls">
-            <%= button_to "Surrender",
+            <%= button_to t("game.fight.surrender"),
                 action_arena_match_path(@arena_match),
                 method: :post,
                 params: {action_type: "surrender"},
                 class: "nl-arena-small-button nl-arena-surrender-button",
                 form: {class: "nl-inline-control-form"},
-                data: {turbo_confirm: "Surrender this fight?"} %>
+                data: {turbo_confirm: t("game.fight.surrender_confirm")} %>
           </div>
 
           <div class="nl-fight-budget">
-            Mana: <b>5..<%= combat_profile["max_magic_mana"] %></b>
-            <span>Action points: <b><%= ap_limit %></b></span>
-            <span>Used: <b data-arena-match-target="turnCostValue">0</b>/<%= ap_limit %></span>
+            <%= t("game.fight.mana") %>: <b>5..<%= combat_profile["max_magic_mana"] %></b>
+            <span><%= t("game.fight.action_points") %>: <b><%= ap_limit %></b></span>
+            <span><%= t("game.fight.used") %>: <b data-arena-match-target="turnCostValue">0</b>/<%= ap_limit %></span>
             <span class="nl-fight-penalty" data-arena-match-target="turnPenalty" hidden></span>
-            <strong class="nl-fight-over-budget" data-arena-match-target="turnOverBudget" hidden>OVER LIMIT!</strong>
+            <strong class="nl-fight-over-budget" data-arena-match-target="turnOverBudget" hidden><%= t("game.fight.over_limit") %></strong>
           </div>
 
-          <div class="nl-fight-magic-slots" aria-label="Combat quick slots">
+          <div class="nl-fight-magic-slots" aria-label="<%= t("game.fight.quick_slots") %>">
             <% configured_magic = magic_options.select { |_key, config| config["action_cost"].to_i.positive? }.to_a.first(5) %>
             <% 5.times do |slot_index| %>
               <% key, config = configured_magic[slot_index] %>
               <% if key && config %>
                 <button type="button"
                         class="nl-fight-magic-slot"
-                        title="<%= config['name'] || key.titleize %>"
+                        title="<%= fight_action_display_name(key, config) %>"
                         data-action="click->arena-match#toggleMagicSlot"
                         data-arena-match-target="magicSlot"
                         data-skill-key="<%= key %>"
                         data-ap-cost="<%= config['action_cost'] %>"
                         data-mana-cost="<%= config['mana_cost'].to_i %>">
-                  <span><%= config["name"] || key.titleize %></span>
-                  <small><%= config["action_cost"] %>/<%= config["mana_cost"].to_i %> MP</small>
+                  <span><%= fight_action_display_name(key, config) %></span>
+                  <small><%= t("game.fight.option_cost_with_mana", ap: config["action_cost"], mana: config["mana_cost"].to_i) %></small>
                 </button>
               <% else %>
                 <span class="nl-fight-magic-slot nl-fight-magic-slot--empty"
                       role="img"
-                      aria-label="Empty combat slot <%= slot_index + 1 %>"></span>
+                      aria-label="<%= t('game.fight.empty_slot', n: slot_index + 1) %>"></span>
               <% end %>
             <% end %>
           </div>
@@ -187,10 +218,10 @@
           <div class="arena-turn-composer nl-fight-turn-composer">
             <table class="nl-fight-selector-table">
               <tr>
-                <th>Attack</th>
-                <th>Action</th>
-                <th>Block</th>
-                <th>Action</th>
+                <th><%= t("game.fight.attack") %></th>
+                <th><%= t("game.common.action") %></th>
+                <th><%= t("game.fight.block") %></th>
+                <th><%= t("game.common.action") %></th>
               </tr>
               <% body_parts.each_with_index do |(part, attack_label), idx| %>
                 <% block_part_key, block_label = block_parts[idx] %>
@@ -201,12 +232,12 @@
                             data-action="change->arena-match#updateTurnCost"
                             data-body-part="<%= part %>"
                             class="form-select form-select--compact nl-fight-select">
-                      <option value="none" data-ap-cost="0" data-mana-cost="0"><%= attack_label %> [ no attack selected ]</option>
+                      <option value="none" data-ap-cost="0" data-mana-cost="0"><%= t("game.fight.no_attack", part: attack_label) %></option>
                       <% attack_options.each do |key, config| %>
                         <option value="<%= key %>"
                                 data-ap-cost="<%= config['action_cost'] %>"
                                 data-mana-cost="<%= config['mana_cost'].to_i %>">
-                          <%= attack_label %>: <%= config["name"] || key.titleize %> [ <%= config["action_cost"] %> ]
+                          <%= t("game.fight.attack_option", part: attack_label, name: fight_action_display_name(key, config), cost: config["action_cost"]) %>
                         </option>
                       <% end %>
                     </select>
@@ -217,7 +248,7 @@
                             data-action="change->arena-match#updateTurnCost"
                             data-body-part="<%= block_part_key %>"
                             class="form-select form-select--compact nl-fight-select">
-                      <option value="none" data-ap-cost="0" data-body-parts=""><%= block_label %> [ no block selected ]</option>
+                      <option value="none" data-ap-cost="0" data-body-parts=""><%= t("game.fight.no_block", part: block_label) %></option>
                       <% block_options.each do |key, config| %>
                         <% covered_parts = config["body_parts"] || [config["body_part"]].compact %>
                         <% next unless [block_part_key, "all"].include?(config["selector_part"]) %>
@@ -225,7 +256,7 @@
                                 data-ap-cost="<%= config['action_cost'] %>"
                                 data-mana-cost="<%= config['mana_cost'].to_i %>"
                                 data-body-parts="<%= covered_parts.join(',') %>">
-                          <%= block_label %>: <%= config["name"] || key.titleize %> [ <%= config["action_cost"] %><%= "/#{config['mana_cost'].to_i} MP" if config["mana_cost"].to_i.positive? %> ]
+                          <%= t("game.fight.block_option", part: block_label, name: fight_action_display_name(key, config), cost: fight_option_cost(config["action_cost"], config["mana_cost"])) %>
                         </option>
                       <% end %>
                     </select>
@@ -239,10 +270,10 @@
                       type="submit"
                       form="arena-turn-form-<%= @arena_match.id %>"
                       data-action="click->arena-match#submitTurn">
-                Turn
+                <%= t("game.fight.turn") %>
               </button>
               <button type="button" class="nl-arena-small-button" data-action="click->arena-match#resetTurn">
-                Reset
+                <%= t("game.fight.reset") %>
               </button>
             </div>
           </div>
@@ -263,7 +294,7 @@
           <span class="nl-fight-target-name nl-fight-target-name--opponent"
                 data-arena-match-target="targetName"><%= target_profile.name %></span>
           <span data-arena-match-target="targetVitals">[<%= target_profile.current_hp %>/<%= target_profile.max_hp %>]</span>
-          <span>against</span>
+          <span><%= t("game.fight.against") %></span>
           <span class="nl-fight-target-name nl-fight-target-name--self"><%= current_profile.name %></span>
           [<%= current_profile.current_hp %>/<%= current_profile.max_hp %>]
         </div>
@@ -273,12 +304,12 @@
       <div class="arena-combat-log" data-arena-match-target="combatLog">
         <div class="combat-log-entry combat-log--system">
           <span class="combat-time"><%= @arena_match.created_at.strftime("%H:%M:%S") %></span>
-          Fight created
+          <%= t("game.fight.fight_created") %>
         </div>
         <% if @arena_match.started_at %>
           <div class="combat-log-entry combat-log--system combat-log--highlight">
             <span class="combat-time"><%= @arena_match.started_at.strftime("%H:%M:%S") %></span>
-            Fight started
+            <%= t("game.fight.fight_started") %>
           </div>
         <% end %>
         <% arena_match_combat_log(@arena_match).each do |entry| %>
@@ -290,7 +321,7 @@
         <% if @arena_match.completed? %>
           <div class="combat-log-entry combat-log--<%= @arena_match.winning_team ? 'victory' : 'draw' %>">
             <span class="combat-time"><%= @arena_match.ended_at&.strftime("%H:%M:%S") %></span>
-            <%= @arena_match.winning_team ? "Winner: #{winner_name(@arena_match)}" : "Draw" %>
+            <%= @arena_match.winning_team ? t("game.fight.winner_line", name: winner_name(@arena_match)) : t("arena.draw") %>
           </div>
         <% end %>
       </div>
@@ -309,7 +340,7 @@
           <% end %>
         </div>
       <% else %>
-        <div class="arena-fighter-empty">Waiting for opponent...</div>
+        <div class="arena-fighter-empty"><%= t("arena.waiting_opponent") %></div>
       <% end %>
     </div>
   </div>
@@ -319,27 +350,27 @@
     <span class="match-bar-item">
       <strong><%= fight_type_label(@arena_match.match_type) %></strong>
       <% if @arena_match.arena_room %>
-        in <%= @arena_match.arena_room.name %>
+        <%= t("game.fight.in_room", name: @arena_match.arena_room.name) %>
       <% end %>
     </span>
     <% if @arena_match.started_at %>
-      <span class="match-bar-item">Started: <%= l(@arena_match.started_at, format: :short) %></span>
+      <span class="match-bar-item"><%= t("game.fight.started") %>: <%= l(@arena_match.started_at, format: :short) %></span>
     <% end %>
     <% if @arena_match.duration && @arena_match.duration < 3600 %>
-      <span class="match-bar-item">Duration: <%= format_duration(@arena_match.duration) %></span>
+      <span class="match-bar-item"><%= t("game.fight.duration") %>: <%= format_duration(@arena_match.duration) %></span>
     <% end %>
     <% if @arena_match.turn_timeout_seconds %>
-      <span class="match-bar-item">Timeout: <%= @arena_match.turn_timeout_seconds / 60 %> min</span>
+      <span class="match-bar-item"><%= t("game.fight.timeout") %>: <%= @arena_match.turn_timeout_seconds / 60 %> <%= t("game.fight.min") %></span>
     <% end %>
     <% unless current_user_participating? %>
-      <span class="match-bar-item text-muted">Spectating</span>
+      <span class="match-bar-item text-muted"><%= t("game.fight.spectating") %></span>
     <% end %>
   </div>
 
   <%# Countdown timer overlay %>
   <div class="arena-countdown-overlay" data-arena-match-target="timer" style="display: none;">
     <div class="arena-countdown-content">
-      <div class="arena-countdown-title">Fight starting</div>
+      <div class="arena-countdown-title"><%= t("arena.fight_starting") %></div>
       <div class="arena-countdown-timer">--</div>
     </div>
   </div>
@@ -351,23 +382,23 @@
          data-arena-match-target="resultOverlay">
       <div class="arena-result-content">
         <h1 class="arena-result-title">
-          <%= result_state == "ended" ? "Fight finished" : result_state.titleize %>
+          <%= result_state == "ended" ? t("game.flashes.fight_finished") : t("arena.match_status.#{result_state}", default: result_state) %>
         </h1>
         <div class="arena-result-details">
           <% if @arena_match.winning_team %>
-            <p>Winner: <strong><%= winner_name(@arena_match) %></strong></p>
+            <p><%= t("game.fight.winner") %>: <strong><%= winner_name(@arena_match) %></strong></p>
           <% else %>
-            <p>Fight ended in a draw</p>
+            <p><%= t("game.fight.draw") %></p>
           <% end %>
-          <p class="text-muted">Duration: <%= format_duration(@arena_match.duration || 0) %></p>
+          <p class="text-muted"><%= t("game.fight.duration") %>: <%= format_duration(@arena_match.duration || 0) %></p>
         </div>
         <table class="nl-fight-result-table">
           <thead>
             <tr>
-              <th>Character</th>
-              <th>Physical</th>
-              <th>Total</th>
-              <th>XP</th>
+              <th><%= t("game.fight.character") %></th>
+              <th><%= t("game.fight.physical") %></th>
+              <th><%= t("game.fight.total") %></th>
+              <th><%= t("game.sheet.experience") %></th>
             </tr>
           </thead>
           <tbody>
@@ -386,19 +417,19 @@
           </tbody>
         </table>
         <% if current_user_participating? && !current_user_finished_arena_match? %>
-          <%= button_to "Finish Fight",
+          <%= button_to t("game.fight.finish"),
               finish_arena_match_path(@arena_match),
               method: :post,
-              class: "btn-primary",
-              form: {data: {turbo: false}} %>
+              class: "btn-primary arena-result-finish",
+              form: {class: "arena-result-finish-form", data: {turbo: false}} %>
         <% else %>
           <% if @arena_match.metadata.to_h["source"] == "world_npc" %>
-            <%= link_to "Return",
+            <%= link_to t("nav.return"),
                 Game::World::CombatReturnContext.new(character: current_character).path_for(@arena_match.metadata.to_h["return_context"]),
                 class: "btn-primary",
                 data: {turbo_frame: "_top"} %>
           <% else %>
-            <%= link_to "To Arena", arena_index_path, class: "btn-primary", data: {turbo_frame: "_top"} %>
+            <%= link_to t("game.fight.to_arena"), arena_index_path, class: "btn-primary", data: {turbo_frame: "_top"} %>
           <% end %>
         <% end %>
       </div>

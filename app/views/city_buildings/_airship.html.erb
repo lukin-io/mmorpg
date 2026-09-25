@@ -1,19 +1,58 @@
-<div class="nl-airship-station">
+<% wallet = current_user.currency_wallet || current_user.create_currency_wallet!(nv_balance: 0) %>
+<% balance = wallet.nv_balance.to_d %>
+<% any_affordable = routes.any? { |route| route.available && balance >= route.fare_nv.to_d } %>
+<% can_board = any_affordable %>
+<div class="nl-airship-station"
+     data-airship-station="1"
+     data-airship-routes="<%= routes.size %>"
+     data-airship-can-board="<%= can_board ? "1" : "0" %>">
+  <p class="nl-quests-board__meta" data-airship-wallet="<%= balance.to_i %>" data-airship-any-affordable="<%= any_affordable ? "1" : "0" %>">
+    <%= t("game.buildings.airship_wallet", amount: balance.to_i) %>
+  </p>
+  <% if routes.blank? %>
+    <p class="nl-quests-board__meta" data-airship-affordable="n/a" data-airship-routes-empty="1">
+      <%= t("game.common.unavailable") %>
+      ·
+      <%= link_to t("arena.nav.city"), world_path, data: {turbo: false, airship_recovery: "world"} %>
+    </p>
+  <% end %>
   <table class="nl-airship-routes">
-    <thead><tr><th>Route</th><th>Price</th><th>Next departure</th><th></th></tr></thead>
+    <thead><tr><th><%= t("game.common.route") %></th><th><%= t("game.common.price") %></th><th><%= t("game.common.next_departure") %></th><th></th></tr></thead>
     <tbody>
       <% routes.each do |route| %>
-        <tr data-airship-route="<%= route.key %>">
+        <% affordable = balance >= route.fare_nv.to_d %>
+        <tr data-airship-route="<%= route.key %>"
+            data-airship-affordable="<%= affordable ? "1" : "0" %>">
           <td><%= route.label %></td>
           <td><%= number_with_precision(route.fare_nv, precision: 2) %> NV</td>
-          <td><%= route.departs_at ? l(route.departs_at, format: "%Y-%m-%d %H:%M:%S") : "Schedule unavailable" %></td>
+          <td><%= route.departs_at ? l(route.departs_at, format: "%Y-%m-%d %H:%M:%S") : t("game.common.unavailable") %></td>
           <td>
-            <% if route.available %>
-              <%= button_to "Buy a ticket and board the flight", airship_path,
+            <% if route.available && affordable %>
+              <%= button_to t("game.airship.board"), airship_path,
                   method: :post, params: {action_key: route.action_key}, class: "lbut",
                   form: {data: {turbo_frame: "_top"}} %>
+            <% elsif route.available %>
+              <button type="button" class="lbut" disabled title="<%= t("game.buildings.airship_need_nv", amount: route.fare_nv) %>"><%= t("game.buildings.airship_need_nv_short") %></button>
+              <p class="nl-quests-board__meta">
+                <%= t("game.buildings.airship_need_nv", amount: route.fare_nv) %>
+                ·
+                <% if Game::World::CityBuildingCatalog.accessible?(character: current_character, building_key: "bank") %>
+                  <%= link_to t("game.shop.open_bank"), city_building_path("bank"), data: {turbo: false, airship_recovery: "bank"} %>
+                <% elsif Game::World::CityBuildingCatalog.accessible?(character: current_character, building_key: "junk_dealer") %>
+                  <%= link_to t("game.buildings.junk_dealer_link"), city_building_path("junk_dealer"), data: {turbo: false, airship_recovery: "junk"} %>
+                <% elsif Game::World::CityBuildingCatalog.accessible?(character: current_character, building_key: "shop") %>
+                  <%= link_to t("game.buildings.airship_shop_link"), shop_path, data: {turbo: false, airship_recovery: "shop"} %>
+                <% else %>
+                  <%= t("game.buildings.airship_earn_hint") %>
+                <% end %>
+              </p>
             <% else %>
-              <button type="button" class="lbut" disabled>Unavailable</button>
+              <button type="button" class="lbut" disabled><%= t("game.common.unavailable") %></button>
+              <p class="nl-quests-board__meta" data-airship-route-deferred="1">
+                <%= t("game.buildings.airship_route_deferred") %>
+                ·
+                <%= link_to t("arena.nav.city"), world_path, data: {turbo: false, airship_recovery: "world"} %>
+              </p>
             <% end %>
           </td>
         </tr>
@@ -21,3 +60,7 @@
     </tbody>
   </table>
 </div>
+
+<%= render "city_buildings/landmark",
+      building: local_assigns.fetch(:building, {}),
+      building_key: "airship_station" %>

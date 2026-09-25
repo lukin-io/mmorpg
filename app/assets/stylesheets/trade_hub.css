@@ -1,0 +1,91 @@
+/* Character Trade Hub */
+.nl-trade-hub {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 8px 10px 18px;
+}
+
+.nl-trade-hub__header {
+  position: relative;
+  padding-top: 4px;
+}
+
+.nl-trade-hub__header h1 {
+  margin: 0 0 4px;
+  font: bold 18px/22px var(--nl-font-tahoma);
+  color: var(--nl-ink);
+}
+
+.nl-trade-hub__hero {
+  height: 48px;
+  margin: 0 0 8px;
+  border: 1px solid var(--nl-rule);
+  background-color: #d8d2b8;
+  background-repeat: repeat;
+  background-size: auto 48px;
+  image-rendering: pixelated;
+}
+
+.nl-trade-hub__header p {
+  margin: 0 0 6px;
+  color: #5a5740;
+  font: 12px/16px var(--nl-font-tahoma);
+}
+
+.nl-trade-hub__wallet {
+  color: #716e44;
+  font-weight: bold;
+}
+
+.nl-trade-hub__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 10px 0 12px;
+  border-bottom: 1px solid var(--nl-rule);
+  padding-bottom: 6px;
+}
+
+.nl-trade-hub__tab {
+  display: inline-block;
+  padding: 4px 10px;
+  border: 1px solid var(--nl-rule);
+  background: var(--nl-surface-inset);
+  color: #3f3c2a;
+  font: bold 12px/16px var(--nl-font-tahoma);
+  text-decoration: none;
+}
+
+.nl-trade-hub__tab.is-active,
+.nl-trade-hub__tab[aria-current="page"] {
+  background: #e8e2c8;
+  border-color: #8a8458;
+  color: #1f1c10;
+}
+
+.nl-trade-hub__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 8px;
+}
+
+.nl-trade-hub__card {
+  padding: 8px;
+  border: 1px solid var(--nl-rule);
+  background: var(--nl-surface);
+}
+
+.nl-trade-hub__card h2 {
+  margin: 0 0 4px;
+  font: bold 13px/16px var(--nl-font-tahoma);
+}
+
+.nl-trade-hub__card p {
+  margin: 0 0 8px;
+  font: 11px/15px var(--nl-font-tahoma);
+  color: #5a5740;
+}
+
+.nl-quests__card--locked {
+  opacity: 0.72;
+}

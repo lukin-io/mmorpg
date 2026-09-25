@@ -20,7 +20,7 @@ RSpec.describe Arena::NpcApplicationService do
       it "uses the captured mannequin application contract in the training room" do
         result = service.create_for_room(room: arena_room)
 
-        expect(result.application.applicant_name).to eq("Training Dummy")
+        expect(result.application.applicant_name).to eq("Пепельный манекен")
         expect(result.application.applicant_level).to eq(1)
         expect(result.application.fight_kind).to eq("free")
         expect(result.application.timeout_seconds).to eq(300)
@@ -30,12 +30,10 @@ RSpec.describe Arena::NpcApplicationService do
         expect(result.application.enemy_level_min).to eq(0)
         expect(result.application.enemy_level_max).to eq(33)
         expect(result.application.metadata["neverlands_rule_value"]).to eq(10)
-        expect(result.application.npc_template.metadata.dig("combat_profile", "injected_attack_keys")).to eq(
-          %w[spirit_arrow mind_blast]
-        )
-        expect(result.application.npc_template.metadata.dig("combat_profile", "injected_block_keys")).to eq(
-          %w[magic_shield rainbow_barrier crystal_sphere]
-        )
+        expect(result.application.npc_template.metadata.dig("combat_profile", "injected_attack_keys")).to eq([])
+        expect(result.application.npc_template.metadata.dig("combat_profile", "injected_block_keys")).to eq([])
+        expect(result.application.npc_template.metadata["defend_chance"]).to eq(1.0)
+        expect(result.application.npc_template.metadata["defend_hp_below"]).to eq(1.01)
       end
 
       it "uses the captured NPC without random selection" do
@@ -49,7 +47,7 @@ RSpec.describe Arena::NpcApplicationService do
         result = service.create_for_room(room: arena_room)
 
         expect(result.success?).to be true
-        expect(result.application.applicant_name).to eq("Training Dummy")
+        expect(result.application.applicant_name).to eq("Пепельный манекен")
         expect(result.application.metadata).not_to have_key("difficulty")
       end
 
@@ -74,7 +72,7 @@ RSpec.describe Arena::NpcApplicationService do
         result = service.create_for_room(room: empty_room)
 
         expect(result.success?).to be false
-        expect(result.errors).to include("No NPC available for this room")
+        expect(result.errors).to include(I18n.t("game.fight.app_no_npc_for_room"))
       end
     end
 
@@ -89,7 +87,7 @@ RSpec.describe Arena::NpcApplicationService do
         result2 = service.create_with_template(room: arena_room, npc_template: npc)
 
         expect(result2.success?).to be false
-        expect(result2.errors).to include("This NPC already has an open application")
+        expect(result2.errors).to include(I18n.t("game.fight.app_npc_already_open"))
       end
     end
   end
@@ -115,7 +113,7 @@ RSpec.describe Arena::NpcApplicationService do
       result = service.create_with_template(room: arena_room, npc_template: hostile_npc)
 
       expect(result.success?).to be false
-      expect(result.errors).to include("NPC template is not an arena bot")
+      expect(result.errors).to include(I18n.t("game.fight.app_npc_not_arena_bot"))
     end
   end
 
@@ -132,7 +130,7 @@ RSpec.describe Arena::NpcApplicationService do
       results = service.spawn_batch(room: arena_room, count: 3)
       names = results.map { |r| r.application&.applicant_name }.compact
 
-      expect(names).to eq(["Training Dummy"])
+      expect(names).to eq(["Пепельный манекен"])
     end
   end
 end

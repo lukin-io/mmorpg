@@ -1,5 +1,6 @@
 <%
   offer = offers_by_hotspot_id[hotspot.id]
+  named_layout = local_assigns[:named_layout]
   catalog_geometry = Game::World::CityCatalog.hotspot_presentation(node_key, hotspot.key) || {
     "box" => [25 + ((index % 5) * 205), 500, 180, 80],
     "direction" => (hotspot.hotspot_type == "district" ? "south" : nil)
@@ -15,17 +16,24 @@
   if hotspot.hotspot_type == "district"
     hotspot_style = "--nl-city-route-x: #{left}px; --nl-city-route-y: #{top}px; --nl-city-route-width: #{width}px; --nl-city-route-height: #{height}px;"
   end
-  hotspot_style = nil unless image_asset
+  hotspot_style = nil if named_layout || !image_asset
   blocked_reason = hotspot.interaction_blocked_reason(current_character)
   tooltip = blocked_reason.present? ? "#{hotspot.name} - #{blocked_reason}" : hotspot.name
   hotspot_classes = ["nl-city-hotspot", "nl-city-hotspot--#{hotspot.hotspot_type}"]
+  hotspot_classes << "nl-city-hotspot--named" if named_layout
   hotspot_classes << "nl-city-hotspot--unavailable" unless offer
+  label_classes =
+    if named_layout
+      "nl-city-hotspot-label"
+    elsif image_asset
+      ["nl-visually-hidden", ("nl-city-route-label" if hotspot.hotspot_type == "district")].compact.join(" ")
+    end
 %>
 
 <% if offer %>
   <%= form_with url: interact_hotspot_world_path,
                 method: :post,
-                class: "city-action-form nl-city-hotspot-form",
+                class: "city-action-form nl-city-hotspot-form#{' nl-city-hotspot-form--named' if named_layout}",
                 local: true,
                 data: {turbo: false} do |f| %>
     <%= f.hidden_field :hotspot_id, value: hotspot.id %>
@@ -35,14 +43,14 @@
             style="<%= hotspot_style %>"
             data-hotspot-key="<%= hotspot.key %>"
             data-tooltip="<%= tooltip %>"
-            data-action="<%= tooltip_actions %>"
+            data-action="<%= tooltip_actions unless named_layout %>"
             aria-label="<%= hotspot.name %>">
-      <% if geometry["direction"] %>
+      <% if geometry["direction"] && !named_layout %>
         <%= image_tag "city/route-arrow.png", class: "nl-city-route-marker", alt: "",
               width: 64, height: 64, aria: {hidden: true}, draggable: false,
               data: {direction: geometry["direction"]} %>
       <% end %>
-      <span class="<%= ['nl-visually-hidden', ('nl-city-route-label' if hotspot.hotspot_type == 'district')].compact.join(' ') if image_asset %>"><%= hotspot.name %></span>
+      <span class="<%= label_classes %>"><%= hotspot.name %></span>
     </button>
   <% end %>
 <% else %>
@@ -50,15 +58,15 @@
         style="<%= hotspot_style %>"
         data-hotspot-key="<%= hotspot.key %>"
         data-tooltip="<%= tooltip %>"
-        data-action="<%= tooltip_actions %>"
+        data-action="<%= tooltip_actions unless named_layout %>"
         role="img"
         aria-label="<%= tooltip %>"
         tabindex="0">
-    <% if geometry["direction"] %>
+    <% if geometry["direction"] && !named_layout %>
       <%= image_tag "city/route-arrow.png", class: "nl-city-route-marker", alt: "",
             width: 64, height: 64, aria: {hidden: true}, draggable: false,
             data: {direction: geometry["direction"]} %>
     <% end %>
-    <span class="<%= ['nl-visually-hidden', ('nl-city-route-label' if hotspot.hotspot_type == 'district')].compact.join(' ') if image_asset %>"><%= tooltip %></span>
+    <span class="<%= label_classes %>"><%= tooltip %></span>
   </span>
 <% end %>

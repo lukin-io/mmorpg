@@ -19,13 +19,13 @@ RSpec.describe Characters::StatAllocationService do
     service = described_class.new(character:)
 
     expect { service.call(allocations: {strength: 4}) }
-      .to raise_error(described_class::AllocationError, /Not enough/)
+      .to raise_error(described_class::AllocationError, I18n.t("game.flashes.alloc_not_enough_stat_points"))
     expect { service.call(allocations: {}) }
-      .to raise_error(described_class::AllocationError, /No stats/)
+      .to raise_error(described_class::AllocationError, I18n.t("game.flashes.alloc_no_stats"))
     expect { service.call(allocations: {strength: nil}) }
-      .to raise_error(described_class::AllocationError, /No stats/)
+      .to raise_error(described_class::AllocationError, I18n.t("game.flashes.alloc_no_stats"))
     expect { service.call(allocations: {invented: 1}) }
-      .to raise_error(described_class::AllocationError, /No stats/)
+      .to raise_error(described_class::AllocationError, I18n.t("game.flashes.alloc_no_stats"))
   end
 
   it "reloads under the row lock for stale competing allocations" do
@@ -36,7 +36,7 @@ RSpec.describe Characters::StatAllocationService do
 
     expect {
       described_class.new(character: stale_second).call(allocations: {health: 2})
-    }.to raise_error(described_class::AllocationError, /Not enough/)
+    }.to raise_error(described_class::AllocationError, I18n.t("game.flashes.alloc_not_enough_stat_points"))
     expect(character.reload.stat_points_available).to eq(1)
   end
 end

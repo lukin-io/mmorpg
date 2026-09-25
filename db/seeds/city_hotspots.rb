@@ -8,7 +8,7 @@ forpost_city_zones = Seeds::WorldContentSupport.city_zones
 # ============================================================
 puts "\n=== Seeding City Hotspots ==="
 
-outpost_surroundings = Zone.find_by(name: "Outpost Surroundings")
+outpost_surroundings = Zone.find_by(name: "Пепельный Берег")
 city_zones_by_key = Game::World::CityCatalog::NODES.to_h do |node_key, node|
   [node_key, Zone.find_by(name: node["zone_name"])]
 end
@@ -49,6 +49,25 @@ Game::World::CityCatalog::NODES.each do |node_key, node|
       action_params: {"feature" => feature_key},
       presentation:,
       required_level: feature.fetch("required_level", 0)
+    }
+  end
+
+  # Painted landmarks become enterable read-only interiors (tavern, schools…).
+  landmarks = Game::World::CityCatalog.presentation(node_key)&.fetch("landmarks", {}) || {}
+  landmarks.each do |landmark_key, landmark|
+    next unless Game::World::CityBuildingCatalog.key?(landmark_key)
+
+    presentation = landmark.slice("box", "polygon")
+    city_hotspots << {
+      zone:,
+      key: landmark_key,
+      name: landmark["name"],
+      hotspot_type: "building",
+      action_type: "open_feature",
+      destination_zone: nil,
+      action_params: {"feature" => landmark_key},
+      presentation:,
+      required_level: 0
     }
   end
 

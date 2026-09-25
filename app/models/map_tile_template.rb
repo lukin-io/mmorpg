@@ -13,6 +13,7 @@ class MapTileTemplate < ApplicationRecord
       "world_action_type" => "search_resources",
       "implemented" => true,
       "default_label" => "Look Around",
+      "default_description" => "Search for herbs and local resources.",
       "default_message" => "There is no useful vegetation in this area."
     },
     "fishing" => {
@@ -58,7 +59,7 @@ class MapTileTemplate < ApplicationRecord
 
   def zone_must_be_string
     if zone.present? && zone.to_s.start_with?("#<Zone:")
-      errors.add(:zone, "must be a zone name string, not a Zone object")
+      errors.add(:zone, I18n.t("manage.zone_must_be_name"))
     end
   end
 
@@ -129,8 +130,22 @@ class MapTileTemplate < ApplicationRecord
     local_action_definition(action_type)&.fetch("world_action_type", nil)
   end
 
+  def self.local_action_type_for_world_action(world_action_type)
+    key = world_action_type.to_s
+    LOCAL_ACTION_DEFINITIONS.each do |action_type, definition|
+      return action_type if definition["world_action_type"] == key
+    end
+    nil
+  end
+
   def self.default_local_action_label(action_type)
-    local_action_definition(action_type)&.fetch("default_label", nil)
+    definition = local_action_definition(action_type)
+    return unless definition
+
+    I18n.t(
+      "game.world.local_action.#{action_type}.label",
+      default: definition.fetch("default_label")
+    )
   end
 
   def self.local_action_implemented?(action_type)
@@ -138,8 +153,94 @@ class MapTileTemplate < ApplicationRecord
   end
 
   def self.default_local_action_message(action_type)
-    local_action_definition(action_type)&.fetch("default_message", nil)
+    definition = local_action_definition(action_type)
+    return unless definition
+
+    english_default = definition["default_message"]
+    return unless english_default
+
+    I18n.t(
+      "game.world.local_action.#{action_type}.message",
+      default: english_default
+    )
   end
+
+  # Prefer i18n for the structural English defaults while preserving custom manage labels.
+  def self.player_local_action_label(action_type, stored_label = nil)
+    definition = local_action_definition(action_type)
+    return stored_label.presence unless definition
+
+    english_default = definition.fetch("default_label")
+    return stored_label if stored_label.present? && stored_label != english_default
+
+    default_local_action_label(action_type)
+  end
+
+  # Prefer i18n for structural English descriptions while preserving custom manage copy.
+  def self.player_local_action_description(action_type, stored_description = nil)
+    definition = local_action_definition(action_type)
+    known = translate_known_description(stored_description)
+    return known if known != stored_description
+
+    return stored_description.presence unless definition
+
+    english_default = definition["default_description"]
+    return stored_description if stored_description.present? && stored_description != english_default
+
+    return stored_description.presence if english_default.blank?
+
+    I18n.t(
+      "game.world.local_action.#{action_type}.description",
+      default: english_default
+    )
+  end
+
+  def self.player_local_action_message(action_type, stored_message = nil)
+    definition = local_action_definition(action_type)
+    return translate_known_result_message(stored_message) if definition.nil?
+
+    english_default = definition["default_message"]
+    if stored_message.present? && stored_message != english_default
+      return translate_known_result_message(stored_message)
+    end
+
+    default_local_action_message(action_type).presence || translate_known_result_message(stored_message)
+  end
+
+  KNOWN_RESULT_MESSAGES = {
+    "Nothing found." => "game.world.local_action.resource_search.nothing_found",
+    "Nothing was found." => "game.world.local_action.resource_search.nothing_found",
+    "Nothing useful here." => "game.world.local_action.resource_search.message",
+    "No vegetation." => "game.world.local_action.resource_search.message",
+    "There is no useful vegetation in this area." => "game.world.local_action.resource_search.message",
+    "No bait available." => "game.world.local_action.fishing.message",
+    "Everything went well." => "game.world.local_action.drinking.message"
+  }.freeze
+
+  KNOWN_DESCRIPTIONS = {
+    "Search for herbs and local resources." => "game.world.local_action.resource_search.description",
+    "Search this cell for herbs or local resources." => "game.world.local_action.resource_search.description"
+  }.freeze
+
+  def self.translate_known_result_message(message)
+    return message if message.blank?
+
+    key = KNOWN_RESULT_MESSAGES[message]
+    return message unless key
+
+    I18n.t(key, default: message)
+  end
+  private_class_method :translate_known_result_message
+
+  def self.translate_known_description(description)
+    return description if description.blank?
+
+    key = KNOWN_DESCRIPTIONS[description]
+    return description unless key
+
+    I18n.t(key, default: description)
+  end
+  private_class_method :translate_known_description
 
   def self.source_action_id_for(action_type)
     local_action_definition(action_type)&.fetch("source_id", nil)
@@ -151,7 +252,7 @@ class MapTileTemplate < ApplicationRecord
     return unless metadata.to_h.key?("presence_label")
     return if presence_label
 
-    errors.add(:metadata, "presence label must contain 1 to 120 characters")
+    errors.add(:metadata, I18n.t("manage.presence_label_length"))
   end
 
   def cell_art_must_be_source_backed
@@ -159,16 +260,16 @@ class MapTileTemplate < ApplicationRecord
     return if raw_cell_art.nil?
 
     unless raw_cell_art.respond_to?(:to_h)
-      errors.add(:metadata, "cell_art must be an object")
+      errors.add(:metadata, I18n.t("manage.cell_art_object"))
       return
     end
 
     unless metadata&.dig("source_map").present?
-      errors.add(:metadata, "cell_art requires source_map metadata")
+      errors.add(:metadata, I18n.t("manage.cell_art_requires_source_map"))
     end
 
     unless Game::World::CellArtCatalog.valid_reference?(raw_cell_art)
-      errors.add(:metadata, "cell_art must use a configured 100x100 source-backed art slice")
+      errors.add(:metadata, I18n.t("manage.cell_art_slice_invalid"))
     end
   end
 
@@ -177,13 +278,13 @@ class MapTileTemplate < ApplicationRecord
     return if raw_actions.nil?
 
     unless raw_actions.is_a?(Array)
-      errors.add(:metadata, "local_actions must be an array")
+      errors.add(:metadata, I18n.t("manage.local_actions_array"))
       return
     end
 
     normalized_actions = raw_actions.filter_map do |action|
       unless action.respond_to?(:deep_stringify_keys)
-        errors.add(:metadata, "local action must be an object")
+        errors.add(:metadata, I18n.t("manage.local_action_object"))
         next
       end
 
@@ -193,20 +294,29 @@ class MapTileTemplate < ApplicationRecord
     normalized_actions.each do |action|
       definition = self.class.local_action_definition(action["type"])
       unless definition
-        errors.add(:metadata, "contains unsupported local action type #{action['type'].inspect}")
+        errors.add(:metadata, I18n.t("manage.local_action_unsupported", type: action["type"].inspect))
         next
       end
 
       unless action["source_id"] == definition.fetch("source_id")
-        errors.add(:metadata, "local action #{action['type']} must use source id #{definition.fetch('source_id')}")
+        errors.add(
+          :metadata,
+          I18n.t(
+            "manage.local_action_source_id",
+            type: action["type"],
+            source_id: definition.fetch("source_id")
+          )
+        )
       end
       if action.key?("active") && ![true, false].include?(action["active"])
-        errors.add(:metadata, "local action active must be true or false")
+        errors.add(:metadata, I18n.t("manage.local_action_active_boolean"))
       end
     end
 
     duplicate_types = normalized_actions.map { |action| action["type"] }.compact.tally.select { |_, count| count > 1 }.keys
-    errors.add(:metadata, "contains duplicate local action types: #{duplicate_types.join(', ')}") if duplicate_types.any?
+    if duplicate_types.any?
+      errors.add(:metadata, I18n.t("manage.local_action_duplicate_types", types: duplicate_types.join(", ")))
+    end
   end
 
   def resource_groups_must_be_valid
@@ -214,37 +324,37 @@ class MapTileTemplate < ApplicationRecord
     return if value.nil?
 
     unless value.is_a?(Array) && value.size <= MAX_RESOURCE_GROUPS
-      errors.add(:metadata, "resource groups must be an array of at most #{MAX_RESOURCE_GROUPS} entries")
+      errors.add(:metadata, I18n.t("manage.resource_groups_array_max", max: MAX_RESOURCE_GROUPS))
       return
     end
 
     value.each do |entry|
       unless entry.is_a?(Hash)
-        errors.add(:metadata, "resource group must be an object")
+        errors.add(:metadata, I18n.t("manage.resource_group_object"))
         next
       end
       unless entry["key"].is_a?(String) && entry["key"].match?(RESOURCE_KEY_FORMAT)
-        errors.add(:metadata, "resource group key must be a stable lowercase identifier")
+        errors.add(:metadata, I18n.t("manage.resource_group_key_format"))
       end
       unless entry["kind"].is_a?(String) && entry["kind"].match?(RESOURCE_KEY_FORMAT)
-        errors.add(:metadata, "resource group kind must be a stable lowercase identifier")
+        errors.add(:metadata, I18n.t("manage.resource_group_kind_format"))
       end
       unless entry["label"].is_a?(String) && entry["label"].present? && entry["label"].length <= 120
-        errors.add(:metadata, "resource group label must contain 1 to 120 characters")
+        errors.add(:metadata, I18n.t("manage.resource_group_label_length"))
       end
       if entry.key?("active") && ![true, false].include?(entry["active"])
-        errors.add(:metadata, "resource group active must be true or false")
+        errors.add(:metadata, I18n.t("manage.resource_group_active_boolean"))
       end
     end
     keys = value.filter_map { |entry| entry["key"] if entry.is_a?(Hash) }
-    errors.add(:metadata, "resource group keys must be unique within the cell") if keys.uniq.size != keys.size
+    errors.add(:metadata, I18n.t("manage.resource_group_keys_unique")) if keys.uniq.size != keys.size
   end
 
   def coordinates_must_fit_known_zone
     known_zone = Zone.find_by(name: zone)
     return unless known_zone && x.is_a?(Integer) && y.is_a?(Integer)
 
-    errors.add(:x, "must be within zone bounds") unless x < known_zone.width
-    errors.add(:y, "must be within zone bounds") unless y < known_zone.height
+    errors.add(:x, I18n.t("manage.coord_outside_zone")) unless x < known_zone.width
+    errors.add(:y, I18n.t("manage.coord_outside_zone")) unless y < known_zone.height
   end
 end

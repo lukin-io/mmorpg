@@ -29,7 +29,7 @@ module Game
 
       def remember_airship!(journey:)
         unless journey.character_id == character.id && journey.aboard?
-          raise ArgumentError, "Active owned airship journey required"
+          raise ArgumentError, I18n.t("game.flashes.airship_journey_required")
         end
 
         character.remember_gameplay_context!(name: "airship", params: {"journey_id" => journey.id})
@@ -44,7 +44,7 @@ module Game
 
       def remember_city_building!(building_key:)
         normalized_key = building_key.to_s
-        raise ArgumentError, "Unsupported city building" unless CityBuildingCatalog.key?(normalized_key)
+        raise ArgumentError, I18n.t("game.flashes.building_not_found") unless CityBuildingCatalog.key?(normalized_key)
 
         character.remember_gameplay_context!(
           name: "city_building",
@@ -54,7 +54,7 @@ module Game
 
       def remember_world_location!(key:)
         normalized_key = key.to_s
-        raise ArgumentError, "World location is unavailable" unless world_location_available?(normalized_key)
+        raise ArgumentError, I18n.t("game.flashes.location_gone") unless world_location_available?(normalized_key)
 
         character.remember_gameplay_context!(
           name: "world_location",

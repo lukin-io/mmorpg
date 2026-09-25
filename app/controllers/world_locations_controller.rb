@@ -15,16 +15,82 @@ class WorldLocationsController < ApplicationController
   before_action :load_location!
 
   def show
-    @location_section = @building.location_section(params[:section])
-    if params[:section].present? && !@location_section
+    Game::World::AshenMineGallery.ensure_lobby!(@building)
+    @building.reload
+    @in_mine_gallery = Game::World::AshenMineGallery.descended?(current_character, location_key: @building.location_key)
+    requested = params[:section].presence
+    requested = "gallery" if @in_mine_gallery && requested.blank? && @building.location_kind == "mine"
+    @location_section = @building.location_section(requested)
+    if requested.present? && !@location_section
       redirect_to world_location_path(@building.location_key), status: :see_other
       return
     end
     @location_features = @building.location_features
     @wallet = current_user.currency_wallet if @building.location_kind == "exchange"
+    if @building.location_kind == "exchange"
+      @exchange_category = params[:resource_type].presence
+      @exchange_sell_rows = Game::World::ResourceExchange.offer_rows_for(current_character, category: @exchange_category)
+      @exchange_buy_rows = Game::World::ResourceExchange.buy_catalog(category: @exchange_category)
+      @exchange_storage = Game::World::ResourceExchange.storage_for(current_character)
+      @exchange_storage_total = Game::World::ResourceExchange.storage_total(current_character)
+    end
     @feature_offers_by_key = build_feature_offers.index_by { |offer| offer.metadata["hotspot_key"] }
+    @gallery_state = current_character.metadata.to_h[Game::World::AshenMineGallery::META_KEY].to_h if @in_mine_gallery
     Game::World::ResumeContext.new(character: current_character).remember_world_location!(key: @building.location_key)
     prepare_presence_context
+  end
+
+  def exchange
+    unless @building.location_kind == "exchange"
+      redirect_to world_location_path(@building.location_key), alert: I18n.t("game.locations.exchange_wrong_lobby"), status: :see_other
+      return
+    end
+
+    mode = params[:mode].to_s
+    result = Game::World::ResourceExchange.new(
+      character: current_character,
+      item_key: params[:item_key],
+      quantity: params[:quantity],
+      mode:
+    ).call
+    section = %w[sell buy storage].include?(params[:section].to_s) ? params[:section] : "sell"
+    target = world_location_path(@building.location_key, section:, resource_type: params[:resource_type].presence)
+    if result.success
+      redirect_to target, notice: result.message, status: :see_other
+    else
+      redirect_to target, alert: result.message, status: :see_other
+    end
+  end
+
+  def descend
+    Game::World::AshenMineGallery.ensure_lobby!(@building)
+    result = Game::World::AshenMineGallery.new(character: current_character, building: @building).descend!
+    if result.success
+      redirect_to world_location_path(@building.location_key, section: "gallery"),
+        notice: result.message, status: :see_other
+    else
+      redirect_to world_location_path(@building.location_key), alert: result.message, status: :see_other
+    end
+  end
+
+  def ascend
+    result = Game::World::AshenMineGallery.new(character: current_character, building: @building).ascend!
+    if result.success
+      redirect_to world_location_path(@building.location_key), notice: result.message, status: :see_other
+    else
+      redirect_to world_location_path(@building.location_key, section: "gallery"),
+        alert: result.message, status: :see_other
+    end
+  end
+
+  def gallery_dig
+    result = Game::World::AshenMineGallery.new(character: current_character, building: @building).dig!
+    target = world_location_path(@building.location_key, section: "gallery")
+    if result.success
+      redirect_to target, notice: result.message, status: :see_other
+    else
+      redirect_to target, alert: result.message, status: :see_other
+    end
   end
 
   def open_feature
@@ -32,7 +98,7 @@ class WorldLocationsController < ApplicationController
 
     feature_key = params[:feature_key].to_s
     feature = @building.location_feature(feature_key)
-    raise Game::World::AcceptAction::ActionViolationError, "Location feature is unavailable" unless feature
+    raise Game::World::AcceptAction::ActionViolationError, I18n.t("game.world.location_feature_unavailable") unless feature
 
     offer = Game::World::AcceptAction.new(
       character: current_character,
@@ -71,7 +137,7 @@ class WorldLocationsController < ApplicationController
     key = params[:key].to_s
 
     unless building&.location? && building.location_key == key && building.can_enter?(current_character)
-      redirect_to world_path, alert: "This location is no longer available."
+      redirect_to world_path(location_denied: 1), alert: I18n.t("game.flashes.location_gone")
       return
     end
 
@@ -95,8 +161,8 @@ class WorldLocationsController < ApplicationController
       metadata["feature"] == feature["feature"]
     return if matches
 
-    offer.fail!("Location feature does not match the offer")
-    raise Game::World::AcceptAction::ActionViolationError, "Location feature does not match the offer"
+    offer.fail!(I18n.t("game.world.location_feature_mismatch"))
+    raise Game::World::AcceptAction::ActionViolationError, I18n.t("game.world.location_feature_mismatch")
   end
 
   def location_feature_path(feature)
@@ -105,6 +171,6 @@ class WorldLocationsController < ApplicationController
     path = CityHotspot.feature_route(feature["feature"])
     return path if path.present?
 
-    raise Game::World::AcceptAction::ActionViolationError, "Location feature is unavailable"
+    raise Game::World::AcceptAction::ActionViolationError, I18n.t("game.world.location_feature_unavailable")
   end
 end

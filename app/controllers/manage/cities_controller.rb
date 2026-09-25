@@ -21,7 +21,7 @@ module Manage
       attributes = parsed_city_params
 
       if attributes && mutate(@city, operation: :create, attributes: attributes.merge("location_type" => "city"))
-        redirect_to manage_city_path(@city), notice: "City node created.", status: :see_other
+        redirect_to manage_city_path(@city), notice: I18n.t("manage.flashes.city_created"), status: :see_other
       else
         render :new, status: :unprocessable_content
       end
@@ -31,7 +31,7 @@ module Manage
       attributes = parsed_city_params
 
       if attributes && mutate(@city, operation: :update, attributes: attributes.merge("location_type" => "city"))
-        redirect_to manage_city_path(@city), notice: "City node updated.", status: :see_other
+        redirect_to manage_city_path(@city), notice: I18n.t("manage.flashes.city_updated"), status: :see_other
       else
         render :edit, status: :unprocessable_content
       end
@@ -39,7 +39,7 @@ module Manage
 
     def destroy
       if mutate(@city, operation: :destroy)
-        redirect_to manage_cities_path, notice: "City node deleted.", status: :see_other
+        redirect_to manage_cities_path, notice: I18n.t("manage.flashes.city_deleted"), status: :see_other
       else
         redirect_to manage_city_path(@city), alert: @city.errors.full_messages.to_sentence, status: :see_other
       end

@@ -14,14 +14,14 @@ module Characters
 
     def call(allocations:)
       requested = normalize(allocations)
-      raise AllocationError, "No skills selected" if requested.empty?
+      raise AllocationError, I18n.t("game.flashes.alloc_no_skills") if requested.empty?
 
       character.with_lock do
         character.reload
         updates, spent = build_updates(requested)
-        raise AllocationError, "No allocatable skills selected" if updates.empty?
-        raise AllocationError, "Not enough combat points" if spent[:combat] > character.available_combat_skill_points
-        raise AllocationError, "Not enough peace points" if spent[:peace] > character.available_peace_skill_points
+        raise AllocationError, I18n.t("game.flashes.alloc_no_allocatable_skills") if updates.empty?
+        raise AllocationError, I18n.t("game.flashes.alloc_not_enough_combat_points") if spent[:combat] > character.available_combat_skill_points
+        raise AllocationError, I18n.t("game.flashes.alloc_not_enough_peace_points") if spent[:peace] > character.available_peace_skill_points
 
         character.update!(
           passive_skills: character.passive_skills.to_h.merge(updates),

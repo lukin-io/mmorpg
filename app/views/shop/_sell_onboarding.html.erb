@@ -1,0 +1,33 @@
+<%#
+  Sell-mode onboarding when trading license is inactive.
+  Points players to Merchant perk, Market qualification, then Licenses tab.
+%>
+<% merchant_status = Game::Shop::MerchantQualification.new(character: current_character).status %>
+<% merchant_unlocked = merchant_status == "completed" %>
+<section class="nl-shop-sell-onboarding" data-shop-sell-onboarding="1" aria-label="<%= t("game.shop.sell_onboarding_title") %>">
+  <h2 class="nl-shop-sell-onboarding__title"><%= t("game.shop.sell_onboarding_title") %></h2>
+  <p class="nl-empty-note"><%= t("game.shop.sell_onboarding_lead") %></p>
+  <ol class="nl-shop-sell-onboarding__steps">
+    <% unless current_character.owns_perk?(:merchant) %>
+      <li><%= t("game.shop.sell_onboarding_perk_html").html_safe %></li>
+    <% end %>
+    <% unless merchant_unlocked %>
+      <li>
+        <% if Game::World::CityBuildingCatalog.accessible?(character: current_character, building_key: "market") %>
+          <%= link_to t("game.shop.sell_onboarding_market"), city_building_path("market"), class: "nl-shop-junk-link", data: {shop_recovery: "market"} %>
+        <% else %>
+          <%= t("game.shop.sell_onboarding_market_hint") %>
+        <% end %>
+        <% if merchant_status.in?(%w[accepted paid]) %>
+          <span class="nl-shop-sell-onboarding__status">(<%= t("game.shop.sell_onboarding_status_#{merchant_status}") %>)</span>
+        <% end %>
+      </li>
+    <% end %>
+    <li>
+      <%= link_to t("game.shop.sell_onboarding_licenses"),
+            shop_path(mode: "licenses"),
+            class: "nl-shop-junk-link",
+            data: {turbo_action: "advance", shop_recovery: "licenses"} %>
+    </li>
+  </ol>
+</section>

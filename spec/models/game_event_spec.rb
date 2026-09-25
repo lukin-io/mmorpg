@@ -20,14 +20,14 @@ RSpec.describe GameEvent, type: :model do
       event = build(:game_event, recipient: nil)
 
       expect(event).not_to be_valid
-      expect(event.errors[:recipient]).to include("is required for personal game events")
+      expect(event.errors[:recipient]).to include(I18n.t("errors.recipient_required_for_personal"))
     end
 
     it "rejects a world announcement with a recipient" do
       event = build(:game_event, :world_announcement, recipient: build(:user))
 
       expect(event).not_to be_valid
-      expect(event.errors[:recipient]).to include("must be empty for world announcements")
+      expect(event.errors[:recipient]).to include(I18n.t("errors.recipient_must_be_empty_for_world"))
     end
   end
 

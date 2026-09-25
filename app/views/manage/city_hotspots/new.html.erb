@@ -1,2 +1,2 @@
-<%= render "manage/shared/page_header", title: "Create City Action", description: "Attach one route, building entry, or exit to a city node." %>
-<%= render "form", city_hotspot: @city_hotspot, url: manage_city_hotspots_path, submit_label: "Create city action", cancel_path: manage_city_hotspots_path %>
+<%= render "manage/shared/page_header", title: t("manage.views.create_city_action"), description: t("manage.views.create_city_action_hint") %>
+<%= render "form", city_hotspot: @city_hotspot, url: manage_city_hotspots_path, submit_label: t("manage.views.create_city_action"), cancel_path: manage_city_hotspots_path %>

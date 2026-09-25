@@ -6,7 +6,7 @@ require "ostruct"
 RSpec.describe Game::World::ActionOfferBuilder do
   include ActiveSupport::Testing::TimeHelpers
 
-  let(:zone) { create(:zone, name: "Outpost Surroundings", location_type: "outdoor", width: 20, height: 20) }
+  let(:zone) { create(:zone, name: "Пепельный Берег", location_type: "outdoor", width: 20, height: 20) }
   let(:character) { create(:character) }
   let(:position) { create(:character_position, character:, zone:, x: 5, y: 5) }
   let(:npc) { create(:tile_npc, zone: zone.name, x: 5, y: 5) }

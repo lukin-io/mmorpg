@@ -18,12 +18,12 @@ module OutdoorActionAvailability
         @position = current_character.position
 
         message = if MovementCommand.moving.where(character: current_character).exists?
-          "Movement already in progress."
+          I18n.t("game.flashes.movement_in_progress")
         elsif active_action
-          "A local action is already in progress."
+          I18n.t("game.world.local_action_in_progress")
         end
         if message
-          redirect_to world_path, alert: message, status: :see_other
+          redirect_to world_path(action_denied: 1), alert: message, status: :see_other
           next
         end
 

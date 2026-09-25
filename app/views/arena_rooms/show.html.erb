@@ -1,4 +1,4 @@
-<% content_for :title, "#{@room.name} - Arena" %>
+<% content_for :title, "#{@room.name} — #{t("arena.title")}" %>
 
 <%
   active_tab = (params[:ft].presence || "1").to_s
@@ -10,51 +10,72 @@
      data-controller="arena"
      data-arena-room-id-value="<%= @room.id %>"
      data-arena-character-id-value="<%= current_character.id %>"
-     data-arena-character-level-value="<%= current_character.level %>">
+     data-arena-character-level-value="<%= current_character.level %>"
+     data-arena-copy-value="<%= {
+       room_level: t("arena.client.room_level"),
+       submit_failed: t("arena.client.submit_failed"),
+       accept_failed: t("arena.client.accept_failed"),
+       cancel_failed: t("arena.client.cancel_failed"),
+       network_error: t("arena.client.network_error"),
+       choose_fight_kind: t("arena.client.choose_fight_kind"),
+       choose_timeout: t("arena.client.choose_timeout"),
+       fight_started: t("arena.client.fight_started"),
+       cancel_confirm: t("arena.cancel_confirm")
+     }.to_json %>">
   <div class="nl-arena-topline">
     <div class="nl-arena-character">
       <%= current_character.name %>[<%= current_character.level %>]
       <span class="nl-arena-vitals"><%= current_character.current_hp %>/<%= current_character.max_hp %> | <%= current_character.current_mp %>/<%= current_character.max_mp %></span>
     </div>
     <div class="nl-arena-controls">
-      <%= link_to "Character", player_path(name: current_character.name), class: "nl-arena-link" %>
-      <%= link_to "Inventory", inventory_path, class: "nl-arena-link" %>
-      <%= link_to "Arena", arena_index_path, class: "nl-arena-link" %>
-      <%= link_to "City", world_path, class: "nl-arena-link", data: {turbo: false} %>
+      <%= link_to t("arena.nav.character"), player_path(name: current_character.name), class: "nl-arena-link", data: {arena_recovery: "character"} %>
+      <%= link_to t("arena.nav.inventory"), inventory_path, class: "nl-arena-link", data: {arena_recovery: "inventory"} %>
+      <%= link_to t("arena.nav.arena"), arena_index_path, class: "nl-arena-link", data: {arena_recovery: "lobby"} %>
+      <%= link_to t("arena.nav.city"), world_path, class: "nl-arena-link", data: {turbo: false, arena_recovery: "city"} %>
     </div>
   </div>
 
+  <% if params[:application_denied].to_s == "1" %>
+    <p class="nl-quests-board__meta" data-application-denied="1">
+      <%= t("arena.application_denied_next") %>
+      ·
+      <%= link_to t("arena.nav.arena"), arena_index_path, class: "nl-arena-link", data: {application_recovery: "lobby"} %>
+      ·
+      <%= link_to t("arena.nav.city"), world_path, class: "nl-arena-link", data: {turbo: false, application_recovery: "city"} %>
+    </p>
+  <% end %>
+
   <div class="nl-arena-room-heading">
     <b><%= @room.name %></b>
-    <span>levels <%= @room.level_min %>-<%= @room.level_max %></span>
+    <span><%= t("arena.levels", min: @room.level_min, max: @room.level_max) %></span>
     <% if @room.alignment_restriction.present? %>
-      <span><%= @room.alignment_restriction.humanize %></span>
+      <span><%= t("game.buildings.law_alignment.#{@room.alignment_restriction}", default: @room.alignment_restriction.to_s.tr("_", " ")) %></span>
     <% end %>
   </div>
 
   <div class="nl-arena-status-row">
-    <span>Applications: <%= link_to "your level", arena_room_path(@room, ft: active_tab, level: current_character.level), class: "nl-arena-filter" %> | <%= link_to "all", arena_room_path(@room, ft: active_tab), class: "nl-arena-filter" %></span>
-    <span>Total: <b><%= visible_applications.size %></b></span>
-    <%= link_to "Refresh", arena_room_path(@room, ft: active_tab), class: "nl-arena-link" %>
-    <%= link_to "Room Map", arena_index_path, class: "nl-arena-link" %>
+    <span><%= t("arena.applications") %>: <%= link_to t("arena.your_level"), arena_room_path(@room, ft: active_tab, level: current_character.level), class: "nl-arena-filter" %> | <%= link_to t("arena.all"), arena_room_path(@room, ft: active_tab), class: "nl-arena-filter" %></span>
+    <span><%= t("arena.total") %>: <b><%= visible_applications.size %></b></span>
+    <%= link_to t("arena.refresh"), arena_room_path(@room, ft: active_tab), class: "nl-arena-link" %>
+    <%= link_to t("arena.room_map"), arena_index_path, class: "nl-arena-link" %>
   </div>
 
   <div class="nl-arena-tabs">
-    <%= link_to "Duels", arena_room_path(@room, ft: 1), class: "nl-arena-tab #{'nl-arena-tab--active' if active_tab == '1'}" %>
-    <%= link_to "Team Battles", arena_room_path(@room, ft: 2), class: "nl-arena-tab #{'nl-arena-tab--active' if active_tab == '2'}" %>
-    <%= link_to "Sacrifice", arena_room_path(@room, ft: 3), class: "nl-arena-tab #{'nl-arena-tab--active' if active_tab == '3'}" %>
-    <%= link_to "Statistics", arena_index_path(ft: 4), class: "nl-arena-tab" %>
+    <%= link_to t("arena.tabs.duels"), arena_room_path(@room, ft: 1), class: "nl-arena-tab #{'nl-arena-tab--active' if active_tab == '1'}" %>
+    <%= link_to t("arena.tabs.team_battles"), arena_room_path(@room, ft: 2), class: "nl-arena-tab #{'nl-arena-tab--active' if active_tab == '2'}" %>
+    <%= link_to t("arena.tabs.sacrifice"), arena_room_path(@room, ft: 3), class: "nl-arena-tab #{'nl-arena-tab--active' if active_tab == '3'}" %>
+    <%= link_to t("arena.tabs.statistics"), arena_index_path(ft: 4), class: "nl-arena-tab" %>
   </div>
 
   <div class="nl-arena-application-form" data-arena-target="formContainer">
     <% if @my_application %>
       <div class="nl-arena-current-row">
-        <b>Your application:</b>
+        <b><%= t("arena.your_application") %>:</b>
         <%= fight_type_label(@my_application.fight_type) %>,
         <%= fight_kind_label(@my_application.fight_kind) %>,
-        timeout <%= @my_application.timeout_seconds / 60 %> min,
-        trauma <%= @my_application.trauma_percent %>%.
-        <%= button_to "Cancel Application",
+        <%= t("arena.timeout_min", count: @my_application.timeout_seconds / 60) %>,
+        <%= t("arena.trauma", percent: @my_application.trauma_percent) %>.
+        <%= button_to t("arena.cancel_application"),
             arena_room_arena_application_path(@room, @my_application),
             method: :delete,
             class: "nl-arena-small-button" %>
@@ -66,44 +87,87 @@
                     data: { action: "submit->arena#submitApplication" } do |f| %>
         <%= f.hidden_field :fight_type, value: tab_fight_type %>
         <%= f.select :fight_kind,
-            [["fight kind", ""], ["No Weapons", "no_weapons"], ["Free", "free"], ["Alignment vs Alignment", "alignment_vs_alignment"], ["No Artifacts", "no_artifacts"], ["Limited Artifacts", "limited_artifacts"]],
+            [
+              [t("arena.form.fight_kind"), ""],
+              [t("arena.fight_kinds.no_weapons"), "no_weapons"],
+              [t("arena.fight_kinds.free"), "free"],
+              [t("arena.fight_kinds.alignment_vs_alignment"), "alignment_vs_alignment"],
+              [t("arena.fight_kinds.no_artifacts"), "no_artifacts"],
+              [t("arena.fight_kinds.limited_artifacts"), "limited_artifacts"]
+            ],
             {},
             class: "nl-arena-select",
             required: true %>
-        <%= f.select :timeout_seconds,
-            [["timeout", ""], ["2 min", 120], ["3 min", 180], ["4 min", 240], ["5 min", 300]],
+        <%= f.select :turn_seconds,
+            [
+              [t("arena.form.turn_seconds"), ""],
+              [t("arena.form.sec", count: 30), 30],
+              [t("arena.form.sec", count: 60), 60],
+              [t("arena.form.sec", count: 90), 90]
+            ],
             {},
             class: "nl-arena-select",
             required: true %>
-        <%= f.select :trauma_percent,
-            [["trauma", ""], ["low (10%)", 10], ["medium (30%)", 30], ["high (50%)", 50], ["very high (80%)", 80]],
+        <%= f.hidden_field :timeout_seconds, value: 180 %>
+        <%= f.select :wait_minutes,
+            [
+              [t("arena.form.wait"), ""],
+              [t("arena.form.min", count: 2), 2],
+              [t("arena.form.min", count: 5), 5],
+              [t("arena.form.min", count: 10), 10],
+              [t("arena.form.min", count: 15), 15],
+              [t("arena.form.min", count: 30), 30]
+            ],
             {},
             class: "nl-arena-select",
             required: true %>
+        <%= f.select :assault_scroll_kind,
+            [
+              [t("arena.form.assault_scroll"), ""],
+              [t("arena.form.assault_peaceful"), "peaceful"],
+              [t("arena.form.assault_normal"), "normal"],
+              [t("arena.form.assault_bloody"), "bloody"]
+            ],
+            {},
+            class: "nl-arena-select",
+            required: true %>
+        <p class="nl-arena-hint"><%= t("arena.form.assault_scroll_hint") %></p>
+        <% scroll_qty = Game::World::StartPlayerAssault.trauma_scroll_quantity(current_character) %>
+        <% if scroll_qty <= 0 %>
+          <p class="nl-quests-board__meta" data-arena-need-scroll="1">
+            <%= t("arena.combat_scroll_missing") %>
+            ·
+            <% if Game::World::CityBuildingCatalog.accessible?(character: current_character, building_key: "hospital") %>
+              <%= link_to t("game.buildings.hospital_title_short"),
+                    city_building_path("hospital", anchor: "hospital-premium-desk"),
+                    class: "nl-sheet-link",
+                    data: {arena_recovery: "hospital"} %>
+            <% else %>
+              <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {turbo: false, arena_recovery: "city"} %>
+            <% end %>
+            ·
+            <%= link_to t("game.inventory.scrolls_block_title"), inventory_path(category: "things", subcategory: "scrolls"), class: "nl-sheet-link" %>
+          </p>
+        <% end %>
 
         <% if active_tab != "1" %>
-          <%= f.select :wait_minutes,
-              [["wait", ""], ["5 min", 5], ["10 min", 10], ["15 min", 15], ["30 min", 30], ["45 min", 45], ["60 min", 60]],
-              {},
-              class: "nl-arena-select",
-              required: true %>
           <span class="nl-arena-team-limits">
-            own team:
-            <%= f.number_field :team_count, min: 1, max: 10, value: 1, class: "nl-arena-mini-input" %>
-            levels
+            <%= t("arena.form.own_team") %>:
+            <%= f.number_field :team_count, min: 1, max: 5, value: 1, class: "nl-arena-mini-input" %>
+            <%= t("arena.form.levels_short") %>
             <%= f.number_field :team_level_min, min: 0, max: 33, value: [current_character.level - 1, 0].max, class: "nl-arena-mini-input" %>
             -
             <%= f.number_field :team_level_max, min: 0, max: 33, value: current_character.level + 1, class: "nl-arena-mini-input" %>
-            vs:
-            <%= f.number_field :enemy_count, min: 1, max: 10, value: 1, class: "nl-arena-mini-input" %>
-            levels
+            <%= t("arena.form.vs") %>:
+            <%= f.number_field :enemy_count, min: 1, max: 5, value: 1, class: "nl-arena-mini-input" %>
+            <%= t("arena.form.levels_short") %>
             <%= f.number_field :enemy_level_min, min: 0, max: 33, value: [current_character.level - 1, 0].max, class: "nl-arena-mini-input" %>
             -
             <%= f.number_field :enemy_level_max, min: 0, max: 33, value: current_character.level + 1, class: "nl-arena-mini-input" %>
           </span>
         <% end %>
 
-        <%= f.submit "Submit Application", class: "nl-arena-small-button" %>
+        <%= f.submit t("arena.form.submit"), class: "nl-arena-small-button" %>
       <% end %>
     <% end %>
   </div>
@@ -111,17 +175,23 @@
   <table class="nl-arena-table nl-arena-applications-table arena-applications" data-arena-target="applicationList">
     <thead>
       <tr>
-        <th>Time</th>
-        <th>Side 1</th>
-        <th>Terms</th>
-        <th>Side 2</th>
-        <th>Action</th>
+        <th><%= t("arena.table.time") %></th>
+        <th><%= t("arena.table.side1") %></th>
+        <th><%= t("arena.table.terms") %></th>
+        <th><%= t("arena.table.side2") %></th>
+        <th><%= t("arena.table.action") %></th>
       </tr>
     </thead>
     <tbody>
       <% if visible_applications.empty? %>
         <tr>
-          <td colspan="5" class="nl-arena-empty">No open applications</td>
+          <td colspan="5" class="nl-arena-empty" data-arena-apps-empty="1">
+            <%= t("arena.table.empty") %>
+            ·
+            <%= t("arena.table.empty_hint") %>
+            ·
+            <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {turbo: false, arena_recovery: "city"} %>
+          </td>
         </tr>
       <% else %>
         <% visible_applications.each do |app| %>
@@ -136,23 +206,23 @@
             </td>
             <td>
               <%= arena_application_rule_label(app) %>,
-              timeout <%= app.timeout_seconds %>s,
-              trauma <%= app.trauma_percent %>,
-              wait <%= distance_of_time_in_words_to_now(app.expires_at) %>
+              <%= t("arena.table.timeout_s", seconds: app.timeout_seconds) %>,
+              <%= t("arena.table.trauma_n", percent: app.trauma_percent) %>,
+              <%= t("arena.table.wait_for", time: distance_of_time_in_words_to_now(app.expires_at)) %>
             </td>
             <td>
-              <b>no opponents</b>
+              <b><%= t("arena.table.no_opponents") %></b>
               <span class="nl-arena-muted"><%= arena_application_open_side_level_gate(app) %></span>
             </td>
             <td>
               <% if own_app %>
-                <span>Your application</span>
-                <%= button_to "Cancel",
+                <span><%= t("arena.table.your_app") %></span>
+                <%= button_to t("arena.table.cancel"),
                     arena_room_arena_application_path(@room, app),
                     method: :delete,
                     class: "nl-arena-small-button" %>
               <% elsif app.acceptable_by?(current_character) %>
-                <%= button_to "Accept",
+                <%= button_to t("arena.table.accept"),
                     accept_arena_room_arena_application_path(@room, app),
                     method: :post,
                     class: "nl-arena-small-button",
@@ -161,7 +231,7 @@
                       application_id: app.id
                     } %>
               <% else %>
-                <span class="nl-arena-muted">cannot accept</span>
+                <span class="nl-arena-muted"><%= t("arena.table.cannot_accept") %></span>
               <% end %>
             </td>
           </tr>
@@ -172,19 +242,19 @@
 
   <% if @active_matches.any? %>
     <div class="nl-arena-active-matches">
-      <b>Active fights</b>
+      <b><%= t("arena.active_fights") %></b>
       <% @active_matches.each do |match| %>
         <div class="nl-arena-recent-row">
-          <%= match.match_type.humanize %>:
+          <%= fight_type_label(match.match_type) %>:
           <%= match.arena_participations.map(&:participant_name).join(" vs ") %>
-          <%= link_to "watch", arena_match_path(match), class: "nl-arena-filter" %>
+          <%= link_to t("arena.watch"), arena_match_path(match), class: "nl-arena-filter" %>
         </div>
       <% end %>
     </div>
   <% end %>
 
   <div class="arena-countdown" data-arena-target="countdown" hidden>
-    <div class="arena-countdown-title">Fight starting</div>
+    <div class="arena-countdown-title"><%= t("arena.fight_starting") %></div>
     <div class="arena-countdown-timer">--</div>
   </div>
 </div>

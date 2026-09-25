@@ -16,7 +16,8 @@ export default class extends Controller {
     roomId: Number,
     characterId: Number,
     characterLevel: Number,
-    refreshInterval: { type: Number, default: 5000 }
+    refreshInterval: { type: Number, default: 5000 },
+    copy: Object
   }
 
   connect() {
@@ -31,6 +32,11 @@ export default class extends Controller {
     if (this.countdownTimer) {
       clearTimeout(this.countdownTimer)
     }
+  }
+
+  copyText(key, fallback) {
+    const value = this.copyValue?.[key]
+    return (typeof value === "string" && value.length > 0) ? value : fallback
   }
 
   // === ROOM NAVIGATION ===
@@ -54,7 +60,7 @@ export default class extends Controller {
 
     // Check level access
     if (this.characterLevelValue < levelMin || this.characterLevelValue > levelMax) {
-      this.showError("Your level doesn't meet the requirements for this room")
+      this.showError(this.copyText("room_level", "Your level doesn't meet the requirements for this room"))
       return
     }
 
@@ -89,10 +95,10 @@ export default class extends Controller {
       if (data.success) {
         this.refreshRoom()
       } else {
-        this.showError(data.errors?.join(", ") || "Failed to submit application")
+        this.showError(data.errors?.join(", ") || this.copyText("submit_failed", "Failed to submit application"))
       }
     } catch (error) {
-      this.showError("Network error. Please try again.")
+      this.showError(this.copyText("network_error", "Network error. Please try again."))
       console.error("Application submit error:", error)
     }
   }
@@ -118,11 +124,11 @@ export default class extends Controller {
         this.startCountdown(data.countdown ?? 30, data.match_id)
       } else {
         event.currentTarget.disabled = false
-        this.showError(data.errors?.join(", ") || "Failed to accept application")
+        this.showError(data.errors?.join(", ") || this.copyText("accept_failed", "Failed to accept application"))
       }
     } catch (error) {
       event.currentTarget.disabled = false
-      this.showError("Network error. Please try again.")
+      this.showError(this.copyText("network_error", "Network error. Please try again."))
       console.error("Accept application error:", error)
     }
   }
@@ -134,7 +140,7 @@ export default class extends Controller {
     event.preventDefault()
     const applicationId = event.currentTarget.dataset.applicationId
 
-    if (!confirm("Cancel application?")) {
+    if (!confirm(this.copyText("cancel_confirm", "Cancel application?"))) {
       return
     }
 
@@ -149,10 +155,10 @@ export default class extends Controller {
       if (data.success) {
         this.refreshRoom()
       } else {
-        this.showError(data.errors?.join(", ") || "Failed to cancel application")
+        this.showError(data.errors?.join(", ") || this.copyText("cancel_failed", "Failed to cancel application"))
       }
     } catch (error) {
-      this.showError("Network error. Please try again.")
+      this.showError(this.copyText("network_error", "Network error. Please try again."))
     }
   }
 
@@ -178,7 +184,8 @@ export default class extends Controller {
     if (!this.hasCountdownTarget) return
 
     if (seconds <= 0) {
-      this.countdownTarget.querySelector(".arena-countdown-timer").textContent = "Fight started"
+      this.countdownTarget.querySelector(".arena-countdown-timer").textContent =
+        this.copyText("fight_started", "Fight started")
       this.countdownTarget.querySelector(".arena-countdown-timer").classList.add("arena-countdown-timer--final")
 
       // Redirect to match after brief delay
@@ -281,12 +288,12 @@ export default class extends Controller {
     const timeout = formData.get("timeout_seconds")
 
     if (!fightType) {
-      this.showError("Choose a fight kind")
+      this.showError(this.copyText("choose_fight_kind", "Choose a fight kind"))
       return false
     }
 
     if (!timeout) {
-      this.showError("Choose a timeout")
+      this.showError(this.copyText("choose_timeout", "Choose a timeout"))
       return false
     }
 

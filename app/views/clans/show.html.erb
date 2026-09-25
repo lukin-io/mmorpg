@@ -1,0 +1,53 @@
+<% content_for :title, t("game.clans.title") %>
+
+<section class="nl-clan" data-clan-hub="1">
+  <header class="nl-clan__header">
+    <h1><%= t("game.clans.title") %></h1>
+    <% if @clan %>
+      <p class="nl-clan__identity">
+        <% if @clan.icon_path.present? %>
+          <img src="<%= @clan.icon_path %>" alt="" width="64" height="64" class="nl-clan__icon">
+        <% end %>
+        <span><%= t("game.clans.your_clan", name: @clan.name, tag: @clan.tag) %></span>
+        <em><%= @clan.alignment_label %></em>
+      </p>
+    <% else %>
+      <p><%= t("game.clans.none_hub") %></p>
+      <p>
+        <%= link_to t("game.buildings.clan_hall_short"),
+              city_building_path("clan_hall"),
+              class: "lbut",
+              data: {turbo_frame: "_top", clan_recovery: "hall"} %>
+      </p>
+    <% end %>
+  </header>
+
+  <nav class="nl-clan__tabs" aria-label="<%= t("game.clans.tabs_aria") %>">
+    <% [
+      ["roster", t("game.clans.tab_roster")],
+      ["manage", t("game.clans.tab_manage")],
+      ["treasury", t("game.clans.tab_treasury")],
+      ["invites", t("game.clans.tab_invites")],
+      ["fortresses", t("game.clans.tab_fortresses")]
+    ].each do |key, label| %>
+      <% if @tab == key %>
+        <span class="lbutdis" aria-current="page"><%= label %></span>
+      <% else %>
+        <%= link_to label, clan_path(tab: key), class: "lbut", data: {turbo_frame: "_top"} %>
+      <% end %>
+    <% end %>
+  </nav>
+
+  <% case @tab %>
+  <% when "roster" %>
+    <%= render "clans/roster" %>
+  <% when "manage" %>
+    <%= render "clans/manage" %>
+  <% when "treasury" %>
+    <%= render "clans/treasury" %>
+  <% when "invites" %>
+    <%= render "clans/invites" %>
+  <% when "fortresses" %>
+    <%= render "clans/fortresses" %>
+  <% end %>
+</section>

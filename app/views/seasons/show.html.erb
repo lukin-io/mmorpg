@@ -1,0 +1,94 @@
+<% content_for :title, t("game.season.title") %>
+<section class="nl-handbook" data-season-board="1" data-season-active="<%= @season[:active] ? "1" : "0" %>">
+  <p class="nl-handbook__banner" data-season-banner="1">
+    <%= image_tag "cc0/ui/season-veil-banner.png", alt: "", class: "nl-handbook__banner-img", width: 960, height: 540 %>
+  </p>
+  <h1><%= @season[:title_ru].presence || t("game.season.title") %></h1>
+  <p class="nl-handbook__lead"><%= t("game.season.lead") %></p>
+  <p class="nl-quests-board__meta">
+    <%= t("game.gifts.wallet_both", nv: @wallet.nv_balance.to_i, vm: @wallet.veil_marks.to_i) %>
+    · <%= link_to t("game.premium_pass.title"), premium_path, class: "nl-sheet-link" %>
+    · <%= link_to t("game.activity.daily_title"), activity_path, class: "nl-sheet-link" %>
+  </p>
+
+  <% if @season[:active] %>
+    <p data-season-days="<%= @season[:days_left] %>">
+      <%= t("game.season.countdown", days: @season[:days_left], xp: @season[:xp]) %>
+    </p>
+    <p class="nl-quests-board__meta"><%= t("game.season.fomo_hint") %></p>
+
+    <% if @season[:premium] %>
+      <p data-season-premium="1"><%= t("game.season.premium_on") %></p>
+    <% else %>
+      <p data-season-premium="0"><%= t("game.season.premium_off", price: @season[:premium_unlock_vm]) %></p>
+      <%= button_to t("game.season.unlock_premium_cta", price: @season[:premium_unlock_vm]),
+            unlock_premium_season_path,
+            method: :post,
+            class: "lbut lbut--primary",
+            form: {data: {turbo: false}} %>
+    <% end %>
+
+    <h2><%= t("game.season.free_track") %></h2>
+    <ul class="nl-trade-hub__list" data-season-free="1">
+      <% Array(Game::Seasons::Catalog.current["free_track"]).each do |row| %>
+        <li>
+          <%= t("game.season.level_row", level: row["level"], xp: row["xp"]) %>
+          <% if @season[:free_levels].any? { |r| r["level"].to_i == row["level"].to_i } %>
+            <%= button_to t("game.season.claim_cta"),
+                  claim_season_path,
+                  method: :post,
+                  params: {track: "free", level: row["level"]},
+                  class: "lbut",
+                  form: {data: {turbo: false}} %>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+
+    <h2><%= t("game.season.premium_track") %></h2>
+    <ul class="nl-trade-hub__list" data-season-premium-track="1">
+      <% Array(Game::Seasons::Catalog.current["premium_track"]).each do |row| %>
+        <li>
+          <%= t("game.season.level_row", level: row["level"], xp: row["xp"]) %>
+          <% if @season[:premium] && @season[:premium_levels].any? { |r| r["level"].to_i == row["level"].to_i } %>
+            <%= button_to t("game.season.claim_cta"),
+                  claim_season_path,
+                  method: :post,
+                  params: {track: "premium", level: row["level"]},
+                  class: "lbut",
+                  form: {data: {turbo: false}} %>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+
+    <h2><%= t("game.season.shop_title") %></h2>
+    <p class="nl-handbook__lead"><%= t("game.season.shop_lead") %></p>
+    <ul class="nl-trade-hub__list" data-season-shop="1">
+      <% @shop_offers.each do |offer| %>
+        <% bought = @shop_bought_today[offer["key"]].present? %>
+        <li data-season-offer="<%= offer["key"] %>" data-season-offer-bought="<%= bought ? "1" : "0" %>">
+          <% if offer["icon"].present? %>
+            <%= image_tag offer["icon"], alt: "", width: 48, height: 48, class: "nl-season-offer-icon" %>
+          <% end %>
+          <strong><%= I18n.locale.to_s.start_with?("en") ? offer["title_en"] : offer["title_ru"] %></strong>
+          —
+          <% if offer["price_vm"].to_i.positive? %><%= offer["price_vm"] %> VM<% end %>
+          <% if offer["price_nv"].to_i.positive? %><%= offer["price_nv"] %> NV<% end %>
+          <% if bought %>
+            <em><%= t("game.season.shop_bought_today") %></em>
+          <% else %>
+            <%= button_to t("game.season.shop_buy_cta"),
+                  buy_offer_season_path,
+                  method: :post,
+                  params: {offer_key: offer["key"]},
+                  class: "lbut",
+                  form: {data: {turbo: false}} %>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  <% else %>
+    <p class="nl-empty-note" data-season-inactive="1"><%= t("game.season.inactive") %></p>
+  <% end %>
+</section>

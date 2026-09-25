@@ -39,26 +39,47 @@ module Arena
         if (error = application_creation_error(character, room))
           Result.new(success?: false, errors: [error])
         else
+          assault_kind = resolve_assault_scroll_kind(params)
+          scroll_required = assault_scroll_required?(params, assault_kind)
+          if scroll_required && (scroll_error = consume_assault_scroll!(character, assault_kind))
+            next Result.new(success?: false, errors: [scroll_error])
+          end
+
+          trauma =
+            if scroll_required
+              Game::Combat::AssaultScrolls.trauma_percent_for(assault_kind)
+            else
+              (params[:trauma_percent] || 30).to_i
+            end
+          turn = (params[:turn_seconds] || params[:timeout_seconds] || 60).to_i
+          turn = 60 unless ArenaApplication::VALID_TURN_SECONDS.include?(turn)
+
           application = ArenaApplication.new(
             arena_room: room,
             applicant: character,
             fight_type: params[:fight_type] || :duel,
             fight_kind: params[:fight_kind] || :free,
             timeout_seconds: params[:timeout_seconds] || 180,
-            trauma_percent: params[:trauma_percent] || 30,
+            turn_seconds: turn,
+            trauma_percent: trauma,
             team_count: params[:team_count],
             team_level_min: params[:team_level_min],
             team_level_max: params[:team_level_max],
             enemy_count: params[:enemy_count],
             enemy_level_min: params[:enemy_level_min],
             enemy_level_max: params[:enemy_level_max],
-            wait_minutes: params[:wait_minutes] || 10
+            wait_minutes: params[:wait_minutes] || 10,
+            metadata: {
+              "assault_scroll_kind" => assault_kind,
+              "combat_trauma" => Game::Combat::AssaultScrolls.bloody?(assault_kind),
+              "assault_scroll_consumed" => scroll_required
+            }
           )
 
           if application.save
             Result.new(success?: true, application: application)
           else
-            Result.new(success?: false, errors: application.errors.full_messages)
+            Result.new(success?: false, errors: application.errors.map(&:message))
           end
         end
       end
@@ -104,6 +125,7 @@ module Arena
             fight_type: application.fight_type,
             fight_kind: application.fight_kind,
             timeout_seconds: application.timeout_seconds,
+            turn_seconds: application.try(:turn_seconds) || 60,
             trauma_percent: application.trauma_percent,
             status: :matched,
             matched_with: application,
@@ -141,16 +163,16 @@ module Arena
         acceptor.lock!
 
         unless application.arena_room.accessible_by?(acceptor)
-          next Result.new(success?: false, errors: ["This arena room is unavailable"])
+          next Result.new(success?: false, errors: [I18n.t("game.fight.app_room_unavailable")])
         end
 
         unless application.acceptable_by?(acceptor)
-          next Result.new(success?: false, errors: [application.rejection_reason_for(acceptor) || "You cannot accept this application"])
+          next Result.new(success?: false, errors: [application.rejection_reason_for(acceptor) || I18n.t("game.fight.app_cannot_accept")])
         end
 
         # Check if player already in combat
         if acceptor.in_combat?
-          next Result.new(success?: false, errors: ["You are already in combat"])
+          next Result.new(success?: false, errors: [I18n.t("game.fight.app_already_in_combat")])
         end
 
         # Create the match
@@ -187,9 +209,9 @@ module Arena
         application.lock!
 
         if application.applicant_id != character.id
-          Result.new(success?: false, errors: ["You can only cancel your own applications"])
+          Result.new(success?: false, errors: [I18n.t("game.fight.app_cancel_own_only")])
         elsif !application.open?
-          Result.new(success?: false, errors: ["This application cannot be cancelled"])
+          Result.new(success?: false, errors: [I18n.t("game.fight.app_cannot_cancel")])
         else
           application.update!(status: :cancelled)
           ActiveRecord.after_all_transactions_commit do
@@ -206,21 +228,25 @@ module Arena
     attr_reader :publisher, :logger
 
     def application_creation_error(character, room)
-      return "This arena room is unavailable" unless room.accessible_by?(character)
-      return "You are already in an active fight" if character_has_active_match?(character)
-      return "You already have an active fight application" if character_has_active_application?(character)
-      return "Arena room is full" unless room.has_capacity?
+      return I18n.t("game.fight.app_room_unavailable") unless room.accessible_by?(character)
+      return I18n.t("game.fight.app_already_in_fight") if character_has_active_match?(character)
+      return I18n.t("game.fight.app_already_has_application") if character_has_active_application?(character)
+      return I18n.t("game.fight.app_room_full") unless room.has_capacity?
 
       nil
     end
 
     def application_acceptance_error(application, acceptor, room)
-      return "You cannot accept this application" unless application.acceptable_by?(acceptor)
-      return "Applicant can no longer access this arena room" unless room.accessible_by?(application.applicant)
-      return "You are already in an active fight" if character_has_active_match?(acceptor)
-      return "You already have an active fight application" if character_has_active_application?(acceptor)
-      return "Applicant is already in an active fight" if character_has_active_match?(application.applicant)
-      return "Arena room is full" unless room.has_capacity?
+      return I18n.t("game.fight.app_cannot_accept") unless application.acceptable_by?(acceptor)
+      return I18n.t("game.fight.app_applicant_cannot_access") unless room.accessible_by?(application.applicant)
+      return I18n.t("game.fight.app_already_in_fight") if character_has_active_match?(acceptor)
+      return I18n.t("game.fight.app_already_has_application") if character_has_active_application?(acceptor)
+      return I18n.t("game.fight.app_applicant_in_fight") if character_has_active_match?(application.applicant)
+      return I18n.t("game.fight.app_room_full") unless room.has_capacity?
+      if Game::Combat::InquisitionImmunity.blocked?(attacker: acceptor, defender: application.applicant) ||
+          Game::Combat::InquisitionImmunity.blocked?(attacker: application.applicant, defender: acceptor)
+        return I18n.t("game.world.inquisition_immune")
+      end
 
       nil
     end
@@ -243,15 +269,21 @@ module Arena
     end
 
     def create_match_from_applications(application, acceptor)
+      meta = application.metadata.to_h
+      assault_kind = Game::Combat::AssaultScrolls.normalize_kind(
+        meta["assault_scroll_kind"].presence || (truthy_meta?(meta["combat_trauma"]) ? "bloody" : "normal")
+      )
       match = ArenaMatch.create!(
         arena_room: application.arena_room,
         match_type: application.fight_type,
         status: :pending,
-        turn_timeout_seconds: application.timeout_seconds,
+        turn_timeout_seconds: application.try(:turn_seconds).presence || application.timeout_seconds,
         trauma_percent: application.trauma_percent,
         metadata: {
-          fight_kind: application.fight_kind
-        }
+          fight_kind: application.fight_kind,
+          "assault_scroll_kind" => assault_kind,
+          "combat_trauma" => Game::Combat::AssaultScrolls.bloody?(assault_kind)
+        }.compact
       )
 
       # Add participants
@@ -290,7 +322,7 @@ module Arena
         arena_room: application.arena_room,
         match_type: application.fight_type,
         status: :pending,
-        turn_timeout_seconds: application.timeout_seconds,
+        turn_timeout_seconds: application.try(:turn_seconds).presence || application.timeout_seconds,
         trauma_percent: application.trauma_percent,
         metadata: match_metadata
       )
@@ -400,7 +432,12 @@ module Arena
         timeout_seconds: application.timeout_seconds,
         trauma_percent: application.trauma_percent,
         expires_at: application.expires_at&.iso8601,
-        expires_in: application.time_until_expiration
+        expires_in: application.time_until_expiration,
+        combat_trauma: Game::Combat::AssaultScrolls.bloody?(
+          application.metadata.to_h["assault_scroll_kind"].presence ||
+            (application.metadata.to_h["combat_trauma"] ? "bloody" : "normal")
+        ),
+        assault_scroll_kind: application.metadata.to_h["assault_scroll_kind"]
       }
 
       # Add NPC-specific fields
@@ -412,6 +449,57 @@ module Arena
       end
 
       payload
+    end
+
+    def resolve_assault_scroll_kind(params)
+      if params[:assault_scroll_kind].present?
+        return Game::Combat::AssaultScrolls.normalize_kind(params[:assault_scroll_kind])
+      end
+
+      if combat_trauma_requested?(params) || params[:trauma_percent].to_i >= 100
+        return "bloody"
+      end
+
+      case params[:trauma_percent].to_i
+      when 0 then "peaceful"
+      when 100 then "bloody"
+      else "normal"
+      end
+    end
+
+    def assault_scroll_required?(params, assault_kind)
+      params[:assault_scroll_kind].present? ||
+        combat_trauma_requested?(params) ||
+        Game::Combat::AssaultScrolls.bloody?(assault_kind)
+    end
+
+    def combat_trauma_requested?(params)
+      value = params[:combat_trauma]
+      value == true || value.to_s.in?(%w[1 true on yes])
+    end
+
+    def truthy_meta?(value)
+      value == true || value.to_s == "true" || value.to_i == 1
+    end
+
+    def consume_assault_scroll!(character, kind)
+      Game::Professions::Templates.ensure_craft_items!
+      item_key = Game::Combat::AssaultScrolls.resolve_owned_key(character, kind)
+      template = ItemTemplate.find_by(key: item_key)
+      return I18n.t("arena.combat_scroll_missing") unless template
+
+      inventory = character.inventory
+      return I18n.t("arena.combat_scroll_missing") unless inventory
+
+      stack = inventory.inventory_items.find_by(item_template: template, equipped: false)
+      return I18n.t("arena.combat_scroll_missing") if stack.blank? || stack.quantity.to_i <= 0
+
+      Game::Inventory::Manager.new(inventory:).remove_item!(item_template: template, quantity: 1)
+      nil
+    rescue StandardError => error
+      raise unless error.class.name.end_with?("InventoryUnderflowError")
+
+      I18n.t("arena.combat_scroll_missing")
     end
   end
 end

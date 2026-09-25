@@ -12,6 +12,6 @@ class IgnoreListEntry < ApplicationRecord
   private
 
   def prevent_self_ignore
-    errors.add(:ignored_user_id, "cannot be yourself") if user_id == ignored_user_id
+    errors.add(:ignored_user_id, I18n.t("errors.ignore_self")) if user_id == ignored_user_id
   end
 end

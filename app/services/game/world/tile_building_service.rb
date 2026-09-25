@@ -20,7 +20,7 @@ module Game
     # Usage:
     #   service = Game::World::TileBuildingService.new(
     #     character: current_character,
-    #     zone: "Outpost Surroundings",
+    #     zone: "Пепельный Берег",
     #     x: 5,
     #     y: 5
     #   )
@@ -73,14 +73,14 @@ module Game
         unless building
           return Result.new(
             success: false,
-            message: "There is no city entrance on this cell."
+            message: I18n.t("game.world.no_city_entrance")
           )
         end
 
         unless building.active?
           return Result.new(
             success: false,
-            message: "Entrance is currently unavailable.",
+            message: I18n.t("game.world.entrance_unavailable"),
             building: building
           )
         end
@@ -97,7 +97,7 @@ module Game
         if building.enter!(character)
           Result.new(
             success: true,
-            message: "Entered #{building.name}.",
+            message: I18n.t("game.world.entered", name: building.name),
             building: building,
             destination_zone: building.destination_zone,
             location_key: building.location_key.presence
@@ -105,7 +105,7 @@ module Game
         else
           Result.new(
             success: false,
-            message: "Could not enter: #{building.name}.",
+            message: I18n.t("game.world.could_not_enter", name: building.name),
             building: building
           )
         end

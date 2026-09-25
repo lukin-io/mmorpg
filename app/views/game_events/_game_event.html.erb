@@ -3,9 +3,9 @@
                 data: {event_id: game_event.id, event_type: game_event.event_type} do %>
   <% if game_event.global? %>
     <time class="sr-only" datetime="<%= game_event.occurred_at.iso8601 %>"><%= game_event.occurred_at.strftime("%H:%M:%S") %></time>
-    <span class="game-event-source">World</span>
+    <span class="game-event-source"><%= t("game.events.world") %></span>
     <span class="game-event-content">
-      <strong class="game-event-attention">Attention!</strong>
+      <strong class="game-event-attention"><%= t("game.events.attention") %></strong>
       <%= game_event.body %>
     </span>
   <% else %>
@@ -13,8 +13,8 @@
           datetime="<%= game_event.occurred_at.iso8601 %>"
           title="<%= l(game_event.occurred_at, format: :long) %>"><%= game_event.occurred_at.strftime("%H:%M:%S") %></time>
     <span class="game-event-content">
-      <% if game_event.item_found? || game_event.money_found? %><strong class="game-event-attention">Attention!</strong><% end %>
-      <strong class="game-event-system-label">System information.</strong>
+      <% if game_event.item_found? || game_event.money_found? %><strong class="game-event-attention"><%= t("game.events.attention") %></strong><% end %>
+      <strong class="game-event-system-label"><%= t("game.events.system") %></strong>
       <%= game_event.body %>
 
       <% if game_event.fight_finished? %>

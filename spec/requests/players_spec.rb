@@ -4,8 +4,31 @@ RSpec.describe "Players", type: :request do
   let(:user) { create(:user, profile_name: "valor-hero") }
 
   describe "GET /player/:name" do
+    it "shows online presence from a fresh UserSession and offline without one" do
+      zone = create(:zone, name: "Presence Shore")
+      character = create(:character, user: user, name: "online_hero")
+      create(:character_position, character: character, zone: zone, x: 2, y: 2)
+
+      get player_path(name: character.name)
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include('data-presence-status="offline"')
+      expect(response.body).to include(I18n.t("game.profile.offline"))
+
+      create(:user_session, user: user, last_seen_at: Time.current, signed_out_at: nil)
+      get player_path(name: character.name)
+      expect(response.body).to include('data-presence-status="online"')
+      expect(response.body).to include(I18n.t("game.profile.online"))
+      expect(response.body).to include('data-profile-lookup="1"')
+    end
+
+    it "finds another character sheet by nick in the same profile surface" do
+      create(:character, user: user, name: "LookupTarget")
+      get find_player_path(name: "lookuptarget")
+      expect(response).to redirect_to(player_path(name: "LookupTarget"))
+    end
+
     it "renders a Neverlands-style public character page by character name" do
-      zone = create(:zone, name: "Outpost Surroundings")
+      zone = create(:zone, name: "Пепельный Берег")
       character = create(:character,
         user: user,
         name: "max_kerby",
@@ -26,7 +49,7 @@ RSpec.describe "Players", type: :request do
       expect(response.body).not_to include('<body class="nl-game-layout"')
       expect(response.body).to include("max_kerby [#{character.level}]")
       location = Nokogiri::HTML(response.body).at_css(".nl-character-page-aside .nl-profile-location")
-      expect(location.text).to eq("Outpost Surroundings")
+      expect(location.text).to eq("Пепельный Берег")
       expect(location.text).not_to include("[7, 9]")
       expect(response.body).to include("nl-doll-figure")
       expect(response.body).not_to include("assets/neverlands")
@@ -38,7 +61,7 @@ RSpec.describe "Players", type: :request do
     end
 
     it "keeps an owner's profile inside the persistent game shell" do
-      character = create(:character, user: user, name: "shell_hero")
+      character = create(:character, user: user, name: "shell_hero", metadata: {"ashen_bank_nv" => 42})
       zone = create(:zone, name: "Outpost")
       create(:character_position, character: character, zone: zone, x: 1, y: 2)
       sign_in user, scope: :user
@@ -48,8 +71,27 @@ RSpec.describe "Players", type: :request do
       expect(response).to have_http_status(:ok)
       expect(response.body).to include('<body class="nl-game-layout"')
       expect(response.body).to include('class="nl-profile-tabs"')
-      expect(response.body).to include("Character sections")
+      expect(response.body).to include(I18n.t("game.profile.sections"))
       expect(Nokogiri::HTML(response.body).css(".nl-profile-location").size).to eq(1)
+      vault = Nokogiri::HTML(response.body).at_css(".nl-sheet-vault")
+      expect(vault).to be_present
+      expect(vault.text).to include("42")
+      locker = Nokogiri::HTML(response.body).at_css(".nl-sheet-locker")
+      expect(locker).to be_present
+      expect(locker.text).to include("Empty").or include("Пусто")
+    end
+
+    it "hides vault balance on another player's public sheet" do
+      owner = create(:user, profile_name: "vault-owner")
+      character = create(:character, user: owner, name: "other_vault", metadata: {"ashen_bank_nv" => 99})
+      zone = create(:zone, name: "Outpost")
+      create(:character_position, character: character, zone: zone, x: 1, y: 2)
+
+      get player_path(name: character.name)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).not_to include("nl-sheet-vault")
+      expect(response.body).not_to include("nl-sheet-locker")
     end
 
     it "returns location, equipment, and public player path in JSON" do
@@ -84,7 +126,11 @@ RSpec.describe "Players", type: :request do
       expect(character_payload.dig("equipment", "main_hand", "name")).to eq("Knife")
       expect(character_payload.dig("numeric_skills", "unarmed_combat")).to eq(10)
       expect(character_payload.fetch("perks")).to include(
-        {"key" => "more_strength", "name" => "More Strength", "source_id" => 7}
+        {
+          "key" => "more_strength",
+          "name" => Game::Skills::PerkRegistry.display_name(Game::Skills::PerkRegistry.find(:more_strength)),
+          "source_id" => 7
+        }
       )
       expect(body).not_to have_key("email")
     end
@@ -98,8 +144,10 @@ RSpec.describe "Players", type: :request do
       get player_path(name: character.name)
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include("Perks")
-      expect(response.body).to include("More Strength")
+      expect(response.body).to include(I18n.t("game.profile.perks"))
+      expect(response.body).to include(
+        Game::Skills::PerkRegistry.display_name(Game::Skills::PerkRegistry.find(:more_strength))
+      )
     end
 
     it "shows an unfinished arena fight link in the public location" do
@@ -114,32 +162,32 @@ RSpec.describe "Players", type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("Outpost")
-      expect(response.body).to include("in combat")
+      expect(response.body).to include("in combat").or include(I18n.t("game.profile.in_combat"))
       expect(response.body).to include("Training Hall")
       expect(response.body).to include(public_fight_log_path(match))
     end
 
     it "shows the same current pond label to its owner, visitors, and the public JSON reader" do
-      zone = create(:zone, :mvp_outdoor_region, name: "Outpost Surroundings")
+      zone = create(:zone, :mvp_outdoor_region, name: "Пепельный Берег")
       character = create(:character, user:, name: "pond_visitor")
       create(:character_position, character:, zone:, x: 13, y: 10)
       create(:map_tile_template, zone: zone.name, x: 13, y: 10,
-        metadata: {"presence_label" => "Outpost Surroundings, Pond"})
+        metadata: {"presence_label" => "Пепельный Берег, Pond"})
 
       get player_path(name: character.name)
       public_location = Nokogiri::HTML(response.body).at_css(".nl-profile-location")
-      expect(public_location.inner_html).to eq("Outpost Surroundings<br>Outpost Surroundings, Pond")
+      expect(public_location.inner_html).to eq("Пепельный Берег<br>Пепельный Берег, Pond")
       expect(public_location.text).not_to include("[13, 10]")
 
       sign_in user, scope: :user
       get player_path(name: character.name)
       own_location = Nokogiri::HTML(response.body).at_css(".nl-profile-location")
       expect(own_location.inner_html).to eq(public_location.inner_html)
-      expect(Nokogiri::HTML(response.body).at_css(".nl-location-text").text).to include("Outpost Surroundings, Pond")
+      expect(Nokogiri::HTML(response.body).at_css(".nl-location-text").text).to include("Пепельный Берег, Pond")
 
       get player_path(name: character.name, format: :json)
       expect(response.parsed_body.dig("character", "location")).to eq(
-        "label" => "Outpost Surroundings, Pond", "zone" => "Outpost Surroundings", "x" => 13, "y" => 10
+        "label" => "Пепельный Берег, Pond", "zone" => "Пепельный Берег", "x" => 13, "y" => 10
       )
     end
 
@@ -155,7 +203,7 @@ RSpec.describe "Players", type: :request do
 
       character.remember_gameplay_context!(name: "shop")
       get player_path(name: character.name, format: :json)
-      expect(response.parsed_body.dig("character", "location", "label")).to eq("Shop")
+      expect(response.parsed_body.dig("character", "location", "label")).to eq(I18n.t("game.world.shop_presence")).or eq("Shop")
 
       position.update!(x: 5, y: 7)
       get player_path(name: character.name)
@@ -172,13 +220,15 @@ RSpec.describe "Players", type: :request do
 
       get player_path(name: character.name)
       location = Nokogiri::HTML(response.body).at_css(".nl-profile-location")
-      expect(location.text).to include("Wild Region", "Village approach", "in combat")
+      expect(location.text).to include("Wild Region", "Village approach")
+      expect(location.text).to include("in combat").or include(I18n.t("game.profile.in_combat"))
       expect(location.text).not_to include("Arena")
       expect(location.at_css("a")["href"]).to eq(public_fight_log_path(match))
 
       get player_path(name: character.name, format: :json)
       expect(response.parsed_body.dig("character", "location")).to include(
-        "label" => "Village approach [in combat]", "sublocation" => "Village approach",
+        "label" => I18n.t("game.profile.location_in_combat", place: "Village approach"),
+        "sublocation" => "Village approach",
         "active_fight" => {"id" => match.id, "path" => public_fight_log_path(match), "status" => "live"}
       )
     end
@@ -197,15 +247,52 @@ RSpec.describe "Players", type: :request do
 
       position.destroy!
       get player_path(name: character.name)
-      expect(Nokogiri::HTML(response.body).at_css(".nl-profile-location").text).to eq("Unknown")
+      expect(Nokogiri::HTML(response.body).at_css(".nl-profile-location").text).to eq(I18n.t("game.profile.unknown_location"))
       get player_path(name: character.name, format: :json)
-      expect(response.parsed_body.dig("character", "location")).to eq("label" => "Unknown")
+      expect(response.parsed_body.dig("character", "location")).to eq("label" => I18n.t("game.profile.unknown_location"))
     end
 
     it "does not resolve account profile names without a character" do
       get player_path(name: user.profile_name)
 
       expect(response).to have_http_status(:not_found)
+    end
+
+    it "shows colocated Assault on a foreign player profile" do
+      zone = create(:zone, name: "Assault Square", location_type: "outdoor")
+      viewer = create(:character, name: "ViewerAsh", level: 4)
+      target = create(:character, name: "TargetAsh", level: 4)
+      create(:character_position, character: viewer, zone:, x: 4, y: 4)
+      create(:character_position, character: target, zone:, x: 4, y: 4)
+      create(:user_session, user: viewer.user)
+      create(:user_session, user: target.user)
+      Game::Professions::Templates.ensure_craft_items! if Game::Professions::Templates.respond_to?(:ensure_craft_items!)
+      template = ItemTemplate.find_by(key: "assault_scroll_normal") ||
+        ItemTemplate.find_by!(key: "combat_trauma_scroll")
+      Game::Inventory::Manager.new(inventory: viewer.inventory).add_item!(item_template: template, quantity: 1)
+      sign_in viewer.user, scope: :user
+
+      get player_path(name: target.name)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(world_assault_path)
+      expect(response.body).to include(I18n.t("game.combat.assault_kind.normal")).or include(I18n.t("game.world.assault_cta"))
+    end
+
+    it "hides Assault on a foreign profile when not colocated" do
+      zone = create(:zone, name: "Assault Far", location_type: "outdoor")
+      viewer = create(:character, name: "ViewerFar", level: 4)
+      target = create(:character, name: "TargetFar", level: 4)
+      create(:character_position, character: viewer, zone:, x: 1, y: 1)
+      create(:character_position, character: target, zone:, x: 8, y: 8)
+      create(:user_session, user: viewer.user)
+      create(:user_session, user: target.user)
+      sign_in viewer.user, scope: :user
+
+      get player_path(name: target.name)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).not_to include('action="' + world_assault_path + '"')
     end
   end
 end

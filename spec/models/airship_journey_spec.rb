@@ -21,7 +21,7 @@ RSpec.describe AirshipJourney do
       {waypoints: journey.waypoints.map { |point| point.merge("x" => 8) }}
     ].each do |changes|
       expect(journey.reload.update(changes)).to be false
-      expect(journey.errors[:base]).to include("Accepted flight details cannot change")
+      expect(journey.errors[:base]).to include(I18n.t("game.airship.validations.snapshot_immutable"))
     end
   end
 
@@ -46,14 +46,14 @@ RSpec.describe AirshipJourney do
   it "rejects invalid destination coordinates" do
     journey = build(:airship_journey, destination_x: 1000)
     expect(journey).not_to be_valid
-    expect(journey.errors[:base]).to include("Flight endpoints must be valid city cells")
+    expect(journey.errors[:base]).to include(I18n.t("game.airship.validations.endpoints_invalid"))
   end
 
   it "does not reopen a terminal journey" do
     journey = create(:airship_journey)
     journey.update!(status: :cancelled, disembarked_at: Time.current)
     expect(journey.update(status: :aboard)).to be false
-    expect(journey.errors[:status]).to include("cannot reopen a finished journey")
+    expect(journey.errors[:status]).to include(I18n.t("game.airship.validations.cannot_reopen"))
   end
 
   it "enforces one active journey per character at the database boundary" do

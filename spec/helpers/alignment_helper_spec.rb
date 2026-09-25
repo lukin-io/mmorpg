@@ -5,9 +5,9 @@ require "rails_helper"
 RSpec.describe AlignmentHelper, type: :helper do
   describe "#alignment_icon" do
     it "returns source-backed Neverlands alignment labels" do
-      expect(helper.alignment_icon(:light)).to eq("Light")
-      expect(helper.alignment_icon(:dark)).to eq("Dark")
-      expect(helper.alignment_icon(:balance)).to eq("Balance")
+      expect(helper.alignment_icon(:light)).to eq(I18n.t("game.buildings.law_alignment.light"))
+      expect(helper.alignment_icon(:dark)).to eq(I18n.t("game.buildings.law_alignment.dark"))
+      expect(helper.alignment_icon(:balance)).to eq(I18n.t("game.buildings.law_alignment.balance"))
     end
   end
 

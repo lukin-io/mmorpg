@@ -49,9 +49,9 @@ class ArenaParticipation < ApplicationRecord
   # @return [String] the participant's name
   def participant_name
     if npc?
-      npc_template&.name || "Arena Bot"
+      npc_template&.name.presence || I18n.t("arena.bot_fallback")
     else
-      character&.name || "Unknown"
+      character&.name.presence || I18n.t("arena.unknown")
     end
   end
 
@@ -119,10 +119,10 @@ class ArenaParticipation < ApplicationRecord
 
   def has_character_or_npc
     if character_id.blank? && npc_template_id.blank?
-      errors.add(:base, "must have either a character or an NPC template")
+      errors.add(:base, I18n.t("arena.validations.character_or_npc_required"))
     end
     if character_id.present? && npc_template_id.present?
-      errors.add(:base, "cannot have both a character and an NPC template")
+      errors.add(:base, I18n.t("arena.validations.character_and_npc_both"))
     end
   end
 

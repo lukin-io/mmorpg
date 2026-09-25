@@ -22,12 +22,95 @@
   margin: 0;
   color: var(--nl-text);
   font: bold 12px/16px var(--nl-font-verdana);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
 }
 
 .nl-profile-identity p {
   margin: 0;
   color: var(--nl-text);
   font: 12px/16px var(--nl-font-tahoma);
+}
+
+.nl-presence-badge {
+  font: 11px/14px var(--nl-font-tahoma);
+  font-weight: normal;
+  text-transform: lowercase;
+}
+
+.nl-presence-badge--online {
+  color: #2f6b2f;
+}
+
+.nl-presence-badge--offline {
+  color: #7a6a4a;
+}
+
+.nl-sheet-buff-icons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 4px 0 6px;
+}
+
+.nl-buff-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: 1px solid var(--nl-rule-gold);
+  background: #f3ead2;
+  font-size: 12px;
+  line-height: 1;
+  cursor: help;
+}
+
+.nl-buff-icon--blood1 { color: #5a6b2f; }
+.nl-buff-icon--blood2 { color: #8a4b12; background: #f6dfc0; }
+.nl-buff-icon--blood3 { color: #7a1020; background: #f0d0d4; border-color: #a04050; }
+
+.nl-buff-icon-img {
+  display: block;
+  width: 16px;
+  height: 16px;
+  image-rendering: pixelated;
+}
+
+.nl-sheet-buff-list {
+  margin: 0 0 6px;
+  padding-left: 16px;
+  color: var(--nl-text-soft);
+  font: 11px/14px var(--nl-font-tahoma);
+}
+
+.nl-profile-lookup {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.nl-profile-lookup__label {
+  font: 11px/14px var(--nl-font-tahoma);
+  color: var(--nl-text-soft);
+}
+
+.nl-profile-lookup__input {
+  min-width: 140px;
+  max-width: 220px;
+  padding: 2px 6px;
+  border: 1px solid var(--nl-rule-gold);
+  background: #fffef8;
+  color: var(--nl-text);
+  font: 12px/16px var(--nl-font-tahoma);
+}
+
+.nl-profile-lookup__submit {
+  flex: 0 0 auto;
 }
 
 .nl-profile-perk-list {
@@ -313,4 +396,38 @@
   .nl-skill-meta {
     grid-column: 2;
   }
+}
+
+@media (pointer: coarse) {
+  .nl-assault-btn,
+  .nl-character-page .lbut,
+  .nl-allocation-page .lbut,
+  .nl-profile-license-list .nl-sheet-link {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 8px 10px;
+    font-size: 12px;
+    line-height: 1.25;
+  }
+}
+
+@media (max-width: 360px) {
+  .nl-character-page,
+  .nl-allocation-page,
+  .nl-skill-row,
+  .nl-profile-license-list {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .nl-skill-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.nl-profile-hub {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 8px 0 12px;
 }

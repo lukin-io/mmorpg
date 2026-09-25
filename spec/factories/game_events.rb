@@ -11,19 +11,19 @@ FactoryBot.define do
 
     trait :fight_finished do
       event_type { :fight_finished }
-      body { "Fight finished." }
+      body { I18n.t("game.events.fight_finished") }
       payload { {"experience" => 10} }
     end
 
     trait :item_found do
       event_type { :item_found }
-      body { "Search result:" }
+      body { I18n.t("game.events.search_result") }
       payload { {"item_name" => "Wood Chips", "quantity" => 1} }
     end
 
     trait :money_found do
       event_type { :money_found }
-      body { "Search result:" }
+      body { I18n.t("game.events.search_result") }
       payload { {"amount" => 24, "currency" => "NV"} }
     end
 

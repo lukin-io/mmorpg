@@ -3,7 +3,7 @@
 require "rails_helper"
 
 RSpec.describe Game::World::AcceptAction do
-  let(:zone) { create(:zone, name: "Outpost Surroundings", location_type: "outdoor") }
+  let(:zone) { create(:zone, name: "Пепельный Берег", location_type: "outdoor") }
   let(:character) { create(:character) }
   let!(:position) { create(:character_position, character:, zone:, x: 5, y: 5) }
   let(:tile) { create(:map_tile_template, :with_resource_search, zone: zone.name, x: 5, y: 5) }
@@ -40,7 +40,7 @@ RSpec.describe Game::World::AcceptAction do
 
     expect {
       described_class.new(character:, action_key: offer.action_key, action_type: :search_resources, target: tile).call
-    }.to raise_error(Game::World::AcceptAction::ActionViolationError, /position/)
+    }.to raise_error(Game::World::AcceptAction::ActionViolationError, I18n.t("game.world.action_offer_position_mismatch"))
   end
 
   it "rejects an expired offer" do
@@ -48,13 +48,13 @@ RSpec.describe Game::World::AcceptAction do
 
     expect {
       described_class.new(character:, action_key: offer.action_key, action_type: :search_resources, target: tile).call
-    }.to raise_error(Game::World::AcceptAction::ActionViolationError, /expired/)
+    }.to raise_error(Game::World::AcceptAction::ActionViolationError, I18n.t("game.world.action_offer_expired"))
   end
 
   it "rejects a mismatched action type" do
     expect {
       described_class.new(character:, action_key: offer.action_key, action_type: :enter_building, target: tile).call
-    }.to raise_error(Game::World::AcceptAction::ActionViolationError, /requested action/)
+    }.to raise_error(Game::World::AcceptAction::ActionViolationError, I18n.t("game.world.action_offer_action_mismatch"))
   end
 
   it "rejects a mismatched target" do
@@ -62,7 +62,7 @@ RSpec.describe Game::World::AcceptAction do
 
     expect {
       described_class.new(character:, action_key: offer.action_key, action_type: :search_resources, target: other_tile).call
-    }.to raise_error(Game::World::AcceptAction::ActionViolationError, /requested target/)
+    }.to raise_error(Game::World::AcceptAction::ActionViolationError, I18n.t("game.world.action_offer_target_mismatch"))
   end
 
   it "rejects wilderness Look at the 86 percent fatigue boundary" do
@@ -75,7 +75,7 @@ RSpec.describe Game::World::AcceptAction do
         action_type: :search_resources,
         target: tile
       ).call
-    }.to raise_error(Game::World::AcceptAction::ActionViolationError, /fatigued/)
+    }.to raise_error(Game::World::AcceptAction::ActionViolationError, I18n.t("game.world.action_too_fatigued"))
     expect(offer.reload).to be_offered
   end
 
@@ -100,7 +100,7 @@ RSpec.describe Game::World::AcceptAction do
 
     expect {
       described_class.new(character:, action_key: offer.action_key).call
-    }.to raise_error(described_class::ActionViolationError, /Movement already in progress/)
+    }.to raise_error(described_class::ActionViolationError, I18n.t("game.flashes.movement_in_progress"))
 
     expect(offer.reload).to be_offered
     expect(movement.reload).to be_moving
@@ -112,7 +112,7 @@ RSpec.describe Game::World::AcceptAction do
     action = described_class.new(character:, action_key: offer.action_key, position: cached_position)
     position.update!(x: 6)
 
-    expect { action.call }.to raise_error(described_class::ActionViolationError, /current position/)
+    expect { action.call }.to raise_error(described_class::ActionViolationError, I18n.t("game.world.action_offer_position_mismatch"))
 
     expect(offer.reload).to be_offered
     expect(position.reload.x).to eq(6)
@@ -125,7 +125,7 @@ RSpec.describe Game::World::AcceptAction do
 
     expect {
       described_class.new(character:, action_key: old_offer.action_key).call
-    }.to raise_error(described_class::ActionViolationError, /current position/)
+    }.to raise_error(described_class::ActionViolationError, I18n.t("game.world.action_offer_position_mismatch"))
 
     expect(old_offer.reload).to be_offered
     expect(position.reload).to have_attributes(zone: new_region, x: 5, y: 5)
@@ -137,7 +137,7 @@ RSpec.describe Game::World::AcceptAction do
 
     expect {
       described_class.new(character: Character.find(character.id), action_key: offer.action_key).call
-    }.to raise_error(described_class::ActionViolationError, /no longer available/)
+    }.to raise_error(described_class::ActionViolationError, I18n.t("game.world.action_offer_unavailable"))
 
     expect(offer.reload.accepted_at).to eq(accepted_at)
   end
@@ -148,7 +148,7 @@ RSpec.describe Game::World::AcceptAction do
     offer.complete!
     allow(action).to receive(:find_offer).and_return(stale_offer)
 
-    expect { action.call }.to raise_error(described_class::ActionViolationError, /no longer available/)
+    expect { action.call }.to raise_error(described_class::ActionViolationError, I18n.t("game.world.action_offer_unavailable"))
     expect(offer.reload).to be_completed
   end
 
@@ -158,7 +158,7 @@ RSpec.describe Game::World::AcceptAction do
 
     expect {
       described_class.new(character:, action_key: offer.action_key).call
-    }.to raise_error(described_class::ActionViolationError, /active fight/)
+    }.to raise_error(described_class::ActionViolationError, I18n.t("game.world.finish_active_fight"))
 
     expect(offer.reload).to be_offered
     expect(position.reload).to have_attributes(x: 5, y: 5)
@@ -171,7 +171,7 @@ RSpec.describe Game::World::AcceptAction do
 
     expect {
       described_class.new(character:, action_key: offer.action_key).call
-    }.to raise_error(described_class::ActionViolationError, /local action is already in progress/)
+    }.to raise_error(described_class::ActionViolationError, I18n.t("game.world.local_action_in_progress"))
 
     expect(work.reload).to be_accepted
     expect(offer.reload).to be_offered

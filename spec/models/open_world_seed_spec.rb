@@ -9,7 +9,7 @@ RSpec.describe "Open-world seed data", type: :model do
   end
 
   it "imports the bounded survey, keeps NPC pools distinct, and preserves managed cells on retry" do
-    region = create(:zone, :mvp_outdoor_region, name: "Outpost Surroundings")
+    region = create(:zone, :mvp_outdoor_region, name: "Пепельный Берег")
     legacy = create(:map_tile_template, zone: region.name, x: 14, y: 10, passable: true,
       metadata: {"source_map" => "forpost_pond_neighborhood_art"})
     position = create(:character_position, zone: region, x: 14, y: 10)
@@ -50,7 +50,7 @@ RSpec.describe "Open-world seed data", type: :model do
 
   it "authors the observed pond in the existing outdoor zone with drinking and the empty fishing entry" do
     load_seed
-    zone = Zone.find_by!(name: "Outpost Surroundings")
+    zone = Zone.find_by!(name: "Пепельный Берег")
     pond = MapTileTemplate.find_by!(zone: zone.name, x: 13, y: 10)
 
     expect(Zone.where(location_type: "outdoor").count).to eq(1)
@@ -69,7 +69,7 @@ RSpec.describe "Open-world seed data", type: :model do
 
   it "keeps pond artwork independent from surveyed cell availability and actions" do
     load_seed
-    cells = MapTileTemplate.where(zone: "Outpost Surroundings", x: 11..15, y: 8..12).order(:y, :x).to_a
+    cells = MapTileTemplate.where(zone: "Пепельный Берег", x: 11..15, y: 8..12).order(:y, :x).to_a
 
     expect(cells.size).to eq(25)
     cells.each do |cell|
@@ -88,13 +88,13 @@ RSpec.describe "Open-world seed data", type: :model do
       expect(cell.passable).to eq(surveyed.passable)
       expect(cell.metadata["source_coordinates"]).to eq([cell.x + 994, cell.y + 992])
     end
-    expect(TileNpc.where(zone: "Outpost Surroundings", x: 13, y: 10)).to be_empty
-    expect(TileBuilding.where(zone: "Outpost Surroundings", x: 11..15, y: 8..12).pluck(:building_key)).to eq(["outpost_east_gate"])
+    expect(TileNpc.where(zone: "Пепельный Берег", x: 13, y: 10)).to be_empty
+    expect(TileBuilding.where(zone: "Пепельный Берег", x: 11..15, y: 8..12).pluck(:building_key)).to eq(["outpost_east_gate"])
   end
 
   it "preserves gameplay layers and saved state while reconciling the neighborhood artwork" do
     load_seed
-    region = Zone.find_by!(name: "Outpost Surroundings")
+    region = Zone.find_by!(name: "Пепельный Берег")
     center = MapTileTemplate.find_by!(zone: region.name, x: 13, y: 10)
     center.update!(passable: false, metadata: center.metadata.merge("managed_note" => "Retain pond override"))
     neighbor = MapTileTemplate.find_by!(zone: region.name, x: 12, y: 10)
@@ -127,7 +127,7 @@ RSpec.describe "Open-world seed data", type: :model do
 
   it "reproduces the observed Forpost gate, village route, and resource-cell neighbors" do
     load_seed
-    region = Zone.find_by!(name: "Outpost Surroundings")
+    region = Zone.find_by!(name: "Пепельный Берег")
     expect(Zone.where(location_type: "outdoor").pluck(:id)).to eq([region.id])
     character = create(:character)
     position = create(:character_position, character:, zone: region, x: 6, y: 8)
@@ -156,7 +156,7 @@ RSpec.describe "Open-world seed data", type: :model do
   end
 
   it "retires an obsolete gate inside the survey without deleting its blocked cell" do
-    region = create(:zone, :mvp_outdoor_region, name: "Outpost Surroundings")
+    region = create(:zone, :mvp_outdoor_region, name: "Пепельный Берег")
     art = {"key" => "forpost_terrain", "column" => 2, "row" => 0}
     old_tile = create(:map_tile_template, zone: region.name, x: 10, y: 9, passable: true,
       metadata: {"city_gate" => "Retired Gate", "source_map" => "m_1019_1025",
@@ -180,7 +180,7 @@ RSpec.describe "Open-world seed data", type: :model do
   end
 
   it "retires the old gate cell without relocating a saved outdoor player" do
-    region = create(:zone, :mvp_outdoor_region, name: "Outpost Surroundings")
+    region = create(:zone, :mvp_outdoor_region, name: "Пепельный Берег")
     old_tile = create(:map_tile_template, zone: region.name, x: 7, y: 0,
       metadata: {"city_gate" => "City Exit", "source_map" => "m_1019_1025"})
     position = create(:character_position, zone: region, x: 7, y: 0)
@@ -196,7 +196,7 @@ RSpec.describe "Open-world seed data", type: :model do
 
   it "cancels only live offers for changed seeded entrances and preserves a no-op reseed" do
     load_seed
-    region = Zone.find_by!(name: "Outpost Surroundings")
+    region = Zone.find_by!(name: "Пепельный Берег")
     city = Zone.find_by!(name: "Outpost")
     character = create(:character)
     position = create(:character_position, character:, zone: region, x: 7, y: 0)
@@ -237,7 +237,7 @@ RSpec.describe "Open-world seed data", type: :model do
     city = create(:zone, :city, name: "Outpost", width: 5, height: 5, metadata: {"stale" => true})
     region = create(
       :zone,
-      name: "Outpost Surroundings",
+      name: "Пепельный Берег",
       location_type: "outdoor",
       width: 15,
       height: 15,
@@ -470,8 +470,7 @@ RSpec.describe "Open-world seed data", type: :model do
     expect(bandit.encounter_roster_samples.map { |sample| sample["members"].size }).to eq([3, 1, 1, 2])
     expect(bandit.passive_delay_windows).to eq(
       [
-        {"key" => "2026-09-01-interval-1", "min_seconds" => 230, "max_seconds" => 278},
-        {"key" => "2026-09-01-interval-2", "min_seconds" => 127, "max_seconds" => 187}
+        {"key" => "ashen_five_minutes", "min_seconds" => 300, "max_seconds" => 300}
       ]
     )
     expect(NpcTemplate.find_by!(npc_key: "wilderness_robber")).to have_attributes(
@@ -514,7 +513,7 @@ RSpec.describe "Open-world seed data", type: :model do
       name: "Outpost Stables",
       metadata: {"city_key" => "forpost", "city_node_key" => "city2_7"}
     )
-    outdoors = create(:zone, :mvp_outdoor_region, name: "Outpost Surroundings")
+    outdoors = create(:zone, :mvp_outdoor_region, name: "Пепельный Берег")
     retained_position = create(:character_position, zone: knowledge, x: 4, y: 4)
     retired_position = create(:character_position, zone: retired_stables, x: 3, y: 2)
     create(:spawn_point, zone: retired_stables, x: 0, y: 0)

@@ -16,21 +16,21 @@ module Game
           recipient_name:,
           quantity:,
           reason: gift ? "inventory.gift" : "inventory.transfer",
-          success_message: gift ? "Gift sent." : "Item transferred."
+          success_message: gift ? I18n.t("game.inventory.gift_sent") : I18n.t("game.inventory.item_transferred")
         )
       end
 
       def sell_item!(item:, recipient_name:, quantity: 1, price:)
-        return failure("Trade license required.") unless trade_license?
+        return failure(I18n.t("game.inventory.trade_license_required")) unless trade_license?
 
         # A license grants trade eligibility, never consent to debit another
         # player. Enable settlement only with a captured buyer-acceptance flow.
-        failure("Player sales are currently unavailable.")
+        failure(I18n.t("game.inventory.player_sales_unavailable"))
       end
 
       def transfer_money!(recipient_name:, amount:)
         amount = decimal_value(amount)
-        return failure("Amount must be positive.") unless amount.positive?
+        return failure(I18n.t("game.inventory.amount_must_be_positive")) unless amount.positive?
 
         recipient = find_recipient(recipient_name)
         return recipient unless recipient.is_a?(Character)
@@ -51,9 +51,9 @@ module Game
           )
         end
 
-        success("NV transferred to #{recipient.name}.")
+        success(I18n.t("game.inventory.nv_transferred", name: recipient.name))
       rescue Economy::WalletService::InsufficientFundsError
-        failure("Not enough NV.")
+        failure(I18n.t("game.inventory.not_enough_nv"))
       end
 
       private
@@ -68,10 +68,10 @@ module Game
         return recipient unless recipient.is_a?(Character)
 
         ApplicationRecord.transaction(requires_new: true) do
-          raise OwnershipError, "Item not found." unless item
+          raise OwnershipError, I18n.t("game.inventory.item_not_found") unless item
 
           source_inventory = character.inventory
-          raise OwnershipError, "Item not found." unless source_inventory
+          raise OwnershipError, I18n.t("game.inventory.item_not_found") unless source_inventory
 
           recipient_inventory = recipient.inventory || recipient.create_inventory!
           # Share Shop's template -> inventory -> item order. Sorting both
@@ -88,23 +88,23 @@ module Game
       rescue CapacityError, OwnershipError => e
         failure(e.message)
       rescue ActiveRecord::RecordNotFound
-        failure("Item not found.")
+        failure(I18n.t("game.inventory.item_not_found"))
       end
 
       def transfer_stack!(item:, source_inventory:, recipient_inventory:, quantity:, reason: "inventory.transfer")
-        raise OwnershipError, "Item not found." unless item.inventory_id == source_inventory.id
-        raise OwnershipError, "Invalid quantity." unless quantity.positive?
-        raise OwnershipError, "Not enough items in stack." if quantity > item.quantity.to_i
-        raise OwnershipError, "Equipped items cannot be transferred." if item.equipped?
-        raise OwnershipError, "Protected items cannot be transferred." if item.protected_from_discard?
+        raise OwnershipError, I18n.t("game.inventory.item_not_found") unless item.inventory_id == source_inventory.id
+        raise OwnershipError, I18n.t("game.inventory.invalid_quantity") unless quantity.positive?
+        raise OwnershipError, I18n.t("game.inventory.not_enough_in_stack") if quantity > item.quantity.to_i
+        raise OwnershipError, I18n.t("game.inventory.equipped_cannot_transfer") if item.equipped?
+        raise OwnershipError, I18n.t("game.inventory.protected_cannot_transfer") if item.protected_from_discard?
 
         delta_weight = item.weight.to_i * quantity
 
-        raise CapacityError, "Recipient inventory is overloaded." if recipient_inventory.current_weight.to_i + delta_weight > recipient_inventory.max_weight.to_i
+        raise CapacityError, I18n.t("game.inventory.recipient_overloaded") if recipient_inventory.current_weight.to_i + delta_weight > recipient_inventory.max_weight.to_i
 
         destination_stack = find_destination_stack(recipient_inventory, item, quantity)
         needs_new_slot = destination_stack.nil?
-        raise CapacityError, "Recipient has no free inventory slots." if needs_new_slot && recipient_inventory.inventory_items.count >= recipient_inventory.slot_capacity.to_i
+        raise CapacityError, I18n.t("game.inventory.recipient_no_slots") if needs_new_slot && recipient_inventory.inventory_items.count >= recipient_inventory.slot_capacity.to_i
 
         if destination_stack
           destination_stack.increment!(:quantity, quantity)
@@ -143,11 +143,11 @@ module Game
 
       def find_recipient(name)
         normalized = name.to_s.strip
-        return failure("Recipient is required.") if normalized.blank?
+        return failure(I18n.t("game.inventory.recipient_required")) if normalized.blank?
 
         recipient = Character.where("LOWER(name) = ?", normalized.downcase).first
-        return failure("Recipient not found.") unless recipient
-        return failure("Cannot target yourself.") if recipient.id == character.id
+        return failure(I18n.t("game.inventory.recipient_not_found")) unless recipient
+        return failure(I18n.t("game.inventory.cannot_target_self")) if recipient.id == character.id
 
         recipient
       end

@@ -30,13 +30,13 @@ module Game
             end
 
             unless offer.matches_position?(character.position)
-              offer.fail!("Character is no longer at the local action cell")
+              offer.fail!(I18n.t("game.world.local_action_wrong_cell"))
               next
             end
 
             deadline = offer.local_action_ends_at
             unless deadline
-              offer.fail!("Local action deadline is invalid")
+              offer.fail!(I18n.t("game.world.local_action_deadline_invalid"))
               next
             end
 

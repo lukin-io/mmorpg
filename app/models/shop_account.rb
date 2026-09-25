@@ -25,6 +25,6 @@ class ShopAccount < ApplicationRecord
     when TileBuilding
       location.location? && location.location_feature_available?("shop")
     end
-    errors.add(:location, "must provide an authored Shop") unless shop
+    errors.add(:location, I18n.t("errors.shop_location_required")) unless shop
   end
 end

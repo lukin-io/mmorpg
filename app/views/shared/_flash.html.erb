@@ -11,6 +11,6 @@
        data-turbo-temporary
        data-action="turbo:before-cache@document->flash#dismiss turbo:before-frame-render@document->flash#clearForNavigation">
     <span class="nl-flash-message"><%= flash_message %></span>
-    <button type="button" class="nl-flash-dismiss" aria-label="Dismiss notification" data-action="flash#dismiss">X</button>
+    <button type="button" class="nl-flash-dismiss" aria-label="<%= t("game.common.close") %>" data-action="flash#dismiss">X</button>
   </div>
 <% end %>

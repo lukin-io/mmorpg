@@ -27,11 +27,13 @@ class ItemTemplate < ApplicationRecord
     "weapon_shield" => "off_hand",
     "armor" => "chest",
     "helmet" => "head",
+    "helm" => "head",
     "boots" => "feet",
     "gloves" => "hands",
     "pants" => "legs",
     "necklace" => "amulet",
     "neck" => "amulet",
+    "earring" => "amulet",
     "belt_item" => "belt_1",
     "pocket_item" => "pocket_1"
   }.freeze
@@ -142,6 +144,11 @@ class ItemTemplate < ApplicationRecord
     enhancement_rules.to_h["description"].presence
   end
 
+  # Prefer authored Russian/source label; keep `name` as unique storage key fallback.
+  def display_name
+    enhancement_rules.to_h["source_name"].presence || name
+  end
+
   # Definition eligibility only; the selected ShopStock is the authority for
   # local availability and quantities, checked separately by each trade.
   def available_in_shop?
@@ -186,7 +193,7 @@ class ItemTemplate < ApplicationRecord
     return unless equipment?
     return if EQUIPMENT_SLOTS.include?(slot) || SLOT_ALIASES.key?(slot.to_s) || slot == "none"
 
-    errors.add(:slot, "must be a valid equipment slot for equipment items")
+    errors.add(:slot, I18n.t("manage.equipment_slot_invalid"))
   end
 
   def shop_catalog_entry
@@ -198,7 +205,7 @@ class ItemTemplate < ApplicationRecord
     return unless shop_catalog_entry["sold"] == true
     return if available_in_shop? && (shop_stock.empty? || valid_shop_stock?)
 
-    errors.add(:enhancement_rules, "shop goods require a valid mode, definition, price, and authored stock")
+    errors.add(:enhancement_rules, I18n.t("manage.shop_catalog_invalid"))
   end
 
   def valid_shop_stock?

@@ -30,9 +30,9 @@ RSpec.describe NpcTemplate, type: :model do
       expect(member_template.tile_npcs).to be_empty
 
       expect(member_template.destroy).to be false
-      expect(member_template.errors[:base]).to include("Cannot delete an NPC template referenced by cell encounter rosters")
+      expect(member_template.errors[:base]).to include(I18n.t("manage.npc_template_roster_referenced"))
       expect(member_template.update(npc_key: "renamed_member")).to be false
-      expect(member_template.errors[:npc_key]).to include("cannot change while referenced by cell encounters")
+      expect(member_template.errors[:npc_key]).to include(I18n.t("manage.npc_key_referenced"))
       expect(member_template.reload.npc_key).to eq("roster_member")
 
       anchor.update!(metadata: {"active" => false})
@@ -60,7 +60,7 @@ RSpec.describe NpcTemplate, type: :model do
           ActiveRecord::Base.connection_pool.with_connection do |connection|
             ApplicationRecord.transaction do
               connection.execute("SET LOCAL lock_timeout = '100ms'")
-              TileNpc.create!(zone: "Outpost Surroundings", x: 1, y: 1, npc_key: "roster_anchor",
+              TileNpc.create!(zone: "Пепельный Берег", x: 1, y: 1, npc_key: "roster_anchor",
                 npc_template_id: anchor_id, npc_role: "hostile", level: 1, metadata:)
             end
           rescue => error

@@ -8,6 +8,7 @@ class ArenaApplicationsController < ApplicationController
   before_action :set_room, only: [:index, :create]
   before_action :ensure_room_access!, only: :index
   before_action :set_application, only: [:accept, :destroy, :cancel]
+  rescue_from ActiveRecord::RecordNotFound, with: :application_or_room_missing
 
   # GET /arena_rooms/:arena_room_id/arena_applications
   def index
@@ -33,10 +34,10 @@ class ArenaApplicationsController < ApplicationController
 
     respond_to do |format|
       if result.success?
-        format.html { redirect_to arena_room_path(@room), notice: "Application submitted." }
+        format.html { redirect_to arena_room_path(@room), notice: I18n.t("game.flashes.application_submitted") }
         format.json { render json: {success: true, application: result.application}, status: :created }
       else
-        format.html { redirect_to arena_room_path(@room), alert: result.errors.join(", ") }
+        format.html { redirect_to arena_index_path(application_denied: 1), alert: result.errors.join(", ") }
         format.json { render json: {success: false, errors: result.errors}, status: :unprocessable_entity }
       end
     end
@@ -53,7 +54,7 @@ class ArenaApplicationsController < ApplicationController
 
     respond_to do |format|
       if result.success?
-        format.html { redirect_to arena_match_path(result.match), notice: "Application accepted." }
+        format.html { redirect_to arena_match_path(result.match), notice: I18n.t("game.flashes.application_accepted") }
         format.json do
           render json: {
             success: true,
@@ -63,7 +64,10 @@ class ArenaApplicationsController < ApplicationController
           }
         end
       else
-        format.html { redirect_back fallback_location: arena_index_path, alert: result.errors.join(", ") }
+        format.html do
+          redirect_to arena_index_path(application_denied: 1),
+            alert: result.errors.join(", ")
+        end
         format.json { render json: {success: false, errors: result.errors}, status: :unprocessable_entity }
       end
     end
@@ -84,10 +88,13 @@ class ArenaApplicationsController < ApplicationController
 
     respond_to do |format|
       if result.success?
-        format.html { redirect_to arena_room_path(@application.arena_room), notice: "Application canceled." }
+        format.html { redirect_to arena_room_path(@application.arena_room), notice: I18n.t("game.flashes.application_canceled") }
         format.json { render json: {success: true} }
       else
-        format.html { redirect_back fallback_location: arena_index_path, alert: result.errors.join(", ") }
+        format.html do
+          redirect_to arena_index_path(application_denied: 1),
+            alert: result.errors.join(", ")
+        end
         format.json { render json: {success: false, errors: result.errors}, status: :unprocessable_entity }
       end
     end
@@ -103,9 +110,9 @@ class ArenaApplicationsController < ApplicationController
     return if @room.accessible_by?(current_character)
 
     respond_to do |format|
-      format.html { redirect_to arena_index_path, alert: "This arena room is unavailable." }
+      format.html { redirect_to arena_index_path(arena_denied: 1), alert: I18n.t("game.flashes.arena_room_unavailable") }
       format.json do
-        render json: {success: false, errors: ["This arena room is unavailable."]}, status: :forbidden
+        render json: {success: false, errors: [I18n.t("game.flashes.arena_room_unavailable")]}, status: :forbidden
       end
     end
   end
@@ -114,9 +121,23 @@ class ArenaApplicationsController < ApplicationController
     @application = ArenaApplication.find(params[:id])
   end
 
+  def application_or_room_missing
+    respond_to do |format|
+      format.html do
+        redirect_to arena_index_path(arena_denied: 1),
+          alert: I18n.t("game.flashes.arena_application_missing"),
+          status: :see_other
+      end
+      format.json do
+        render json: {success: false, errors: [I18n.t("game.flashes.arena_application_missing")]},
+          status: :not_found
+      end
+    end
+  end
+
   def require_character
     unless current_character
-      redirect_to root_path, alert: "A character is required to enter the arena."
+      redirect_to root_path, alert: I18n.t("game.flashes.arena_character_required")
     end
   end
 
@@ -127,14 +148,16 @@ class ArenaApplicationsController < ApplicationController
 
   def application_params
     params.require(:arena_application).permit(
-      :fight_type, :fight_kind, :timeout_seconds, :trauma_percent,
+      :fight_type, :fight_kind, :timeout_seconds, :turn_seconds, :trauma_percent, :combat_trauma,
+      :assault_scroll_kind,
       :team_count, :team_level_min, :team_level_max,
       :enemy_count, :enemy_level_min, :enemy_level_max,
       :wait_minutes
     )
   rescue ActionController::ParameterMissing
     params.permit(
-      :fight_type, :fight_kind, :timeout_seconds, :trauma_percent,
+      :fight_type, :fight_kind, :timeout_seconds, :turn_seconds, :trauma_percent, :combat_trauma,
+      :assault_scroll_kind,
       :team_count, :team_level_min, :team_level_max,
       :enemy_count, :enemy_level_min, :enemy_level_max,
       :wait_minutes

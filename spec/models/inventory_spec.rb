@@ -107,7 +107,7 @@ RSpec.describe Inventory, type: :model do
     it "raises error when insufficient materials" do
       expect {
         inventory.consume_materials!({"Rat Tail" => 15})
-      }.to raise_error(Inventory::InsufficientMaterialsError, /Missing Rat Tail/)
+      }.to raise_error(Inventory::InsufficientMaterialsError, I18n.t("game.inventory.missing_material", name: "Rat Tail"))
     end
   end
 

@@ -108,6 +108,28 @@
   text-align: center;
 }
 
+.nl-inventory-junk-link {
+  color: #5a7040;
+  text-decoration: underline;
+}
+
+.nl-inventory-junk-link:hover {
+  color: #3a5020;
+}
+
+.nl-inventory-junk-hint {
+  color: #8a8050;
+}
+
+.nl-inventory-wear {
+  color: #8a7040;
+  font-weight: 700;
+}
+
+.nl-inventory-wear--broken {
+  color: #a04040;
+}
+
 /* ---------------------------------------------------------------- *
  * Item rows
  * ---------------------------------------------------------------- */
@@ -129,6 +151,29 @@
   gap: 1px;
   background: var(--nl-rule);
   grid-template-columns: 72px minmax(0, 1fr);
+}
+
+.nl-inventory-item--broken {
+  outline: 1px solid #a33;
+  outline-offset: -1px;
+}
+
+.nl-inventory-broken-badge {
+  margin-left: 6px;
+  color: #a33;
+  font: bold 10px/12px var(--nl-font-tahoma);
+}
+
+.nl-inventory-broken-hint {
+  margin-top: 2px;
+  color: var(--nl-text-soft);
+  font: 10px/12px var(--nl-font-tahoma);
+}
+
+.nl-inventory-durability-label {
+  margin-left: 6px;
+  color: var(--nl-text-soft);
+  font: 10px/12px var(--nl-font-tahoma);
 }
 
 .nl-inventory-item-icon {
@@ -172,6 +217,19 @@
   display: block;
   height: 100%;
   background: var(--nl-rule-blue);
+}
+
+.nl-durability-bar--low span {
+  background: #c9782a;
+}
+
+.nl-durability-bar--broken {
+  background: #e0b8b8;
+}
+
+.nl-durability-bar--broken span {
+  background: #a33;
+  width: 0 !important;
 }
 
 .nl-inventory-item-body {
@@ -328,5 +386,43 @@
 
   .nl-inventory-item-details {
     grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (pointer: coarse) {
+  .nl-inventory-page .invbut,
+  .nl-inventory-page .lbut,
+  .nl-inventory-page .weaponch,
+  .nl-equipment-sets .invbut,
+  .nl-equipment-sets .lbut,
+  .nl-family-inventory .weaponch,
+  .nl-inventory-page .nl-sheet-link {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 8px 10px;
+    font-size: 12px;
+    line-height: 1.25;
+  }
+
+  .nl-inventory-page input.LogintextBox,
+  .nl-inventory-page input.LogintextBox2,
+  .nl-inventory-page input.LogintextBox4,
+  .nl-inventory-page select.LogintextBox {
+    min-height: 44px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 360px) {
+  .nl-inventory-page,
+  .nl-inventory-grid,
+  .nl-inventory-item,
+  .nl-family-inventory {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .nl-inventory-item {
+    grid-template-columns: 48px minmax(0, 1fr);
   }
 }

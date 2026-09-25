@@ -4,6 +4,7 @@ class ArenaMatchesController < ApplicationController
   before_action :authenticate_user!
   before_action :set_arena_match, only: [:show, :action, :claim_timeout, :finish, :log]
   before_action :require_character, only: [:action, :claim_timeout, :finish]
+  rescue_from ActiveRecord::RecordNotFound, with: :match_missing
 
   def show
     authorize @arena_match
@@ -18,7 +19,7 @@ class ArenaMatchesController < ApplicationController
 
     # Auto-end stale or finished matches
     if @arena_match.auto_end_if_needed!
-      flash.now[:notice] = "Fight finished."
+      flash.now[:notice] = I18n.t("game.flashes.fight_finished")
     end
 
     @participations = @arena_match.arena_participations.includes(
@@ -69,12 +70,12 @@ class ArenaMatchesController < ApplicationController
 
     respond_to do |format|
       if result.success?
-        message = result[:surrendered] ? "Surrender recorded." : "Turn submitted."
+        message = result[:surrendered] ? I18n.t("game.flashes.surrender_recorded") : I18n.t("game.flashes.turn_submitted")
         format.html { redirect_to @arena_match, notice: message, status: :see_other }
         format.json { render json: {success: true, data: result.data} }
         format.turbo_stream { redirect_to @arena_match, notice: message, status: :see_other }
       else
-        format.html { redirect_to @arena_match, alert: result.error, status: :see_other }
+        format.html { redirect_to arena_match_path(@arena_match, match_denied: 1), alert: result.error, status: :see_other }
         format.json { render json: {success: false, error: result.error}, status: :unprocessable_entity }
         format.turbo_stream { head :unprocessable_entity }
       end
@@ -94,11 +95,11 @@ class ArenaMatchesController < ApplicationController
 
     respond_to do |format|
       if result.success?
-        message = result[:mode] == "draw" ? "Timeout draw recorded." : "Timeout victory recorded."
+        message = result[:mode] == "draw" ? I18n.t("game.flashes.timeout_draw") : I18n.t("game.flashes.timeout_victory")
         format.html { redirect_to @arena_match, notice: message, status: :see_other }
         format.json { render json: {success: true, data: result.data} }
       else
-        format.html { redirect_to @arena_match, alert: result.error, status: :see_other }
+        format.html { redirect_to arena_match_path(@arena_match, match_denied: 1), alert: result.error, status: :see_other }
         format.json { render json: {success: false, error: result.error}, status: :unprocessable_entity }
       end
     end
@@ -110,9 +111,9 @@ class ArenaMatchesController < ApplicationController
 
     unless @arena_match.completed?
       respond_to do |format|
-        format.html { redirect_to @arena_match, alert: "The fight is still active." }
+        format.html { redirect_to arena_match_path(@arena_match, match_denied: 1), alert: I18n.t("game.flashes.fight_still_active") }
         format.json do
-          render json: {error: "The fight is still active."}, status: :unprocessable_content
+          render json: {error: I18n.t("game.flashes.fight_still_active")}, status: :unprocessable_content
         end
         format.turbo_stream { head :unprocessable_content }
       end
@@ -127,14 +128,26 @@ class ArenaMatchesController < ApplicationController
     end
     current_character.exit_combat! if current_character.in_combat?
 
-    redirect_to finish_destination_path, notice: "Fight finished.", status: :see_other
+    recovery = Game::World::DefeatRecovery.new(character: current_character).call
+    injury_state = Game::Combat::InjuryState.new(character: current_character)
+    injury_note = injury_state.summary
+    combat_hint = if injury_state.active.any? { |row| row["severity"].to_s == "combat" }
+      I18n.t("game.injuries.combat_finish_hint")
+    end
+    notice_parts = [recovery.recovered ? recovery.message : I18n.t("game.flashes.fight_finished"), injury_note, combat_hint]
+    notice = notice_parts.compact.join(" ")
+    if recovery.recovered
+      redirect_to recovery.path, notice:, status: :see_other
+    else
+      redirect_to finish_destination_path, notice:, status: :see_other
+    end
   end
 
   private
 
   def require_character
     unless current_character
-      redirect_to arena_index_path, alert: "A character is required to participate."
+      redirect_to arena_index_path, alert: I18n.t("game.flashes.arena_character_required_participate")
     end
   end
 
@@ -167,6 +180,12 @@ class ArenaMatchesController < ApplicationController
 
   def set_arena_match
     @arena_match = ArenaMatch.find(params[:id])
+  end
+
+  def match_missing
+    redirect_to arena_index_path(arena_denied: 1),
+      alert: I18n.t("game.flashes.arena_match_missing"),
+      status: :see_other
   end
 
   def match_payload

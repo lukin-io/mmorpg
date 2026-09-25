@@ -49,6 +49,9 @@ module Game
           if Characters::FatigueService.new(character:).outdoor_actions_blocked?
             next Result.new(position:, active_command: nil, destinations: [], locked_reason: :fatigued)
           end
+          if Game::Combat::InjuryState.new(character:).blocks_movement?
+            next Result.new(position:, active_command: nil, destinations: [], locked_reason: :injured)
+          end
 
           destinations = build_destination_offers(position)
           Result.new(position:, active_command: nil, destinations:, locked_reason: nil)

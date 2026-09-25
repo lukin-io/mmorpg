@@ -71,7 +71,7 @@ RSpec.describe Arena::ApplicationHandler do
         )
 
         expect(result.success?).to be false
-        expect(result.errors).to include("This arena room is unavailable")
+        expect(result.errors).to include(I18n.t("game.fight.app_room_unavailable"))
       end
     end
 
@@ -91,7 +91,7 @@ RSpec.describe Arena::ApplicationHandler do
         )
 
         expect(result.success?).to be false
-        expect(result.errors).to include("You already have an active fight application")
+        expect(result.errors).to include(I18n.t("game.fight.app_already_has_application"))
       end
     end
 
@@ -159,7 +159,7 @@ RSpec.describe Arena::ApplicationHandler do
         )
 
         expect(result.success?).to be false
-        expect(result.errors).to include("Arena room is full")
+        expect(result.errors).to include(I18n.t("game.fight.app_room_full"))
       end
     end
   end
@@ -263,7 +263,7 @@ RSpec.describe Arena::ApplicationHandler do
         )
 
         expect(result.success?).to be false
-        expect(result.errors).to include("You cannot accept this application")
+        expect(result.errors).to include(I18n.t("game.fight.app_cannot_accept"))
       end
     end
 
@@ -282,7 +282,7 @@ RSpec.describe Arena::ApplicationHandler do
         )
 
         expect(result.success?).to be false
-        expect(result.errors).to include("You cannot accept this application")
+        expect(result.errors).to include(I18n.t("game.fight.app_cannot_accept"))
       end
     end
 
@@ -298,7 +298,7 @@ RSpec.describe Arena::ApplicationHandler do
         )
 
         expect(result.success?).to be false
-        expect(result.errors).to include("You cannot accept this application")
+        expect(result.errors).to include(I18n.t("game.fight.app_cannot_accept"))
       end
     end
 
@@ -319,7 +319,7 @@ RSpec.describe Arena::ApplicationHandler do
         )
 
         expect(result.success?).to be false
-        expect(result.errors.first).to include("cannot accept this application")
+        expect(result.errors.first).to match(/cannot accept this application|не можете принять эту заявку|Восстановитесь перед боем|Recover before fighting/)
       end
     end
 
@@ -552,7 +552,7 @@ RSpec.describe Arena::ApplicationHandler do
         )
 
         expect(result.success?).to be false
-        expect(result.errors).to include("You can only cancel your own applications")
+        expect(result.errors).to include(I18n.t("game.fight.app_cancel_own_only"))
       end
     end
 

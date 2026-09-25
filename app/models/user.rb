@@ -4,12 +4,25 @@ class User < ApplicationRecord
   unless const_defined?(:MAX_CHARACTERS)
     MAX_CHARACTERS = 5
   end
+  MAX_PROFILE_NAME_LENGTH = 20
+  PROFILE_NAME_FORMAT = /\A[\p{L}\p{N}](?:[\p{L}\p{N}_ -]{0,18}[\p{L}\p{N}])?\z/u
 
   rolify
 
+  # Sandbox/Railway: no SMTP — keep confirmable schema but allow login without email.
   devise :database_authenticatable, :registerable,
     :recoverable, :rememberable, :validatable,
     :confirmable, :trackable, :timeoutable
+
+  before_create :sandbox_skip_confirmation
+  before_validation :normalize_profile_name
+
+  def sandbox_skip_confirmation
+    return unless ENV["SANDBOX_OPEN_AUTH"] == "1"
+
+    skip_confirmation!
+    skip_confirmation_notification!
+  end
 
   has_many :user_sessions, dependent: :destroy
   has_many :characters, dependent: :destroy
@@ -36,11 +49,14 @@ class User < ApplicationRecord
     dependent: :restrict_with_error
   after_create :assign_default_role
   after_create :ensure_currency_wallet!
-  before_validation :ensure_profile_name
 
   scope :verified, -> { where.not(confirmed_at: nil) }
 
-  validates :profile_name, presence: true, uniqueness: true, length: {maximum: 32}
+  validates :profile_name,
+    presence: true,
+    uniqueness: {case_sensitive: false},
+    length: {minimum: 2, maximum: MAX_PROFILE_NAME_LENGTH},
+    format: {with: PROFILE_NAME_FORMAT, message: :invalid_nickname}
 
   def verified_for_social_features?
     confirmed?
@@ -49,7 +65,7 @@ class User < ApplicationRecord
   def ensure_social_features!
     return if verified_for_social_features?
 
-    raise Pundit::NotAuthorizedError, "Email verification required"
+    raise Pundit::NotAuthorizedError, I18n.t("game.flashes.email_verification_required")
   end
 
   def moderator?
@@ -61,7 +77,10 @@ class User < ApplicationRecord
   end
 
   def ensure_playable_character!
-    character || characters.create!(name: next_character_name)
+    playable = character || characters.create!(name: next_character_name)
+    Game::World::StarterKit.new(character: playable).call
+    Game::Quests::Journal.new(character: playable).ensure_starter!
+    playable
   end
 
   def suspended?
@@ -94,19 +113,9 @@ class User < ApplicationRecord
 
   private
 
-  def ensure_profile_name
-    return if profile_name.present?
-
-    base = email.to_s.split("@").first.presence || "player"
-    candidate = base.parameterize.presence || "player"
-    suffix = 1
-
-    while User.where.not(id: id).exists?(profile_name: candidate)
-      suffix += 1
-      candidate = "#{base.parameterize}-#{suffix}"
-    end
-
-    self.profile_name = candidate
+  def normalize_profile_name
+    self.profile_name = profile_name.to_s.strip.squeeze(" ")
+    self.profile_name = nil if profile_name.blank?
   end
 
   def assign_default_role
@@ -119,13 +128,14 @@ class User < ApplicationRecord
 
   def next_character_name
     base = profile_name.presence || email.to_s.split("@").first.presence || "player"
-    normalized = base.to_s.gsub(/[^a-zA-Z0-9_]/, "_").squeeze("_").delete_prefix("_").delete_suffix("_")
+    normalized = base.to_s.strip.gsub(/[^\p{L}\p{N}_ -]/u, "").squeeze(" ").tr(" ", "_")
+    normalized = normalized.squeeze("_").delete_prefix("_").delete_suffix("_")
     normalized = "player" if normalized.blank?
     normalized = normalized.first(Character::MAX_NAME_LENGTH)
     candidate = normalized
     suffix = 1
 
-    while Character.exists?(name: candidate)
+    while Character.where("LOWER(name) = ?", candidate.downcase).exists?
       suffix += 1
       suffix_text = suffix.to_s
       candidate = "#{normalized.first(Character::MAX_NAME_LENGTH - suffix_text.length)}#{suffix_text}"

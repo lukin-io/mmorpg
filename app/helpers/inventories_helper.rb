@@ -40,32 +40,27 @@ module InventoriesHelper
     ["runes", "Runes"]
   ].freeze
 
-  FAMILY_EMPTY_STATES = {
-    "elixirs" => "You carry no elixirs.",
-    "quests" => "No active quests.",
-    "all" => "No items in this category.",
-    "things" => "No things in this category."
-  }.freeze
+  FAMILY_EMPTY_KEYS = %w[elixirs quests all things].freeze
 
-  FAMILY_SECTIONS = {
+  FAMILY_SECTION_KEYS = {
     "alchemy" => [
-      ["Alchemy Inventory", "No alchemy inventory items available.", true],
-      ["Alchemy Resources", "No alchemy resources available.", true]
+      %w[alchemy_inventory alchemy_inventory_empty],
+      %w[alchemy_resources alchemy_resources_empty]
     ],
     "fishing" => [
-      ["Fishing Inventory", "No fishing inventory items available.", true],
-      ["Alchemy Resources", "No alchemy resources available.", true]
+      %w[fishing_inventory fishing_inventory_empty],
+      %w[alchemy_resources alchemy_resources_empty]
     ],
     "hunting" => [
-      ["Cooking Inventory", "No cooking inventory items available.", true],
-      ["Resources", "No resources available.", true]
+      %w[cooking_inventory cooking_inventory_empty],
+      %w[resources resources_empty]
     ],
     "resources" => [
-      ["Resources", "No resources available.", true]
+      %w[resources resources_empty]
     ],
     "wood" => [
-      ["Carpentry Inventory", "No carpentry inventory items available.", true],
-      ["Resources", "No resources available.", true]
+      %w[carpentry_inventory carpentry_inventory_empty],
+      %w[resources resources_empty]
     ]
   }.freeze
 
@@ -190,84 +185,86 @@ module InventoriesHelper
     "doctor_license_iii" => "items/doctor_license_iii.png"
   }.freeze
 
-  INVENTORY_CATEGORY_MARKS = {
-    "all" => "All",
-    "things" => "Gear",
-    "elixirs" => "Elx",
-    "fishing" => "Fish",
-    "alchemy" => "Alch",
-    "hunting" => "Hunt",
-    "resources" => "Res",
-    "wood" => "Wood",
-    "quests" => "Quest"
-  }.freeze
-
   # Family strip order observed in the live inventory capture. The source has no
   # "all" icon: its first family is the equipment family, so the local default
   # `all` category highlights the same cell.
   INVENTORY_FAMILY_STRIP = %w[things elixirs alchemy fishing hunting resources wood quests].freeze
 
-  ITEM_DETAIL_LABELS = {
-    "ap" => "Action Points",
-    "action_points" => "Action Points",
-    "armor_class" => "Armor class",
-    "armor_pierce" => "Armor pierce",
-    "armor_piercing" => "Armor pierce",
-    "crushing" => "Crushing",
-    "dexterity" => "Dexterity",
-    "dodge" => "Dodge",
-    "earth_resistance" => "Earth resistance",
-    "evasion" => "Evasion",
-    "fire_resistance" => "Fire resistance",
-    "fortitude" => "Fortitude",
-    "health" => "Health",
-    "hp" => "HP",
-    "intelligence" => "Knowledge",
-    "knowledge" => "Knowledge",
-    "luck" => "Luck",
-    "mana" => "Mana",
-    "mass" => "Mass",
-    "max_hp" => "HP",
-    "max_mp" => "Mana",
-    "mp" => "Mana",
-    "strength" => "Strength",
-    "vitality" => "Health",
-    "water_resistance" => "Water resistance",
-    "air_resistance" => "Air resistance",
-    "all_resistances" => "All elemental resistances",
-    "two_handed" => "Two-handed",
-    "two_handed_skill" => "Two-Handed Skill"
+  ITEM_DETAIL_I18N_KEYS = {
+    "ap" => "action_points",
+    "action_points" => "action_points",
+    "armor_class" => "armor_class",
+    "armor_pierce" => "armor_pierce",
+    "armor_piercing" => "armor_pierce",
+    "crushing" => "crushing",
+    "dexterity" => "dexterity",
+    "dodge" => "dodge",
+    "earth_resistance" => "earth_resistance",
+    "evasion" => "evasion",
+    "fire_resistance" => "fire_resistance",
+    "fortitude" => "fortitude",
+    "health" => "health",
+    "hp" => "hp",
+    "intelligence" => "knowledge",
+    "knowledge" => "knowledge",
+    "luck" => "luck",
+    "mana" => "mana",
+    "mass" => "mass",
+    "max_hp" => "hp",
+    "max_mp" => "mana",
+    "mp" => "mana",
+    "strength" => "strength",
+    "vitality" => "health",
+    "water_resistance" => "water_resistance",
+    "air_resistance" => "air_resistance",
+    "all_resistances" => "all_resistances",
+    "two_handed" => "two_handed",
+    "two_handed_skill" => "two_handed_skill"
   }.freeze
 
-  ITEM_SKILL_LABELS = {
-    "unarmed_skill" => "Unarmed Combat",
-    "unarmed_combat" => "Unarmed Combat",
-    "sword_skill" => "Sword Skill",
-    "sword_mastery" => "Sword Skill",
-    "axe_skill" => "Axe Skill",
-    "axe_mastery" => "Axe Skill",
-    "blunt_skill" => "Bludgeoning Skill",
-    "bludgeoning_skill" => "Bludgeoning Skill",
-    "bludgeoning_mastery" => "Bludgeoning Skill",
-    "knife_skill" => "Knife Skill",
-    "knife_mastery" => "Knife Skill",
-    "throwing_skill" => "Throwing Skill",
-    "throwing_mastery" => "Throwing Skill",
-    "polearm_skill" => "Polearm Skill",
-    "polearm_mastery" => "Polearm Skill",
-    "staff_skill" => "Staff Skill",
-    "staff_mastery" => "Staff Skill",
-    "two_handed_skill" => "Two-Handed Skill",
-    "two_handed_mastery" => "Two-Handed Skill",
-    "dual_wield_skill" => "Dual Wielding",
-    "dual_wielding" => "Dual Wielding",
-    "stealth" => "Stealth",
-    "linguistics" => "Linguistics"
+  ITEM_SKILL_I18N_KEYS = {
+    "unarmed_skill" => "unarmed_combat",
+    "unarmed_combat" => "unarmed_combat",
+    "sword_skill" => "sword_skill",
+    "sword_mastery" => "sword_skill",
+    "axe_skill" => "axe_skill",
+    "axe_mastery" => "axe_skill",
+    "blunt_skill" => "bludgeoning_skill",
+    "bludgeoning_skill" => "bludgeoning_skill",
+    "bludgeoning_mastery" => "bludgeoning_skill",
+    "knife_skill" => "knife_skill",
+    "knife_mastery" => "knife_skill",
+    "throwing_skill" => "throwing_skill",
+    "throwing_mastery" => "throwing_skill",
+    "polearm_skill" => "polearm_skill",
+    "polearm_mastery" => "polearm_skill",
+    "staff_skill" => "staff_skill",
+    "staff_mastery" => "staff_skill",
+    "two_handed_skill" => "two_handed_skill",
+    "two_handed_mastery" => "two_handed_skill",
+    "dual_wield_skill" => "dual_wielding",
+    "dual_wielding" => "dual_wielding",
+    "stealth" => "stealth",
+    "linguistics" => "linguistics"
   }.freeze
 
   ITEM_EFFECT_SKIP_KEYS = %w[
     damage_min damage_max heal_hp restore_mp reset_allocation family weapon_family
+    buff buff_duration_seconds blood_tier
   ].freeze
+
+  BUFF_MOD_LABELS = {
+    "attack" => "Атака",
+    "defense" => "Защита",
+    "accuracy" => "Точность",
+    "dodge" => "Уклон",
+    "max_hp" => "Макс. HP",
+    "gather_speed" => "Скорость сбора %",
+    "fishing_skill" => "Рыбалка",
+    "luck" => "Удача",
+    "intelligence" => "Знания"
+  }.freeze
+  CRAFT_GEAR_PREFIXES = %w[ash_ranger_ ash_warden_ ash_battle_ ash_forager_].freeze
 
   def equipment_slot_icon(slot)
     SLOT_ICONS[slot.to_sym] || "[ ]"
@@ -280,24 +277,37 @@ module InventoriesHelper
     ITEM_TYPE_ICONS[item_template.item_type] || "IT"
   end
 
-  def item_artwork_path(item_template)
-    ITEM_ARTWORK_PATHS[item_template.key.to_s]
+  def item_artwork_path(item_template, inventory_item: nil)
+    custom = inventory_item&.properties.to_h["custom_icon"].presence
+    return custom if custom.present?
+
+    explicit = item_template.enhancement_rules.to_h["icon"].presence
+    path = explicit.presence || ITEM_ARTWORK_PATHS[item_template.key.to_s]
+    return if path.blank?
+
+    path = path.to_s
+    # Absolute CDN / public ashen paths stay absolute for image_tag.
+    # Authored Propshaft assets under items/ must NOT get a leading slash, or
+    # the browser requests /items/*.png outside the digested asset pipeline (404).
+    return path if path.start_with?("http://", "https://", "/ashen/")
+
+    path.delete_prefix("/")
   end
 
   def inventory_category_options
-    INVENTORY_CATEGORIES
+    INVENTORY_CATEGORIES.map { |key, _| [key, inventory_category_label(key)] }
   end
 
   def inventory_category_mark(category)
-    INVENTORY_CATEGORY_MARKS.fetch(category.to_s, INVENTORY_CATEGORY_MARKS.fetch("all"))
+    I18n.t("game.inventory.marks.#{category}", default: I18n.t("game.inventory.marks.all"))
   end
 
   def inventory_category_label(category)
-    INVENTORY_CATEGORIES.to_h.fetch(category.to_s, category.to_s.humanize)
+    I18n.t("game.inventory.categories.#{category}", default: category.to_s.tr("_", " "))
   end
 
   def inventory_things_subcategory_options
-    THINGS_SUBCATEGORIES
+    THINGS_SUBCATEGORIES.map { |key, _| [key, I18n.t("game.inventory.subcategories.#{key}", default: key.to_s.tr("_", " "))] }
   end
 
   def inventory_equipment_family?(category)
@@ -305,11 +315,18 @@ module InventoriesHelper
   end
 
   def inventory_family_sections(category)
-    FAMILY_SECTIONS.fetch(category.to_s, [])
+    FAMILY_SECTION_KEYS.fetch(category.to_s, []).map do |title_key, empty_key|
+      [I18n.t("game.inventory.sections.#{title_key}"), I18n.t("game.inventory.sections.#{empty_key}"), true]
+    end
   end
 
   def inventory_empty_message(category)
-    FAMILY_EMPTY_STATES.fetch(category.to_s, "No items in this category.")
+    key = category.to_s
+    if FAMILY_EMPTY_KEYS.include?(key)
+      I18n.t("game.inventory.empty.#{key}")
+    else
+      I18n.t("game.common.no_items")
+    end
   end
 
   def inventory_requirement_rows(item)
@@ -321,7 +338,7 @@ module InventoriesHelper
       missing_entry = missing[normalized]
       {
         label:,
-        value: missing_entry ? "#{value} (current #{missing_entry[:current]})" : value,
+        value: missing_entry ? I18n.t("game.inventory.current_value", value:, current: missing_entry[:current]) : value,
         met: missing_entry.blank?
       }
     end
@@ -342,12 +359,33 @@ module InventoriesHelper
   def inventory_item_properties(item)
     template = item.item_template
     lines = []
-    lines << ["Quantity", item.quantity] if item.quantity.to_i > 1
-    lines << ["Price", "#{template.base_price} NV"] if template.base_price.to_i.positive?
-    lines << ["Durability", inventory_item_durability(item)] if inventory_item_durability(item)
-    lines << ["Damage", "#{template.stat_modifiers["damage_min"]}-#{template.stat_modifiers["damage_max"]}"] if template.stat_modifiers["damage_min"] && template.stat_modifiers["damage_max"]
+    lines << [I18n.t("game.details.quantity"), item.quantity] if item.quantity.to_i > 1
+    lines << [I18n.t("game.details.price"), "#{template.base_price} NV"] if template.base_price.to_i.positive?
+    lines << [I18n.t("game.details.durability"), inventory_item_durability(item)] if inventory_item_durability(item)
+    lines << [I18n.t("game.details.damage"), "#{template.stat_modifiers["damage_min"]}-#{template.stat_modifiers["damage_max"]}"] if template.stat_modifiers["damage_min"] && template.stat_modifiers["damage_max"]
 
-    template.stat_modifiers.to_h.each do |stat, value|
+    stats = template.stat_modifiers.to_h
+    if stats["heal_hp"].present?
+      lines << [I18n.t("game.details.heal_hp", default: "HP"), "+#{stats["heal_hp"].to_i}"]
+    end
+    if stats["restore_mp"].present?
+      lines << [I18n.t("game.details.restore_mp", default: "MP"), "+#{stats["restore_mp"].to_i}"]
+    end
+    if stats["buff"].is_a?(Hash)
+      blood = stats["blood_tier"].presence || template.enhancement_rules.to_h["blood_tier"]
+      if blood.present?
+        lines << [I18n.t("game.details.blood_tier", default: "Кровь"), Game::Professions::PotionCatalog.roman(blood)]
+      end
+      duration_min = (stats["buff_duration_seconds"].presence || 3600).to_i / 60
+      lines << [I18n.t("game.details.buff_duration", default: "Длительность"), "#{duration_min} мин."]
+      stats["buff"].each do |mod_key, value|
+        label = BUFF_MOD_LABELS[mod_key.to_s] || mod_key.to_s
+        signed = value.to_i.positive? ? "+#{value.to_i}" : value.to_i.to_s
+        lines << [label, signed]
+      end
+    end
+
+    stats.each do |stat, value|
       next if value.blank?
       next if ITEM_EFFECT_SKIP_KEYS.include?(normalize_item_detail_key(stat))
 
@@ -362,16 +400,21 @@ module InventoriesHelper
       append_inventory_property_rows(lines, label, value, signed: false)
     end
 
-    lines << ["Description", template.description] if template.description.present?
+    lines << [I18n.t("game.details.description"), template.description] if template.description.present?
+    lines.concat(equipment_comparison_rows(template))
 
-    lines.presence || [["Description", template.item_type.to_s.titleize]]
+    lines.presence || [[I18n.t("game.details.description"), inventory_item_type_label(template.item_type)]]
+  end
+
+  def inventory_item_type_label(item_type)
+    I18n.t("game.inventory.item_types.#{item_type}", default: item_type.to_s.tr("_", " "))
   end
 
   def inventory_item_requirements(item)
     template = item.item_template
     requirements = template.requirements.to_h.merge(item.properties.to_h.fetch("requirements", {}))
     weight = item.weight.to_i.positive? ? item.weight : template.weight
-    lines = [["Mass", weight, "mass"]]
+    lines = [[I18n.t("game.details.mass"), weight, "mass"]]
 
     requirements.each do |label, value|
       append_inventory_requirement_rows(lines, label, value)
@@ -401,18 +444,51 @@ module InventoriesHelper
 
     damage_min = modifiers["damage_min"].to_i
     damage_max = modifiers["damage_max"].to_i
-    lines << "Damage: #{damage_min}-#{damage_max}" if damage_min.positive? || damage_max.positive?
+    lines << "#{I18n.t("game.details.damage")}: #{damage_min}-#{damage_max}" if damage_min.positive? || damage_max.positive?
 
-    {"Armor class" => "armor_class", "Armor pierce" => "armor_pierce", "HP" => "max_hp", "Mana" => "max_mp"}
-      .each do |title, key|
-        amount = modifiers[key].to_i
-        lines << "#{title}: #{signed_value(amount)}" unless amount.zero?
-      end
+    {
+      I18n.t("game.details.armor_class") => %w[armor_class],
+      I18n.t("game.details.armor_pierce") => %w[armor_pierce],
+      I18n.t("game.details.hp") => %w[hp max_hp],
+      I18n.t("game.details.mana") => %w[mana max_mp]
+    }.each do |title, keys|
+      amount = keys.sum { |key| modifiers[key].to_i }
+      lines << "#{title}: #{signed_value(amount)}" unless amount.zero?
+    end
 
     durability = inventory_item_durability(item)
-    lines << "Durability: #{durability}" if durability
+    lines << "#{I18n.t("game.details.durability")}: #{durability}" if durability
+    equipment_comparison_rows(template).each { |label, value| lines << "#{label}: #{value}" }
 
     lines.join("\n")
+  end
+
+  # Mist-War-style public hover: identity + requirements + durability, no raw
+  # primary-stat dump (Ashen adaptation of the dense but quiet alt text).
+  def mist_paperdoll_slot_tooltip(item, label)
+    template = item.item_template
+    lines = [template&.display_name.presence || template&.name.presence || label]
+    lines << "#{I18n.t("game.dossier.equip_slot")}: #{label}"
+    req = template&.requirements.to_h
+    level = req["level"].to_i
+    lines << "#{I18n.t("game.dossier.equip_req_level")}: #{level}" if level.positive?
+    durability = inventory_item_durability(item)
+    lines << "#{I18n.t("game.details.durability")}: #{durability}" if durability
+    lines << I18n.t("game.dossier.equip_no_stats")
+    lines.join("\n")
+  end
+
+  def equipment_comparison_rows(template)
+    rules = template.enhancement_rules.to_h
+    marked = CRAFT_GEAR_PREFIXES.any? { |prefix| template.key.to_s.start_with?(prefix) } ||
+      rules["craft"].present? || rules["premium"].present? || rules["source"].to_s.in?(%w[craft premium])
+    return [] unless marked && %w[equipment weapon armor accessory].include?(template.item_type.to_s)
+
+    [
+      [I18n.t("game.details.compare_shop", default: "Лавка"), I18n.t("game.details.compare_shop_value", default: "≈60% характеристик")],
+      [I18n.t("game.details.compare_craft", default: "Крафт"), "#{template.base_price.to_i} NV · 100%"],
+      [I18n.t("game.details.compare_premium", default: "Прем"), I18n.t("game.details.compare_premium_value", default: "выше крафта")]
+    ]
   end
 
   def inventory_item_durability_percent(item)
@@ -467,9 +543,10 @@ module InventoriesHelper
 
   def inventory_detail_label(label, parent: nil)
     key = normalize_item_detail_key(label)
-    return inventory_skill_label(key) if ITEM_SKILL_LABELS.key?(key)
+    return inventory_skill_label(key) if ITEM_SKILL_I18N_KEYS.key?(key)
 
-    base = ITEM_DETAIL_LABELS.fetch(key, key.titleize)
+    i18n_key = ITEM_DETAIL_I18N_KEYS[key]
+    base = i18n_key ? I18n.t("game.details.#{i18n_key}") : I18n.t("game.details.#{key}", default: key.tr("_", " "))
     parent_key = normalize_item_detail_key(parent)
     return base if parent.blank? || %w[stats skills requirements properties effects].include?(parent_key)
 
@@ -478,15 +555,16 @@ module InventoriesHelper
 
   def inventory_skill_label(skill)
     key = normalize_item_detail_key(skill)
-    ITEM_SKILL_LABELS.fetch(key) do
-      definition = Game::Skills::PassiveSkillRegistry.find(key)
-      definition&.fetch(:name) || key.titleize
-    end
+    i18n_key = ITEM_SKILL_I18N_KEYS[key]
+    return I18n.t("game.skills.#{i18n_key}") if i18n_key
+
+    definition = Game::Skills::PassiveSkillRegistry.find(key)
+    definition&.fetch(:name) || I18n.t("game.skills.#{key}", default: key.tr("_", " "))
   end
 
   def formatted_item_value(value, signed: true)
-    return "yes" if value == true
-    return "no" if value == false
+    return I18n.t("game.common.yes", default: "да") if value == true
+    return I18n.t("game.common.no", default: "нет") if value == false
     return value.to_json if value.is_a?(Array) || value.is_a?(Hash)
     return value unless signed
 

@@ -18,6 +18,19 @@ module Manage
       return attributes unless attributes.delete("content_fields") == "1"
 
       metadata["encounter_count"] = integer(attributes.delete("encounter_count"))
+      if attributes.key?("respawn_seconds")
+        value = attributes.delete("respawn_seconds")
+        value.present? ? metadata["respawn_seconds"] = integer(value) : metadata.delete("respawn_seconds")
+      end
+      if attributes.key?("drop_chance_multiplier")
+        raw = attributes.delete("drop_chance_multiplier")
+        if raw.present?
+          mult = Float(raw, exception: false)
+          metadata["drop_chance_multiplier"] = mult.clamp(0.1, 5.0) if mult
+        else
+          metadata.delete("drop_chance_multiplier")
+        end
+      end
       rosters = attributes.delete("rosters").to_h.values.filter_map { |sample| normalize_sample(sample.to_h) }
       rosters.any? ? metadata["encounter_rosters"] = rosters : metadata.delete("encounter_rosters")
       attributes

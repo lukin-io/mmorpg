@@ -7,20 +7,46 @@
 <% if @active_world_action.present? %>
   <% locked_actions = Array(@tile_state&.local_actions) %>
   <% locked_actions.each do |action| %>
-    <button type="button" class="nl-nav-link nl-world-action-button" disabled><%= action["label"].presence || MapTileTemplate.default_local_action_label(action["type"]) %></button>
+    <button type="button" class="nl-nav-link nl-world-action-button" disabled><%= MapTileTemplate.player_local_action_label(action["type"], action["label"]) %></button>
   <% end %>
   <% unless locked_actions.any? { |action| MapTileTemplate.world_action_type_for(action["type"]) == @active_world_action.action_type } %>
-    <button type="button" class="nl-nav-link nl-world-action-button" disabled><%= @active_world_action.metadata["label"].presence || "Action in progress" %></button>
+    <button type="button" class="nl-nav-link nl-world-action-button" disabled><%= @active_world_action.metadata["label"].presence || t("game.world.action_in_progress") %></button>
   <% end %>
 <% end %>
 
-<% if @movement_state&.locked_reason == :fatigued %>
-  <span class="nl-world-action-unavailable" title="Fatigue is 86% or higher. Move, Look, and Enter are unavailable until it recovers.">Actions unavailable</span>
-  <span class="nl-visually-hidden">Move, Look, and Enter are unavailable until fatigue recovers.</span>
+<% if @movement_state&.locked_reason == :injured %>
+  <% injured_bound = Game::World::ObeliskRecall.bound_for(current_character) %>
+  <div class="nl-world-action-unavailable" data-world-injury-lock="1" title="<%= t("game.injuries.outdoor_lock_title") %>">
+    <span><%= t("game.injuries.outdoor_lock") %></span>
+    <%= link_to t("game.injuries.outdoor_lock_inventory"), inventory_path, class: "nl-sheet-link", data: {world_recovery: "inventory"} %>
+    <% if Game::World::CityBuildingCatalog.accessible?(character: current_character, building_key: "hospital") %>
+      ·
+      <%= link_to t("game.buildings.hospital_title_short"),
+            city_building_path("hospital", anchor: "hospital-premium-desk"),
+            class: "nl-sheet-link",
+            data: {world_recovery: "hospital"} %>
+    <% else %>
+      ·
+      <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {world_recovery: "city"} %>
+    <% end %>
+    <% if injured_bound.present? %>
+      <span data-world-injury-obelisk="1"><%= t("game.injuries.outdoor_lock_obelisk") %></span>
+    <% end %>
+  </div>
+<% elsif @movement_state&.locked_reason == :fatigued %>
+  <div class="nl-world-action-unavailable" data-world-fatigue-lock="1" title="<%= t("game.world.actions_unavailable_title") %>">
+    <span><%= t("game.world.actions_unavailable") %></span>
+    <span class="nl-quests-board__meta"><%= t("game.world.actions_unavailable_title") %></span>
+    <% if Game::World::CityBuildingCatalog.accessible?(character: current_character, building_key: "tavern") %>
+      <%= link_to t("game.buildings.tavern_rest_cta"), city_building_path("tavern"), class: "nl-sheet-link", data: {world_recovery: "tavern"} %>
+    <% else %>
+      <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {world_recovery: "city"} %>
+    <% end %>
+  </div>
 <% end %>
 
 <% if local_actions_present %>
-  <div class="actions-panel nl-world-action-strip" aria-label="Current cell actions">
+  <div class="actions-panel nl-world-action-strip" aria-label="<%= t("game.world.cell_actions") %>">
     <% if tile_building_action && tile_building_action[:building] %>
       <% building = tile_building_action[:building] %>
       <% offer = tile_building_action[:offer] %>
@@ -32,15 +58,19 @@
                       data: {turbo: true, turbo_frame: "_top"} do |f| %>
           <%= f.hidden_field :building_id, value: building[:id] %>
           <%= f.hidden_field :action_key, value: offer.action_key %>
-          <%= f.submit "Enter", class: "nl-nav-link nl-world-action-button", title: building[:name] %>
+          <%= f.submit t("game.world.enter"), class: "nl-nav-link nl-world-action-button", title: building[:name] %>
           <span class="nl-visually-hidden"><%= building[:name] %> <%= building[:destination] %> <%= building[:description] %></span>
         <% end %>
       <% else %>
         <button type="button"
                 class="nl-nav-link nl-world-action-button"
                 title="<%= building[:blocked_reason] %>"
-                disabled>Enter</button>
-        <span class="building-blocked nl-visually-hidden"><%= building[:name] %> <%= building[:blocked_reason] %></span>
+                disabled><%= t("game.world.enter") %></button>
+        <span class="building-blocked nl-quests-board__meta" data-world-enter-blocked="1">
+          <%= building[:blocked_reason].presence || t("game.world.enter_blocked") %>
+          ·
+          <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {world_recovery: "city"} %>
+        </span>
       <% end %>
     <% end %>
 
@@ -50,7 +80,13 @@
       <%= form_with url: perform_local_action_world_path,
                     method: :post,
                     class: "nl-world-action-form",
-                    data: {turbo: true, turbo_frame: "_top"} do |f| %>
+                    data: {
+                      turbo: true,
+                      turbo_frame: "_top",
+                      local_action_type: local_action[:local_action_type],
+                      tile_id: local_action[:tile_id],
+                      action_key: offer.action_key
+                    } do |f| %>
         <%= f.hidden_field :tile_id, value: local_action[:tile_id] %>
         <%= f.hidden_field :local_action_type, value: local_action[:local_action_type] %>
         <%= f.hidden_field :action_key, value: offer.action_key %>

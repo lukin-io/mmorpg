@@ -28,7 +28,7 @@ module Manage
       attributes = parsed_world_cell_params
 
       if attributes && mutate(@world_cell, operation: :create, attributes:)
-        redirect_to manage_world_cell_path(@world_cell), notice: "World cell created.", status: :see_other
+        redirect_to manage_world_cell_path(@world_cell), notice: I18n.t("manage.flashes.world_cell_created"), status: :see_other
       else
         render :new, status: :unprocessable_content
       end
@@ -38,7 +38,7 @@ module Manage
       attributes = parsed_world_cell_params
 
       if attributes && mutate(@world_cell, operation: :update, attributes:)
-        redirect_to manage_world_cell_path(@world_cell), notice: "World cell updated.", status: :see_other
+        redirect_to manage_world_cell_path(@world_cell), notice: I18n.t("manage.flashes.world_cell_updated"), status: :see_other
       else
         render :edit, status: :unprocessable_content
       end
@@ -46,7 +46,7 @@ module Manage
 
     def destroy
       if mutate(@world_cell, operation: :destroy)
-        redirect_to manage_world_cells_path, notice: "World cell deleted.", status: :see_other
+        redirect_to manage_world_cells_path, notice: I18n.t("manage.flashes.world_cell_deleted"), status: :see_other
       else
         redirect_to manage_world_cell_path(@world_cell), alert: @world_cell.errors.full_messages.to_sentence,
           status: :see_other

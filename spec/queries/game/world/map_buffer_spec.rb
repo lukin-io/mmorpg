@@ -48,6 +48,19 @@ RSpec.describe Game::World::MapBuffer do
     expect(result.base_token).to be_nil
   end
 
+  it "projects server-authoritative resource regrowth seconds" do
+    freeze_time do
+      create(:map_tile_template, zone: zone.name, x: 20, y: 20, metadata: {
+        "resource_groups" => [{"key" => "herb", "kind" => "herb", "label" => "трава", "active" => true}],
+        "resource_depletion" => {"herb" => (7.minutes + 42.seconds).from_now.iso8601}
+      })
+
+      tile = buffer.rows.flatten.find { |row| row.x == 20 && row.y == 20 }
+
+      expect(tile.metadata["resource_regrowth"]).to eq([{"label" => "трава", "remaining_seconds" => 462}])
+    end
+  end
+
   it "sends no terrain again when the accepted movement retains its source center" do
     original = buffer
 

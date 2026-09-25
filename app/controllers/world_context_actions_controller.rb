@@ -21,8 +21,8 @@ class WorldContextActionsController < ApplicationController
       redirect_to Game::World::CombatReturnContext.new(character: current_character).path_for(return_context)
     end
   rescue Game::World::CombatReturnContext::UnsupportedContextError => e
-    redirect_to world_path, alert: e.message
+    redirect_to world_path(action_denied: 1), alert: e.message
   rescue Game::World::StartNpcFight::FightViolationError => e
-    redirect_to world_path, alert: e.message
+    redirect_to world_path(action_denied: 1), alert: e.message
   end
 end

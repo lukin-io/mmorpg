@@ -38,14 +38,25 @@ module Game
         config_path = Rails.root.join("config/gameplay/combat_actions.yml")
         raise "Missing source-backed combat action catalog: #{config_path}" unless File.exist?(config_path)
 
-        YAML.load_file(config_path)
+        localize_action_names(YAML.load_file(config_path))
+      end
+
+      def localize_action_names(cfg)
+        %w[body_parts attack_types block_types].each do |section|
+          (cfg[section] || {}).each do |key, entry|
+            next unless entry.is_a?(Hash) && entry["name"].present?
+
+            entry["name"] = I18n.t("game.combat.#{section}.#{key}", default: entry["name"])
+          end
+        end
+        cfg
       end
 
       def standard_blocks_config
         STANDARD_BLOCKS.values.index_by { |entry| entry[:key] }.transform_values do |entry|
           {
             "key" => entry[:key],
-            "name" => entry[:name],
+            "name" => I18n.t("game.combat.block_types.#{entry[:key]}", default: entry[:name]),
             "action_cost" => entry[:action_cost],
             "body_parts" => body_parts_for_block_key(entry[:key]),
             "block_table" => "normal",
@@ -59,7 +70,7 @@ module Game
           entries.each do |entry|
             memo[entry[:key]] = {
               "key" => entry[:key],
-              "name" => entry[:name],
+              "name" => I18n.t("game.combat.block_types.#{entry[:key]}", default: entry[:name]),
               "action_cost" => entry[:action_cost],
               "mana_cost" => entry[:mana_cost],
               "body_parts" => parts,

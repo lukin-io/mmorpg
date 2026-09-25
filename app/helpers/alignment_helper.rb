@@ -1,10 +1,11 @@
 # frozen_string_literal: true
 
 module AlignmentHelper
-  ALIGNMENT_ICONS = Character::ALIGNMENT_LABELS.transform_keys(&:to_sym).freeze
-
   def alignment_icon(alignment)
-    ALIGNMENT_ICONS[alignment.to_sym] || "None"
+    I18n.t(
+      "game.buildings.law_alignment.#{alignment}",
+      default: Character::ALIGNMENT_LABELS.fetch(alignment.to_s, Character::ALIGNMENT_LABELS.fetch("none"))
+    )
   end
 
   # Full alignment badge for a character

@@ -52,7 +52,7 @@ Supporting documents:
 | Related feature | Relationship | Ownership and handoff |
 |---|---|---|
 | `doc/features/game_shell.md` | The shell links to the player profile and renders profile/allocation surfaces in its main content context. | Character Progression owns saved allocations and profile values; Game Shell owns only shared navigation, framing, and header presentation. |
-| `doc/features/world.md` | World consumes effective Wanderer for adjacent travel and supplies the profile's current cell/room/flight label. | Character Progression owns saved skill values and profile formatting; World owns the configurable `24..30` second local fallback, exact authored durations, movement lifecycle, and `Presence#label` resolution from persisted location. |
+| `doc/features/world.md` | World consumes effective Wanderer for adjacent travel and supplies the profile's current cell/room/flight label. | Character Progression owns saved skill values and profile formatting; World owns the soft-release `12..30` second Wanderer fallback, authored durations (also Wanderer-discounted), encumbrance/watchtower factors, movement lifecycle, and `Presence#label` resolution from persisted location. |
 | `doc/features/shop_economy.md` | Shop rows read character requirements and Merchant/Healer prerequisites; Your licenses displays purchased permissions. | Character Progression owns allocations and permission display; Shop owns license grants, catalog, eligibility and atomic settlement, while Inventory owns later equipment enforcement. |
 | `doc/features/player_inventory.md` | The shared character sheet and item rows consume effective stats/skills. | Character Progression owns saved/effective values; Player Inventory owns equipment state, capacity display, and requirement enforcement. |
 | `doc/features/arena_combat.md` | Fight profiles consume effective character values and eligible completed solo NPC fights may award capped XP, whose actual amount is passed onward for concise shell feedback. | Character Progression owns values, thresholds, and grants; Arena Combat owns match resolution, the idempotent award handoff, and the persisted fact supplied to Game Shell. |
@@ -63,15 +63,15 @@ An authenticated player begins at level `0`, gains configured combat experience 
 
 The `Character` record is authoritative for saved allocations and point balances. `allocated_stats`, `passive_skills`, and `perks` are JSONB maps; `stat_points_available`, `combat_skill_points`, `peace_skill_points`, and `perk_points` are separate non-negative counters. The browser never grants points or finalizes an allocation.
 
-Numeric skill identities and four-band progression rates come from the captured Neverlands registry. Effective Extra Action Points now contributes one-for-one to the shared fight AP profile. The selectable perk subset contains source ID `7`, `Больше силы`/`More Strength`, adding `floor(level / 2)` effective Strength; source ID `15`, `Аккуратный боец`/`Careful Fighter`, halving post-fight equipment-wear probability; source ID `34`, Merchant; and source ID `35`, Healer. Merchant and Healer satisfy explicit Shop license prerequisites; selecting either does not grant a license, quest completion, or medical treatment.
+Numeric skill identities and four-band progression rates come from the captured Neverlands registry. Effective Extra Action Points now contributes one-for-one to the shared fight AP profile. The selectable perk subset contains source ID `7`, `Больше силы`/`More Strength`, adding `floor(level / 2)` effective Strength; source ID `15`, `Аккуратный боец`/`Careful Fighter`, halving post-fight equipment-wear probability; source ID `22`, `Дитя природы`/`Nature Child`, raising waterbody drinking recovery from two to four fatigue points; source ID `34`, Merchant; and source ID `35`, Healer. Merchant and Healer satisfy explicit Shop license prerequisites; selecting either does not grant a license, quest completion, or medical treatment.
 
 The MVP currently contains:
 
 - five primary stats with base value `1` and additive saved allocations;
-- a finite table of complete source rows `0..27` for thresholds, stat/skill/perk/NV grants, per-fight XP caps, and source NPC-group limits;
+- a finite Ashen progression table `0..50` for thresholds, denser stat/skill/perk/NV grants, per-fight XP caps, and NPC-group limits;
 - exact `Health × 5` base HP, `Knowledge × 7` base MP, and `Strength × 5 + Health × 10 + level × 10` mass formulas;
 - 29 source-backed numeric skills from `0` to `100` with combat and peace point pools;
-- four selectable binary perks with a separate point pool and captured exclusion infrastructure;
+- five selectable binary perks with a separate point pool and captured exclusion infrastructure;
 - an owner-only Your licenses surface showing current purchased permissions and their server-owned expiry;
 - solo configured-NPC XP award through idempotent fight finalization, capped by the current level row;
 - public HTML and JSON display of numeric skills and owned perks;
@@ -96,7 +96,7 @@ The MVP currently contains:
 - Rendering or selecting the remaining observed `Навыки` merely because their source labels are known.
 - Free respec, saved progression builds, skill trees, classes, specializations, or generic ability unlock graphs.
 - Owning equipment, combat, movement, recovery, inventory, or profession mechanics that consume progression values.
-- Group PvE XP distribution, XP loss, fame/valor awards, or levels beyond the complete row `27`.
+- Group PvE XP distribution, XP loss, fame/valor awards, or levels beyond the authored row `50`.
 - Recreating Neverlands CGI routes, frames, Russian player-facing copy, or token formats.
 
 ## 4. Player experience
@@ -114,7 +114,7 @@ request. Visitor profiles and the read-only public JSON profile remain
 available. World owns the captured lock and timer behavior recorded in
 `doc/design/reference/world/observations/2026-09-07_forpost_grid_and_action_audit.md`.
 
-The profile is not an account dashboard. It shows the gameplay character, equipment summary, vitals, progress, record, numeric skill summary, and owned perks. Only the owner sees primary-stat detail and progression mutation links.
+The profile is not an account dashboard. It shows the gameplay character, equipment summary, vitals, progress, record, numeric skill summary, and owned perks. Only the owner sees primary-stat detail and progression mutation links. A visitor profile with no public perks shows an empty note plus World recovery so the page is not a dead end.
 
 Both owner and public profiles place the current location below the equipment
 paper doll. The first line is the zone's display name; a distinct authored
@@ -130,6 +130,7 @@ Each allocation page uses the compact Neverlands player-subpage language:
 
 - character name and level;
 - the same equipment paper doll, location, and money summary as the profile left column;
+- an owner-only look picker with 10 standard Ashen portraits (`ash_01`…`ash_10`): two free changes, then `50 NV` per further change; admin/donor custom upload resizes to 128×128;
 - a visible remaining-point counter;
 - dense rows grouped by stat or captured skill category;
 - plus and minus controls for pending changes;
@@ -137,7 +138,7 @@ Each allocation page uses the compact Neverlands player-subpage language:
 - one disabled-until-changed Save button;
 - profile, Stats, Skills, Perks, and Your licenses navigation.
 
-Numeric skills render as `[NNN/100]` and show the gain for the next spend. Perks render as `Yes` or `No`. Existing owned perks remain `Yes` and do not expose a normal removal control.
+Numeric skills render as `[NNN]` (uncapped). Point spends and use-based training (`Game::Skills::UseTrainer`) both grow skills; the last rate band repeats past level 75 forever.
 
 The desktop owner profile retains the 463/5/467 composition and shared
 258/5/200 sheet. At `<=800px` its columns stack; at `<=520px` the CSS paper
@@ -149,7 +150,7 @@ same breakpoints.
 
 On Stats, the player distributes pending additions among Strength, Dexterity, Luck, Health, and Knowledge. On Skills, each click spends a preview point from the correct combat or peace pool and applies the captured rate for the current 25-level band. On Perks, the player can preview an unowned captured perk if a new-perk point exists.
 
-Save submits only pending additions. HTML success redirects back with `Stats saved`, `Skills saved`, or `Perks saved`. Turbo success replaces the affected allocation frame and updates the shared flash. Invalid, empty, over-budget, unknown, conflicting, or duplicate perk selections show an error and preserve valid persisted state.
+Save submits only pending additions. HTML success redirects back with localized `Stats saved` / `Skills saved` / `Perks saved` flashes. Turbo success replaces the affected allocation frame and updates the shared flash. Invalid, empty, over-budget, unknown, conflicting, or duplicate perk selections show localized `game.flashes.alloc_*` errors and preserve valid persisted state.
 
 ### 4.4 Exit and integration behavior
 
@@ -170,6 +171,7 @@ The feature is an authored catalog and state graph rather than spatial topology.
 | `peace_world` | Peace/world skills | Spend peace points | Source IDs `22`, `23`, `24`, `26`, `27`, `30`, `33`, `34` |
 | `more_strength` | More Strength | Spend one perk point; persist `Yes` | Boolean perk source ID `7`; adds `floor(level / 2)` effective Strength |
 | `careful_fighter` | Careful Fighter | Spend one perk point; persist `Yes` | Boolean perk source ID `15`; halves each post-fight equipment-wear chance |
+| `nature_child` | Nature Child | Spend one perk point; persist `Yes` | Boolean perk source ID `22`; waterbody drinking recovers four fatigue instead of two |
 | `merchant` | Merchant | Spend one perk point; persist `Yes` | Boolean perk source ID `34`; prerequisite for Trading licenses, alongside Merchant qualification |
 | `healer` | Healer | Spend one perk point; persist `Yes` | Boolean perk source ID `35`; prerequisite for Doctor licenses, with Traumatologist qualification additionally required for tiers II/III |
 
@@ -186,7 +188,7 @@ Numeric skills use captured four-value rate strings. The rate selected for a spe
 
 - **Primary-stat key** — normalized local identity such as `strength`, `dexterity`, `luck`, `vitality`, or `intelligence`; player labels map Health to `vitality` and Knowledge to `intelligence`.
 - **Numeric-skill source ID** — stable Neverlands `Умения` identity retained in `PassiveSkillRegistry`; local symbolic keys are used in persisted JSONB.
-- **Perk source ID** — stable Neverlands `Навыки` identity retained in `PerkRegistry`; source IDs `7`, `15`, `34`, and `35` have launch-selectable local keys.
+- **Perk source ID** — stable Neverlands `Навыки` identity retained in `PerkRegistry`; source IDs `7`, `15`, `22`, `34`, and `35` have launch-selectable local keys.
 - **Base value** — saved character allocation before equipment modifiers.
 - **Effective value** — base character value plus supported equipment modifiers, capped where the implementation defines a cap.
 
@@ -222,23 +224,20 @@ The numeric registry contains 29 captured `Умения`, each with a source ID,
 
 Multiple pending spends are applied sequentially so crossing `25`, `50`, or `75` changes the rate used by later spends. The final value is capped at `100`; requested spends after the cap do not consume points. Unknown skill keys do not consume points. Equipment bonuses contribute to `passive_skill_level`.
 
-Two numeric skills have bounded downstream effects. World snapshots an exact
-authored cell duration when present; otherwise its configurable fallback uses
-effective Wanderer. Current defaults compute `30 - floor(wanderer * 6 / 100)`
-seconds with Wanderer clamped to `0..100` and duration bounded to `24..30`.
-These values come from `config/gameplay/world_rules.yml`; the linear fallback
-is a local projection of observed samples, not the complete Neverlands formula.
-Combat builds AP as base `80`, plus `10` at level `5`, another `10` at level
-`10`, and one point per effective Extra Action Points value. Persisted
-per-fight profile overrides remain authoritative for captured fights. Every
-other downstream numeric-skill effect remains unimplemented until separately
-captured.
+Two numeric skills have bounded downstream effects. World snapshots travel via
+`Game::Movement::TravelTime`: soft-release defaults are a `12..30` Wanderer
+fallback (`world_rules.yml`), Wanderer discount on authored `travel_seconds`,
+optional watchtower cut, and encumbrance slowdown. Combat builds AP as base
+`80`, plus `10` at level `5`, another `10` at level `10`, and one point per
+effective Extra Action Points value. Persisted per-fight profile overrides
+remain authoritative for captured fights. Every other downstream numeric-skill
+effect remains unimplemented until separately captured.
 
 ### 6.4 Boolean perks and deferred behavior boundary
 
-`more_strength`, `careful_fighter`, `merchant`, and `healer` are the rendered
-selectable perks. Saving any new selection consumes one `perk_points`, stores
-its key as `true`, and makes it
+`more_strength`, `careful_fighter`, `nature_child`, `merchant`, and `healer` are
+the rendered selectable perks. Saving any new selection consumes one
+`perk_points`, stores its key as `true`, and makes it
 non-removable through the normal UI. `PerkAllocation` rejects empty/duplicate
 ownership, unknown keys, insufficient points, and any captured mutually
 exclusive combination under a character row lock.
@@ -247,25 +246,28 @@ The complete observed `Навыки` labels and saved yes/no rows are evidence, 
 local capabilities. Source ID `7` adds one effective Strength per two levels,
 rounded down. Source ID `15` halves the independent per-item wear chance at
 fight finalization, including the `1%` arena-defeat chance as an exact `0.5%`
-roll. Source IDs `34` and `35` provide Merchant/Healer ownership to Shop
-license prerequisite checks. Selecting a profession perk grants neither quest
-completion nor a timed license. Shop implements the bounded Merchant
-qualification path; Doctor quests and medical treatment remain unimplemented.
-Reset behavior and other uncaptured prerequisite/effect rules remain deferred.
+roll. Source ID `22` (`nature_child`) is selectable and raises waterbody
+drinking recovery from two to four fatigue points via
+`PerformLocalAction` and `world_rules.yml`. Source IDs `34` and `35` provide
+Merchant/Healer ownership to Shop license prerequisite checks. Selecting a
+profession perk grants neither quest completion nor a timed license. Shop
+implements the bounded Merchant qualification path; Doctor quests and medical
+treatment remain unimplemented. Reset behavior and other uncaptured
+prerequisite/effect rules remain deferred.
 
 ### 6.5 World-related skill and perk gaps
 
-This is the progression owner for the remaining World skill/perk handoffs.
-The source catalog records Nature Child as auxiliary perk ID `22`; it is
-absent from the local selectable registry. The user's
+This is the progression owner for remaining World skill/perk handoffs beyond
+the shipped Nature Child drinking effect. The source catalog records Nature
+Child as auxiliary perk ID `22`. The user's
 [Nature Child wiki link](http://wiki.neverlands.ru/wiki/Дитя_природы) resolves
 to the auxiliary section of the Perk article, preserved in the September 9
 wiki observation.
 
 | Gap | Known boundary and remaining work |
 |---|---|
-| `[IMPL]` Nature Child acquisition and drinking effect | The published sip removes four fatigue points instead of two. `world_rules.yml` preserves that value, but `PerformLocalAction` currently requests ordinary two-point recovery and no supported owned-perk selection exists. Add the validated progression-to-World handoff and applicable allocation, persistence, atomic effect and retry coverage when this perk is scoped. A configured number alone does not enable the perk. |
-| `[EVIDENCE]` Nature Child variants | Capture its applicable prerequisites/selection and actual perk-dependent sip. The exact Wanderer enhancement, outdoor HP-recovery coefficient and zero-fatigue source behavior are not established by the article. Do not classify the already published four-point amount as unknown. |
+| Shipped Nature Child drinking | Owned `nature_child` recovers four fatigue per sip; without the perk, drinking recovers two. Allocation uses `PerkRegistry` source ID `22`. |
+| `[EVIDENCE]` Nature Child variants | Capture its applicable prerequisites/selection and actual perk-dependent sip variants. The exact Wanderer enhancement, outdoor HP-recovery coefficient and zero-fatigue source behavior are not established by the article. Do not classify the already published four-point amount as unknown. |
 | `[EVIDENCE]` Broader movement skill/effect combinations | Effective Wanderer is already supplied to World. Terrain, equipment and effect composition beyond the current authored duration/configurable fallback need isolated inputs; the formula owner is [Movement](../design/features/movement.md#travel-time), with runtime limits in [World](world.md#19-open-world-parity-audit-updated-2026-09-09). |
 | Deferred profession progression | Successful fishing grows its profession counter per the user's confirmation; there is no initial fishing skill gate. Successful fishing/gathering/mining counters and their activity lifecycle belong to [Professions](professions.md), not ordinary allocatable peace skills. |
 
@@ -280,7 +282,8 @@ open `GET /character/licenses`. The controller resolves only the signed-in
 current character, authorizes ownership, and reads active `CharacterLicense`
 rows at one server timestamp. It shows at most 100 current grants, ordered by
 expiry and id, with snapshot name, kind, tier, and expiry. An empty collection
-shows `You have no licenses.` Query-supplied character or license ids cannot
+shows `You have no licenses.` plus a Shop Licenses recovery link so Abilities is
+not a dead end. Query-supplied character or license ids cannot
 select another owner.
 
 Shop owns atomic purchase, funds, stock, prerequisites, and grant creation. The
@@ -309,7 +312,8 @@ numeric profession proficiency, completed quest qualification, and an active
 timed license. Profession proficiency is not an ordinary allocatable skill or
 another name for the perk. Shop reads saved Trading proficiency for resale
 rates but does not grow it after sales. Doctor II/III purchase checks the
-Traumatologist completion flag; it does not independently check Doctor
+Traumatologist completion flag set by Ashen Infirmary `TraumatologistClearance`;
+it does not independently check Doctor
 proficiency. The published `100` Doctor proficiency requirement belongs to
 entering that still-unimplemented quest, with equipment allowed to contribute.
 The Doctor wiki does not state an additional license-purchase quest gate for
@@ -324,7 +328,7 @@ and remaining gaps.
 | Record or component | Responsibility | Important contract |
 |---|---|---|
 | `Character` | Saved point pools, allocations, level, experience, and effective accessors | Point pools are non-negative; saved JSONB maps default to empty objects |
-| `Game::Progression::Catalog` | Complete source rows `0..27` | Thresholds and all grants are validated, contiguous, and never extrapolated |
+| `Game::Progression::Catalog` | Ashen rows `0..50` | Thresholds and all grants are validated, contiguous, and never extrapolated |
 | `LevelUpService` | Award XP and table-authored level grants | Locks/reloads Character; grants pools and NV without refilling vitals |
 | `StatAllocationService` | Spend primary-stat points and recalculate base vitals | Locks/reloads Character and preserves current HP/MP except max clamp |
 | `SkillAllocationService` | Spend combat/peace points using tier rates | Locks/reloads Character and charges only actual pre-cap spends |
@@ -340,7 +344,7 @@ and remaining gaps.
 
 ### 7.1 Source of truth
 
-The `characters` table is authoritative for character state. Point counters and JSONB maps determine saved allocation; `config/gameplay/character_progression.yml` is authoritative for complete level thresholds/grants; the NV wallet/ledger is authoritative for level currency grants. Registries define valid content identity; they do not grant ownership or points. Profile values are rebuilt from the saved character, registries, exact derived formulas, and supported equipment modifiers on every request.
+The `characters` table is authoritative for character state. Point counters and JSONB maps determine saved allocation; `Game::Progression::Curves` is authoritative for cumulative XP thresholds (YAML `experience_to_next_level` remains for docs/compat); `config/gameplay/character_progression.yml` remains authoritative for complete level grants (stat/perk/NV/caps); the NV wallet/ledger is authoritative for level currency grants. Registries define valid content identity; they do not grant ownership or points. Profile values are rebuilt from the saved character, registries, exact derived formulas, and supported equipment modifiers on every request.
 
 Missing JSON keys mean zero numeric skill, no stat addition, or unowned perk. An absent/unknown perk key is not rendered through the registry-backed profile payload.
 
@@ -464,7 +468,7 @@ page composition and the shared 258/5/200 character sheet, including the
 the increases banner, and the combat chips. `app/assets/stylesheets/player.css`
 owns the profile tab band, the allocation panels, and the stat/skill/perk rows.
 The reusable markup lives in
-`app/views/shared/_neverlands_character_sheet.html.erb`, which Profile and
+`app/views/shared/_ashen_character_sheet.html.erb`, which Profile and
 Inventory consume without sharing their domain actions. Shared controls and
 shell styling remain owned by the ordered `tokens.css`, `primitives.css`, and
 `shell.css` modules; no Tailwind layer is introduced. `character_sheet.css`
@@ -541,9 +545,10 @@ Arbitrary saved browser fields, translated labels, or profile URLs do not grant 
 - The owner can spend the correct combat or peace pool across all 29 captured numeric skills.
 - Numeric skill spends use the captured four-band rate and never exceed `100`.
 - The owner can spend perk points on `more_strength`, `careful_fighter`,
-  `merchant`, or `healer`; another save cannot reacquire an owned perk. Strength
-  gains `floor(level / 2)`, shared fight wear chances are halved for Careful
-  Fighter, and profession perks feed explicit Shop license prerequisites.
+  `nature_child`, `merchant`, or `healer`; another save cannot reacquire an
+  owned perk. Strength gains `floor(level / 2)`, shared fight wear chances are
+  halved for Careful Fighter, Nature Child raises drinking recovery to four
+  fatigue points, and profession perks feed explicit Shop license prerequisites.
 - Your licenses displays only current owned permissions, preserves grant
   snapshots across catalog changes/login, and hides them exactly at expiry.
 - A level-0 starter receives exact catalog grants when configured solo-PvE XP crosses one or more complete thresholds.
@@ -553,7 +558,7 @@ Arbitrary saved browser fields, translated labels, or profile URLs do not grant 
 - Profile HTML and JSON expose numeric skills and owned launch-registry perks without private account data.
 - Browser preview/reset behavior never mutates saved state before PATCH succeeds.
 - Saved progression survives logout/login; pending browser preview does not.
-- Effective Wanderer is available to World, which owns and tests exact authored cell durations and the configurable local movement fallback, currently bounded to `24..30` seconds.
+- Effective Wanderer is available to World, which owns and tests exact authored cell durations and the soft-release `12..30` movement fallback (plus authored Wanderer discount, encumbrance, and watchtower).
 - Effective Extra Action Points contributes one AP per point to a new shared
   combat profile after the captured level-threshold base.
 - Owner and public profile surfaces preserve their desktop source geometry and
@@ -647,8 +652,8 @@ There is no dedicated view spec for each allocation partial; request and system 
 - `app/views/players/show.html.erb`
 - `app/views/shared/_equipment_paperdoll.html.erb`
 - `app/views/shared/_equipment_paperdoll_slot.html.erb`
-- `app/views/shared/_neverlands_character_sheet.html.erb`
-- `app/views/shared/_neverlands_profile_navigation.html.erb`
+- `app/views/shared/_ashen_character_sheet.html.erb`
+- `app/views/shared/_ashen_profile_navigation.html.erb`
 - `app/views/characters/stats.html.erb`
 - `app/views/characters/_stat_allocation.html.erb`
 - `app/views/characters/skills.html.erb`
@@ -740,4 +745,30 @@ Before extending Character Progression:
 | 2026-07-28 | Removed source-owned portrait and source-specific project/service copy while preserving profile hierarchy and geometry with CSS and local gameplay copy. |
 | 2026-07-29 | Reordered the parameter column to the captured profile sequence, dropped the uncaptured Attack/Defense/Critical rows, gave the visitor profile its own identity line, and split the presentation into `character_sheet.css` and `player.css`. |
 | 2026-08-23 | Documented that Arena supplies the actual persisted solo-NPC XP award for recipient fight-completion feedback while Character Progression remains the XP/level authority. |
+| 2026-09-14 | Owner sheet Vault/VM open CTAs expose `data-sheet-recovery` (Bank/Infirmary/World). |
+| 2026-09-15 | Missing/foreign character progression redirects to World with `character_denied=1` recovery chrome. |
+| 2026-09-15 | Failed stat/skill/perk allocation redirects with `allocation_denied=1` recovery chrome on the same surface. |
+| 2026-09-15 | Soft-release smoke spends one combat skill point (`unarmed_combat`) after Law Abode pledge. |
+| 2026-09-15 | Soft-release smoke spends the starter perk point on Nature Child (`nature_child`). |
+| 2026-09-15 | Missing public player profiles recover via World (`player_denied`) when signed in, or a public missing page when anonymous. |
+| 2026-09-13 | Owner sheet shows private Veil Marks balance (`data-sheet-vm`) with Infirmary link when colocated; NV wallet also exposes `data-sheet-nv`; locker occupancy uses `data-sheet-locker`; vault NV uses `data-sheet-vault`. |
+| 2026-09-14 | Level-up service rejects non-integer/negative XP via `errors.experience_non_negative`. |
+| 2026-09-14 | Allocation/perk and profile chrome request specs assert via `game.flashes.alloc_*` / `perks_saved` / `game.profile.sections` (RU-safe). |
+| 2026-09-14 | Nature Child (`nature_child`, source ID `22`) is selectable; owned perk raises waterbody drinking recovery to four fatigue points via World. |
+| 2026-09-14 | Owner profile idle allocation note links to World and Training hall when no free primary-stat points remain. |
+| 2026-09-14 | Profile section tabs expose `data-profile-tabs` / `data-profile-recovery` for Skills/Perks/Licenses navigation. |
+| 2026-09-14 | Visitor empty public-perks note recovers via World. |
+| 2026-09-14 | Owner sheet empty NV recovers via Junk/Shop Sell/City; vault/VM out-of-district recover via City. |
+| 2026-09-14 | Unset sheet alignment recovers via Law Abode or City. |
+| 2026-09-14 | Sheet fatigue recovers via Tavern or City. |
+| 2026-09-14 | Empty Your licenses note recovers via Shop Licenses. |
+| 2026-09-14 | Idle Stats/Skills/Perks allocation pages recover to World when no free points remain. |
+| 2026-09-13 | Skill/perk allocation UI prefers captured RU source labels for `:ru`, localizes skill categories and spend rejects. |
+| 2026-09-13 | Stat/skill/perk allocation Reset/Save and `(base: N)` chrome use `game.profile.allocation_*` / `stat_base` i18n. |
+| 2026-09-13 | Character/licenses page titles use `game.profile.*_title`; license kinds use `game.licenses.kinds.*`. |
+| 2026-09-13 | Paper-doll empty slots, alignment labels, profile combat/unknown location, sheet aria, and city/village Shop presence use `game.equipment.slots.*` / `game.buildings.law_alignment.*` / `game.profile.*` / `game.sheet.aria_label` / `game.world.shop_presence` i18n. |
 | 2026-08-26 | Added the exact `80 + level thresholds + Extra Action Points` combat-profile effect and source perk `15` Careful Fighter with half-probability equipment wear. |
+| 2026-09-18 | Phase 6 power rebalance: progression table extended to `0..50` with denser stat/skill grants, HP/MP `×8`, stronger level combat contribution, and Super Admin resync through honest level inject. |
+| 2026-09-25 | Soft-release XP: `Game::Progression::Curves` owns cumulative thresholds; YAML keeps grants/caps. |
+| 2026-09-20 | Formula audit restored Neverlands wiki vitals/mass (`Health×5`, `Knowledge×7`, mass `5/10/10`), AP bonuses only at levels 5 and 10, and stopped mapping equipment attack/armor/hp into primary stats (double-count). |
+| 2026-09-19 | Hybrid uncapped skills: use-based trainer from combat/chat/travel + level points; display drops `/100` ceiling. |

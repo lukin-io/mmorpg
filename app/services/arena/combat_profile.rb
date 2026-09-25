@@ -130,12 +130,27 @@ module Arena
 
     def derived_physical_attack_seed
       if participant_character
-        explicit_item_seed || [DEFAULT_PHYSICAL_ATTACK_SEED + equipment_attack_cost_bonus, 1].max
+        base = explicit_item_seed || [DEFAULT_PHYSICAL_ATTACK_SEED + equipment_attack_cost_bonus, 1].max
+        # Wiki: weapon mastery lowers strike AP. Captured Neverlands samples fit
+        # floor(mastery / 15) (e.g. 150→−10, 130→−8). Cap so a strike stays ≥1 AP.
+        [base - weapon_mastery_ap_reduction, 1].max
       elsif participation&.npc?
         DEFAULT_PHYSICAL_ATTACK_SEED
       else
         DEFAULT_PHYSICAL_ATTACK_SEED
       end
+    end
+
+    # Neverlands-aligned AP reduction from the equipped weapon's mastery skill.
+    # Use base (uncapped) level: wiki mastery is trained past 100; display caps at 100.
+    def weapon_mastery_ap_reduction
+      family = participant_character.equipment_weapon_family.to_s
+      key = Game::Skills::UseTrainer::WEAPON_TO_SKILL[family]
+      level = key ? participant_character.base_passive_skill_level(key).to_i : 0
+      if family.blank? || family == "unarmed"
+        level += participant_character.base_passive_skill_level(:unarmed_combat).to_i
+      end
+      (level / 15).clamp(0, 40)
     end
 
     def derived_magic_mana_limit
@@ -184,9 +199,24 @@ module Arena
     end
 
     def injected_attack_keys
-      Array(explicit_profile_value("injected_attack_keys")).map(&:to_s).uniq.select do |key|
+      keys = Array(explicit_profile_value("injected_attack_keys")).map(&:to_s)
+      keys.concat(inventory_magic_attack_keys)
+      keys.uniq.select do |key|
         Game::Combat::ActionCatalog.attack_config(key).present? &&
           !Game::Combat::ActionCatalog::PHYSICAL_ATTACK_KEYS.include?(key)
+      end
+    end
+
+    def inventory_magic_attack_keys
+      return [] unless participant_character&.inventory
+
+      participant_character.inventory.inventory_items.includes(:item_template).filter_map do |item|
+        template = item.item_template
+        next unless template
+
+        key = template.stat_modifiers.to_h["inject_attack_key"].presence ||
+          template.enhancement_rules.to_h["inject_attack_key"].presence
+        key.to_s if key.present? && item.quantity.to_i.positive?
       end
     end
 

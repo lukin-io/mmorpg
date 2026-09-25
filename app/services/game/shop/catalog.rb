@@ -6,37 +6,17 @@ module Game
     # Inputs are a character, the resolved Shop account, and optional filters.
     # Returns bounded template rows or filtered inventory rows without mutations.
     class Catalog
-      MODES = [
-        ["buy", "Buy Goods"],
-        ["licenses", "Licenses"],
-        ["sell", "Sell Goods"],
-        ["novice", "For Beginners"]
+      MODE_KEYS = %w[buy licenses sell novice].freeze
+      CATEGORY_KEYS = %w[
+        knives swords axes blunt polearms staves shields armor helmets boots
+        pants belts gloves bracers jewelry relics scrolls runes misc
       ].freeze
-
-      CATEGORIES = [
-        ["knives", "Knives"],
-        ["swords", "Swords"],
-        ["axes", "Axes"],
-        ["blunt", "Blunt"],
-        ["polearms", "Halberds & Spears"],
-        ["staves", "Staves"],
-        ["shields", "Shields"],
-        ["armor", "Armor"],
-        ["helmets", "Helmets"],
-        ["boots", "Boots"],
-        ["pants", "Pants"],
-        ["belts", "Belts"],
-        ["gloves", "Gloves"],
-        ["bracers", "Bracers"],
-        ["jewelry", "Jewelry"],
-        ["relics", "Relics"],
-        ["scrolls", "Scrolls & Potions"],
-        ["runes", "Runes"],
-        ["misc", "Other"]
-      ].freeze
-      VALID_MODES = MODES.map(&:first).freeze
-      VALID_CATEGORIES = CATEGORIES.map(&:first).freeze
-      MAX_CATALOG_ROWS = 200
+      # Back-compat for callers that still expect [key, label] pairs.
+      MODES = MODE_KEYS.map { |key| [key, key] }.freeze
+      CATEGORIES = CATEGORY_KEYS.map { |key| [key, key] }.freeze
+      VALID_MODES = MODE_KEYS.freeze
+      VALID_CATEGORIES = CATEGORY_KEYS.freeze
+      MAX_CATALOG_ROWS = 1_200
       FILTER_DEFAULTS = {min_level: 0, max_level: 33, min_price: 0, max_price: 1_000_000}.freeze
 
       attr_reader :character, :shop_account, :params

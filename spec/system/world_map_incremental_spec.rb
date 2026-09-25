@@ -54,7 +54,7 @@ RSpec.describe "Incremental walking map", type: :system, js: true do
   end
 
   it "selects city image density without resizing logical cells or replacing retained movement terrain" do
-    starter_zone = create(:zone, name: "Outpost Surroundings", location_type: "outdoor", width: 1000, height: 1000,
+    starter_zone = create(:zone, name: "Пепельный Берег", location_type: "outdoor", width: 1000, height: 1000,
       metadata: {"source_map" => "m_1001_999"})
     create(:map_tile_template, zone: starter_zone.name, x: 7, y: 8, metadata: {"travel_seconds" => 1})
     position.update!(zone: starter_zone, x: 6, y: 8)
@@ -97,7 +97,7 @@ RSpec.describe "Incremental walking map", type: :system, js: true do
   end
 
   it "displays the western margin at full color while keeping its outside cells inert" do
-    starter_zone = create(:zone, name: "Outpost Surroundings", location_type: "outdoor", width: 1000, height: 1000,
+    starter_zone = create(:zone, name: "Пепельный Берег", location_type: "outdoor", width: 1000, height: 1000,
       metadata: {"source_map" => "m_1001_999"})
     position.update!(zone: starter_zone, x: 6, y: 8)
 
@@ -294,7 +294,7 @@ RSpec.describe "Incremental walking map", type: :system, js: true do
 
     click_button "Move east"
 
-    expect(page).to have_css("#flash", text: "Movement offer is no longer available")
+    expect(page).to have_css("#flash", text: I18n.t("game.flashes.movement_offer_unavailable"))
     expect_position(20, 20)
     expect(page).to have_button("Move east", disabled: false)
     expect(page).to have_button("Inventory", disabled: false)

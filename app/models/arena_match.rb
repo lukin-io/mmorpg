@@ -10,7 +10,9 @@
 #   ArenaMatchChannel.subscribed(match_id: match.id)
 #
 class ArenaMatch < ApplicationRecord
-  DEFAULT_TURN_TIMEOUT = 300 # 5 minutes
+  DEFAULT_TURN_TIMEOUT = 300 # 5 minutes of inactivity per turn
+  # Absolute wall-clock ceiling if turn jobs never ran; active hits never hit this.
+  ABSOLUTE_FIGHT_CEILING = 6.hours.to_i
 
   STATUSES = {
     pending: 0,
@@ -90,6 +92,9 @@ class ArenaMatch < ApplicationRecord
     pending? && scheduled_start_at.present? && now >= scheduled_start_at
   end
 
+  # Turn inactivity (DEFAULT_TURN_TIMEOUT) is the normal timeout; this only
+  # prevents forever-live rows if jobs never ran.
+
   # Check if the current turn has timed out
   #
   # @return [Boolean] true if turn has exceeded timeout
@@ -101,11 +106,9 @@ class ArenaMatch < ApplicationRecord
     Time.current > (current_turn_started_at + timeout.seconds)
   end
 
-  # Check if the entire match has exceeded its maximum duration. Wilderness
-  # fights persist the source-displayed fight deadline explicitly. Other match
-  # types retain the existing two-turn stale recovery boundary.
-  #
-  # @return [Boolean] true if match should be auto-ended
+  # True when the fight has been abandoned long enough that even turn jobs
+  # failed to settle it. Active players who keep hitting never hit this path
+  # because each action refreshes current_turn_started_at.
   def stale?
     return false unless live?
     return false unless started_at
@@ -117,7 +120,7 @@ class ArenaMatch < ApplicationRecord
     configured = Integer(metadata.to_h["fight_timeout_seconds"], exception: false)
     return configured if configured&.positive?
 
-    (turn_timeout_seconds || DEFAULT_TURN_TIMEOUT) * 2
+    ABSOLUTE_FIGHT_CEILING
   end
 
   # Auto-end match if it's stale or all opponents defeated
@@ -134,10 +137,13 @@ class ArenaMatch < ApplicationRecord
       return true
     end
 
-    # Check if match is stale (timed out)
+    # Check if match is stale (abandoned absolute ceiling)
     if stale?
       processor = Arena::CombatProcessor.new(self)
-      processor.end_match(nil, reason: :timeout)
+      winner = if metadata.to_h["is_npc_fight"] == true || arena_participations.npcs.exists?
+        arena_participations.npcs.first&.team
+      end
+      processor.end_match(winner, reason: :timeout)
       return true
     end
 

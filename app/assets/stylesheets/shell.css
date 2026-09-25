@@ -1,8 +1,7 @@
 /*
- * Persistent game shell: the local translation of the live frameset
- * (`main_top`, `chmain`, `ch.php?lo=1`, `ch/but.php`) into one grid.
- * Source: doc/design/reference/neverlands_live_style_system.md
- * ("Main Frame Page Skeleton", "Bottom Chat Control Strip").
+ * Persistent game shell: Ashen Veil soft-release frame grid
+ * (`main_top`, `chmain`, chat strip) as one CSS grid.
+ * Palette: tokens.css. Geometry notes: doc/design/reference/neverlands_live_style_system.md.
  */
 
 .nl-game-layout {
@@ -14,7 +13,7 @@
   width: 100%;
   height: 100vh;
   height: 100dvh;
-  min-width: 760px;
+  min-width: 0;
   min-height: 420px;
   grid-template-rows: var(--nl-top-bar-height) minmax(0, 1fr) 8px var(--nl-social-height) 1px var(--nl-chat-controls-height);
   overflow: hidden;
@@ -24,9 +23,8 @@
 }
 
 /*
- * The header strip is `#FCFAF3` and is closed by the source accent rows:
- * 1px white, 1px gold, 2px cream. A gradient reproduces those exact bands
- * without the source spacer table.
+ * The header strip uses Ashen ash-parchment surface tokens, closed by ember
+ * accent bands (soft rule / ember / soft rule) instead of the old cream clone rows.
  */
 .nl-top-bar {
   position: relative;
@@ -69,12 +67,226 @@
 .nl-player-link:hover { color: var(--nl-link); }
 .nl-player-level { color: var(--nl-text-soft); }
 
+.nl-injury-chip {
+  margin-left: 6px;
+  padding: 1px 6px;
+  border: 1px solid #8a5a2b;
+  background: #2a1c12;
+  color: #e6c38a;
+  font-size: 11px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.nl-injury-chip:hover { color: #fff3d0; border-color: #c48a3c; }
+
+.nl-injury-chip--heavy {
+  border-color: #a33;
+  color: #f0a0a0;
+  background: #2a1212;
+}
+
+.nl-quest-chip {
+  margin-left: 6px;
+  padding: 1px 6px;
+  border: 1px solid #3d6b52;
+  background: #12201a;
+  color: #b7e0c4;
+  font-size: 11px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nl-quest-chip:hover { color: #e8fff0; border-color: #5f9a74; }
+
+.nl-quest-chip--ready {
+  border-color: #8ab86a;
+  color: #e8ffe0;
+  background: #1a2818;
+}
+
+.nl-bait-chip {
+  margin-left: 6px;
+  padding: 1px 6px;
+  border: 1px solid #6a5a2b;
+  background: #1c1a12;
+  color: #d8c48a;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+a.nl-bait-chip:hover {
+  color: #fff0c0;
+  border-color: #a08840;
+}
+
+.nl-bait-chip--empty {
+  border-color: #5a4040;
+  color: #c09090;
+  background: #1a1212;
+}
+
+.nl-obelisk-chip-form {
+  display: inline;
+  margin: 0;
+}
+
+.nl-obelisk-chip {
+  margin-left: 6px;
+  padding: 1px 6px;
+  border: 1px solid #4a5a78;
+  background: #12161c;
+  color: #b8c8e0;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+a.nl-obelisk-chip:hover,
+button.nl-obelisk-chip:hover {
+  color: #e8f0ff;
+  border-color: #7a90b8;
+}
+
+.nl-obelisk-chip--short {
+  border-color: #5a4040;
+  color: #c09090;
+  background: #1a1212;
+  cursor: default;
+}
+
+.nl-fatigue-chip {
+  margin-left: 6px;
+  padding: 1px 6px;
+  border: 1px solid #6a5a3b;
+  background: #1a1610;
+  color: #d8c090;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+a.nl-fatigue-chip:hover {
+  color: #fff0c8;
+  border-color: #a08850;
+}
+
+.nl-fatigue-chip--locked {
+  border-color: #8a4040;
+  color: #e0a0a0;
+  background: #1a1212;
+}
+
+.nl-alignment-chip {
+  margin-left: 6px;
+  padding: 1px 6px;
+  border: 1px solid #3a5a6a;
+  background: #10181c;
+  color: #a8d0e0;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+a.nl-alignment-chip:hover {
+  color: #d8f0ff;
+  border-color: #6a98b0;
+}
+
+.nl-trauma-chip {
+  margin-left: 6px;
+  padding: 1px 6px;
+  border: 1px solid #6a3a3a;
+  background: #1a1010;
+  color: #e0a8a8;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+a.nl-trauma-chip:hover {
+  color: #ffd0d0;
+  border-color: #a06060;
+}
+
+.nl-trauma-chip--empty {
+  border-color: #5a4040;
+  color: #c09090;
+  opacity: 0.9;
+}
+
+.nl-heal-chip {
+  margin-left: 6px;
+  padding: 1px 6px;
+  border: 1px solid #3a6a4a;
+  background: #101a12;
+  color: #a8e0b8;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+a.nl-heal-chip:hover {
+  color: #d0ffd8;
+  border-color: #60a070;
+}
+
+.nl-heal-chip--empty {
+  border-color: #405a48;
+  color: #90c0a0;
+  opacity: 0.9;
+}
+
+.nl-clan-hall-presence {
+  margin: 8px 0 12px;
+  padding: 6px 8px;
+  border: 1px solid #3a4a5a;
+  background: #101418;
+  max-height: 160px;
+  overflow: auto;
+}
+
+.nl-wear-chip {
+  margin-left: 6px;
+  padding: 1px 6px;
+  border: 1px solid #6a5a3a;
+  background: #1a1610;
+  color: #e0c8a8;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+a.nl-wear-chip:hover {
+  color: #ffe8c8;
+  border-color: #a08850;
+}
+
+.nl-wear-chip--broken {
+  border-color: #8a4040;
+  color: #f0a0a0;
+  background: #1a1010;
+}
+
 .nl-vitals-inline {
   gap: 3px;
   margin-left: 3px;
 }
 
-/* Two 160x6 bars stacked with a 1px white separator, as measured in hp.js. */
+/* Two 160x6 bars stacked with a 1px ash separator. */
 .nl-vitals-bars {
   display: grid;
   width: var(--nl-vitals-width);
@@ -142,14 +354,14 @@ button.nl-nav-link:disabled {
   height: 15px;
   align-items: center;
   justify-content: center;
-  border: 1px solid #8f8f8f;
-  background: linear-gradient(180deg, #ffffff, #d9d9d9);
-  color: #7d0000;
+  border: 1px solid var(--nl-rule);
+  background: linear-gradient(180deg, var(--nl-surface-accent), var(--nl-surface-inset));
+  color: var(--nl-combat-xp);
   font: bold 11px/13px Arial, sans-serif;
   text-decoration: none;
 }
 
-.nl-close-btn:hover { border-color: #730000; background: #f4dddd; color: #b00000; }
+.nl-close-btn:hover { border-color: var(--nl-control-danger-border); background: var(--nl-surface-value); color: var(--nl-bonus); }
 
 .nl-main-area {
   position: relative;
@@ -167,15 +379,49 @@ button.nl-nav-link:disabled {
 }
 
 .nl-frame-resizer {
+  position: relative;
+  z-index: 20;
   border-top: 1px solid #777777;
   border-bottom: 1px solid #8c8c8c;
   background: linear-gradient(#efefef 0 35%, #bcbcbc 36% 58%, #e7e7e7 59% 100%);
+  cursor: row-resize;
+  touch-action: none;
+  user-select: none;
+}
+
+.nl-frame-resizer:focus-visible {
+  outline: 2px solid #8a6a2b;
+  outline-offset: -2px;
+}
+
+.nl-frame-resizer::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 42px;
+  height: 2px;
+  transform: translate(-50%, -50%);
+  border-radius: 1px;
+  background: rgba(80, 80, 80, 0.45);
+  pointer-events: none;
+}
+
+body.nl-resizing-social {
+  cursor: row-resize;
+  user-select: none;
+}
+
+body.nl-resizing-social iframe,
+body.nl-resizing-social turbo-frame {
+  pointer-events: none;
 }
 
 .nl-social-row {
   display: grid;
   min-width: 0;
   min-height: 0;
+  height: 100%;
   grid-template-columns: minmax(0, 1fr) var(--nl-players-width);
   overflow: hidden;
   background: var(--nl-surface-inset);
@@ -183,19 +429,26 @@ button.nl-nav-link:disabled {
 
 .nl-chat-history {
   min-width: 0;
-  height: 240px;
-  overflow: auto;
+  height: 100%;
+  max-height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
   border-right: 1px solid #eeeeee;
-  background: var(--nl-surface-inset);
-  color: var(--nl-text);
+  background: #f5f5f5;
+  color: #222222;
   font: 12px/18px var(--nl-font-verdana);
 }
 
-.nl-chat-history > turbo-frame { display: block; min-height: 100%; }
+.nl-chat-history > turbo-frame {
+  display: block;
+  min-height: 0;
+  height: auto;
+  max-height: none;
+}
 
 .nl-players-float {
   width: 300px;
-  height: 240px;
+  height: 100%;
   overflow: hidden;
   border: 0;
   background: var(--nl-surface-header);
@@ -280,6 +533,49 @@ button.nl-nav-link:disabled {
 
 .nl-player-entry:hover { background: var(--nl-surface-accent); }
 
+.nl-assault-form {
+  display: inline-flex;
+  margin: 0 0 0 4px;
+  flex: 0 0 auto;
+}
+
+.nl-assault-btn {
+  padding: 0 4px;
+  border: 1px solid #8a4a4a;
+  background: #f3dede;
+  color: #6a2020;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.nl-assault-btn:hover {
+  background: #e8c0c0;
+}
+
+.nl-assault-btn--blocked,
+.nl-assault-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  background: #eee4e4;
+  color: #7a5555;
+}
+
+.nl-assault-btn--blocked:hover,
+.nl-assault-btn:disabled:hover {
+  background: #eee4e4;
+}
+
+.nl-profile-assault {
+  margin-top: 8px;
+}
+
+.nl-profile-assault .nl-quests-board__meta {
+  margin-top: 4px;
+  font-size: 11px;
+}
+
 .nl-player-arrow,
 .nl-player-icon,
 .nl-player-lvl,
@@ -336,20 +632,53 @@ button.nl-nav-link:disabled {
 
 .nl-action-check input { width: 13px; height: 13px; margin: 0 2px 0 0; }
 
+.nl-action-panel {
+  position: absolute;
+  left: 8px;
+  bottom: 34px;
+  z-index: 40;
+  width: min(280px, 72vw);
+  padding: 8px 10px;
+  border: 1px solid #8a7a5c;
+  background: linear-gradient(180deg, #f4ebda 0%, #e2d4b8 100%);
+  box-shadow: 0 6px 18px rgba(28, 22, 14, 0.28);
+  color: #2c2418;
+}
+
+.nl-action-panel__hint {
+  margin: 0 0 4px;
+  font: 10px/1.35 var(--nl-font-tahoma);
+  color: #5c5140;
+}
+
+.nl-action-panel__nick {
+  margin: 0 0 8px;
+  font: 700 12px/1.3 var(--nl-font-verdana);
+  color: #1f1810;
+}
+
+.nl-action-panel__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.nl-action-area { position: relative; }
+
 .nl-chat-image-button {
   width: 75px;
   height: 30px;
   overflow: hidden;
   padding: 0;
-  border: 1px solid #8b8b8b;
-  background: linear-gradient(180deg, #ffffff 0%, #d8d8d8 100%);
+  border: 1px solid var(--nl-rule);
+  background: linear-gradient(180deg, var(--nl-surface-accent) 0%, var(--nl-surface-inset) 100%);
   color: var(--nl-text-soft);
   font: bold 10px/28px var(--nl-font-tahoma);
 }
 
 .nl-chat-input-bar,
 .nl-chat-form-inline { display: flex; min-width: 0; align-items: center; }
-.nl-chat-input-bar { height: 30px; padding: 6px 0 7px 5px; background: linear-gradient(180deg, #ececec, #cfcfcf 48%, #e6e6e6); }
+.nl-chat-input-bar { height: 30px; padding: 6px 0 7px 5px; background: linear-gradient(180deg, var(--nl-surface-accent), var(--nl-surface-band) 48%, var(--nl-surface-value)); }
 .nl-chat-form-inline { width: 100%; }
 
 input.nl-chat-input-field,
@@ -364,7 +693,10 @@ input.nl-chat-input-field,
   font: 11px/15px var(--nl-font-verdana);
 }
 
-.nl-chat-toolstrip { background: linear-gradient(180deg, #ececec, #c8c8c8 48%, #e6e6e6); }
+.nl-chat-toolstrip {
+  position: relative;
+  background: linear-gradient(180deg, var(--nl-surface-accent), var(--nl-surface-band) 48%, var(--nl-surface-value));
+}
 
 .nl-chat-tool {
   display: inline-flex;
@@ -373,27 +705,88 @@ input.nl-chat-input-field,
   justify-content: center;
   padding: 0;
   border: 0;
-  border-left: 1px solid rgba(120, 120, 120, 0.55);
+  border-left: 1px solid #b5a890;
   overflow: hidden;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(190, 190, 190, 0.52));
-  color: #27313a;
+  background: linear-gradient(180deg, #f7f2e8, #e4dccf 55%, #d6cdb8);
+  color: #2a241e;
   cursor: pointer;
-  font: bold 8px/29px Arial, sans-serif;
+  font: bold 9px/29px Tahoma, Verdana, Arial, sans-serif;
   text-align: center;
-  text-shadow: 0 1px rgba(255, 255, 255, 0.8);
+  text-shadow: none;
 }
 
-.nl-chat-tool:hover { background: linear-gradient(180deg, #ffffff, #d6cba9); color: #003c6a; }
-.nl-chat-tool--send { width: 23px; font-size: 13px; }
+.nl-chat-tool:hover {
+  background: linear-gradient(180deg, #fffaf0, #ebe3d4);
+  color: #1a1510;
+}
+.nl-chat-tool--disabled,
+.nl-chat-tool:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+.nl-chat-tool--active {
+  outline: 1px solid #8b5a2b;
+  color: #6b3a12;
+  background: linear-gradient(180deg, #fff6e4, #ead7b0);
+}
+.nl-chat-tool--send { width: 23px; font-size: 13px; color: #1e4d2b; }
 .nl-chat-tool--clear-input { width: 19px; font-size: 12px; }
 .nl-chat-tool--smiles-one { width: 11px; font-size: 7px; }
 .nl-chat-tool--smiles-two { width: 10px; font-size: 7px; }
+
+.nl-smiles-popover {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 72px;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px;
+  background: linear-gradient(180deg, #f4efe6, #d8d0c2);
+  border: 1px solid #6a5a48;
+  box-shadow: 0 2px 8px rgba(20, 14, 8, 0.35);
+}
+
+.nl-smiles-popover[hidden] {
+  display: none;
+}
+
+.nl-smiles-popover__row {
+  display: flex;
+  gap: 4px;
+}
+
+.nl-smiles-popover__btn {
+  width: 22px;
+  height: 22px;
+  padding: 2px;
+  border: 1px solid #8a7a66;
+  background: #efe8da;
+  cursor: pointer;
+  line-height: 0;
+}
+
+.nl-smiles-popover__btn:hover,
+.nl-smiles-popover__btn:focus-visible {
+  border-color: #b07030;
+  outline: none;
+}
+
+.nl-chat-smile {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  vertical-align: -3px;
+  image-rendering: pixelated;
+}
 .nl-chat-tool--refresh { width: 30px; margin-left: 18px; font-size: 13px; }
-.nl-chat-tool--clear-chat { width: 28px; color: #850000; font-size: 9px; }
+.nl-chat-tool--clear-chat { width: 28px; color: #8a1010; font-size: 9px; }
 .nl-chat-tool--messages { width: 28px; }
 .nl-chat-tool--speed { width: 28px; }
 .nl-chat-tool--language { width: 28px; }
-.nl-chat-tool--abilities { width: 26px; margin-right: 4px; font-size: 12px; text-decoration: none; }
+.nl-chat-tool--abilities { width: 26px; margin-right: 4px; font-size: 12px; text-decoration: none; color: #2a241e; }
 
 .nl-status-icons {
   justify-content: space-between;
@@ -456,6 +849,7 @@ input.nl-chat-input-field,
     --nl-social-height: 190px;
     --nl-chat-controls-height: 60px;
     grid-template-rows: var(--nl-top-bar-height) minmax(0, 1fr) 6px var(--nl-social-height) 1px var(--nl-chat-controls-height);
+    min-width: 0;
     min-height: 520px;
   }
 
@@ -581,3 +975,143 @@ input.nl-chat-input-field,
   .nl-vitals-text { font-size: 10px; }
   .nl-refresh-image { min-width: 52px; }
 }
+
+/* Minimum-width phones (UI-ADAPT-001 320 CSS px): keep nav/tools scrollable. */
+@media (max-width: 360px) {
+  .nl-game-layout {
+    --nl-top-bar-height: 58px;
+    --nl-social-height: 176px;
+    --nl-chat-controls-height: 58px;
+    min-height: 460px;
+  }
+
+  .nl-top-bar {
+    grid-template-rows: 26px 26px;
+    padding: 1px 2px 4px;
+  }
+
+  .nl-vitals-bars,
+  .nl-hp-bar-inline,
+  .nl-mp-bar-inline { width: 108px; }
+
+  .nl-players-float {
+    grid-template-columns: minmax(108px, 40%) minmax(0, 1fr);
+  }
+
+  .nl-bottom-bar {
+    grid-template-columns: 92px minmax(0, 1fr) 44px;
+  }
+
+  .nl-action-area { padding-left: 1px; }
+}
+
+/* Short landscape phones: keep chat tools reachable without burying the main pane. */
+@media (max-height: 430px) and (orientation: landscape) {
+  .nl-game-layout {
+    --nl-top-bar-height: 28px;
+    --nl-social-height: 120px;
+    --nl-chat-controls-height: 34px;
+    grid-template-rows: var(--nl-top-bar-height) minmax(0, 1fr) 4px var(--nl-social-height) 1px var(--nl-chat-controls-height);
+    min-height: 0;
+  }
+
+  .nl-social-row {
+    grid-template-columns: minmax(0, 1fr) minmax(120px, 34%);
+    grid-template-rows: 1fr;
+  }
+
+  .nl-chat-history {
+    height: 100%;
+    border-right: 1px solid #d8cdaf;
+    border-bottom: 0;
+  }
+
+  .nl-players-float {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+  }
+
+  .nl-flash-container {
+    bottom: 160px;
+    width: min(340px, calc(100vw - 12px));
+  }
+}
+
+@media (pointer: coarse) {
+  button.nl-nav-link,
+  .nl-nav-link,
+  .nl-top-right button,
+  .nl-chat-tool--send,
+  .nl-chat-tool--refresh,
+  .nl-chat-tool--clear-chat,
+  .nl-chat-tool--abilities,
+  .nl-chat-tool--messages {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 8px 10px;
+    font-size: 12px;
+    line-height: 1.25;
+  }
+
+  .nl-chat-input-field {
+    min-height: 44px;
+    font-size: 14px;
+  }
+}
+
+.nl-player-arrow {
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  padding: 0 2px;
+  font: inherit;
+}
+.nl-player-info {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 0 4px;
+  border: 1px solid rgba(255,255,255,0.35);
+  border-radius: 2px;
+  font-size: 0.75rem;
+  line-height: 1.1;
+  text-decoration: none;
+  color: inherit;
+}
+.nl-timers-popover {
+  position: absolute;
+  right: 0.75rem;
+  bottom: 3.5rem;
+  z-index: 40;
+  min-width: 220px;
+  max-width: 320px;
+  padding: 0.6rem 0.75rem;
+  background: var(--nl-surface-value);
+  border: 1px solid var(--nl-rule-gold-soft);
+  color: var(--nl-text);
+  font-size: 0.85rem;
+}
+.nl-timers-popover h3 { margin: 0 0 0.4rem; font-size: 0.95rem; }
+.nl-timer-row { margin: 0.2rem 0; }
+.nl-chat-tool--timers { font-size: 0.95rem; }
+.nl-chat-tool--help {
+  width: 22px;
+  font-weight: 700;
+  color: #3a2a18;
+  background: linear-gradient(180deg, #f0e2c4 0%, #d4b98a 100%);
+  border-color: #8a6a3a;
+}
+.nl-clan__header { margin-bottom: 0.75rem; }
+.nl-clan__identity { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+.nl-clan__icon { width: 64px; height: 64px; object-fit: cover; border: 1px solid rgba(232,223,208,0.3); }
+.nl-clan__tabs { display: flex; flex-wrap: wrap; gap: 0.35rem; margin: 0.75rem 0 1rem; }
+.nl-clan-roster, .nl-clan-invites, .nl-clan-treasury-donate, .nl-clan-treasury-stock { list-style: none; padding: 0; margin: 0.5rem 0; }
+.nl-clan-roster li, .nl-clan-invites li, .nl-clan-treasury-donate li, .nl-clan-treasury-stock li {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem;
+  margin: 0.35rem 0; padding: 0.35rem 0; border-bottom: 1px solid rgba(232,223,208,0.12);
+}
+.nl-clan-form p { margin: 0.4rem 0; }
+.nl-clan-inline { display: inline-flex; gap: 0.3rem; align-items: center; }
+.nl-clan-fort { margin: 0.75rem 0; }

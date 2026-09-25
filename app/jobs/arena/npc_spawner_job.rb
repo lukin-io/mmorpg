@@ -22,7 +22,7 @@ module Arena
     RESPAWN_INTERVAL = 60.seconds # Re-check every minute
 
     # Rooms that support NPC spawning
-    NPC_ENABLED_ROOMS = %w[training].freeze
+    NPC_ENABLED_ROOMS = %w[training help].freeze
 
     def perform(room_slug: nil)
       if room_slug

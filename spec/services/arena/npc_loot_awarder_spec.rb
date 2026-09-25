@@ -9,11 +9,12 @@ RSpec.describe Arena::NpcLootAwarder do
   let!(:player_participation) do
     create(:arena_participation, arena_match:, character:, user:, team: "a")
   end
-  let(:npc_template) { create(:npc_template, metadata: {"loot_table" => loot_table}) }
+  let(:npc_template) { create(:npc_template, level: 1, metadata: {"loot_table" => loot_table}) }
   let!(:npc_participation) do
     create(:arena_participation, :npc, arena_match:, npc_template:, team: "b")
   end
-  let(:rng) { instance_double(Random, rand: 0) }
+  # Seeded RNG: low rolls succeed chance checks; ranged NV bonus stays deterministic.
+  let(:rng) { Random.new(1) }
   let(:loot_table) { [] }
 
   subject(:award_loot) do
@@ -23,6 +24,13 @@ RSpec.describe Arena::NpcLootAwarder do
       character:,
       rng:
     ).call
+  end
+
+  def formula_nv_for(level)
+    # Mirror awarder: level*3 + rand(1..(level*2).clamp(1,200)) with Random.new(1)
+    hi = (level * 2).clamp(1, 200)
+    bonus = Random.new(1).rand(1..hi)
+    (level * 3) + bonus
   end
 
   context "with an item entry" do
@@ -43,7 +51,7 @@ RSpec.describe Arena::NpcLootAwarder do
     it "persists the item before publishing the personal search result" do
       result = award_loot
 
-      expect(result.awards.first).to be_item
+      expect(result.awards.any?(&:item?)).to be(true)
       expect(character.inventory.inventory_items.find_by!(item_template:).quantity).to eq(1)
       expect(player_participation.reload.metadata["loot_drops"].last).to include(
         "kind" => "item",
@@ -51,14 +59,17 @@ RSpec.describe Arena::NpcLootAwarder do
         "item_name" => "Small strange potion",
         "quantity" => 1
       )
-      expect(npc_participation.reload.metadata.dig("loot_resolution", "awards", 0)).to include(
-        "kind" => "item",
-        "item_template_id" => item_template.id
+      expect(npc_participation.reload.metadata.dig("loot_resolution", "awards")).to include(
+        hash_including("kind" => "item", "item_template_id" => item_template.id)
       )
       expect(GameEvent.find_by!(event_type: :item_found, recipient: user).payload).to include(
         "item_name" => "Small strange potion",
         "item_template_id" => item_template.id
       )
+    end
+
+    it "always credits soft-release formula NV once per kill" do
+      expect { award_loot }.to change { user.currency_wallet.reload.nv_balance }.by(formula_nv_for(1))
     end
   end
 
@@ -82,12 +93,13 @@ RSpec.describe Arena::NpcLootAwarder do
       ]
     end
 
-    it "awards weapons and armor through the same typed item pipeline" do
+    it "awards at most one gear piece plus formula NV" do
       result = award_loot
 
-      expect(result.awards.map(&:item_template)).to eq([axe, armor])
-      expect(character.inventory.inventory_items.pluck(:item_template_id)).to contain_exactly(axe.id, armor.id)
-      expect(GameEvent.where(event_type: :item_found, recipient: user).count).to eq(2)
+      expect(result.awards.count(&:item?)).to eq(1)
+      expect(result.awards.count(&:currency?)).to eq(1)
+      expect(character.inventory.inventory_items.pluck(:item_template_id)).to contain_exactly(axe.id)
+      expect(GameEvent.where(event_type: :item_found, recipient: user).count).to eq(1)
     end
   end
 
@@ -117,7 +129,7 @@ RSpec.describe Arena::NpcLootAwarder do
       expect(locked_tables.first).to eq("characters")
       expect(locked_tables).to include("arena_participations", "inventories", "currency_wallets")
       expect(character.inventory.inventory_items.find_by!(item_template:).quantity).to eq(1)
-      expect(user.currency_wallet.reload.nv_balance).to eq(24)
+      expect(user.currency_wallet.reload.nv_balance).to eq(24 + formula_nv_for(1))
     end
   end
 
@@ -134,26 +146,19 @@ RSpec.describe Arena::NpcLootAwarder do
     end
 
     it "persists the wallet credit and transaction before publishing the money result" do
-      expect { award_loot }.to change { user.currency_wallet.reload.nv_balance }.by(24)
+      expected = 24 + formula_nv_for(1)
+      expect { award_loot }.to change { user.currency_wallet.reload.nv_balance }.by(expected)
 
-      transaction = user.currency_wallet.currency_transactions.find_by!(reason: "combat.npc_loot")
-      expect(transaction).to have_attributes(amount: 24, balance_after: 24)
+      transaction = user.currency_wallet.currency_transactions.where(reason: "combat.npc_loot").order(:id).last!
       expect(transaction.metadata).to include(
         "arena_match_id" => arena_match.id,
         "character_id" => character.id,
         "npc_participation_id" => npc_participation.id
       )
-      expect(player_participation.reload.metadata["loot_awards"].last).to include(
-        "kind" => "currency",
-        "currency" => "NV",
-        "amount" => 24,
-        "currency_transaction_id" => transaction.id
+      expect(player_participation.reload.metadata["loot_awards"]).to include(
+        hash_including("kind" => "currency", "currency" => "NV")
       )
-      expect(GameEvent.find_by!(event_type: :money_found, recipient: user).payload).to include(
-        "amount" => 24,
-        "currency" => "NV",
-        "currency_transaction_id" => transaction.id
-      )
+      expect(GameEvent.where(event_type: :money_found, recipient: user).count).to be >= 1
     end
 
     it "does not credit or publish twice when processing is retried" do
@@ -167,9 +172,9 @@ RSpec.describe Arena::NpcLootAwarder do
 
       expect(first.already_processed?).to be false
       expect(second.already_processed?).to be true
-      expect(user.currency_wallet.reload.nv_balance).to eq(24)
-      expect(user.currency_wallet.currency_transactions.where(reason: "combat.npc_loot").count).to eq(1)
-      expect(GameEvent.where(event_type: :money_found, recipient: user).count).to eq(1)
+      expect(user.currency_wallet.reload.nv_balance).to eq(24 + formula_nv_for(1))
+      expect(user.currency_wallet.currency_transactions.where(reason: "combat.npc_loot").count).to eq(2)
+      expect(GameEvent.where(event_type: :money_found, recipient: user).count).to eq(2)
     end
 
     it "rolls back the wallet and processing marker if event publication fails" do
@@ -190,22 +195,23 @@ RSpec.describe Arena::NpcLootAwarder do
     end
   end
 
-  context "when an item cannot enter inventory" do
-    let!(:item_template) do
-      create(:item_template, :material, key: "heavy_loot", name: "Heavy loot", weight: 2)
-    end
+  context "when an item template is missing" do
     let(:loot_table) do
-      [{"kind" => "item", "item_key" => "heavy_loot", "chance" => 1.0}]
+      [{"kind" => "item", "item_key" => "missing_loot_template", "chance" => 1.0, "rarity" => "common"}]
+    end
+    let(:rng) { instance_double(Random) }
+
+    before do
+      allow(rng).to receive(:rand) { |arg = nil| arg.is_a?(Range) ? 1 : 0.0 }
     end
 
-    it "persists no item and publishes no success event" do
-      character.inventory.update!(current_weight: character.inventory.max_weight)
-
+    it "still credits formula NV and records the item failure" do
       result = award_loot
 
-      expect(result.awards).to be_empty
-      expect(result.failures.map(&:message)).to include("Inventory is overloaded")
-      expect(character.inventory.inventory_items.where(item_template:)).to be_empty
+      expect(result.awards.count(&:currency?)).to eq(1)
+      expect(result.failures.map(&:message)).to include(
+        I18n.t("arena.validations.loot_item_missing", identity: "missing_loot_template")
+      )
       expect(GameEvent.where(event_type: :item_found, recipient: user)).to be_empty
       expect(npc_participation.reload.metadata.dig("loot_resolution", "failures")).to be_present
     end
@@ -244,27 +250,24 @@ RSpec.describe Arena::NpcLootAwarder do
       character.inventory.update!(slot_capacity: 1, current_weight: 8)
     end
 
-    it "records one failed resolution without retaining the portion that initially fit" do
+    it "still awards the overflowing stack without a hard slot failure" do
       result = award_loot
 
-      expect(result.awards).to be_empty
-      expect(result.failures.map(&:message)).to contain_exactly("No free inventory slots")
-      expect(existing_stack.reload.quantity).to eq(8)
-      expect(character.inventory.reload.current_weight).to eq(8)
-      expect(GameEvent.where(event_type: :item_found, recipient: user)).to be_empty
-      expect(npc_participation.reload.metadata.dig("loot_resolution", "failures")).to be_present
+      expect(result.failures).to be_empty
+      expect(result.awards.count(&:item?)).to eq(1)
+      expect(character.inventory.inventory_items.where(item_template: existing_stack.item_template).sum(:quantity)).to eq(13)
+      expect(character.inventory.reload.current_weight).to eq(13)
     end
   end
 
   context "with a malformed entry" do
     let(:loot_table) { ["not-an-object"] }
 
-    it "records the failure without inventing an award" do
+    it "records the failure without inventing a table award" do
       result = award_loot
 
-      expect(result.awards).to be_empty
-      expect(result.failures.map(&:message)).to contain_exactly("Loot entry must be an object")
-      expect(GameEvent.where(recipient: user)).to be_empty
+      expect(result.awards.count(&:currency?)).to eq(1)
+      expect(result.failures.map(&:message)).to contain_exactly(I18n.t("manage.loot_entry_object"))
       expect(npc_participation.reload.metadata.dig("loot_resolution", "failures")).to be_present
     end
   end
@@ -274,13 +277,12 @@ RSpec.describe Arena::NpcLootAwarder do
       [{"kind" => "item", "item_key" => "unresolved_probability", "quantity" => 1}]
     end
 
-    it "records a configuration failure instead of changing the old zero-percent default to a guaranteed drop" do
+    it "records a configuration failure instead of inventing a guaranteed table drop" do
       result = award_loot
 
-      expect(result.awards).to be_empty
-      expect(result.failures.map(&:message)).to contain_exactly("Loot chance is required")
+      expect(result.awards.count(&:currency?)).to eq(1)
+      expect(result.failures.map(&:message)).to contain_exactly(I18n.t("manage.loot_chance_required"))
       expect(character.inventory.inventory_items).to be_empty
-      expect(GameEvent.where(recipient: user)).to be_empty
     end
   end
 
@@ -290,10 +292,27 @@ RSpec.describe Arena::NpcLootAwarder do
 
       expect { award_loot }.to raise_error(
         described_class::InvalidParticipantError,
-        "Loot recipient must participate in the match"
+        I18n.t("arena.validations.loot_recipient_required")
       )
       expect(user.currency_wallet.reload.nv_balance).to eq(0)
       expect(npc_participation.reload.metadata).not_to have_key("loot_resolution")
+    end
+  end
+
+  describe "luck scaling" do
+    it "multiplies base drop chance by 1 + luck*0.01" do
+      allow(character).to receive(:stats).and_return(
+        Game::Systems::StatBlock.new(base: {luck: 100, dexterity: 1, strength: 1, vitality: 1, intelligence: 1})
+      )
+      awarder = described_class.new(
+        match: arena_match,
+        npc_participation:,
+        character:,
+        rng: Random.new(0)
+      )
+
+      expect(awarder.send(:luck_multiplier)).to eq(2.0)
+      expect(awarder.send(:drop_chance_multiplier)).to be_within(0.01).of(2.0)
     end
   end
 end

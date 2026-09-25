@@ -15,7 +15,7 @@ RSpec.describe "Login resume", type: :request do
 
   it "sends playable accounts directly to the world at their persisted cell" do
     user = create(:user, password: "Password123!", password_confirmation: "Password123!")
-    zone = create(:zone, name: "Outpost Surroundings", location_type: "outdoor", width: 20, height: 20)
+    zone = create(:zone, name: "Пепельный Берег", location_type: "outdoor", width: 20, height: 20)
     character = create(:character, user: user)
 
     create(:character_position, character: character, zone: zone, x: 7, y: 9)
@@ -26,7 +26,7 @@ RSpec.describe "Login resume", type: :request do
 
     follow_redirect!
 
-    expect(response.body).to include("Outpost Surroundings")
+    expect(response.body).to include("Пепельный Берег")
     expect(response.body).to include('data-nl-world-map-player-x-value="7"')
     expect(response.body).to include('data-nl-world-map-player-y-value="9"')
     expect(response.body).to include("[7, 9]")

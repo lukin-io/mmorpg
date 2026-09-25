@@ -23,9 +23,9 @@ RSpec.describe "Perk Allocation", type: :system, js: true do
     end
 
     expect(page).to have_css("[data-perk-allocation-target='freePoints']", text: "0")
-    click_button "Save"
+    click_button I18n.t("game.profile.allocation_save")
 
-    expect(page).to have_content("Perks saved")
+    expect(page).to have_content(I18n.t("game.flashes.perks_saved"))
     expect(character.reload).to be_owns_perk(:more_strength)
     expect(page).not_to have_button("+")
   end

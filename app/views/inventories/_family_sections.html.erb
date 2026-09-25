@@ -6,12 +6,29 @@
         <% if discardable %>
           <%= form_with url: inventory_path, method: :get, class: "nl-inline-action-form" do |f| %>
             <%= f.hidden_field :category, value: category %>
-            <%= f.select :subact, [["choose action", "0"], ["discard", "discard"]], {}, class: "LogintextBox" %>
-            <%= f.submit "OK", class: "weaponch", data: {turbo_confirm: "Discard resources from #{title}?"} %>
+            <%= f.select :subact, [[t("game.inventory.choose_action"), "0"], [t("game.inventory.discard_action"), "discard"]], {}, class: "LogintextBox" %>
+            <%= f.submit t("game.common.ok"), class: "weaponch", data: {turbo_confirm: t("game.inventory.discard_resources_confirm", title: title)} %>
           <% end %>
         <% end %>
       </header>
       <p class="nl-empty-note"><%= empty_message %></p>
+      <% case category.to_s
+         when "resources", "alchemy", "fishing", "hunting" %>
+        <p class="nl-quests-board__meta" data-inventory-empty-hint="world">
+          <%= t("game.inventory.empty_hint_world") %>
+          <%= link_to t("nav.world"), world_path, class: "nl-sheet-link", data: {inventory_recovery: "world"} %>
+        </p>
+      <% when "wood" %>
+        <p class="nl-quests-board__meta" data-inventory-empty-hint="workshop">
+          <%= t("game.inventory.empty_hint_workshop") %>
+          <%= link_to t("game.professions.tar_smith"), city_building_path("workshop"), class: "nl-sheet-link", data: {inventory_recovery: "workshop"} %>
+        </p>
+      <% when "quests" %>
+        <p class="nl-quests-board__meta" data-inventory-empty-hint="quests">
+          <%= t("game.inventory.empty_hint_quests") %>
+          <%= link_to t("nav.quests"), quests_path, class: "nl-sheet-link", data: {inventory_recovery: "quests"} %>
+        </p>
+      <% end %>
     </section>
   <% end %>
 </div>

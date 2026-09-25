@@ -82,7 +82,7 @@ RSpec.describe "Local chat browser buffer", type: :system, js: true do
     find(".nl-chat-input-field").set("%<Someone> confidential")
     find(".nl-chat-input-field").send_keys(:enter)
 
-    expect(page).to have_css("#flash", text: "Private messaging is not available here.")
+    expect(page).to have_css("#flash", text: /Private messaging is not available here\.|Личные сообщения здесь недоступны\./)
     expect(page).to have_no_css("#chat_timeline article", text: "confidential")
     expect(ChatMessage.where(body: "%<Someone> confidential")).not_to exist
   end

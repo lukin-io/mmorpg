@@ -1,31 +1,31 @@
-<% content_for :title, "Cell Buildings · Management" %>
+<% content_for :title, t("manage.views.page_title", section: t("manage.views.cell_buildings_title"), manage: t("manage.title")) %>
 <%= render "manage/shared/page_header",
-      title: "Open-World Cell Buildings",
-      description: "City gates and linked-location entrances attached to exact outdoor cells.",
+      title: t("manage.views.cell_buildings_title"),
+      description: t("manage.views.cell_buildings_hint"),
       new_path: new_manage_tile_building_path,
-      new_label: "Create cell building" %>
+      new_label: t("manage.views.create_cell_building") %>
 
 <%= form_with url: manage_tile_buildings_path, method: :get, class: "nl-manage-filter", local: true do |form| %>
-  <%= form.label :zone, "Outdoor zone" %>
-  <%= form.select :zone, options_from_collection_for_select(@zones, :name, :name, params[:zone]), include_blank: "All zones" %>
-  <%= form.submit "Filter", class: "lbut" %>
-  <%= link_to "Clear", manage_tile_buildings_path, class: "lbut" %>
+  <%= form.label :zone, t("manage.views.outdoor_zone") %>
+  <%= form.select :zone, options_from_collection_for_select(@zones, :name, :name, params[:zone]), include_blank: t("manage.views.all_zones") %>
+  <%= form.submit t("manage.filter"), class: "lbut" %>
+  <%= link_to t("manage.clear"), manage_tile_buildings_path, class: "lbut" %>
 <% end %>
 
 <div class="nl-manage-table-wrap"><table class="nl-manage-table">
-  <thead><tr><th>Key</th><th>Name</th><th>Source cell</th><th>Type</th><th>Destination</th><th>Active</th><th>Actions</th></tr></thead>
+  <thead><tr><th><%= t("manage.views.col_key") %></th><th><%= t("manage.views.col_name") %></th><th><%= t("manage.views.col_source_cell") %></th><th><%= t("manage.views.col_type") %></th><th><%= t("manage.views.col_destination") %></th><th><%= t("manage.views.col_active") %></th><th><%= t("manage.views.col_actions") %></th></tr></thead>
   <tbody>
     <% @tile_buildings.each do |building| %>
       <tr>
         <td><%= building.building_key %></td><td><%= building.name %></td>
         <td><%= building.zone %> [<%= building.x %>, <%= building.y %>]</td>
-        <td><%= building.building_type %></td>
+        <td><%= management_enum_label(:building_type, building.building_type) %></td>
         <td><%= building.destination_zone&.display_name || building.location_short_label %></td>
         <td><%= management_boolean(building.active?) %></td>
-        <td class="nl-manage-table-actions"><%= link_to "View", manage_tile_building_path(building) %> <%= link_to "Edit", edit_manage_tile_building_path(building) %></td>
+        <td class="nl-manage-table-actions"><%= link_to t("manage.view"), manage_tile_building_path(building) %> <%= link_to t("manage.edit"), edit_manage_tile_building_path(building) %></td>
       </tr>
     <% end %>
-    <% if @tile_buildings.empty? %><tr><td colspan="7" class="nl-manage-empty">No cell buildings found.</td></tr><% end %>
+    <% if @tile_buildings.empty? %><tr><td colspan="7" class="nl-manage-empty"><%= t("manage.views.empty_cell_buildings") %></td></tr><% end %>
   </tbody>
 </table></div>
 <%= render "manage/shared/pagination", pagination: @pagination %>

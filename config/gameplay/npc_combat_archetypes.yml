@@ -1,0 +1,63 @@
+# Soft-release Mist-guided NPC combat archetypes for Ashen wilderness bots.
+# Used by Game::World::NpcLoadout to scale HP/ATK/DEF/EVA/LUCK/magic.
+archetypes:
+  tank:
+    # High defense/HP — reward Strength / armor pierce.
+    set_focus: [judge, swamp, blood]
+    hp_mult: 1.45
+    attack_mult: 0.85
+    defense_mult: 1.55
+    agility_mult: 0.7
+    accuracy_mult: 0.9
+    luck_mult: 0.6
+    magic_power_mult: 0.2
+    magic_resist: 8
+  evader:
+    # High evasion, low armor — reward Accuracy / Dexterity.
+    set_focus: [distortion, swamp, blood]
+    hp_mult: 0.9
+    attack_mult: 0.95
+    defense_mult: 0.55
+    agility_mult: 1.7
+    accuracy_mult: 1.2
+    luck_mult: 1.0
+    magic_power_mult: 0.25
+    magic_resist: 4
+  critter:
+    # High attack/luck, fragile — reward Defense / HP gear.
+    set_focus: [blood, distortion, judge]
+    hp_mult: 0.7
+    attack_mult: 1.35
+    defense_mult: 0.65
+    agility_mult: 1.1
+    accuracy_mult: 1.15
+    luck_mult: 1.8
+    magic_power_mult: 0.3
+    magic_resist: 3
+  mage:
+    # Magic pressure ignores physical defense path; fragile.
+    set_focus: [demiurge, distortion, swamp]
+    hp_mult: 0.6
+    attack_mult: 0.55
+    defense_mult: 0.45
+    agility_mult: 0.85
+    accuracy_mult: 1.0
+    luck_mult: 0.9
+    magic_power_mult: 1.6
+    magic_resist: 18
+
+# Shore key → archetype (stable soft-launch cast).
+shore_keys:
+  plague_rat: evader
+  ash_gate_mite: tank
+  ash_gate_patrol: tank
+  ash_shore_scout: critter
+  wilderness_bandit: critter
+  wilderness_robber: critter
+  ash_bell_mite: mage
+  ash_cinder_crab: tank
+  ash_drift_mite: evader
+  salt_dock_wraith: mage
+  soot_market_knifer: critter
+  veil_dust_chanter: mage
+  arena_training_dummy: tank

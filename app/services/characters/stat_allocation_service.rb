@@ -14,12 +14,12 @@ module Characters
 
     def call(allocations:)
       normalized = normalize(allocations)
-      raise AllocationError, "No stats selected" if normalized.empty?
+      raise AllocationError, I18n.t("game.flashes.alloc_no_stats") if normalized.empty?
 
       character.with_lock do
         character.reload
         total = normalized.values.sum
-        raise AllocationError, "Not enough free stat points" if total > character.stat_points_available.to_i
+        raise AllocationError, I18n.t("game.flashes.alloc_not_enough_stat_points") if total > character.stat_points_available.to_i
 
         merged = character.allocated_stats.to_h.deep_dup
         normalized.each do |key, amount|

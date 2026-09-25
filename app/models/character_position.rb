@@ -22,7 +22,7 @@ class CharacterPosition < ApplicationRecord
   def coordinates_within_zone_bounds
     return unless zone && x.is_a?(Integer) && y.is_a?(Integer)
 
-    errors.add(:x, "must be within zone bounds") unless x.between?(0, zone.width - 1)
-    errors.add(:y, "must be within zone bounds") unless y.between?(0, zone.height - 1)
+    errors.add(:x, I18n.t("manage.coord_outside_zone")) unless x.between?(0, zone.width - 1)
+    errors.add(:y, I18n.t("manage.coord_outside_zone")) unless y.between?(0, zone.height - 1)
   end
 end

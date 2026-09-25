@@ -71,7 +71,10 @@ class WorldActionOffer < ApplicationRecord
         local_action_ends_at && local_action_result.present?
       next if metadata.to_h.key?("local_action_result_delivered_at")
 
-      result = local_action_result
+      result = MapTileTemplate.player_local_action_message(
+        MapTileTemplate.local_action_type_for_world_action(action_type),
+        local_action_result
+      )
       update!(metadata: metadata.to_h.merge("local_action_result_delivered_at" => at.iso8601(6)))
       result
     end
@@ -106,15 +109,15 @@ class WorldActionOffer < ApplicationRecord
     return unless accepted? && metadata.to_h.key?("local_action_ends_at")
 
     unless TIMED_LOCAL_ACTION_TYPES.include?(action_type) && accepted_at && local_action_ends_at && local_action_ends_at > accepted_at
-      errors.add(:metadata, "must have a valid accepted local action deadline")
+      errors.add(:metadata, I18n.t("errors.local_action_deadline_invalid"))
     end
-    errors.add(:metadata, "must have a local action result") if local_action_result.blank?
+    errors.add(:metadata, I18n.t("errors.local_action_result_required")) if local_action_result.blank?
   end
 
   def coordinates_within_zone_bounds
     return unless zone && x.is_a?(Integer) && y.is_a?(Integer)
 
-    errors.add(:x, "must be within zone bounds") unless x < zone.width
-    errors.add(:y, "must be within zone bounds") unless y < zone.height
+    errors.add(:x, I18n.t("manage.coord_outside_zone")) unless x < zone.width
+    errors.add(:y, I18n.t("manage.coord_outside_zone")) unless y < zone.height
   end
 end

@@ -1,0 +1,56 @@
+<% content_for :title, t("game.dress.title") %>
+
+<section class="nl-handbook" aria-label="<%= t("game.dress.aria") %>">
+  <h1><%= t("game.dress.title") %></h1>
+  <p><%= t("game.dress.lead") %></p>
+
+  <nav class="nl-dress-sets" aria-label="<%= t("game.dress.sets_nav") %>">
+    <% @sets.each do |set_row| %>
+      <% label = I18n.locale.to_s.start_with?("ru") ? set_row[:name_ru] : set_row[:name_en] %>
+      <%= link_to label,
+            dress_path(set: set_row[:id]),
+            class: "lbut #{'lbut--active' if set_row[:id] == @selected&.dig(:id)}" %>
+    <% end %>
+  </nav>
+
+  <% if @selected %>
+    <% set_label = I18n.locale.to_s.start_with?("ru") ? @selected[:name_ru] : @selected[:name_en] %>
+    <h2><%= set_label %></h2>
+    <p class="nl-quests-board__meta"><%= t("game.dress.focus", focus: @selected[:focus]) %></p>
+
+    <% @selected[:tiers].each do |tier_row| %>
+      <h3><%= t("game.dress.tier", tier: tier_row[:tier]) %></h3>
+      <% if tier_row[:pieces].blank? %>
+        <p class="nl-quests-board__meta"><%= t("game.dress.empty_tier") %></p>
+      <% else %>
+        <ul class="nl-dress-pieces">
+          <% tier_row[:pieces].each do |piece| %>
+            <li class="nl-dress-piece">
+              <% if piece[:icon].present? %>
+                <img src="<%= piece[:icon] %>" alt="" width="40" height="40" loading="lazy">
+              <% end %>
+              <div>
+                <strong><%= piece[:name] %></strong>
+                <span class="nl-quests-board__meta">
+                  <%= t("game.dress.slot", slot: piece[:slot]) %>
+                  · <%= t("game.dress.req_level", level: piece[:level].to_i) %>
+                </span>
+                <ul class="nl-dress-stats">
+                  <% piece[:stats].each do |stat, value| %>
+                    <li><%= stat %>: <%= value %></li>
+                  <% end %>
+                </ul>
+              </div>
+            </li>
+          <% end %>
+        </ul>
+      <% end %>
+    <% end %>
+  <% end %>
+
+  <p>
+    <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link" %>
+    ·
+    <%= link_to t("game.inventory.title"), inventory_path, class: "nl-sheet-link" %>
+  </p>
+</section>

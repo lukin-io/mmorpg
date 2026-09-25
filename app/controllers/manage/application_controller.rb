@@ -18,13 +18,15 @@ module Manage
 
     def management_sections
       [
-        {key: :world_cells, label: "World Cells", path: manage_world_cells_path},
-        {key: :tile_buildings, label: "Cell Buildings", path: manage_tile_buildings_path},
-        {key: :npc_templates, label: "NPC Catalog", path: manage_npc_templates_path},
-        {key: :tile_npcs, label: "Cell NPCs", path: manage_tile_npcs_path},
-        {key: :cities, label: "Cities", path: manage_cities_path},
-        {key: :city_hotspots, label: "City Actions", path: manage_city_hotspots_path},
-        {key: :audit_events, label: "Audit Log", path: manage_audit_events_path}
+        {key: :world_cells, label: I18n.t("manage.sections.world_cells"), path: manage_world_cells_path},
+        {key: :tile_buildings, label: I18n.t("manage.sections.tile_buildings"), path: manage_tile_buildings_path},
+        {key: :npc_templates, label: I18n.t("manage.sections.npc_templates"), path: manage_npc_templates_path},
+        {key: :tile_npcs, label: I18n.t("manage.sections.tile_npcs"), path: manage_tile_npcs_path},
+        {key: :cities, label: I18n.t("manage.sections.cities"), path: manage_cities_path},
+        {key: :city_hotspots, label: I18n.t("manage.sections.city_hotspots"), path: manage_city_hotspots_path},
+        {key: :idle_ticks, label: I18n.t("manage.sections.idle_ticks"), path: manage_idle_tick_path},
+        {key: :characters, label: I18n.t("manage.sections.characters"), path: manage_characters_path},
+        {key: :audit_events, label: I18n.t("manage.sections.audit_events"), path: manage_audit_events_path}
       ]
     end
 
@@ -46,13 +48,13 @@ module Manage
 
         parsed = JSON.parse(raw_value.presence || "{}")
         unless parsed.is_a?(Hash)
-          record.errors.add(attribute_name, "must be a JSON object")
+          record.errors.add(attribute_name, I18n.t("manage.json_object"))
           return
         end
 
         attributes[attribute_name.to_s] = parsed
       rescue JSON::ParserError => e
-        record.errors.add(attribute_name, "is not valid JSON: #{e.message}")
+        record.errors.add(attribute_name, I18n.t("manage.json_invalid", detail: e.message))
         return
       end
 
@@ -73,7 +75,7 @@ module Manage
     rescue ActiveRecord::RecordNotDestroyed,
       ActiveRecord::DeleteRestrictionError,
       ActiveRecord::InvalidForeignKey => e
-      record.errors.add(:base, e.message)
+      record.errors.add(:base, I18n.t("manage.cannot_destroy", detail: e.message))
       false
     end
 

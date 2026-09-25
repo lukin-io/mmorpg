@@ -19,7 +19,7 @@ module Game
             context.shop_available? && !MovementCommand.moving.where(character:).exists? &&
             !Game::World::LocalActionState.new(character:).call &&
             !character.arena_participations.joins(:arena_match).merge(ArenaMatch.active).exists?
-          raise TradeOffers::Unavailable, "Shop is only available from an accessible trading location."
+          raise TradeOffers::Unavailable, I18n.t("game.flashes.shop_location_required")
         end
 
         building = context.shop_parent_location
@@ -27,7 +27,7 @@ module Game
         building ||= CityHotspot.for_zone(position.zone).detect do |candidate|
           candidate.action_params.to_h["feature"] == "shop" && candidate.can_interact?(character)
         end
-        raise TradeOffers::Unavailable, "Shop is no longer available." unless building
+        raise TradeOffers::Unavailable, I18n.t("game.shop.shop_no_longer_available") unless building
 
         Result.new(
           building:,

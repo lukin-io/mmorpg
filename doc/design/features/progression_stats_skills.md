@@ -274,12 +274,11 @@ does not alter an item's stored durability outside a completed-fight roll.
 The full live id/name/category catalog is captured in
 `doc/design/reference/character/observations/2026-05-11_player_profile_and_development.md`. This includes all profession,
 stat, resistance, magic, auxiliary, and warrior rows, so branch names no longer
-need to be inferred. Source IDs `7`, `15`, `34` and `35` are selectable for launch;
+need to be inferred. Source IDs `7`, `15`, `22`, `34` and `35` are selectable for launch;
 prerequisite gates, reset behavior, and mechanical effects for the other
 entries are not fully captured or implemented. Nature Child's four-point
-drinking recovery is already published; its allocation/effect handoff remains
-unimplemented, and the exact movement/HP bonuses remain unknown. See the
-World-related skill/perk gap owner in
+drinking recovery ships when owned; the exact Wanderer/outdoor HP bonuses
+remain unknown. See the World-related skill/perk gap owner in
 `doc/features/character_progression.md` section 6.5 and the current wiki record
 `doc/design/reference/world/observations/2026-09-09_wiki_skills_and_cell_actions.md`.
 

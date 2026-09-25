@@ -8,6 +8,15 @@ puts "Seeding Arena Rooms..."
 if defined?(ArenaRoom)
   arena_rooms = [
     {
+      name: "Help Hall",
+      slug: "help",
+      room_type: :help,
+      level_min: 0,
+      level_max: 5,
+      alignment_restriction: nil,
+      description: "Source-backed Help Hall for levels 0-5."
+    },
+    {
       name: "Training Hall",
       slug: "training",
       room_type: :training,

@@ -26,6 +26,8 @@
 
   <%= render "world/map_control", destination: (destination if is_walkable), is_player:, timer_active: %>
 
+  <span class="nl-tile-coord" data-tile-coord="<%= tile.x %>,<%= tile.y %>" aria-hidden="true"><%= tile.x %>,<%= tile.y %></span>
+
   <% if tile_meta["building"].present? %>
     <div class="nl-tile-entity nl-tile-building nl-tile-building--<%= tile_meta['building_kind'] %> <%= 'nl-tile-building--painted' if painted_building %>"
          title="<%= tile_meta['building'] %>">
@@ -33,8 +35,43 @@
         <span class="nl-tile-village-hut" aria-hidden="true"></span>
       <% elsif !painted_building && tile_meta["building_kind"] == "city" %>
         <span class="nl-tile-city-gate" aria-hidden="true">🏰</span>
+      <% elsif !painted_building && %w[fortress castle dungeon mine resource].include?(tile_meta["building_kind"]) %>
+        <span class="nl-tile-landmark-mark nl-tile-landmark-mark--<%= tile_meta["building_kind"] %>" aria-hidden="true"></span>
       <% end %>
       <span class="nl-entity-label <%= 'nl-visually-hidden' if hidden_building_label %>"><%= tile_meta["building"] %></span>
+    </div>
+  <% end %>
+
+  <% if Array(tile_meta["npc_labels"]).any? %>
+    <div class="nl-tile-entity nl-tile-npcs"
+         title="<%= Array(tile_meta['npc_labels']).join(' · ') %>"
+         data-npc-count="<%= tile_meta['npc_count'].to_i %>">
+      <% Array(tile_meta["npc_labels"]).each do |label| %>
+        <span class="nl-tile-npc-row">
+          <span class="nl-tile-npc-mark" aria-hidden="true"></span>
+          <span class="nl-entity-label nl-tile-npc-label"><%= label %></span>
+        </span>
+      <% end %>
+    </div>
+  <% end %>
+
+  <% if Array(tile_meta["resource_labels"]).any? %>
+    <div class="nl-tile-entity nl-tile-resources"
+         title="<%= Array(tile_meta['resource_labels']).join(', ') %>">
+      <span class="nl-entity-label nl-tile-resource-label"><%= Array(tile_meta["resource_labels"]).join(" · ") %></span>
+    </div>
+  <% end %>
+  <% if Array(tile_meta["resource_regrowth"]).any? %>
+    <div class="nl-tile-resource-regrowth"
+         data-controller="nl-regrowth-timer">
+      <% Array(tile_meta["resource_regrowth"]).each do |growth| %>
+        <% seconds = growth["remaining_seconds"].to_i.clamp(0, 86_399) %>
+        <% ends_at_ms = ((Time.current.to_f + seconds) * 1000).to_i %>
+        <span data-nl-regrowth-timer-target="item"
+              data-resource-label="<%= growth["label"] %>"
+              data-ends-at-ms="<%= ends_at_ms %>"
+              data-template="<%= t("game.world.resource_regrowth", resource: "%{resource}", time: "%{time}") %>"><%= t("game.world.resource_regrowth", resource: growth["label"], time: format("%d:%02d", seconds / 60, seconds % 60)) %></span>
+      <% end %>
     </div>
   <% end %>
 </td>

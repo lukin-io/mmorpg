@@ -1,0 +1,81 @@
+# Soft-release 100×100 playable outdoor atlas (Пепельный Берег).
+# Coordinates are absolute outdoor cells. Landmarks are projected as overlays;
+# existing painted starter cells keep their cell_art when already present.
+# Approach rings give each fortress/dungeon a labeled neighborhood so travel
+# is not "empty cell → sudden dungeon".
+zone_name: "Пепельный Берег"
+origin_x: 0
+origin_y: 0
+width: 100
+height: 100
+seed_source: "playable_region_atlas_v2"
+
+fortresses:
+  - {key: fort_north_ash, name: "Северная крепость", x: 50, y: 12, kind: fortress}
+  - {key: fort_east_veil, name: "Восточная крепость", x: 88, y: 50, kind: fortress}
+  - {key: fort_south_ember, name: "Южная крепость", x: 50, y: 88, kind: fortress}
+  - {key: fort_west_salt, name: "Западная крепость", x: 12, y: 50, kind: fortress}
+  - {key: fort_heart, name: "Сердце Пепла", x: 50, y: 50, kind: fortress}
+
+castles:
+  - {key: castle_dawn, name: "Замок Рассвета", x: 18, y: 18, kind: castle}
+  - {key: castle_dusk, name: "Замок Заката", x: 82, y: 18, kind: castle}
+  - {key: castle_mire, name: "Замок Топи", x: 18, y: 82, kind: castle}
+  - {key: castle_ridge, name: "Замок Хребта", x: 82, y: 82, kind: castle}
+
+# Multilevel dungeon entrances placed on the outdoor map (rooms = floors).
+# instance_id matches ashen_veil_dungeon_catalog.json ids when present.
+dungeons:
+  - {key: dun_cistern, name: "Затопленная цистерна", x: 28, y: 28, floors: 5, instance_id: drowned-cistern}
+  - {key: dun_salt, name: "Соляные катакомбы", x: 72, y: 28, floors: 4, instance_id: null}
+  - {key: dun_ashpit, name: "Яма Пепла", x: 28, y: 72, floors: 6, instance_id: null}
+  - {key: dun_veilwell, name: "Колодец Завесы", x: 72, y: 72, floors: 5, instance_id: null}
+  - {key: dun_blind, name: "Слепой причал", x: 40, y: 60, floors: 3, instance_id: null}
+  - {key: dun_tar, name: "Смоляные шахты", x: 60, y: 40, floors: 4, instance_id: null}
+  - {key: dun_crypt, name: "Крипта углей", x: 35, y: 45, floors: 7, instance_id: null}
+  - {key: dun_spire, name: "Шпиль руин", x: 65, y: 55, floors: 5, instance_id: null}
+
+mines:
+  - {key: mine_iron, name: "Железная жила", x: 22, y: 40, resource: iron_ore, label: "Железо"}
+  - {key: mine_silver, name: "Серебряная жила", x: 78, y: 40, resource: silver_ore, label: "Серебро"}
+  - {key: mine_coal, name: "Угольный разрез", x: 40, y: 22, resource: coal, label: "Уголь"}
+  - {key: mine_crystal, name: "Кристальный грот", x: 60, y: 78, resource: crystal, label: "Кристалл"}
+
+resource_nodes:
+  - {x: 8, y: 8, label: "Травы", key: herbs, type: forage}
+  - {x: 9, y: 7, label: "Сосны", key: pine_grove, type: harvest}
+  - {x: 10, y: 12, label: "Дубы", key: oak_grove, type: harvest}
+  - {x: 13, y: 6, label: "Травы", key: herb_patch, type: forage}
+  - {x: 14, y: 9, label: "Ивы", key: willow_grove, type: harvest}
+  - {x: 16, y: 16, label: "Берёзы", key: birch_grove, type: harvest}
+  - {x: 18, y: 8, label: "Смоляные сосны", key: tar_grove, type: harvest}
+  - {x: 21, y: 9, label: "Ольха", key: alder_grove, type: harvest}
+  - {x: 25, y: 12, label: "Цветы Завесы", key: bloom_patch, type: forage}
+  - {x: 28, y: 20, label: "Мхи", key: moss_patch, type: forage}
+  - {x: 32, y: 15, label: "Паслён", key: nightshade_patch, type: forage}
+  - {x: 35, y: 18, label: "Грибы и чертополох", key: ember_cap_patch, type: forage}
+  - {x: 42, y: 27, label: "Лунные орхидеи", key: moon_orchid_patch, type: forage}
+  - {x: 92, y: 8, label: "Ягоды", key: berries, type: forage}
+  - {x: 8, y: 92, label: "Грибы", key: mushrooms, type: forage}
+  - {x: 92, y: 92, label: "Коренья", key: roots, type: forage}
+  - {x: 30, y: 10, label: "Рыбалка", key: shore_fish, type: fish}
+  - {x: 31, y: 10, label: "Окунь", key: ash_perch_spot, type: fish}
+  - {x: 70, y: 10, label: "Рыбалка", key: reef_fish, type: fish}
+  - {x: 71, y: 11, label: "Угорь", key: veil_eel_spot, type: fish}
+  - {x: 4, y: 20, label: "Карп", key: salt_carp_spot, type: fish}
+  - {x: 5, y: 22, label: "Форель", key: ember_trout_spot, type: fish}
+  - {x: 24, y: 4, label: "Корюшка", key: drift_smelt_spot, type: fish}
+  - {x: 6, y: 23, label: "Щука", key: cinder_pike_spot, type: fish}
+  - {x: 38, y: 8, label: "Стеклянный гольян", key: glass_minnow_spot, type: fish}
+  - {x: 66, y: 18, label: "Чернопёрка", key: veil_blackfin_spot, type: fish}
+  - {x: 15, y: 65, label: "Древесина", key: timber, type: harvest}
+  - {x: 85, y: 65, label: "Камень", key: stone, type: dig}
+  - {x: 45, y: 35, label: "Травы", key: mist_herbs, type: forage}
+  - {x: 55, y: 65, label: "Руды", key: scrap_ore, type: mine}
+
+# Roads: light terrain markers connecting fortresses to the heart (visual only).
+roads:
+  - {from: [50, 12], to: [50, 50]}
+  - {from: [88, 50], to: [50, 50]}
+  - {from: [50, 88], to: [50, 50]}
+  - {from: [12, 50], to: [50, 50]}

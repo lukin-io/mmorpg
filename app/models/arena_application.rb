@@ -40,7 +40,9 @@ class ArenaApplication < ApplicationRecord
   }.freeze
 
   VALID_TIMEOUTS = [120, 180, 240, 300].freeze
-  VALID_TRAUMA_PERCENTS = [10, 30, 50, 80].freeze
+  VALID_TURN_SECONDS = [30, 60, 90].freeze
+  VALID_TRAUMA_PERCENTS = [0, 10, 30, 50, 80, 100].freeze
+  VALID_TEAM_SIZES = (1..5).freeze
   MIN_HP_PERCENT_FOR_ARENA = 50 # Minimum HP% required to accept fights
 
   enum :fight_type, FIGHT_TYPES
@@ -53,8 +55,9 @@ class ArenaApplication < ApplicationRecord
   belongs_to :matched_with, class_name: "ArenaApplication", optional: true
   belongs_to :arena_match, optional: true
 
-  validates :timeout_seconds, inclusion: {in: VALID_TIMEOUTS}
-  validates :trauma_percent, inclusion: {in: VALID_TRAUMA_PERCENTS}
+  validate :timeout_seconds_allowed
+  validate :turn_seconds_allowed
+  validate :trauma_percent_allowed
   validate :applicant_can_access_room, on: :create, unless: :npc_application?
   validate :npc_can_appear_in_room, on: :create, if: :npc_application?
   validate :group_params_valid, if: :team_battle?
@@ -132,12 +135,12 @@ class ArenaApplication < ApplicationRecord
   # @param character [Character] the character to check
   # @return [String, nil] reason why character cannot accept, or nil if they can
   def rejection_reason_for(character)
-    return "Application is closed" unless open?
-    return "You cannot accept your own application" if applicant == character
-    return "Arena room is unavailable" unless arena_room.accessible_by?(character)
-    return "Alignment does not match" if alignment_restricted? && !alignment_matches?(character)
-    return "Recover before fighting: minimum #{MIN_HP_PERCENT_FOR_ARENA}% HP" unless character_hp_sufficient?(character)
-    return "Level does not match" unless level_matches?(character)
+    return I18n.t("game.fight.app_closed") unless open?
+    return I18n.t("game.fight.app_own_application") if applicant == character
+    return I18n.t("game.fight.app_room_unavailable_short") unless arena_room.accessible_by?(character)
+    return I18n.t("game.fight.app_alignment_mismatch") if alignment_restricted? && !alignment_matches?(character)
+    return I18n.t("game.fight.app_recover_hp", percent: MIN_HP_PERCENT_FOR_ARENA) unless character_hp_sufficient?(character)
+    return I18n.t("game.fight.app_level_mismatch") unless level_matches?(character)
 
     nil
   end
@@ -183,9 +186,9 @@ class ArenaApplication < ApplicationRecord
   # @return [String] the applicant's name
   def applicant_name
     if npc_application?
-      npc_template&.name || "Arena Bot"
+      npc_template&.name.presence || I18n.t("arena.bot_fallback")
     else
-      applicant&.name || "Unknown"
+      applicant&.name.presence || I18n.t("arena.unknown")
     end
   end
 
@@ -216,29 +219,47 @@ class ArenaApplication < ApplicationRecord
     self.expires_at ||= Time.current + wait.minutes
   end
 
+  def timeout_seconds_allowed
+    return if VALID_TIMEOUTS.include?(timeout_seconds)
+
+    errors.add(:base, I18n.t("game.fight.app_timeout_invalid"))
+  end
+
+  def turn_seconds_allowed
+    return if turn_seconds.blank? || VALID_TURN_SECONDS.include?(turn_seconds)
+
+    errors.add(:base, I18n.t("game.fight.app_turn_invalid"))
+  end
+
+  def trauma_percent_allowed
+    return if VALID_TRAUMA_PERCENTS.include?(trauma_percent)
+
+    errors.add(:base, I18n.t("game.fight.app_trauma_invalid"))
+  end
+
   def applicant_can_access_room
     return if arena_room.nil? || applicant.nil?
 
     unless arena_room.accessible_by?(applicant)
-      errors.add(:applicant, "cannot access this arena room")
+      errors.add(:applicant, I18n.t("arena.validations.room_access_denied"))
     end
   end
 
   def group_params_valid
-    if team_count.nil? || team_count < 1
-      errors.add(:team_count, "is required for group fights")
+    if team_count.nil? || !VALID_TEAM_SIZES.cover?(team_count)
+      errors.add(:team_count, I18n.t("arena.validations.group_team_count_required"))
     end
-    if enemy_count.nil? || enemy_count < 1
-      errors.add(:enemy_count, "is required for group fights")
+    if enemy_count.nil? || !VALID_TEAM_SIZES.cover?(enemy_count)
+      errors.add(:enemy_count, I18n.t("arena.validations.group_enemy_count_required"))
     end
   end
 
   def has_applicant_or_npc
     if applicant_id.blank? && npc_template_id.blank?
-      errors.add(:base, "must have either an applicant or an NPC template")
+      errors.add(:base, I18n.t("arena.validations.applicant_or_npc_required"))
     end
     if applicant_id.present? && npc_template_id.present?
-      errors.add(:base, "cannot have both an applicant and an NPC template")
+      errors.add(:base, I18n.t("arena.validations.applicant_and_npc_both"))
     end
   end
 
@@ -249,7 +270,7 @@ class ArenaApplication < ApplicationRecord
     return if npc_rooms.empty? # Empty means NPC can appear anywhere
 
     unless npc_rooms.include?(arena_room.slug)
-      errors.add(:npc_template, "cannot appear in this arena room")
+      errors.add(:npc_template, I18n.t("arena.validations.npc_room_denied"))
     end
   end
 end

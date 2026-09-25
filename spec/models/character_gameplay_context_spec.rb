@@ -47,15 +47,15 @@ RSpec.describe Character, type: :model do
     it "rejects arbitrary paths and non-object params" do
       expect {
         character.remember_gameplay_context!(name: "https://example.invalid")
-      }.to raise_error(ArgumentError, "Unsupported gameplay context")
+      }.to raise_error(ArgumentError, I18n.t("errors.unsupported_gameplay_context"))
 
       expect {
         character.remember_gameplay_context!(name: "shop", params: nil)
-      }.to raise_error(ArgumentError, "Gameplay context params must be an object")
+      }.to raise_error(ArgumentError, I18n.t("errors.gameplay_context_params_object"))
 
       expect {
         character.remember_gameplay_context!(name: nil)
-      }.to raise_error(ArgumentError, "Unsupported gameplay context")
+      }.to raise_error(ArgumentError, I18n.t("errors.unsupported_gameplay_context"))
     end
   end
 end

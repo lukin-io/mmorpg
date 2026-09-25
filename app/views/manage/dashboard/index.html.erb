@@ -1,19 +1,54 @@
-<% content_for :title, "World Management" %>
+<% content_for :title, t("manage.title") %>
 <%= render "manage/shared/page_header",
-      title: "World and City Management",
-      description: "Edit the persisted records consumed by the existing World and City runtime pipeline." %>
+      title: t("manage.dashboard_title"),
+      description: t("manage.dashboard_hint") %>
 
 <div class="nl-manage-dashboard">
   <% management_sections.each do |section| %>
     <%= link_to section[:path], class: "nl-manage-dashboard-card" do %>
       <strong><%= section[:label] %></strong>
-      <span><%= @resource_counts.fetch(section[:key]) %> records</span>
+      <span><%= @resource_counts.fetch(section[:key]) %> <%= t("manage.records") %></span>
     <% end %>
   <% end %>
 </div>
 
 <section class="nl-manage-note">
-  <h2>Authoritative pipeline</h2>
-  <p><code>TileStateResolver</code> composes managed world cells, buildings, NPC placements, and local actions. <code>ActionOfferBuilder</code> issues short-lived capabilities from that resolved state. City nodes and city actions use the same persisted-zone and offer boundaries.</p>
-  <p>Changes take effect on the next server render. Existing live offers targeting edited or deleted content are cancelled automatically.</p>
+  <h2><%= t("manage.pipeline_title") %></h2>
+  <p><%= t("manage.pipeline_body_html").html_safe %></p>
+  <p><%= t("manage.pipeline_note") %></p>
+</section>
+
+<section class="nl-manage-panel">
+  <h2><%= t("manage.playable_region.title") %></h2>
+  <p><%= t("manage.playable_region.hint") %></p>
+  <p class="nl-manage-region-live">
+    <%= t(
+          "manage.playable_region.live",
+          landmark_cells: @playable_region_live[:landmark_cells],
+          fortresses: @playable_region_live[:fortresses]
+        ) %>
+  </p>
+  <% if @playable_region_status.present? %>
+    <p class="nl-manage-region-status" data-playable-region-status="1">
+      <%= t(
+            "manage.playable_region.last_build",
+            source: @playable_region_status["source"],
+            at: @playable_region_status["recorded_at"],
+            cells_created: @playable_region_status["cells_created"],
+            cells_updated: @playable_region_status["cells_updated"],
+            fortresses: @playable_region_status["fortresses"],
+            dungeon_npcs: @playable_region_status["dungeon_npcs"]
+          ) %>
+    </p>
+  <% else %>
+    <p class="nl-manage-region-status nl-manage-region-status--missing"
+       data-playable-region-status="0">
+      <%= t("manage.playable_region.never_built") %>
+    </p>
+  <% end %>
+  <%= button_to t("manage.playable_region.cta"),
+        manage_playable_region_path,
+        method: :post,
+        class: "lbut",
+        form: {data: {turbo_confirm: t("manage.playable_region.confirm")}} %>
 </section>

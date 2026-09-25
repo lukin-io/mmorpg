@@ -72,17 +72,17 @@ class AirshipJourney < ApplicationRecord
   def ordered_deadlines
     return unless boarded_at && departs_at && arrives_at
 
-    errors.add(:departs_at, "must follow boarding and precede arrival") unless boarded_at <= departs_at && departs_at < arrives_at
+    errors.add(:departs_at, I18n.t("game.airship.validations.departs_order")) unless boarded_at <= departs_at && departs_at < arrives_at
   end
 
   def immutable_reservation
     return unless persisted?
 
     if SNAPSHOT_ATTRIBUTES.any? { |attribute| will_save_change_to_attribute?(attribute) }
-      errors.add(:base, "Accepted flight details cannot change")
+      errors.add(:base, I18n.t("game.airship.validations.snapshot_immutable"))
     end
     if status_in_database != "aboard" && will_save_change_to_status?
-      errors.add(:status, "cannot reopen a finished journey")
+      errors.add(:status, I18n.t("game.airship.validations.cannot_reopen"))
     end
   end
 
@@ -90,29 +90,29 @@ class AirshipJourney < ApplicationRecord
     [[source_zone, source_x, source_y], [destination_zone, destination_x, destination_y]].each do |zone, x, y|
       next if zone&.city? && x.is_a?(Integer) && y.is_a?(Integer) && x.between?(0, zone.width - 1) && y.between?(0, zone.height - 1)
 
-      errors.add(:base, "Flight endpoints must be valid city cells")
+      errors.add(:base, I18n.t("game.airship.validations.endpoints_invalid"))
     end
   end
 
   def valid_path
     unless waypoints.is_a?(Array) && waypoints.size.between?(2, MAX_WAYPOINTS) && departs_at && arrives_at
-      errors.add(:waypoints, "must contain a bounded timed route")
+      errors.add(:waypoints, I18n.t("game.airship.validations.route_bounded"))
       return
     end
     unless waypoints.all? { |point| point.is_a?(Hash) && %w[offset_seconds zone_id x y].all? { |key| point[key].is_a?(Integer) } }
-      errors.add(:waypoints, "must contain integer offsets, region ids, and coordinates")
+      errors.add(:waypoints, I18n.t("game.airship.validations.route_integers"))
       return
     end
     offsets = waypoints.pluck("offset_seconds")
     unless offsets.first == 0 && offsets.last == (arrives_at - departs_at) && offsets.each_cons(2).all? { |left, right| right > left }
-      errors.add(:waypoints, "must span the flight in strictly increasing order")
+      errors.add(:waypoints, I18n.t("game.airship.validations.route_increasing"))
     end
     zones = Zone.where(id: waypoints.pluck("zone_id").uniq).index_by(&:id)
     waypoints.each do |point|
       zone = zones[point.fetch("zone_id")]
       next if zone&.outdoor? && point.fetch("x").between?(0, zone.width - 1) && point.fetch("y").between?(0, zone.height - 1)
 
-      errors.add(:waypoints, "must stay within authored outdoor regions")
+      errors.add(:waypoints, I18n.t("game.airship.validations.route_outdoor"))
       break
     end
   end

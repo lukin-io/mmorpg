@@ -5,6 +5,18 @@
 <% content_for :title, @zone.name %>
 
 <div class="nl-world-container nl-world-container--map">
+  <%= render "shared/premium_auto_rail" %>
+  <%# City-defense CTA belongs on the city surface only — outdoor FOMO used to
+      look like a false ambush next to wilderness cells. %>
+  <% fair = WorldLiveEvent.active.of_kind("season_fair").order(starts_at: :desc).first %>
+  <% if fair %>
+    <p class="nl-quests-board__meta" data-season-fair="1">
+      <strong class="game-event-attention"><%= fair.title %></strong>
+      — <%= fair.body %>
+      · <%= link_to t("game.buildings.market_short"), city_building_path("market"), class: "nl-sheet-link", data: {turbo_frame: "_top"} %>
+      · <%= link_to t("game.season.nav"), season_path, class: "nl-sheet-link", data: {turbo_frame: "_top"} %>
+    </p>
+  <% end %>
   <turbo-frame id="game-map">
     <%= render "world/map",
                position: @position,

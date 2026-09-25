@@ -49,7 +49,7 @@ RSpec.describe Zone, type: :model do
         original_name = region.name
 
         expect(region.update(name: "Renamed Region")).to be false
-        expect(region.errors[:name]).to include("identifies populated region content; change the display title instead")
+        expect(region.errors[:name]).to include(I18n.t("manage.zone_name_populated"))
         expect(region.reload.name).to eq(original_name)
         expect(content.reload.zone).to eq(original_name)
         expect(Zone.find_by(name: original_name)).to eq(region)
@@ -87,7 +87,7 @@ RSpec.describe Zone, type: :model do
 
       zone.metadata["city_presentation"]["landmarks"]["tavern"]["polygon"] = [[0, 0], [100, 0], [0, -1]]
       expect(zone).not_to be_valid
-      expect(zone.errors[:metadata]).to include("city landmarks polygon must contain 3 to 32 percentage points enclosing an area")
+      expect(zone.errors[:metadata]).to include(I18n.t("manage.city_polygon_invalid", kind: "landmarks"))
     end
 
     it "exposes the stable node key and player-facing title" do
@@ -122,7 +122,7 @@ RSpec.describe Zone, type: :model do
       [nil, "", "  ", 123, ["Station"], "S" * 121].each do |title|
         zone = build(:zone, :city, metadata: {"airship_station_title" => title})
         expect(zone).not_to be_valid
-        expect(zone.errors[:metadata]).to include("airship_station_title must be a nonblank string of at most 120 characters")
+        expect(zone.errors[:metadata]).to include(I18n.t("manage.airship_station_title_invalid"))
         expect(zone.airship_station_title).to be_nil
       end
     end

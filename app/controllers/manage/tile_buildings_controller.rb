@@ -26,7 +26,7 @@ module Manage
       attributes = parsed_tile_building_params
 
       if attributes && mutate(@tile_building, operation: :create, attributes:)
-        redirect_to manage_tile_building_path(@tile_building), notice: "Cell building created.", status: :see_other
+        redirect_to manage_tile_building_path(@tile_building), notice: I18n.t("manage.flashes.tile_building_created"), status: :see_other
       else
         render :new, status: :unprocessable_content
       end
@@ -36,7 +36,7 @@ module Manage
       attributes = parsed_tile_building_params
 
       if attributes && mutate(@tile_building, operation: :update, attributes:)
-        redirect_to manage_tile_building_path(@tile_building), notice: "Cell building updated.", status: :see_other
+        redirect_to manage_tile_building_path(@tile_building), notice: I18n.t("manage.flashes.tile_building_updated"), status: :see_other
       else
         render :edit, status: :unprocessable_content
       end
@@ -44,7 +44,7 @@ module Manage
 
     def destroy
       if mutate(@tile_building, operation: :destroy)
-        redirect_to manage_tile_buildings_path, notice: "Cell building deleted.", status: :see_other
+        redirect_to manage_tile_buildings_path, notice: I18n.t("manage.flashes.tile_building_deleted"), status: :see_other
       else
         redirect_to manage_tile_building_path(@tile_building), alert: @tile_building.errors.full_messages.to_sentence,
           status: :see_other

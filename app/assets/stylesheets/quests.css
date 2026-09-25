@@ -1,0 +1,676 @@
+/* Sandbox Ashen quest journal — Mist War–inspired clarity: counts, formula row, reward chips */
+
+.nl-quests {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 12px 16px 24px;
+  color: #2a2218;
+}
+
+.nl-quests__header h1 {
+  margin: 0 0 6px;
+  font: 700 18px Verdana, Tahoma, sans-serif;
+}
+
+.nl-quests__header p,
+.nl-quests__giver {
+  margin: 0 0 8px;
+  color: #5a4a38;
+}
+
+.nl-quests__summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 14px;
+  padding: 0;
+  list-style: none;
+}
+
+.nl-quests__summary li {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+  padding: 4px 10px;
+  border: 1px solid #c4b396;
+  background: #f3ead8;
+  font: 12px Verdana, Tahoma, sans-serif;
+}
+
+.nl-quests__list {
+  display: grid;
+  gap: 12px;
+}
+
+.nl-quests__card {
+  padding: 12px;
+  border: 1px solid #b9a588;
+  background: linear-gradient(180deg, #f7f0e2 0%, #ebe1cd 100%);
+}
+
+.nl-quests__card-top {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.nl-quests__card h2 {
+  margin: 0 0 6px;
+  font: 700 14px Verdana, Tahoma, sans-serif;
+}
+
+.nl-quests__badge {
+  flex: 0 0 auto;
+  padding: 2px 8px;
+  border: 1px solid #a89472;
+  font: 700 11px Verdana, Tahoma, sans-serif;
+  white-space: nowrap;
+}
+
+.nl-quests__dialogue {
+  margin: 8px 0 0;
+  padding: 8px 10px;
+  border-left: 3px solid #8b7355;
+  background: rgba(255, 250, 240, 0.7);
+  color: #3a3024;
+  font: italic 12px/1.45 Georgia, "Times New Roman", serif;
+}
+
+.nl-dungeon-vignette {
+  margin: 0 0 10px;
+  padding: 8px 12px;
+  border: 1px solid #6e5a3c;
+  background: linear-gradient(90deg, rgba(42, 34, 24, 0.92), rgba(26, 21, 16, 0.85));
+  color: #f0e2c4;
+  font: italic 12px/1.45 Georgia, "Times New Roman", serif;
+}
+
+.nl-quests__badge--available {
+  background: #e8f0dc;
+  color: #355222;
+}
+
+.nl-quests__badge--active {
+  background: #f3e4c4;
+  color: #6a4a12;
+}
+
+.nl-quests__badge--completed {
+  background: #ddd6c8;
+  color: #555;
+}
+
+.nl-quests__badge--locked {
+  background: #ece8e0;
+  color: #7a6a55;
+}
+
+.nl-quests__card--locked {
+  opacity: 0.72;
+}
+
+.nl-quests__card--ready {
+  outline: 1px solid var(--nl-rule-blue, #4a6fa5);
+  outline-offset: -1px;
+}
+
+.nl-quests__card--completed {
+  opacity: 0.82;
+}
+
+.nl-quests__formula {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 12px;
+  align-items: start;
+  margin: 0 0 10px;
+  padding: 8px 10px;
+  border: 1px solid #d0c1a4;
+  background: #faf6ec;
+  font: 12px Verdana, Tahoma, sans-serif;
+}
+
+.nl-quests__formula strong {
+  white-space: nowrap;
+}
+
+.nl-quests__formula span {
+  line-height: 1.35;
+}
+
+.nl-quests__rewards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 8px;
+  padding: 0;
+  list-style: none;
+}
+
+.nl-quests__chip {
+  padding: 3px 8px;
+  border: 1px solid #b9a588;
+  background: #fffaf0;
+  font: 11px Verdana, Tahoma, sans-serif;
+}
+
+.nl-quests__actions {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.nl-quests__done {
+  font-weight: 700;
+  color: #3d5a2f;
+}
+
+.nl-quests-board {
+  margin-top: 16px;
+  padding: 12px;
+  border: 1px solid #b9a588;
+  background: #f4ecdc;
+}
+
+.nl-quests-board__meta {
+  margin: 8px 0 0;
+  color: #5a4a38;
+  font: 12px Verdana, Tahoma, sans-serif;
+}
+
+.nl-quests-board__active {
+  margin: 0 0 10px;
+  padding: 8px 10px;
+  border: 1px solid #c9b48a;
+  background: #f7efdc;
+  font: 700 12px Verdana, Tahoma, sans-serif;
+}
+
+.nl-quests-board__active a {
+  color: #4a3818;
+  text-decoration: none;
+}
+
+.nl-chat-tool--quests {
+  font-weight: 700;
+}
+
+.nl-handbook {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid #b9a588;
+  background: linear-gradient(180deg, #f8f2e6 0%, #efe6d2 100%);
+}
+
+.nl-handbook h2 {
+  margin: 0 0 8px;
+  font: 700 14px Verdana, Tahoma, sans-serif;
+}
+
+.nl-handbook__lead {
+  margin: 0 0 10px;
+  color: #5a4a38;
+  font: 12px Verdana, Tahoma, sans-serif;
+}
+
+.nl-handbook__banner {
+  margin: 0 0 10px;
+}
+
+.nl-handbook__banner-img {
+  display: block;
+  width: 100%;
+  max-width: 520px;
+  height: auto;
+  border: 1px solid #3a2a1a;
+  object-fit: cover;
+}
+
+.nl-handbook__banner-img--emblem {
+  max-width: 96px;
+  margin: 0 auto;
+}
+
+.nl-season-offer-icon {
+  display: inline-block;
+  vertical-align: middle;
+  width: 48px;
+  height: 48px;
+  margin-right: 8px;
+  border: 1px solid #3a2a1a;
+  object-fit: cover;
+  background: #1a1210;
+}
+
+.nl-handbook__grid {
+  display: grid;
+  gap: 8px;
+}
+
+@media (min-width: 640px) {
+  .nl-handbook__grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.nl-handbook__card {
+  padding: 8px 10px;
+  border: 1px solid #c4b396;
+  background: #faf6ec;
+}
+
+.nl-handbook__card h3 {
+  margin: 0 0 4px;
+  font: 700 12px Verdana, Tahoma, sans-serif;
+}
+
+.nl-handbook__card p {
+  margin: 0;
+  color: #4a3d2e;
+  font: 11px/1.35 Verdana, Tahoma, sans-serif;
+}
+
+.nl-handbook__bullets {
+  margin: 6px 0 0;
+  padding-left: 16px;
+  color: #4a3d2e;
+  font: 11px/1.35 Verdana, Tahoma, sans-serif;
+}
+
+.nl-living-board {
+  margin: 0 0 12px;
+  padding: 8px 10px;
+  border: 1px solid #c9b89a;
+  background: linear-gradient(180deg, #f7f0e2 0%, #efe4d0 100%);
+}
+
+.nl-living-board__title {
+  display: block;
+  margin: 0 0 6px;
+  font: 700 12px Verdana, Tahoma, sans-serif;
+  color: #3d3224;
+}
+
+.nl-living-board__list {
+  margin: 0;
+  padding-left: 16px;
+}
+
+.nl-living-board__item,
+.nl-living-board li {
+  margin: 0 0 4px;
+  font: 11px/1.35 Verdana, Tahoma, sans-serif;
+}
+
+.nl-living-board--city {
+  margin-bottom: 10px;
+}
+
+.nl-city-landmark__lead {
+  margin: 0 0 8px;
+}
+
+.nl-city-landmark__notes {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  color: #5a4a38;
+}
+
+@media (pointer: coarse) {
+  .nl-quests__card .lbut,
+  .nl-quests__card .nl-sheet-link,
+  .nl-quests__header .nl-sheet-link {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 8px 10px;
+    font-size: 12px;
+    line-height: 1.25;
+  }
+}
+
+@media (max-width: 360px) {
+  .nl-quests,
+  .nl-quests__summary,
+  .nl-quests__card {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .nl-handbook__card {
+    min-width: 0;
+  }
+}
+
+/* Instances browser — segmented tabs + cover strip */
+.nl-instances__tabs {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0;
+  margin: 4px 0 12px;
+  border: 1px solid #c4b396;
+  background: #efe6d2;
+}
+
+.nl-instances__tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 6px 14px;
+  border-right: 1px solid #c4b396;
+  color: #4a3a28;
+  font: 700 13px/1.2 Verdana, Tahoma, sans-serif;
+  text-decoration: none;
+}
+
+.nl-instances__tab:last-child {
+  border-right: 0;
+}
+
+.nl-instances__tab:hover {
+  background: #f7f0e2;
+  color: #2a2218;
+  text-decoration: none;
+}
+
+.nl-instances__tab.is-active {
+  background: #fffef9;
+  color: #2a2218;
+  box-shadow: inset 0 -2px 0 #8a7040;
+}
+
+.nl-instances__count {
+  min-width: 1.5rem;
+  padding: 1px 6px;
+  border: 1px solid #c4b396;
+  background: #f3ead8;
+  font: 700 11px/1.2 Verdana, Tahoma, sans-serif;
+  text-align: center;
+}
+
+.nl-instances__card {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 12px;
+  align-items: stretch;
+}
+
+.nl-instances__cover {
+  min-height: 88px;
+  border: 1px solid #b9a588;
+  background:
+    linear-gradient(160deg, rgba(42, 34, 24, 0.15), rgba(42, 34, 24, 0.45)),
+    repeating-linear-gradient(135deg, #d8cbb0 0 8px, #cfc0a0 8px 16px);
+}
+
+.nl-instances__cover[data-instance-kind-art="raid"] {
+  background:
+    linear-gradient(160deg, rgba(90, 40, 28, 0.25), rgba(42, 34, 24, 0.55)),
+    repeating-linear-gradient(135deg, #d4b49a 0 8px, #c49a7a 8px 16px);
+}
+
+.nl-instances__body {
+  min-width: 0;
+}
+
+.nl-instances__launch {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  margin-top: 8px;
+  padding: 6px 16px;
+  border: 1px solid #8a7040;
+  background: linear-gradient(180deg, #fffef9 0%, #e8dab6 100%);
+  color: #2a2218;
+  font: 700 13px/1.2 Verdana, Tahoma, sans-serif;
+  cursor: pointer;
+}
+
+.nl-instances__rooms {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 6px 0 0;
+}
+
+.nl-instances__room {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.35rem;
+  height: 1.35rem;
+  padding: 0 3px;
+  border: 1px solid #9a8560;
+  border-radius: 2px;
+  background: #ebe1cc;
+  color: #4a3a28;
+  font: 700 10px/1 Verdana, Tahoma, sans-serif;
+}
+
+.nl-instances__room--elite {
+  border-color: #8a6a20;
+  background: #f0dfa8;
+}
+
+.nl-instances__room--boss {
+  border-color: #7a3030;
+  background: #e8b8b0;
+  color: #4a1010;
+}
+
+.nl-instances__room.is-done {
+  opacity: 0.45;
+  text-decoration: line-through;
+}
+
+.nl-instances__room.is-current {
+  box-shadow: 0 0 0 2px #6a4a18;
+  font-weight: 800;
+}
+
+@media (max-width: 520px) {
+  .nl-instances__card {
+    grid-template-columns: 1fr;
+  }
+
+  .nl-instances__cover {
+    min-height: 72px;
+  }
+}
+
+@media (pointer: coarse) {
+  .nl-instances__tab,
+  .nl-instances__launch {
+    min-height: 44px;
+  }
+}
+
+/* First-hour rail — lives on the achievements/activity board only */
+.nl-first-hour {
+  max-width: 100%;
+  margin: 0 0 16px;
+  padding: 10px 12px;
+  border: 1px solid #b8893a;
+  background:
+    linear-gradient(165deg, rgba(255, 248, 230, 0.97) 0%, rgba(236, 214, 168, 0.95) 55%, rgba(214, 176, 110, 0.92) 100%);
+  box-shadow: 0 2px 0 rgba(90, 60, 20, 0.18);
+  color: #2a1c0c;
+}
+
+.nl-activity-tiers,
+.nl-quests__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 0 0 12px;
+}
+
+.nl-activity-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.nl-first-hour__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.nl-first-hour__head h2 {
+  margin: 0;
+  font: 700 13px/1.2 Verdana, Tahoma, sans-serif;
+  color: #5a3a12;
+}
+
+.nl-first-hour__pct {
+  font: 700 11px/1 Verdana, Tahoma, sans-serif;
+  color: #8a5a18;
+  white-space: nowrap;
+}
+
+.nl-first-hour__list {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 4px;
+}
+
+.nl-first-hour__step {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  font: 12px/1.35 Verdana, Tahoma, sans-serif;
+}
+
+.nl-first-hour__step--done {
+  color: #3a5a28;
+  opacity: 0.85;
+}
+
+.nl-first-hour__check {
+  color: #2f6a22;
+  font-weight: 700;
+}
+
+.nl-first-hour__open {
+  color: #b07020;
+  font-weight: 700;
+  animation: nl-open-pulse 1.8s ease-in-out infinite;
+}
+
+.nl-first-hour__link {
+  color: #003c6a;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.nl-first-hour__link:hover {
+  color: #8a4010;
+}
+
+.nl-first-hour__hint {
+  margin: 8px 0 0;
+  color: #6a5230;
+  font: 11px/1.35 Verdana, Tahoma, sans-serif;
+}
+
+.nl-progress {
+  position: relative;
+  height: 10px;
+  overflow: hidden;
+  border: 1px solid #8a7040;
+  background: linear-gradient(180deg, #d8c8a0, #c8b488);
+}
+
+.nl-progress__fill {
+  display: block;
+  height: 100%;
+  min-width: 0;
+  background: linear-gradient(90deg, #c07020 0%, #e8a838 55%, #f0d060 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  transition: width 280ms ease-out;
+}
+
+.nl-progress__fill--ready {
+  background: linear-gradient(90deg, #2f6a22 0%, #5aaa38 55%, #a0d860 100%);
+  animation: nl-claim-glow 1.4s ease-in-out infinite;
+}
+
+.nl-claim-pulse {
+  animation: nl-claim-glow 1.2s ease-in-out infinite;
+}
+
+.nl-chat-tool--claim {
+  position: relative;
+  border-color: #a04028 !important;
+  color: #7a2010 !important;
+  background: linear-gradient(180deg, #ffe8d8, #f0b090) !important;
+  box-shadow: 0 0 0 1px rgba(180, 60, 30, 0.35);
+  animation: nl-claim-glow 1.5s ease-in-out infinite;
+}
+
+.nl-claim-dot {
+  position: absolute;
+  top: -5px;
+  right: -6px;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 3px;
+  border-radius: 8px;
+  background: #c02818;
+  color: #fff8f0;
+  font: 700 9px/14px Verdana, Tahoma, sans-serif;
+  text-align: center;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+.nl-clan-online {
+  margin: 0 0 8px;
+  padding: 6px 8px;
+  border: 1px solid #7a9ab0;
+  background: linear-gradient(180deg, #eef5fa, #d8e6f0);
+  color: #1e3a4a;
+  font: 12px/1.35 Verdana, Tahoma, sans-serif;
+}
+
+.nl-clan-roster__online {
+  background: rgba(40, 120, 80, 0.08);
+}
+
+.nl-online-pip {
+  margin-left: 4px;
+  color: #1a8a40;
+  font-size: 11px;
+  vertical-align: middle;
+}
+
+@keyframes nl-first-hour-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes nl-open-pulse {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+
+@keyframes nl-claim-glow {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.08); }
+}
+
+@media (max-width: 900px) {
+  .nl-first-hour {
+    max-width: none;
+    margin: 0 0 10px;
+  }
+}

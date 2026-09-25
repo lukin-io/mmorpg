@@ -1,19 +1,38 @@
-<% content_for :title, "#{@character.name} - Character" %>
+<% content_for :title, t("game.profile.character_title", name: @character.name) %>
+<% online = @character_online %>
 
 <%#
   Player profile.
 
   For the owner this renders inside the game shell, whose header already
-  carries the name, level, and vitals, so the sheet starts directly with the
-  paper doll as in the live capture. A visitor gets that identity line here
-  instead, because the public layout has no shell header.
+  carries the name, level, and vitals, so the sheet starts with identity +
+  presence above the paper doll. A visitor gets the same identity band.
 %>
 <section class="nl-character-page">
-  <% unless @own_profile %>
-    <header class="nl-profile-identity">
-      <h1><%= @character.name %> [<%= @character.level %>]</h1>
-    </header>
-  <% end %>
+  <header class="nl-profile-identity"
+          data-profile-online="<%= online ? 1 : 0 %>"
+          data-profile-name="<%= @character.name %>">
+    <h1>
+      <span class="nl-profile-nick"><%= @character.name %> [<%= @character.level %>]</span>
+      <span class="nl-presence-badge <%= online ? "nl-presence-badge--online" : "nl-presence-badge--offline" %>"
+            data-presence-status="<%= online ? "online" : "offline" %>">
+        <%= online ? t("game.profile.online") : t("game.profile.offline") %>
+      </span>
+    </h1>
+
+    <%= form_with url: find_player_path, method: :get, local: true, class: "nl-profile-lookup", data: {profile_lookup: "1"} do %>
+      <label class="nl-profile-lookup__label" for="profile-lookup-name"><%= t("game.profile.lookup_label") %></label>
+      <input id="profile-lookup-name"
+             class="nl-profile-lookup__input"
+             type="text"
+             name="name"
+             maxlength="<%= Character::MAX_NAME_LENGTH %>"
+             autocomplete="off"
+             placeholder="<%= t("game.profile.lookup_placeholder") %>"
+             aria-label="<%= t("game.profile.lookup_label") %>">
+      <button type="submit" class="lbut nl-profile-lookup__submit"><%= t("game.profile.lookup_submit") %></button>
+    <% end %>
+  </header>
 
   <div class="nl-character-page-grid">
     <aside class="nl-character-page-aside">
@@ -22,7 +41,44 @@
         equipment: @equipment,
         interactive: false,
         show_money: @own_profile %>
-      <p class="nl-profile-location" aria-label="Current location"><%= profile_location(@character) %></p>
+      <p class="nl-profile-location" aria-label="<%= t("game.world.location") %>"><%= profile_location(@character) %></p>
+      <% if !@own_profile && @viewer_character.present? && Game::World::StartPlayerAssault.offerable?(attacker: @viewer_character, defender: @character) %>
+        <div class="nl-profile-assault">
+          <% if Game::World::StartPlayerAssault.has_trauma_scroll?(@viewer_character) %>
+            <% preferred = @viewer_character.metadata.to_h["preferred_assault_scroll_kind"].presence || "normal" %>
+            <div class="nl-assault-kinds" data-assault-kinds="1">
+              <% %w[peaceful normal bloody].each do |kind| %>
+                <% qty = Game::Combat::AssaultScrolls.quantity(@viewer_character, Game::Combat::AssaultScrolls.item_key_for(kind)) %>
+                <% qty += Game::Combat::AssaultScrolls.quantity(@viewer_character, Game::Combat::AssaultScrolls::LEGACY_BLOODY_KEY) if kind == "bloody" %>
+                <% next if qty <= 0 %>
+                <%= button_to t("game.combat.assault_kind.#{kind}"),
+                      world_assault_path,
+                      method: :post,
+                      params: {defender_id: @character.id, assault_scroll_kind: kind},
+                      class: "nl-assault-btn#{' nl-assault-btn--preferred' if kind == preferred}",
+                      form: {class: "nl-assault-form", data: {turbo: false}},
+                      title: t("game.world.assault_hint_kind", kind: t("game.combat.assault_kind.#{kind}")) %>
+              <% end %>
+            </div>
+            <p class="nl-quests-board__meta"><%= t("game.world.assault_hint") %></p>
+          <% else %>
+            <button type="button" class="nl-assault-btn nl-assault-btn--blocked" disabled title="<%= t("game.world.assault_need_scroll") %>">
+              <%= t("game.world.assault_cta") %>
+            </button>
+            <p class="nl-quests-board__meta" data-assault-need-scroll="1">
+              <%= t("game.world.assault_need_scroll") %>
+              <%= link_to t("game.inventory.scrolls_block_title"), inventory_path(category: "things", subcategory: "scrolls"), class: "nl-sheet-link", data: {assault_recovery: "inventory"} %>
+              <% if Game::World::CityBuildingCatalog.accessible?(character: @viewer_character, building_key: "hospital") %>
+                ·
+                <%= link_to t("game.buildings.hospital_title_short"), city_building_path("hospital"), class: "nl-sheet-link", data: {assault_recovery: "hospital"} %>
+              <% else %>
+                ·
+                <%= link_to t("game.common.city"), world_path, class: "nl-sheet-link", data: {assault_recovery: "city"} %>
+              <% end %>
+            </p>
+          <% end %>
+        </div>
+      <% end %>
     </aside>
 
     <main class="nl-character-page-main">
@@ -33,16 +89,32 @@
           <turbo-frame id="stat-allocation" class="nl-allocation-frame">
             <%= render "characters/stat_allocation" %>
           </turbo-frame>
+        <% else %>
+          <p class="nl-empty-note" data-profile-allocation="idle">
+            <%= t("game.profile.no_stat_points") %>
+            ·
+            <%= link_to t("nav.world"), world_path, class: "nl-sheet-link", data: {profile_recovery: "world"} %>
+            <% if Game::World::CityBuildingCatalog.accessible?(character: @character, building_key: "general_school") %>
+              ·
+              <%= link_to t("game.buildings.school_board_title"), city_building_path("general_school"), class: "nl-sheet-link", data: {profile_recovery: "school"} %>
+            <% end %>
+          </p>
         <% end %>
       <% elsif @character.owned_perk_keys.any? %>
         <div class="nl-panel">
-          <h2>Perks</h2>
+          <h2><%= t("game.profile.perks") %></h2>
           <ul class="nl-profile-perk-list">
             <% @character.owned_perk_keys.each do |perk_key| %>
-              <li><%= Game::Skills::PerkRegistry.find(perk_key)[:name] %></li>
+              <li><%= Game::Skills::PerkRegistry.display_name(Game::Skills::PerkRegistry.find(perk_key)) %></li>
             <% end %>
           </ul>
         </div>
+      <% else %>
+        <p class="nl-empty-note" data-profile-perks="empty">
+          <%= t("game.profile.no_public_perks") %>
+          ·
+          <%= link_to t("nav.world"), world_path, class: "nl-sheet-link", data: {profile_recovery: "world"} %>
+        </p>
       <% end %>
     </main>
   </div>

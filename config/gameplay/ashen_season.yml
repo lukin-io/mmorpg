@@ -1,0 +1,52 @@
+# Season track — Mist-style FOMO retention (not Neverlands parity).
+# Soft convenience monetization: free track + premium track unlock via VM.
+current: veil_ember_s1
+
+seasons:
+  veil_ember_s1:
+    title_ru: "Сезон Угольной Завесы"
+    title_en: "Veil Ember Season"
+    starts_on: "2026-09-01"
+    ends_on: "2026-10-15"
+    # FOMO shop demand: which exchange keys pay more during the season
+    demand_keys: [coal_chunk, iron_ore, ash_herb, ash_perch, ember_trout]
+    demand_mult: 1.25
+    # Craft sink: combat players need these mats from gatherers
+    craft_demand_keys: [pine_resin, ash_herb, coal_chunk, ember_cedar_plank]
+    xp_per_daily_claim: 25
+    xp_per_pulse_hour: 10
+    xp_per_daily_checkin: 15
+    # Streak milestones beat Mist flat dailies: escalating FOMO without P2W.
+    streak_milestones:
+      - {days: 3, nv: 40, season_xp: 20}
+      - {days: 7, nv: 120, season_xp: 50}
+      - {days: 14, nv: 300, season_xp: 100}
+    # Convenience-only season shop (no damage/crit packs).
+    shop_offers:
+      - {key: "xp_flask", title_ru: "Колба сезона (+80 XP)", title_en: "Season flask (+80 XP)", price_vm: 8, once_per_day: true, icon: "cc0/ui/season-offer-xp-flask.png", grant: {season_xp: 80}}
+      - {key: "bandage_pack", title_ru: "Набор бинтов ×3", title_en: "Bandage pack ×3", price_vm: 6, once_per_day: true, icon: "cc0/ui/season-offer-bandage.png", grant: {item_key: ashen_bandage, quantity: 3}}
+      - {key: "bait_pack", title_ru: "Приманка ×5", title_en: "Bait pack ×5", price_nv: 90, once_per_day: true, icon: "cc0/ui/season-offer-bait-pack.png", grant: {item_key: ashen_bait, quantity: 5}}
+      - {key: "merchant_boost", title_ru: "Купеческий импульс (+35 NV)", title_en: "Merchant pulse (+35 NV)", price_vm: 5, once_per_day: true, icon: "cc0/ui/season-offer-merchant-boost.png", grant: {nv: 35}}
+    free_track:
+      - {level: 1, xp: 0, reward: {nv: 30}}
+      - {level: 2, xp: 50, reward: {nv: 40, item_key: ashen_bait}}
+      - {level: 3, xp: 120, reward: {nv: 55}}
+      - {level: 4, xp: 220, reward: {item_key: ashen_bandage}}
+      - {level: 5, xp: 350, reward: {nv: 80}}
+      - {level: 6, xp: 500, reward: {nv: 100}}
+      - {level: 7, xp: 700, reward: {item_key: coal_chunk, quantity: 3}}
+      - {level: 8, xp: 950, reward: {nv: 140}}
+      - {level: 9, xp: 1250, reward: {nv: 160}}
+      - {level: 10, xp: 1600, reward: {nv: 200, item_key: ashen_bait}}
+    premium_track:
+      - {level: 1, xp: 0, reward: {nv: 60, vm: 5}}
+      - {level: 2, xp: 50, reward: {nv: 80}}
+      - {level: 3, xp: 120, reward: {item_key: ashen_bandage, quantity: 2}}
+      - {level: 4, xp: 220, reward: {nv: 120, vm: 8}}
+      - {level: 5, xp: 350, reward: {nv: 150}}
+      - {level: 6, xp: 500, reward: {vm: 12}}
+      - {level: 7, xp: 700, reward: {nv: 200}}
+      - {level: 8, xp: 950, reward: {item_key: ashen_bait, quantity: 5}}
+      - {level: 9, xp: 1250, reward: {nv: 250, vm: 15}}
+      - {level: 10, xp: 1600, reward: {nv: 400, vm: 25}}
+    premium_unlock_vm: 35

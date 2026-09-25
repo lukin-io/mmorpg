@@ -4,7 +4,8 @@
       <% items.each do |item| %>
         <% block_reason = shop_sell_block_reason(item) %>
         <% offer = @shop_sell_offers[item.id] %>
-        <tr>
+        <% sellable = block_reason.nil? && offer.present? %>
+        <tr data-shop-sell-item="<%= item.id %>" data-shop-sellable="<%= sellable ? "1" : "0" %>">
           <td class="nl-shop-icon-cell">
             <% if artwork = item_artwork_path(item.item_template) %>
               <%= image_tag artwork, width: 62, height: 91, alt: "", class: "nl-shop-item-icon" %>
@@ -12,20 +13,23 @@
               <span class="nl-shop-category__icon nl-shop-item-icon" style="<%= shop_category_icon_style(Game::Shop::Catalog.category_for(item.item_template)) %>" aria-hidden="true"></span>
             <% end %>
             <% if item.durable? %>
-              <meter class="nl-shop-durability" value="<%= item.current_durability %>" max="<%= item.max_durability %>" aria-label="Durability <%= item.item_template.name %>"></meter>
+              <meter class="nl-shop-durability" value="<%= item.current_durability %>" max="<%= item.max_durability %>" aria-label="<%= t("game.common.durability") %> <%= item.item_template.display_name %>"></meter>
             <% end %>
           </td>
           <td class="nl-shop-row-content">
             <div class="nl-shop-item-heading">
-              <strong><%= item.item_template.name %></strong>
-              <span>(quantity: <%= shop_stock_label(item.item_template) %>)</span>
-              <span>Quantity: <%= item.quantity %></span>
+              <strong><%= item.item_template.display_name %></strong>
+              <span>(<%= t("game.shop.quantity", count: shop_stock_label(item.item_template)) %>)</span>
+              <span><%= t("game.common.quantity") %>: <%= item.quantity %></span>
             </div>
             <div class="nl-shop-item-trade">
               <% if block_reason || !offer %>
-                <span class="nl-shop-unavailable"><%= block_reason || "Refresh to sell" %></span>
+                <span class="nl-shop-unavailable">
+                  <%= block_reason || t("game.shop.refresh_sell") %>
+                  <%= shop_block_recovery_link(block_reason) %>
+                </span>
               <% else %>
-                <%= form_with url: sell_shop_path, method: :post, class: "nl-shop-action-form", data: {turbo_confirm: "Sell #{item.item_template.name}?"} do |f| %>
+                <%= form_with url: sell_shop_path, method: :post, class: "nl-shop-action-form", data: {turbo_confirm: t("game.shop.sell_confirm", name: item.item_template.display_name)} do |f| %>
                   <%= f.hidden_field :mode, value: "sell" %>
                   <%= f.hidden_field :category, value: @category %>
                   <% shop_filter_context.each do |key, value| %>
@@ -33,13 +37,13 @@
                   <% end %>
                   <%= f.hidden_field :item_id, value: item.id %>
                   <%= f.hidden_field :action_key, value: offer.action_key %>
-                  <%= f.submit "Sell for #{number_with_delimiter(shop_sale_price(item))} NV", class: "invbut" %>
+                  <%= f.submit t("game.shop.sell_for", price: number_with_delimiter(shop_sale_price(item))), class: "invbut" %>
                 <% end %>
               <% end %>
             </div>
             <div class="nl-shop-item-details">
               <section>
-                <h2>properties</h2>
+                <h2><%= t("game.common.properties") %></h2>
                 <dl class="nl-shop-properties">
                   <% shop_item_properties(item.item_template, item:).each do |label, value| %>
                     <div><dt><%= label %>:</dt> <dd><b><%= value %></b></dd></div>
@@ -47,7 +51,7 @@
                 </dl>
               </section>
               <section>
-                <h2>requirements</h2>
+                <h2><%= t("game.common.requirements") %></h2>
                 <ul class="nl-shop-requirements">
                   <% shop_item_requirements(item.item_template).each do |label, value, met| %>
                     <li>
@@ -63,5 +67,8 @@
     </tbody>
   </table>
 <% else %>
-  <p class="nl-empty-note nl-shop-empty">There are no sellable items in inventory.</p>
+  <p class="nl-empty-note nl-shop-empty" data-shop-sell-empty="1">
+    <%= t("game.shop.empty_sell") %>
+    <%= link_to t("game.shop.open_inventory"), inventory_path, class: "nl-sheet-link", data: {shop_recovery: "inventory"} %>
+  </p>
 <% end %>

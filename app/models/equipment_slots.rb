@@ -53,4 +53,14 @@ module EquipmentSlots
   ORDERED = (LEFT + POCKET_ROW + RIGHT + RINGS + BELT_CONTENT).freeze
   KEYS = ORDERED.map(&:key).freeze
   LABELS = ORDERED.to_h { |slot| [slot.key, slot.label] }.freeze
+
+  module_function
+
+  # English catalog labels stay on Slot for evidence; player UI resolves through i18n.
+  def label_for(key)
+    english = LABELS[key.to_s]
+    return key.to_s if english.blank?
+
+    I18n.t("game.equipment.slots.#{key}", default: english)
+  end
 end

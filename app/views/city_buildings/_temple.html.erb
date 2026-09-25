@@ -1,0 +1,73 @@
+<% cost = Game::World::TempleBlessing::COST_NV.to_d %>
+<% wallet = current_user.currency_wallet || current_user.create_currency_wallet!(nv_balance: 0) %>
+<% balance = wallet.nv_balance.to_d %>
+<% injury_state = Game::Combat::InjuryState.new(character: current_character) %>
+<% light_count = injury_state.active.count { |row| row["severity"].to_s == "light" } %>
+<% can_rite = light_count.positive? && balance >= cost %>
+<% can_afford = balance >= cost %>
+<section class="nl-handbook" aria-label="<%= t("game.buildings.temple_aria") %>"
+         data-temple-light="<%= light_count %>"
+         data-temple-wallet="<%= balance.to_i %>"
+         data-temple-can-afford="<%= can_afford ? "1" : "0" %>"
+         data-temple-rite-ready="<%= can_rite ? "1" : "0" %>">
+  <h2><%= t("game.buildings.temple_rite_title") %></h2>
+  <p class="nl-handbook__lead"><%= t("game.buildings.temple_rite_lead", amount: Game::World::TempleBlessing::COST_NV) %></p>
+  <% if params[:temple_denied].to_s == "1" %>
+    <p class="nl-quests-board__meta" data-temple-denied="1">
+      <%= t("game.buildings.temple_denied_next") %>
+      ·
+      <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {temple_recovery: "world"} %>
+      ·
+      <%= link_to t("game.buildings.temple_rite_title"), city_building_path("temple"), class: "nl-sheet-link", data: {temple_recovery: "temple"} %>
+    </p>
+  <% end %>
+  <p class="nl-quests-board__meta"><%= t("game.buildings.temple_wallet", amount: balance.to_i) %></p>
+  <% if (injury_summary = injury_state.summary).present? %>
+    <p class="nl-quests-board__meta" data-temple-injury="1">
+      <%= injury_summary %>
+      <% if injury_state.active.any? { |row| %w[heavy combat].include?(row["severity"].to_s) } %>
+        <% if Game::World::CityBuildingCatalog.accessible?(character: current_character, building_key: "hospital") %>
+          · <%= link_to t("game.buildings.hospital_title_short"), city_building_path("hospital"), class: "nl-sheet-link", data: {temple_recovery: "hospital"} %>
+        <% else %>
+          · <%= link_to t("game.shop.open_inventory"), inventory_path, class: "nl-sheet-link", data: {temple_recovery: "inventory"} %>
+        <% end %>
+      <% end %>
+    </p>
+  <% else %>
+    <p class="nl-quests-board__meta" data-temple-injury="0">
+      <%= t("game.buildings.temple_no_injuries") %>
+      ·
+      <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {temple_recovery: "world"} %>
+    </p>
+  <% end %>
+  <p>
+    <% if can_rite %>
+      <%= button_to t("game.buildings.temple_rite_cta", amount: Game::World::TempleBlessing::COST_NV),
+            city_building_bless_path("temple"),
+            method: :post,
+            class: "lbut",
+            form: {data: {turbo: false}} %>
+    <% elsif balance < cost %>
+      <button type="button" class="lbut" disabled title="<%= t("game.buildings.temple_need_nv", amount: Game::World::TempleBlessing::COST_NV) %>"><%= t("game.buildings.temple_need_nv_short") %></button>
+      <span class="nl-quests-board__meta">
+        <%= t("game.buildings.temple_need_nv", amount: Game::World::TempleBlessing::COST_NV) %>
+        <% if Game::World::CityBuildingCatalog.accessible?(character: current_character, building_key: "bank") %>
+          <%= link_to t("game.shop.open_bank"), city_building_path("bank"), class: "nl-sheet-link", data: {temple_recovery: "bank"} %>
+        <% elsif Game::World::CityBuildingCatalog.accessible?(character: current_character, building_key: "junk_dealer") %>
+          <%= link_to t("game.buildings.junk_dealer_link"), city_building_path("junk_dealer"), class: "nl-sheet-link", data: {temple_recovery: "junk"} %>
+        <% else %>
+          <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {temple_recovery: "world"} %>
+        <% end %>
+      </span>
+    <% else %>
+      <button type="button" class="lbut" disabled title="<%= t("game.buildings.temple_no_light") %>"><%= t("game.buildings.temple_rite_cta", amount: Game::World::TempleBlessing::COST_NV) %></button>
+      <span class="nl-quests-board__meta" data-temple-no-light="1">
+        <%= t("game.buildings.temple_no_light") %>
+        ·
+        <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {temple_recovery: "world"} %>
+      </span>
+    <% end %>
+  </p>
+</section>
+
+<%= render "city_buildings/landmark", building: building, building_key: "temple" %>

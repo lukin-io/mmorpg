@@ -19,13 +19,13 @@ RSpec.describe Game::LootEntry do
     it "rejects a missing chance" do
       expect {
         described_class.new({"kind" => "item"})
-      }.to raise_error(described_class::InvalidError, "Loot chance is required")
+      }.to raise_error(described_class::InvalidError, I18n.t("manage.loot_chance_required"))
     end
 
     it "rejects an out-of-range chance" do
       expect {
         described_class.new({"kind" => "item", "chance" => 101})
-      }.to raise_error(described_class::InvalidError, "Loot chance must be between 0 and 100")
+      }.to raise_error(described_class::InvalidError, I18n.t("manage.loot_chance_range"))
     end
   end
 end

@@ -1,17 +1,16 @@
-# Arena NPC Configuration
-# Captured Neverlands-based arena NPC applications only.
+# Arena NPC Configuration — Ashen Veil sandbox reskin.
 
 training:
-  description: "Training Hall NPC applications for new players"
+  description: "Тренировочные NPC для новичков Пепельной Завесы"
   npcs:
     - key: arena_training_dummy
-      name: Training Dummy
+      name: Пепельный манекен
       role: arena_bot
       level: 1
       hp: 30
       damage: 1
       xp: 5
-      dialogue: "*creaks and sways*"
+      dialogue: "*скрипит и покачивается*"
       loot_table:
         - kind: item
           item_key: wood_chips
@@ -22,19 +21,19 @@ training:
           weight: 1
       metadata:
         ai_behavior: passive
+        defend_hp_below: 1.01
+        defend_chance: 1.0
+        max_attacks_per_turn: 1
         arena_rooms:
           - training
-        description: "Captured Neverlands training mannequin."
+          - help
+        description: "Тренировочный манекен Пепельной Завесы (soft-release: только защита)."
+        source_name: "Пепельный манекен"
         avatar: "M"
         avatar_image: "scarecrow.png"
         combat_profile:
-          injected_attack_keys:
-            - spirit_arrow
-            - mind_blast
-          injected_block_keys:
-            - magic_shield
-            - rainbow_barrier
-            - crystal_sphere
+          injected_attack_keys: []
+          injected_block_keys: []
         stats:
           attack: 1
           defense: 0
@@ -43,5 +42,5 @@ training:
           crit_chance: 0
 
 default:
-  description: "No fallback arena NPCs until captured Neverlands behavior exists."
+  description: "Нет запасных арена-NPC вне захваченных профилей."
   npcs: []

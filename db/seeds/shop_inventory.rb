@@ -6,8 +6,9 @@ main_character = Character.find_by(user: admin, name: "max_kerby") if admin
 if defined?(ItemTemplate)
   # Source-backed NPC material item templates.
   material_items = [
-    {key: "wood_chips", name: "Wood Chips", item_type: "material", weight: 1},
-    {key: "rat_tail", name: "Rat Tail", item_type: "material", weight: 1}
+    {key: "wood_chips", name: "Щепа Смолы", item_type: "material", weight: 1},
+    {key: "rat_tail", name: "Хвост Крысы Завесы", item_type: "material", weight: 1},
+    {key: "ashen_bait", name: "Приманка Завесы", item_type: "material", weight: 1}
   ]
 
   material_items.each do |attrs|
@@ -22,11 +23,35 @@ if defined?(ItemTemplate)
   end
   puts "Created #{material_items.size} material item templates"
 
+  # Ashen bait: sold cheaply so forced outdoor fights stay available without passive wait.
+  bait = ItemTemplate.find_or_initialize_by(key: "ashen_bait")
+  bait.assign_attributes(
+    name: "Приманка Завесы",
+    item_type: "material",
+    slot: "material",
+    weight: 1,
+    stack_limit: 99,
+    base_price: 5,
+    durability_max: 1,
+    requirements: {},
+    stat_modifiers: {},
+    enhancement_rules: {
+      "inventory_family" => "things",
+      "subcategory" => "misc",
+      "source_name" => "Приманка Завесы",
+      "description" => "Вызывает бой с ботом на текущей клетке. Без приманки боты сами нападают примерно раз в 5 минут.",
+      "icon" => "/ashen/items/consumables/ashen-bait.png",
+      "shop" => {"sold" => true, "mode" => "buy", "position" => 90},
+      "shop_stock" => {"current" => 500, "max" => 500}
+    }
+  )
+  bait.save!
+
   # Inventory-only reference definitions remain separate from the authored Shop.
   shop_items = [
     {
       key: "knowledge_ring",
-      name: "Knowledge Ring",
+      name: "Кольцо Знаний",
       item_type: "equipment",
       slot: "ring",
       weight: 1,
@@ -39,7 +64,7 @@ if defined?(ItemTemplate)
     },
     {
       key: "dexterity_ring",
-      name: "Dexterity Ring",
+      name: "Кольцо Ловкости",
       item_type: "equipment",
       slot: "ring",
       weight: 1,
@@ -52,7 +77,7 @@ if defined?(ItemTemplate)
     },
     {
       key: "soul_hunter_pendant",
-      name: "Soul Hunter Pendant",
+      name: "Кулон Ловца Душ",
       item_type: "equipment",
       slot: "amulet",
       weight: 2,
@@ -65,7 +90,7 @@ if defined?(ItemTemplate)
     },
     {
       key: "student_boots",
-      name: "Apprentice Boots",
+      name: "Сапожки Ученика",
       item_type: "equipment",
       slot: "feet",
       weight: 8,
@@ -78,7 +103,7 @@ if defined?(ItemTemplate)
     },
     {
       key: "cowardly_gloves",
-      name: "Cowardly Gloves",
+      name: "Трусливые Перчатки",
       item_type: "equipment",
       slot: "hands",
       weight: 6,
@@ -91,7 +116,7 @@ if defined?(ItemTemplate)
     },
     {
       key: "north_wind_bracers",
-      name: "North Wind Bracers",
+      name: "Наручи Северного Ветра",
       item_type: "equipment",
       slot: "bracers",
       weight: 8,
@@ -104,7 +129,7 @@ if defined?(ItemTemplate)
     },
     {
       key: "damage_armor",
-      name: "Damage Armor",
+      name: "Доспех Повреждений",
       item_type: "equipment",
       slot: "chest",
       weight: 11,
@@ -117,7 +142,7 @@ if defined?(ItemTemplate)
     },
     {
       key: "starwatcher_cap",
-      name: "Starwatcher Cap",
+      name: "Колпак Звездочёта",
       item_type: "equipment",
       slot: "head",
       weight: 2,
@@ -130,7 +155,7 @@ if defined?(ItemTemplate)
     },
     {
       key: "reset_scroll",
-      name: "Reset Scroll",
+      name: "Свиток Обнуления",
       item_type: "consumable",
       slot: "none",
       weight: 1,
@@ -143,7 +168,7 @@ if defined?(ItemTemplate)
     },
     {
       key: "imp_helper_summon",
-      name: "Imp Helper Summon",
+      name: "Призыв импа-помощника",
       item_type: "consumable",
       slot: "none",
       weight: 1,
@@ -160,12 +185,12 @@ if defined?(ItemTemplate)
   shop_items.concat(starter_shop_goods.map(&:symbolize_keys))
 
   license_items = [
-    {key: "trading_license_i", name: "Trading License I", kind: "trading", price: 300, days: 3, stock: 9},
-    {key: "trading_license_ii", name: "Trading License II", kind: "trading", price: 800, days: 10, stock: 666},
-    {key: "trading_license_iii", name: "Trading License III", kind: "trading", price: 2_000, days: 30, stock: 4},
-    {key: "doctor_license_i", name: "Doctor License I", kind: "doctor", price: 300, days: 5, stock: 10},
-    {key: "doctor_license_ii", name: "Doctor License II", kind: "doctor", price: 550, days: 10, stock: 9},
-    {key: "doctor_license_iii", name: "Doctor License III", kind: "doctor", price: 800, days: 15, stock: 10}
+    {key: "trading_license_i", name: "Лицензия Торговца I", kind: "trading", price: 300, days: 3, stock: 9},
+    {key: "trading_license_ii", name: "Лицензия Торговца II", kind: "trading", price: 800, days: 10, stock: 666},
+    {key: "trading_license_iii", name: "Лицензия Торговца III", kind: "trading", price: 2_000, days: 30, stock: 4},
+    {key: "doctor_license_i", name: "Лицензия Лекаря I", kind: "doctor", price: 300, days: 5, stock: 10},
+    {key: "doctor_license_ii", name: "Лицензия Лекаря II", kind: "doctor", price: 550, days: 10, stock: 9},
+    {key: "doctor_license_iii", name: "Лицензия Лекаря III", kind: "doctor", price: 800, days: 15, stock: 10}
   ]
   license_items.each_with_index do |license, index|
     rules = {

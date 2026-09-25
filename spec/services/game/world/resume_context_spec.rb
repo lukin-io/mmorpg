@@ -106,7 +106,7 @@ RSpec.describe Game::World::ResumeContext do
 
     expect {
       resume_context.remember_city_building!(building_key: nil)
-    }.to raise_error(ArgumentError, "Unsupported city building")
+    }.to raise_error(ArgumentError, I18n.t("game.flashes.building_not_found"))
 
     resume_context.remember_city_building!(building_key: "market")
     position.update!(zone: create(:zone, :mvp_outdoor_region), x: 7, y: 0)

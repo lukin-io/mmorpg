@@ -1,0 +1,69 @@
+<section class="nl-handbook" aria-label="<%= t("game.buildings.obelisk_aria") %>"
+         data-obelisk-bound="<%= local_assigns[:bound].present? ? "1" : "0" %>">
+  <h2><%= t("game.buildings.obelisk_title") %></h2>
+  <p class="nl-handbook__lead"><%= t("game.buildings.obelisk_lead", amount: Game::World::ObeliskRecall::RECALL_COST) %></p>
+  <% if params[:obelisk_desk_denied].to_s == "1" %>
+    <p class="nl-quests-board__meta" data-obelisk-desk-denied="1">
+      <%= t("game.buildings.obelisk_desk_denied_next") %>
+      ·
+      <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {obelisk_recovery: "world"} %>
+      ·
+      <%= link_to t("game.buildings.obelisk_title"), city_building_path("obelisk"), class: "nl-sheet-link", data: {obelisk_recovery: "obelisk"} %>
+    </p>
+  <% end %>
+  <% bound = local_assigns[:bound] %>
+  <% wallet = current_user.currency_wallet || current_user.create_currency_wallet!(nv_balance: 0) %>
+  <% balance = wallet.nv_balance.to_d %>
+  <% recall_cost = Game::World::ObeliskRecall::RECALL_COST.to_d %>
+  <% can_recall = bound.present? && balance >= recall_cost %>
+  <p class="nl-quests-board__meta"
+     data-obelisk-wallet="<%= balance.to_i %>"
+     data-obelisk-can-recall="<%= can_recall ? "1" : "0" %>"
+     data-obelisk-can-bind="1">
+    <%= t("game.buildings.obelisk_wallet", amount: balance.to_i) %>
+  </p>
+  <% if bound.present? %>
+    <p class="nl-quests-board__meta" data-obelisk-place="<%= bound["zone_name"] %>">
+      <%= t("game.buildings.obelisk_bound_meta", place: bound["zone_name"], x: bound["x"], y: bound["y"]) %>
+    </p>
+  <% else %>
+    <p class="nl-quests-board__meta" data-obelisk-unbound="1"><%= t("game.buildings.obelisk_unbound_meta") %></p>
+  <% end %>
+  <p>
+    <%= button_to t("game.buildings.obelisk_bind_cta"),
+          city_building_obelisk_path("obelisk"),
+          method: :post,
+          params: {obelisk_action: "bind"},
+          class: "lbut",
+          form: {data: {turbo: false}} %>
+    <% if can_recall %>
+      <%= button_to t("game.buildings.obelisk_recall_cta", amount: Game::World::ObeliskRecall::RECALL_COST),
+            city_building_obelisk_path("obelisk"),
+            method: :post,
+            params: {obelisk_action: "recall"},
+            class: "lbut",
+            form: {data: {turbo: false}} %>
+    <% elsif bound.present? %>
+      <button type="button" class="lbut" disabled title="<%= t("game.buildings.obelisk_need_nv", amount: Game::World::ObeliskRecall::RECALL_COST) %>"><%= t("game.buildings.obelisk_need_nv_short") %></button>
+      <span class="nl-quests-board__meta">
+        <%= t("game.buildings.obelisk_need_nv", amount: Game::World::ObeliskRecall::RECALL_COST) %>
+        <% if Game::World::CityBuildingCatalog.accessible?(character: current_character, building_key: "bank") %>
+          <%= link_to t("game.shop.open_bank"), city_building_path("bank"), class: "nl-sheet-link", data: {obelisk_recovery: "bank"} %>
+        <% elsif Game::World::CityBuildingCatalog.accessible?(character: current_character, building_key: "junk_dealer") %>
+          <%= link_to t("game.buildings.junk_dealer_link"), city_building_path("junk_dealer"), class: "nl-sheet-link", data: {obelisk_recovery: "junk"} %>
+        <% else %>
+          <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {obelisk_recovery: "world"} %>
+        <% end %>
+      </span>
+    <% else %>
+      <button type="button" class="lbut" disabled title="<%= t("game.buildings.obelisk_unbound_meta") %>"><%= t("game.buildings.obelisk_recall_cta", amount: Game::World::ObeliskRecall::RECALL_COST) %></button>
+      <span class="nl-quests-board__meta" data-obelisk-bind-first="1">
+        <%= t("game.buildings.obelisk_bind_first") %>
+        ·
+        <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {obelisk_recovery: "world"} %>
+      </span>
+    <% end %>
+  </p>
+</section>
+
+<%= render "city_buildings/landmark", building: local_assigns.fetch(:building, {}), building_key: "obelisk" %>

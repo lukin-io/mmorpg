@@ -1,19 +1,24 @@
-<% content_for :title, "Cell NPCs · Management" %>
-<%= render "manage/shared/page_header", title: "Open-World Cell NPCs", description: "Persisted NPC placements consumed by the world tile resolver.", new_path: new_manage_tile_npc_path, new_label: "Create cell NPC" %>
+<% content_for :title, t("manage.views.page_title", section: t("manage.views.cell_npcs_title"), manage: t("manage.title")) %>
+<%= render "manage/shared/page_header", title: t("manage.views.cell_npcs_title"), description: t("manage.views.cell_npcs_hint"), new_path: new_manage_tile_npc_path, new_label: t("manage.views.create_cell_npc") %>
+
+<p class="nl-manage-actions">
+  <%= button_to t("manage.world_population.run"), manage_world_population_path, method: :post, class: "lbut" %>
+</p>
 
 <%= form_with url: manage_tile_npcs_path, method: :get, class: "nl-manage-filter", local: true do |form| %>
-  <%= form.label :zone, "Outdoor zone" %><%= form.select :zone, options_from_collection_for_select(@zones, :name, :name, params[:zone]), include_blank: "All zones" %>
-  <%= form.submit "Filter", class: "lbut" %><%= link_to "Clear", manage_tile_npcs_path, class: "lbut" %>
+  <%= form.label :zone, t("manage.views.outdoor_zone") %><%= form.select :zone, options_from_collection_for_select(@zones, :name, :name, params[:zone]), include_blank: t("manage.views.all_zones") %>
+  <%= form.submit t("manage.filter"), class: "lbut" %><%= link_to t("manage.clear"), manage_tile_npcs_path, class: "lbut" %>
 <% end %>
 
 <div class="nl-manage-table-wrap"><table class="nl-manage-table">
-  <thead><tr><th>NPC</th><th>Key</th><th>Cell</th><th>Level</th><th>HP</th><th>State</th><th>Actions</th></tr></thead>
+  <thead><tr><th><%= t("manage.views.col_npc") %></th><th><%= t("manage.views.col_key") %></th><th><%= t("manage.views.col_cell") %></th><th><%= t("manage.views.col_level") %></th><th><%= t("manage.views.col_hp") %></th><th><%= t("manage.views.col_state") %></th><th><%= t("manage.views.col_actions") %></th></tr></thead>
   <tbody>
     <% @tile_npcs.each do |npc| %>
-      <tr><td><%= npc.display_name %></td><td><%= npc.npc_key %></td><td><%= npc.zone %> [<%= npc.x %>, <%= npc.y %>]</td><td><%= npc.level %></td><td><%= npc.current_hp %>/<%= npc.max_hp %></td><td><%= npc.active? ? (npc.alive? ? "Alive" : "Defeated") : "Inactive" %></td>
-        <td class="nl-manage-table-actions"><%= link_to "View", manage_tile_npc_path(npc) %> <%= link_to "Edit", edit_manage_tile_npc_path(npc) %></td></tr>
+      <% state = npc.active? ? (npc.alive? ? t("manage.views.state_alive") : t("manage.views.state_defeated")) : t("manage.views.state_inactive") %>
+      <tr><td><%= npc.display_name %></td><td><%= npc.npc_key %></td><td><%= npc.zone %> [<%= npc.x %>, <%= npc.y %>]</td><td><%= npc.level %></td><td><%= npc.current_hp %>/<%= npc.max_hp %></td><td><%= state %></td>
+        <td class="nl-manage-table-actions"><%= link_to t("manage.view"), manage_tile_npc_path(npc) %> <%= link_to t("manage.edit"), edit_manage_tile_npc_path(npc) %></td></tr>
     <% end %>
-    <% if @tile_npcs.empty? %><tr><td colspan="7" class="nl-manage-empty">No cell NPCs found.</td></tr><% end %>
+    <% if @tile_npcs.empty? %><tr><td colspan="7" class="nl-manage-empty"><%= t("manage.views.empty_cell_npcs") %></td></tr><% end %>
   </tbody>
 </table></div>
 <%= render "manage/shared/pagination", pagination: @pagination %>

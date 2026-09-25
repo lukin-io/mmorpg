@@ -1,0 +1,48 @@
+<div class="nl-trade-hub__panel" data-trade-hub-auction="1">
+  <p><%= t("game.trade_hub.auction_lead") %></p>
+
+  <% if @listable_items.any? %>
+    <div class="nl-trade-hub__list-form">
+      <h2><%= t("game.trade_hub.auction_list_title") %></h2>
+      <%= form_with url: list_auction_trade_hub_path, method: :post, local: true do |f| %>
+        <p>
+          <%= f.label :inventory_item_id, t("game.trade_hub.auction_item") %>
+          <%= f.select :inventory_item_id,
+                @listable_items.map { |i| ["#{i.item_template.name} ×#{i.quantity}", i.id] },
+                {},
+                class: "nl-trade-hub__select" %>
+        </p>
+        <p>
+          <%= f.label :quantity, t("game.trade_hub.auction_qty") %>
+          <%= f.number_field :quantity, value: 1, min: 1, class: "nl-trade-hub__input" %>
+        </p>
+        <p>
+          <%= f.label :price_nv, t("game.trade_hub.auction_price") %>
+          <%= f.number_field :price_nv, value: 10, min: 1, step: 1, class: "nl-trade-hub__input" %>
+        </p>
+        <%= f.submit t("game.trade_hub.auction_list_cta"), class: "lbut" %>
+      <% end %>
+    </div>
+  <% end %>
+
+  <% if @listings.blank? %>
+    <p class="nl-trade-hub__empty"><%= t("game.trade_hub.auction_empty") %></p>
+  <% else %>
+    <ul class="nl-trade-hub__list">
+      <% @listings.each do |listing| %>
+        <li>
+          <%= listing.item_template.name %> ×<%= listing.quantity %>
+          — <%= listing.price_nv %> NV
+          (<%= listing.seller_character.name %>)
+          <% if listing.seller_character_id != current_character.id %>
+            <%= button_to t("game.common.buy", default: "Buy"),
+                  buy_auction_trade_hub_path,
+                  method: :post,
+                  params: {listing_id: listing.id},
+                  class: "lbut" %>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+</div>

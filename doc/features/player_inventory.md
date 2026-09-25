@@ -493,4 +493,42 @@ shipped Inventory management routes.
 | 2026-08-23 | Documented the successful NPC item-loot handoff to Arena's item-found feedback, distinguished Economy-owned NV loot from Inventory state, and kept inventory validation on the shared flash surface after removal of the legacy toast path; equip/unequip Turbo failures now return 422 without mutating equipment. |
 | 2026-08-25 | Made the shared multi-unit item-add contract explicitly atomic: an Inventory lock plus nested savepoint rolls back partial stack and carried-mass writes before a caller records a capacity failure. |
 | 2026-08-26 | Clarified the Combat-owned Careful Fighter wear handoff and recorded repair as a deferred workshop/profession transaction rather than an inventory durability reset. |
+| 2026-09-18 | Character inventory scrolls panel (`data-inventory-scrolls`): buy/use assault, protection, and heal scrolls without Infirmary trip; Protection use opens combat interventions. |
+| 2026-09-15 | Missing inventory row on equip/use/transfer recovers on Inventory with `item_denied=1` chrome. |
+| 2026-09-15 | Failed equip/unequip recovers on Inventory with `equip_denied=1` chrome; failed use/discard with `use_denied=1`. |
+| 2026-09-15 | Failed item/NV transfer/gift recovers on Inventory with `transfer_denied=1` chrome. |
+| 2026-09-15 | Failed equipment-set wear/save/delete recovers on Inventory with `set_denied=1` chrome. |
+| 2026-09-15 | Discard of a missing inventory row recovers on Inventory with `item_denied=1` and a City CTA. |
+| 2026-09-15 | Soft-release smoke wears a bag item after knives Shop buy via body `item_id` (rejects `item_denied`/`equip_denied`). |
+| 2026-09-15 | Soft-release smoke unequips a paperdoll slot after wear via body `slot` (rejects `equip_denied`). |
+| 2026-09-15 | Soft-release smoke saves an equipment set while geared, unequips, then wears the set (rejects `set_denied`). |
+| 2026-09-15 | Soft-release smoke deletes the saved equipment set after wear (rejects `set_denied`). |
+| 2026-09-15 | Soft-release smoke gifts `wood_chips` and 1 NV to a second signed-up character, then asserts the peer bag. |
+| 2026-09-15 | Soft-release smoke uses bag `ashen_bandage` via body `item_id` after Relic Shop buy (rejects `use_denied`/`item_denied`). Inventory slots expose `data-item-key`. |
+| 2026-09-13 | Equipment-set save/wear/delete success and failure alerts use `game.inventory.set_*` i18n. |
+| 2026-09-13 | Direct transfer/gift/NV and deferred player-sale alerts use `game.inventory.*` i18n. |
+| 2026-09-14 | Inventory Sell control explains deferred P2P sales and links to Shop Sell instead of a live form. |
+| 2026-09-14 | Empty equipment sets note links to Shop Buy; deferred repair when Forge is out of district recovers via City. |
+| 2026-09-14 | Empty inventory grid tabs recover via Shop Buy (gear/elixirs), Quests, or World. |
+| 2026-09-14 | Coarse-pointer Inventory equip/sell/discard controls and set forms target ~44×44 CSS px (`UI-ADAPT-005`). |
+| 2026-09-13 | Inventory capacity/underflow raises and craft capacity/material rejects use `game.inventory.no_free_slots` / `inventory_overloaded` / `stack_limit_exceeded` / `not_enough_items` / `craft_*`. |
+| 2026-09-13 | Use/discard inventory alerts use `game.inventory.cannot_use` / `cannot_discard` / `item_discarded`. |
+| 2026-09-13 | Equipment-set save field uses localized placeholder (`game.common.set_name`) with `data-equipment-set-name`. |
+| 2026-09-13 | Transfer price field uses `game.common.nv_short` placeholder with `data-inventory-transfer-price`. |
+| 2026-09-14 | Deferred P2P Sell CTA exposes `data-inventory-recovery="shop_sell"`; broken repair CTA exposes workshop/World recovery. |
+| 2026-09-14 | Empty production-family where-hints expose `data-inventory-recovery` (World/Workshop/Quests). |
+| 2026-09-14 | Smoke asserts empty Quests-family Journal recovery (`data-inventory-recovery="quests"`). |
+| 2026-09-14 | Smoke asserts empty Alchemy/Fishing family World recoveries. |
+| 2026-09-14 | Smoke asserts empty Hunting family World recovery. |
+| 2026-09-13 | Broken rows link to Pitch Forge (or show deferred hint) without inventing a repair transaction. |
+| 2026-09-13 | Carried durable rows expose `data-inventory-broken`, a Broken badge, and low/broken durability bar states; workshop repair remains deferred. |
+| 2026-09-13 | Junk CTA shows offer count plus estimated buyback NV (`data-inventory-junk-total`); same estimate authority as Ash Buyer. |
+| 2026-09-13 | Inventory mass row exposes mass/slot capacity markers (`data-inventory-mass`, `data-inventory-slots`) plus slot copy. |
+| 2026-09-13 | HUD wear chip (`Game::Inventory::EquippedWear`) links to Inventory when equipped durable gear is worn or broken (`data-wear-worn` / `data-wear-broken`); inventory mass row repeats the wear count; workshop repair remains deferred. |
+| 2026-09-13 | Paper-doll empty-slot labels resolve through `EquipmentSlots.label_for` → `game.equipment.slots.*` i18n. |
+| 2026-09-13 | Family-section discard chrome uses `game.inventory.choose_action` / `discard_action` / `discard_resources_confirm` / `game.common.ok`. |
+| 2026-09-14 | Equip/use requirement labels resolve through `game.details.*` / `game.skills.*` instead of English `titleize`. |
+| 2026-09-14 | Inventory item-type / unknown detail fallbacks use `game.inventory.item_types.*` and non-titleized keys. |
+| 2026-09-14 | Material underflow raises `game.inventory.missing_material` instead of English `Missing …`. |
+| 2026-09-14 | Inventory/shop request chrome assertions use RU-default `game.inventory.*` / `game.shop.*` i18n. |
 | 2026-09-10 | Integrated seven original Shop-item illustrations into carried rows and shared equipment slots; extended the Shop browser flow through wear, persisted slot/stat confirmation, removal and resale. |

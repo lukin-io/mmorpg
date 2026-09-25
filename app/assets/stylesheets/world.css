@@ -4,6 +4,16 @@
   background: #ffffff;
 }
 
+.nl-starter-tip {
+  margin: 0 0 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--nl-border);
+  background: #f7f3ea;
+  color: #3a3428;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
 .nl-world-container--map {
   display: grid;
   gap: 6px;
@@ -593,7 +603,8 @@ turbo-frame.nl-world-action-frame {
   width: 100px;
   min-width: 100px;
   height: 100px;
-  border: 0;
+  border: 1px solid rgba(48, 36, 18, 0.55);
+  box-shadow: inset 0 0 0 1px rgba(255, 248, 220, 0.18);
   background-color: hsl(82deg 34% var(--nl-terrain-tone, 38%));
   background-image:
     radial-gradient(ellipse at 18px 24px, rgba(224, 223, 169, 0.28) 0 7px, transparent 8px),
@@ -601,6 +612,20 @@ turbo-frame.nl-world-action-frame {
     repeating-linear-gradient(128deg, rgba(255, 255, 255, 0.06) 0 2px, rgba(21, 48, 24, 0.08) 3px 7px);
   background-position: var(--nl-terrain-x, 0) var(--nl-terrain-y, 0);
   background-size: 100px 100px, 100px 100px, 19px 23px;
+}
+
+.nl-tile-coord {
+  position: absolute;
+  top: 1px;
+  left: 2px;
+  right: auto;
+  z-index: 2;
+  pointer-events: none;
+  text-align: left;
+  font: 700 7px/1 "Segoe UI", Tahoma, sans-serif;
+  letter-spacing: 0.01em;
+  color: rgba(244, 234, 208, 0.72);
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.95);
 }
 
 .nl-tile-bg--outdoor {
@@ -693,6 +718,112 @@ button.nl-tile-clickable--available:disabled {
   color: inherit;
   font-size: 9px;
   line-height: 1;
+}
+
+.nl-tile-entity.nl-tile-npcs {
+  top: 15px;
+  bottom: auto;
+  left: 1px;
+  right: 1px;
+  width: auto;
+  max-width: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 0;
+  overflow: visible;
+  border: 0;
+  background: transparent !important;
+  color: #ffe338;
+  white-space: normal;
+  text-overflow: clip;
+  box-shadow: none;
+  z-index: 5;
+  text-align: center;
+}
+
+.nl-tile-npc-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 0;
+}
+
+.nl-tile-npc-mark {
+  display: none;
+}
+
+.nl-tile-npc-label {
+  overflow: visible;
+  white-space: normal;
+  word-break: break-word;
+  font-size: 10px;
+  line-height: 1.15;
+  font-weight: 800;
+  color: #ffe338 !important;
+  background: transparent !important;
+  text-shadow:
+    0 1px 0 #000,
+    1px 0 0 #000,
+    -1px 0 0 #000,
+    0 -1px 0 #000;
+}
+
+.nl-tile-entity.nl-tile-resources {
+  top: auto;
+  bottom: 2px;
+  left: 1px;
+  right: 1px;
+  width: auto;
+  max-width: none;
+  overflow: visible;
+  white-space: normal;
+  padding: 0;
+  border: 0;
+  background: transparent !important;
+  color: #7dff6a;
+  box-shadow: none;
+  z-index: 4;
+}
+
+.nl-tile-resource-label {
+  font-size: 9px;
+  line-height: 1.15;
+  font-weight: 700;
+  white-space: normal;
+  word-break: break-word;
+  color: #7dff6a !important;
+  background: transparent !important;
+  text-shadow:
+    0 1px 0 #000,
+    1px 0 0 #000,
+    -1px 0 0 #000,
+    0 -1px 0 #000;
+}
+
+.nl-tile-resource-regrowth {
+  position: absolute;
+  right: 2px;
+  bottom: 16px;
+  left: 2px;
+  z-index: 4;
+  padding: 1px 2px;
+  border: 1px solid rgba(90, 65, 25, 0.75);
+  background: rgba(255, 244, 205, 0.94);
+  color: #624312;
+  font-size: 8px;
+  line-height: 1.15;
+  text-align: center;
+}
+
+.nl-tile-resource-regrowth span {
+  display: block;
+}
+
+.nl-tile-resource-regrowth span.is-ready {
+  color: #1f6b2e;
+  font-weight: 700;
 }
 
 /* Painted landmarks retain their accessible entity label without overlaying
@@ -901,7 +1032,19 @@ button.nl-tile-clickable--available:disabled {
      scaled hotspot must never pan the larger source image inside this plane. */
   overflow: clip;
   isolation: isolate;
-  background: #525a41;
+  background: #2a1810;
+}
+
+.nl-city-scene::after {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background:
+    radial-gradient(ellipse at 50% 18%, rgba(255, 140, 60, 0.14), transparent 55%),
+    linear-gradient(180deg, rgba(18, 10, 6, 0.12), rgba(8, 4, 2, 0.4));
+  mix-blend-mode: multiply;
 }
 
 .nl-city-scene-image {
@@ -914,6 +1057,7 @@ button.nl-tile-clickable--available:disabled {
   object-fit: fill;
   user-select: none;
   pointer-events: none;
+  filter: sepia(0.18) saturate(0.88) contrast(1.06) brightness(0.94);
 }
 
 .nl-city-hotspots,
@@ -1171,6 +1315,92 @@ button.nl-city-hotspot,
     outline-offset: -4px;
     background: #294654;
   }
+
+  .nl-city-viewport .nl-city-building-controls {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px 2px 2px;
+  }
+
+  .nl-city-viewport .nl-city-building-controls .nl-city-hotspot {
+    position: relative;
+    inset: auto;
+    flex: 1 1 110px;
+    width: auto;
+    height: auto;
+    min-height: 48px;
+    padding: 8px 10px;
+    border: 2px solid #ddc68d;
+    border-radius: 6px;
+    background: #152631;
+    color: #fff7de;
+    font-size: 12px;
+    line-height: 1.25;
+    white-space: normal;
+  }
+
+  .nl-city-viewport .nl-city-building-controls .nl-city-hotspot:hover,
+  .nl-city-viewport .nl-city-building-controls .nl-city-hotspot:focus-visible {
+    border-color: #fff;
+    outline: 2px solid #fff0ba;
+    outline-offset: -4px;
+    background: #294654;
+  }
+}
+
+.nl-city-building-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 8px 0 0;
+  padding: 0;
+  max-width: 220px;
+}
+
+.nl-city-building-controls .nl-city-hotspot {
+  position: relative;
+  inset: auto;
+  width: 100%;
+  height: auto;
+  min-height: 40px;
+  padding: 8px 10px;
+  border: 1px solid #a89058;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #f4ead0 0%, #e4d5b0 100%);
+  color: #3a3420;
+  font: 12px/1.25 var(--nl-font-tahoma);
+  text-align: left;
+  white-space: normal;
+}
+
+.nl-city-building-controls .nl-city-hotspot:hover,
+.nl-city-building-controls .nl-city-hotspot:focus-visible {
+  border-color: #6b5428;
+  outline: 2px solid #c9a85a;
+  outline-offset: -2px;
+}
+
+.nl-city-viewport--pending .nl-city-building-controls {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0 16px 16px;
+}
+
+.nl-city-viewport--pending .nl-city-building-controls .nl-city-hotspot {
+  position: relative;
+  inset: auto;
+  width: auto;
+  height: auto;
+  min-height: 48px;
+  padding: 8px 12px;
+  border: 1px solid #808080;
+  background: #fff;
+  color: #111;
+  white-space: normal;
 }
 
 /* Missing-art content keeps the same named controls without image geometry. */
@@ -1313,6 +1543,41 @@ button.nl-city-hotspot,
 .nl-world-location-mine-summary { width: 100%; margin-bottom: 8px; border-collapse: collapse; }
 .nl-world-location-mine-summary th,
 .nl-world-location-mine-summary td { padding: 5px; border: 1px solid #d6cdb5; text-align: center; }
+
+.nl-mine-gallery {
+  padding: 10px 12px;
+  border: 1px solid #6e5a3c;
+  background:
+    radial-gradient(ellipse at 20% 0%, rgba(255, 214, 140, 0.18), transparent 55%),
+    linear-gradient(180deg, #2a2218 0%, #1a1510 100%);
+  color: #f0e2c4;
+}
+
+.nl-mine-gallery__vignette,
+.nl-mine-gallery-vignette {
+  margin: 0 0 8px;
+  font: italic 12px/1.45 Georgia, "Times New Roman", serif;
+  color: #e8d7b0;
+}
+
+.nl-mine-gallery-vignette {
+  padding: 6px 8px;
+  border-left: 3px solid #c4a46a;
+  background: rgba(244, 235, 218, 0.55);
+  color: #3a2f1e;
+}
+
+.nl-mine-gallery__status {
+  margin: 0 0 10px;
+  font: 700 11px/1.3 Verdana, Tahoma, sans-serif;
+  color: #d8c69a;
+}
+
+.nl-mine-gallery__dig-form,
+.nl-mine-gallery__ascend-form {
+  display: inline-block;
+  margin: 0 6px 0 0;
+}
 
 @media (max-width: 600px) {
   .nl-world-location-item-previews { grid-template-columns: 1fr; }
@@ -1595,10 +1860,56 @@ button.nl-city-hotspot,
   .nl-city-building-page {
     padding: 0 4px;
   }
+
+  .nl-world-location-tabs {
+    flex-wrap: wrap;
+  }
+
+  .nl-world-location-tab {
+    flex: 1 1 40%;
+    min-width: 0;
+    font-size: 11px;
+  }
+
+  .nl-world-location-sections {
+    width: calc(100% - 8px);
+  }
 }
 
 @media (max-width: 720px) {
   .nl-world-location-viewport {
     width: calc(100% - 12px);
+  }
+}
+
+@media (pointer: coarse) {
+  .nl-city-building-page .lbut,
+  .nl-city-building-tab,
+  .nl-world-location-tab,
+  .nl-world-location-sections .lbut,
+  .nl-handbook .lbut,
+  .nl-world-action-button,
+  .city-view-container .nl-sheet-link,
+  .location-info-panel .nl-sheet-link {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 8px 10px;
+    font-size: 12px;
+    line-height: 1.25;
+  }
+}
+
+@media (max-width: 360px) {
+  .nl-city-building-page,
+  .nl-world-location-sections,
+  .nl-world-location-viewport,
+  .city-view-container,
+  .location-info-panel {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .nl-world-location-tab {
+    flex: 1 1 100%;
   }
 }

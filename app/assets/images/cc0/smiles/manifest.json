@@ -1,0 +1,44 @@
+{
+  "smiles": [
+    {
+      "key": "smile",
+      "char": ":)",
+      "asset": "cc0/smiles/smile.png"
+    },
+    {
+      "key": "grin",
+      "char": ":D",
+      "asset": "cc0/smiles/grin.png"
+    },
+    {
+      "key": "wink",
+      "char": ";)",
+      "asset": "cc0/smiles/wink.png"
+    },
+    {
+      "key": "sad",
+      "char": ":(",
+      "asset": "cc0/smiles/sad.png"
+    },
+    {
+      "key": "angry",
+      "char": ">:<",
+      "asset": "cc0/smiles/angry.png"
+    },
+    {
+      "key": "shock",
+      "char": ":O",
+      "asset": "cc0/smiles/shock.png"
+    },
+    {
+      "key": "cool",
+      "char": "B)",
+      "asset": "cc0/smiles/cool.png"
+    },
+    {
+      "key": "heart",
+      "char": "<3",
+      "asset": "cc0/smiles/heart.png"
+    }
+  ]
+}

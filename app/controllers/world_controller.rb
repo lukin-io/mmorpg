@@ -22,6 +22,13 @@ class WorldController < ApplicationController
   before_action :set_position
 
   def show
+    Game::World::DismissCompletedFight.new(character: current_character).call
+
+    if (unresolved = Game::World::UnresolvedFight.new(character: current_character).match)
+      redirect_to arena_match_path(unresolved), status: :see_other
+      return
+    end
+
     # City zones render captured node actions instead of an outdoor grid.
     if city_zone?
       @zone = @position.zone
@@ -69,7 +76,7 @@ class WorldController < ApplicationController
   def players
     prepare_presence_context(sort: params[:sort])
 
-    render partial: "shared/nl_players_list", layout: false
+    render partial: "shared/nl_players_list", locals: {viewer: current_character}, layout: false
   end
 
   def move
@@ -85,13 +92,13 @@ class WorldController < ApplicationController
     @position = result.position.reload
     respond_to do |format|
       format.turbo_stream { render_map_update }
-      format.html { redirect_to world_path, notice: "Move started." }
+      format.html { redirect_to world_path, notice: I18n.t("game.flashes.move_started") }
     end
   rescue Game::Movement::MovementViolationError,
     Game::World::StartNpcFight::FightViolationError => e
     respond_to do |format|
       format.turbo_stream { render_movement_error(e.message) }
-      format.html { redirect_to world_path, alert: e.message }
+      format.html { redirect_to world_path(action_denied: 1), alert: e.message }
     end
   end
 
@@ -99,7 +106,7 @@ class WorldController < ApplicationController
   # Accept a captured city transition, building, or gate offer.
   def interact_hotspot
     hotspot = CityHotspot.find_by(id: params[:hotspot_id], zone: @position.zone)
-    return respond_with_city_action_error("Location not found.") unless hotspot
+    return respond_with_city_action_error(I18n.t("game.flashes.location_not_found")) unless hotspot
 
     service = Game::World::CityHotspotService.new(
       character: current_character,
@@ -137,7 +144,7 @@ class WorldController < ApplicationController
       end
     else
       respond_to do |format|
-        format.html { redirect_to world_path, alert: result.message }
+        format.html { redirect_to world_path(hotspot_denied: 1), alert: result.message }
         format.turbo_stream { render_error(result.message) }
       end
     end
@@ -152,8 +159,11 @@ class WorldController < ApplicationController
 
     unless building
       return respond_to do |format|
-        format.html { redirect_to world_path, alert: "Building not found." }
-        format.turbo_stream { render_error("Building not found.") }
+        format.html {
+          redirect_to world_path(building_denied: 1),
+            alert: I18n.t("game.flashes.building_not_found")
+        }
+        format.turbo_stream { render_error(I18n.t("game.flashes.building_not_found")) }
       end
     end
 
@@ -199,7 +209,7 @@ class WorldController < ApplicationController
           redirect_to destination_path, status: :see_other
         end
       else
-        format.html { redirect_to world_path, alert: result.message }
+        format.html { redirect_to world_path(building_denied: 1), alert: result.message }
         format.turbo_stream { render_error(result.message) }
       end
     end
@@ -212,11 +222,11 @@ class WorldController < ApplicationController
   # Accept a Neverlands-shaped current-cell action such as `look`.
   def perform_local_action
     tile = MapTileTemplate.find_by(id: params[:tile_id])
-    return respond_with_world_action_error("Local action is no longer available.") unless tile
+    return respond_with_world_action_error(I18n.t("game.world.local_action_unavailable")) unless tile
 
     local_action_type = params[:local_action_type].to_s
     world_action_type = MapTileTemplate.world_action_type_for(local_action_type)
-    return respond_with_world_action_error("Local action is not supported.") unless world_action_type
+    return respond_with_world_action_error(I18n.t("game.world.local_action_unsupported")) unless world_action_type
 
     result = nil
     ActiveRecord::Base.transaction do
@@ -397,12 +407,24 @@ class WorldController < ApplicationController
           tile_id: @tile_state.tile.id,
           local_action_type: local_action["type"],
           source_id: local_action["source_id"],
-          label: local_action["label"].presence ||
-            MapTileTemplate.default_local_action_label(local_action["type"]),
-          description: local_action["description"]
+          label: MapTileTemplate.player_local_action_label(
+            local_action["type"],
+            local_action["label"]
+          ),
+          description: MapTileTemplate.player_local_action_description(
+            local_action["type"],
+            local_action["description"]
+          )
         },
         offer:
       }
+    end
+
+    landmark = @tile_state&.tile&.metadata.to_h["landmark"].to_h
+    if landmark["kind"].in?(%w[fortress castle])
+      actions << {type: :claim_fortress, landmark:}
+    elsif landmark["kind"] == "dungeon"
+      actions << {type: :enter_dungeon, landmark:}
     end
 
     actions
@@ -492,7 +514,7 @@ class WorldController < ApplicationController
 
   def respond_with_world_action_error(message)
     respond_to do |format|
-      format.html { redirect_to world_path, alert: message }
+      format.html { redirect_to world_path(action_denied: 1), alert: message }
       format.turbo_stream { render_movement_error(message) }
       format.json { render json: {success: false, message: message}, status: :unprocessable_entity }
     end
@@ -500,7 +522,7 @@ class WorldController < ApplicationController
 
   def respond_with_city_action_error(message)
     respond_to do |format|
-      format.html { redirect_to world_path, alert: message }
+      format.html { redirect_to world_path(hotspot_denied: 1), alert: message }
       format.turbo_stream { render_error(message) }
       format.json { render json: {success: false, message:}, status: :unprocessable_content }
     end

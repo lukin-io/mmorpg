@@ -7,7 +7,7 @@ RSpec.describe Game::World::StarterCellCatalog do
   let(:catalog) { described_class.new(data:) }
 
   it "covers every source coordinate in the bounded starter rectangle exactly once" do
-    expect(catalog.zone_name).to eq("Outpost Surroundings")
+    expect(catalog.zone_name).to eq("Пепельный Берег")
     expect(catalog.cells.map { |cell| [cell.x, cell.y] }).to match_array((0..20).to_a.product((2..14).to_a))
     expect(catalog.at(-1, 2)).to be_nil
     expect(catalog.at(20, 15)).to be_nil

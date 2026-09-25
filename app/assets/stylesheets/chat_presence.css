@@ -339,3 +339,30 @@
 }
 .nl-chat-history .game-event-time,
 .nl-chat-history .game-event-source { line-height: 18px; }
+
+@media (pointer: coarse) {
+  .user-menu button,
+  .nl-player-menu button,
+  .nl-player-menu a,
+  .nl-players-header-float a,
+  .chat-send-btn,
+  .new-message-indicator.is-visible,
+  .new-message-indicator[aria-hidden="false"],
+  .nl-social-row .nl-sheet-link {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 8px 10px;
+    font-size: 12px;
+    line-height: 1.25;
+  }
+}
+
+@media (max-width: 360px) {
+  .nl-chat-history,
+  .nl-social-row,
+  .nl-players-header-float,
+  .user-menu {
+    min-width: 0;
+    max-width: 100%;
+  }
+}

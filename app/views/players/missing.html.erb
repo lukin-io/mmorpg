@@ -1,0 +1,12 @@
+<% content_for :title, t("game.profile.missing_title") %>
+
+<section class="nl-public-main" data-player-missing="1">
+  <h1><%= t("game.profile.missing_title") %></h1>
+  <p class="nl-quests-board__meta" role="status">
+    <%= t("game.flashes.player_missing") %>
+    ·
+    <%= link_to t("game.common.city"), root_path, class: "nl-sheet-link", data: {player_recovery: "home"} %>
+    ·
+    <%= link_to t("nav.sign_in"), new_user_session_path, class: "nl-sheet-link", data: {player_recovery: "sign_in"} %>
+  </p>
+</section>

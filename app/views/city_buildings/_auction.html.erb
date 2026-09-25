@@ -1,0 +1,71 @@
+<section class="nl-handbook" aria-label="<%= t("game.buildings.auction_aria") %>" data-auction-live="1">
+  <h2><%= t("game.buildings.auction_title") %></h2>
+  <p class="nl-handbook__lead"><%= t("game.buildings.auction_live_lead") %></p>
+  <% wallet = current_user.currency_wallet || current_user.create_currency_wallet!(nv_balance: 0) %>
+  <% vault = Game::World::BankVault.balance_for(current_character) %>
+  <p class="nl-quests-board__meta"
+     data-auction-wallet="<%= wallet.nv_balance.to_i %>"
+     data-auction-vault="<%= vault %>"
+     data-auction-vm="<%= wallet.veil_marks.to_i %>"
+     data-auction-lots="<%= (@auction_listings || []).size %>"
+     data-auction-can-list="<%= (@auction_listable || []).any? ? "1" : "0" %>"
+     data-auction-can-bid="1">
+    <%= t("game.buildings.auction_treasury",
+          wallet: wallet.nv_balance.to_i,
+          vault: vault,
+          marks: wallet.veil_marks.to_i) %>
+  </p>
+
+  <% if (@auction_listable || []).any? %>
+    <div class="nl-trade-hub__list-form">
+      <h3><%= t("game.trade_hub.auction_list_title") %></h3>
+      <%= form_with url: city_building_list_auction_path("auction"), method: :post, local: true, data: {turbo: false} do |f| %>
+        <p>
+          <%= f.label :inventory_item_id, t("game.trade_hub.auction_item") %>
+          <%= f.select :inventory_item_id,
+                @auction_listable.map { |i| ["#{i.item_template.name} ×#{i.quantity}", i.id] },
+                {},
+                class: "nl-trade-hub__select" %>
+        </p>
+        <p>
+          <%= f.label :quantity, t("game.trade_hub.auction_qty") %>
+          <%= f.number_field :quantity, value: 1, min: 1, class: "nl-trade-hub__input" %>
+        </p>
+        <p>
+          <%= f.label :price_nv, t("game.trade_hub.auction_price") %>
+          <%= f.number_field :price_nv, value: 10, min: 1, step: 1, class: "nl-trade-hub__input" %>
+        </p>
+        <%= f.submit t("game.trade_hub.auction_list_cta"), class: "lbut" %>
+      <% end %>
+    </div>
+  <% else %>
+    <p class="nl-quests-board__meta"><%= t("game.buildings.auction_need_items") %></p>
+  <% end %>
+
+  <% if (@auction_listings || []).blank? %>
+    <p class="nl-trade-hub__empty" data-auction-empty="1"><%= t("game.trade_hub.auction_empty") %></p>
+  <% else %>
+    <ul class="nl-trade-hub__list" data-auction-list="1">
+      <% @auction_listings.each do |listing| %>
+        <li>
+          <%= listing.item_template.name %> ×<%= listing.quantity %>
+          — <%= listing.price_nv %> NV
+          (<%= listing.seller_character.name %>)
+          <% if listing.seller_character_id != current_character.id %>
+            <%= button_to t("game.common.buy", default: "Buy"),
+                  city_building_buy_auction_path("auction"),
+                  method: :post,
+                  params: {listing_id: listing.id},
+                  class: "lbut",
+                  form: {data: {turbo: false}} %>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+
+  <p>
+    <%= link_to t("game.trade_hub.title", default: "Trade Hub"), trade_hub_path(tab: "auction"), class: "lbut", data: {auction_recovery: "trade_hub"} %>
+    <%= link_to t("game.shop.title"), shop_path, class: "lbut", data: {auction_recovery: "shop"} %>
+  </p>
+</section>

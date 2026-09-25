@@ -1,0 +1,26 @@
+.nl-dress-sets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0 12px;
+}
+
+.nl-dress-pieces {
+  list-style: none;
+  margin: 0 0 16px;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.nl-dress-piece {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.nl-dress-stats {
+  margin: 2px 0 0;
+  padding-left: 16px;
+  font: 10px/14px var(--nl-font-tahoma);
+}

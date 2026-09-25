@@ -1,0 +1,67 @@
+<% content_for :title, t("game.combat.interventions_title") %>
+
+<section class="nl-inventory-page" data-combat-interventions="1">
+  <h1 class="nl-sheet-title"><%= t("game.combat.interventions_title") %></h1>
+  <p class="nl-quests-board__meta"
+     data-protection-owned="<%= @protection_owned %>">
+    <%= t("game.combat.protection_owned", count: @protection_owned) %>
+    ·
+    <%= link_to t("game.inventory.title"), inventory_path(category: "things", subcategory: "scrolls"), class: "nl-sheet-link" %>
+    ·
+    <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link" %>
+  </p>
+
+  <% if @protection_owned.to_i <= 0 %>
+    <p class="nl-quests-board__meta" data-protection-need-scroll="1">
+      <%= t("game.combat.protector_scroll_missing") %>
+      <% if Game::World::CityBuildingCatalog.accessible?(character: current_character, building_key: "hospital") %>
+        ·
+        <%= link_to t("game.buildings.hospital_title_short"),
+              city_building_path("hospital", anchor: "hospital-premium-desk"),
+              class: "nl-sheet-link" %>
+      <% end %>
+    </p>
+  <% elsif @matches.empty? %>
+    <p class="nl-quests-board__meta" data-protection-empty="1">
+      <%= t("game.combat.protector_no_fights") %>
+    </p>
+  <% else %>
+    <table class="nl-arena-table" data-protection-match-list="1">
+      <thead>
+        <tr>
+          <th><%= t("game.combat.protector_col_match") %></th>
+          <th><%= t("game.combat.protector_col_sides") %></th>
+          <th><%= t("game.combat.protector_col_action") %></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @matches.each do |match| %>
+          <% team_a = match.team_participants("a").map(&:participant_name).join(", ") %>
+          <% team_b = match.team_participants("b").map(&:participant_name).join(", ") %>
+          <tr data-protection-match-id="<%= match.id %>">
+            <td>#<%= match.id %></td>
+            <td>
+              <span data-team="a"><%= team_a.presence || "—" %></span>
+              vs
+              <span data-team="b"><%= team_b.presence || "—" %></span>
+            </td>
+            <td>
+              <%= button_to t("game.combat.protector_join_a"),
+                    combat_interventions_path,
+                    method: :post,
+                    params: {match_id: match.id, team: "a"},
+                    class: "nl-assault-btn",
+                    form: {data: {turbo: false}} %>
+              <%= button_to t("game.combat.protector_join_b"),
+                    combat_interventions_path,
+                    method: :post,
+                    params: {match_id: match.id, team: "b"},
+                    class: "nl-assault-btn",
+                    form: {data: {turbo: false}} %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% end %>
+</section>

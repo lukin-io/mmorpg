@@ -281,7 +281,7 @@ module Arena
     def broadcast_timeout_claim_available
       broadcast({
         type: "timeout_claim_available",
-        message: "Timeout finish is available.",
+        message: I18n.t("game.fight.timeout_finish_available"),
         turn_number: match.current_turn_number,
         timestamp: Time.current.strftime("%H:%M:%S")
       })
@@ -316,13 +316,13 @@ module Arena
     def countdown_message(seconds)
       case seconds
       when 0
-        "Fight started"
+        I18n.t("game.fight.fight_started")
       when 1..3
         seconds.to_s
       when 4..10
-        "Fight starts in: #{seconds}"
+        I18n.t("game.fight.starts_in", seconds:)
       else
-        "Fight starts in #{seconds}s"
+        I18n.t("game.fight.starts_in_seconds", seconds:)
       end
     end
 
@@ -330,13 +330,13 @@ module Arena
       parts = []
 
       if action[:is_miss]
-        parts << "Miss"
+        parts << I18n.t("game.fight.log.result_miss")
       elsif action[:is_critical]
-        parts << "Critical"
+        parts << I18n.t("game.fight.log.result_critical")
       end
 
       if action[:damage]
-        parts << "-#{action[:damage]} HP"
+        parts << I18n.t("game.fight.log.result_damage", damage: action[:damage])
       end
 
       parts.join(" ")
@@ -353,36 +353,39 @@ module Arena
     end
 
     def format_combat_description(actor, action_type, target, damage, body_part: nil, critical: false, miss: false, dodge: false)
-      target_name = target&.name || "opponent"
+      target_name = target&.name || I18n.t("game.fight.log.opponent")
+      part = body_part_suffix(body_part)
 
       case action_type.to_s
       when "miss"
-        part_text = body_part ? " (#{body_part})" : ""
-        "#{actor.name} misses #{target_name}#{part_text}."
+        I18n.t("game.fight.log.miss", actor: actor.name, target: target_name, part:)
       when "dodge"
-        part_text = body_part ? " (#{body_part})" : ""
-        "#{target_name} dodges #{actor.name}#{part_text}."
+        I18n.t("game.fight.log.dodge", actor: actor.name, target: target_name, part:)
       when "attack"
         if miss || dodge
-          part_text = body_part ? " (#{body_part})" : ""
-          return dodge ? "#{target_name} dodges #{actor.name}#{part_text}." : "#{actor.name} misses #{target_name}#{part_text}."
+          return dodge ? I18n.t("game.fight.log.dodge", actor: actor.name, target: target_name, part:) : I18n.t("game.fight.log.miss", actor: actor.name, target: target_name, part:)
         end
 
         if damage
-          part_text = body_part ? " (#{body_part})" : ""
-          crit_text = critical ? " Critical hit!" : ""
-          "#{actor.name} hits #{target_name}#{part_text}: #{damage} damage.#{crit_text}"
+          crit = critical ? I18n.t("game.fight.log.crit_suffix") : ""
+          I18n.t("game.fight.log.hit", actor: actor.name, target: target_name, part:, damage:, crit:)
         else
-          "#{actor.name} attacks."
+          I18n.t("game.fight.log.attacks", actor: actor.name)
         end
       when "blocked"
-        part_text = body_part ? " (#{body_part})" : ""
-        "#{target_name} blocks #{actor.name}'s attack#{part_text}."
+        I18n.t("game.fight.log.blocks", actor: actor.name, target: target_name, part:)
       when "defend"
-        "#{actor.name} defends."
+        I18n.t("game.fight.log.defends", actor: actor.name)
       else
-        "#{actor.name}: #{action_type}."
+        I18n.t("game.fight.log.generic", actor: actor.name, action: action_type)
       end
+    end
+
+    def body_part_suffix(body_part)
+      return "" if body_part.blank?
+
+      label = I18n.t("game.combat.body_parts.#{body_part}", default: body_part.to_s)
+      " (#{label})"
     end
   end
 end

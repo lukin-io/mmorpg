@@ -26,7 +26,8 @@ module Manage
       attributes = parsed_tile_npc_params
 
       if attributes && mutate(@tile_npc, operation: :create, attributes:)
-        redirect_to manage_tile_npc_path(@tile_npc), notice: "Cell NPC created.", status: :see_other
+        sync_spawn_controls_to_template!(@tile_npc)
+        redirect_to manage_tile_npc_path(@tile_npc), notice: I18n.t("manage.flashes.tile_npc_created"), status: :see_other
       else
         render :new, status: :unprocessable_content
       end
@@ -36,7 +37,8 @@ module Manage
       attributes = parsed_tile_npc_params
 
       if attributes && mutate(@tile_npc, operation: :update, attributes:)
-        redirect_to manage_tile_npc_path(@tile_npc), notice: "Cell NPC updated.", status: :see_other
+        sync_spawn_controls_to_template!(@tile_npc)
+        redirect_to manage_tile_npc_path(@tile_npc), notice: I18n.t("manage.flashes.tile_npc_updated"), status: :see_other
       else
         render :edit, status: :unprocessable_content
       end
@@ -44,7 +46,7 @@ module Manage
 
     def destroy
       if mutate(@tile_npc, operation: :destroy)
-        redirect_to manage_tile_npcs_path, notice: "Cell NPC deleted.", status: :see_other
+        redirect_to manage_tile_npcs_path, notice: I18n.t("manage.flashes.tile_npc_deleted"), status: :see_other
       else
         redirect_to manage_tile_npc_path(@tile_npc), alert: @tile_npc.errors.full_messages.to_sentence,
           status: :see_other
@@ -66,7 +68,7 @@ module Manage
       params.require(:tile_npc).permit(
         :zone, :x, :y, :npc_template_id, :npc_key, :npc_role, :level,
         :current_hp, :max_hp, :defeated_at, :respawns_at, :metadata, :active,
-        :content_fields, :encounter_count,
+        :content_fields, :encounter_count, :respawn_seconds, :drop_chance_multiplier,
         rosters: [:key, :weight, :encounter_experience_reward, :trauma_percent,
           members: [:npc_key, :level, :level_min, :level_max, :hp]]
       )
@@ -75,6 +77,18 @@ module Manage
     def load_form_options
       @outdoor_zones = Zone.where(location_type: "outdoor").order(:name)
       @npc_templates = NpcTemplate.order(:name)
+    end
+
+    def sync_spawn_controls_to_template!(tile_npc)
+      template = tile_npc.npc_template
+      return unless template
+
+      meta = template.metadata.to_h.deep_dup
+      %w[respawn_seconds respawn_variance_seconds drop_chance_multiplier].each do |key|
+        value = tile_npc.metadata.to_h[key]
+        value.nil? ? meta.delete(key) : meta[key] = value
+      end
+      template.update!(metadata: meta) if meta != template.metadata.to_h
     end
   end
 end

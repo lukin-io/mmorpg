@@ -25,6 +25,7 @@ decisions live under `doc/design/`; delivery status lives in
 | NPCs/Quests | `doc/design/reference/npcs_quests/README.md` | Variable outdoor group captures, Bot wiki capacity, and incomplete Quest evidence |
 | Professions | `doc/design/reference/professions/README.md` | Cross-domain direction; complete flow missing |
 | Dungeons | `doc/design/reference/dungeons/README.md` | Evidence needed |
+| Mist War UI (clarity tutor) | `doc/design/reference/mistwar_ui_patterns.md` | Public library UX patterns; not Neverlands authority |
 
 Composite captures have one primary physical owner and may support several
 domain summaries. Other domains link to the canonical observation and relevant

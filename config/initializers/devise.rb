@@ -159,6 +159,11 @@ Devise.setup do |config|
   # unconfirmed_email column, and copied to email column on successful confirmation.
   config.reconfirmable = true
 
+  # Public Railway sandbox has no mail delivery — allow unconfirmed login.
+  if ENV["SANDBOX_OPEN_AUTH"] == "1"
+    config.allow_unconfirmed_access_for = nil
+  end
+
   # Defines which key will be used when confirming an account
   # config.confirmation_keys = [:email]
 

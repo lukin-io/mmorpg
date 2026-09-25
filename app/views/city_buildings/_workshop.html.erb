@@ -1,0 +1,91 @@
+<section class="nl-handbook" aria-label="<%= t("game.professions.workshop_aria") %>">
+  <h2><%= t("game.professions.tar_smith") %></h2>
+  <p class="nl-handbook__lead">
+    <%= t("game.professions.tar_smith_lead", skill: local_assigns.fetch(:skill, 0)) %>
+  </p>
+  <% if params[:craft_denied].to_s == "1" %>
+    <p class="nl-quests-board__meta" data-craft-denied="1">
+      <%= t("game.professions.craft_denied_next") %>
+      ·
+      <%= link_to t("arena.nav.city"), world_path, class: "nl-sheet-link", data: {workshop_recovery: "world"} %>
+      ·
+      <%= link_to t("game.professions.tar_smith"), city_building_path("workshop"), class: "nl-sheet-link", data: {workshop_recovery: "workshop"} %>
+    </p>
+  <% end %>
+  <% inv = current_character.inventory %>
+  <% bag_weight = inv&.current_weight.to_i || 0 %>
+  <% bag_max = inv&.max_weight.to_i || current_character.carrying_capacity.to_i %>
+  <% bag_slots = inv&.inventory_items&.where(equipped: false)&.count.to_i || 0 %>
+  <% bag_slot_cap = inv&.slot_capacity.to_i || 0 %>
+  <% recipes = local_assigns.fetch(:recipes, {}) %>
+  <% skill = local_assigns.fetch(:skill, 0) %>
+  <% any_ready = recipes.any? { |_key, recipe| craft_readiness(recipe, character: current_character, skill: skill)[:ready] } %>
+  <p class="nl-quests-board__meta"
+     data-workshop-mass="<%= bag_weight %>"
+     data-workshop-mass-max="<%= bag_max %>"
+     data-workshop-slots="<%= bag_slots %>"
+     data-workshop-slots-max="<%= bag_slot_cap %>"
+     data-workshop-any-ready="<%= any_ready ? "1" : "0" %>">
+    <%= t("game.professions.bag_capacity", weight: bag_weight, max: bag_max, slots: bag_slots, slot_max: bag_slot_cap) %>
+  </p>
+  <% unless any_ready %>
+    <p class="nl-quests-board__meta" data-workshop-none-ready="1">
+      <%= t("game.professions.workshop_none_ready") %>
+      ·
+      <%= link_to t("game.inventory.title"), inventory_path, data: {turbo: false, workshop_recovery: "inventory"} %>
+      ·
+      <%= link_to t("arena.nav.city"), world_path, data: {turbo: false, workshop_recovery: "world"} %>
+    </p>
+  <% end %>
+  <% wear = Game::Inventory::EquippedWear.summary_for(current_character) %>
+  <p class="nl-quests-board__meta" data-workshop-repair="deferred">
+    <%= t("game.professions.repair_deferred") %>
+    <% if wear.worn.positive? || wear.broken.positive? %>
+      ·
+      <%= link_to(
+            wear.broken.positive? ? t("game.world.wear_chip_broken", count: wear.broken) : t("game.world.wear_chip", count: wear.worn),
+            inventory_path,
+            data: {turbo: false, workshop_recovery: "inventory"}
+          ) %>
+    <% else %>
+      ·
+      <%= link_to t("game.inventory.title"), inventory_path, data: {turbo: false, workshop_recovery: "inventory"} %>
+    <% end %>
+  </p>
+
+  <div class="nl-handbook__grid">
+    <% recipes.each do |key, recipe| %>
+      <% title = I18n.locale.to_s.start_with?("ru") ? recipe["title_ru"] : recipe["title_en"] %>
+      <% summary = I18n.locale.to_s.start_with?("ru") ? recipe["summary_ru"] : recipe["summary_en"] %>
+      <% gate = craft_readiness(recipe, character: current_character, skill: skill) %>
+      <article class="nl-handbook__card"
+               data-workshop-recipe="<%= key %>"
+               data-workshop-ready="<%= gate[:ready] ? "1" : "0" %>">
+        <h3><%= title %></h3>
+        <p><%= summary %></p>
+        <p class="nl-quests-board__meta">
+          <%= t("game.professions.min_skill", amount: recipe.fetch("min_skill", 0)) %>
+          ·
+          <%= t("game.professions.inputs") %>:
+          <%= craft_input_labels(recipe, character: current_character) %>
+        </p>
+        <% if gate[:ready] %>
+          <%= button_to t("game.professions.craft_cta"),
+                city_building_craft_path("workshop"),
+                method: :post,
+                params: {recipe_key: key},
+                class: "lbut",
+                form: {data: {turbo: false}} %>
+        <% else %>
+          <button type="button" class="lbut" disabled title="<%= gate[:reason] %>"><%= t("game.professions.craft_cta") %></button>
+          <p class="nl-quests-board__meta">
+            <%= gate[:reason] %>
+            <%= craft_block_recovery_link(gate) %>
+          </p>
+        <% end %>
+      </article>
+    <% end %>
+  </div>
+</section>
+
+<%= render "city_buildings/landmark", building: building, building_key: "workshop" %>

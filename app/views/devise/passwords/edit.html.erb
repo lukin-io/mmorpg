@@ -1,31 +1,31 @@
 <div class="login-container">
-  <h1>Change your password</h1>
+  <h1><%= t("auth.change_password_title") %></h1>
 
   <%= form_for(resource, as: resource_name, url: password_path(resource_name), html: { method: :put }) do |f| %>
     <%= render "devise/shared/error_messages", resource: resource %>
     <%= f.hidden_field :reset_password_token %>
 
     <div class="field">
-      <%= f.label :password, "New password" %>
+      <%= f.label :password, t("auth.new_password") %>
       <% if @minimum_password_length %>
-        <span class="text-muted text-sm">(<%= @minimum_password_length %> characters minimum)</span>
+        <span class="text-muted text-sm">(<%= t("auth.password_min", count: @minimum_password_length) %>)</span>
       <% end %>
       <%= f.password_field :password, autofocus: true, autocomplete: "new-password" %>
     </div>
 
     <div class="field">
-      <%= f.label :password_confirmation, "Confirm new password" %>
+      <%= f.label :password_confirmation, t("auth.confirm_new_password") %>
       <%= f.password_field :password_confirmation, autocomplete: "new-password" %>
     </div>
 
     <div class="field">
-      <%= f.submit "Change my password", class: "btn-primary w-full" %>
+      <%= f.submit t("auth.change_password"), class: "btn-primary w-full" %>
     </div>
   <% end %>
 
   <hr>
 
   <div class="text-center">
-    <%= link_to "Back to login", new_session_path(resource_name) %>
+    <%= link_to t("auth.back_to_login"), new_session_path(resource_name) %>
   </div>
 </div>

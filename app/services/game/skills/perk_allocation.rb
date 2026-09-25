@@ -13,20 +13,20 @@ module Game
 
       def call(selected_keys:)
         keys = normalize_keys(selected_keys)
-        raise AllocationError, "No new perks selected" if keys.empty?
+        raise AllocationError, I18n.t("game.flashes.alloc_no_new_perks") if keys.empty?
 
         definitions = keys.index_with { |key| PerkRegistry.find(key) }
         unknown_keys = definitions.select { |_key, definition| definition.nil? }.keys
-        raise AllocationError, "Unknown perk selection" if unknown_keys.any?
+        raise AllocationError, I18n.t("game.flashes.alloc_unknown_perk") if unknown_keys.any?
 
         character.with_lock do
           new_keys = keys.reject { |key| character.owns_perk?(key) }
-          raise AllocationError, "No new perks selected" if new_keys.empty?
-          raise AllocationError, "Not enough new-perk points" if new_keys.size > character.perk_points
+          raise AllocationError, I18n.t("game.flashes.alloc_no_new_perks") if new_keys.empty?
+          raise AllocationError, I18n.t("game.flashes.alloc_not_enough_perk_points") if new_keys.size > character.perk_points
 
           selected_and_owned = character.owned_perk_keys + new_keys
           if PerkRegistry.conflicts_for(selected_and_owned).any?
-            raise AllocationError, "Selected perks are mutually exclusive"
+            raise AllocationError, I18n.t("game.flashes.alloc_perks_exclusive")
           end
 
           character.update!(

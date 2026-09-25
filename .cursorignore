@@ -1,0 +1,16 @@
+﻿# Shrink Cursor indexing for this Rails game repo.
+log/
+tmp/
+storage/
+vendor/
+coverage/
+.ruby-lsp/
+*.log
+public/ashen-import/
+changelogs/
+doc/design/reference/**/*.png
+doc/design/reference/**/*.jpg
+doc/design/reference/**/*.webp
+config/credentials.yml.enc.upstream
+scripts/wipe_users.py
+scripts/_tmp_*

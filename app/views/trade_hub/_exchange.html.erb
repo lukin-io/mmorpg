@@ -1,0 +1,42 @@
+<div class="nl-trade-hub__panel" data-trade-hub-exchange="1">
+  <p><%= t("game.trade_hub.exchange_lead") %></p>
+
+  <div class="nl-trade-hub__list-form">
+    <h2><%= t("game.trade_hub.exchange_create_title") %></h2>
+    <%= form_with url: create_exchange_trade_hub_path, method: :post, local: true do |f| %>
+      <p>
+        <%= f.label :give_currency, t("game.trade_hub.exchange_give") %>
+        <%= f.select :give_currency, [["NV", "nv"], ["VM", "vm"]], {}, class: "nl-trade-hub__select" %>
+        <%= f.number_field :give_amount, value: 10, min: 1, step: 1, class: "nl-trade-hub__input" %>
+      </p>
+      <p>
+        <%= f.label :want_currency, t("game.trade_hub.exchange_want") %>
+        <%= f.select :want_currency, [["VM", "vm"], ["NV", "nv"]], {}, class: "nl-trade-hub__select" %>
+        <%= f.number_field :want_amount, value: 1, min: 1, step: 1, class: "nl-trade-hub__input" %>
+      </p>
+      <%= f.submit t("game.trade_hub.exchange_create_cta"), class: "lbut" %>
+    <% end %>
+  </div>
+
+  <% if @offers.blank? %>
+    <p class="nl-trade-hub__empty"><%= t("game.trade_hub.exchange_empty") %></p>
+  <% else %>
+    <ul class="nl-trade-hub__list">
+      <% @offers.each do |offer| %>
+        <li>
+          <%= offer.give_amount %> <%= offer.give_currency.upcase %>
+          → <%= offer.want_amount %> <%= offer.want_currency.upcase %>
+          (<%= offer.seller.profile_name %>)
+          <% if offer.seller_id != current_user.id %>
+            <%= button_to t("game.trade_hub.exchange_fill_cta"),
+                  fill_exchange_trade_hub_path,
+                  method: :post,
+                  params: {offer_id: offer.id},
+                  class: "lbut" %>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+  <p class="nl-trade-hub__note"><%= t("game.trade_hub.exchange_note") %></p>
+</div>

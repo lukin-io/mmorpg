@@ -1,0 +1,39 @@
+<% content_for :title, @character.name %>
+<%= render "manage/shared/page_header",
+      title: @character.name,
+      description: t("manage.characters.hint") %>
+
+<p>
+  <strong><%= t("manage.characters.level") %>:</strong> <%= @character.level %>
+  · <strong><%= t("manage.characters.rating") %>:</strong> <%= @combat_rating %>
+  · <strong>INQ:</strong> <%= @inquisitor ? t("manage.yes") : t("manage.no") %>
+</p>
+
+<section class="nl-handbook">
+  <h2><%= t("manage.characters.inject_level") %></h2>
+  <%= form_with url: inject_level_manage_character_path(@character), method: :post, local: true do |f| %>
+    <%= f.number_field :level, value: @character.level, min: 0, max: 100, class: "LogintextBox4" %>
+    <%= f.submit t("manage.characters.inject_level_cta"), class: "lbut" %>
+  <% end %>
+</section>
+
+<section class="nl-handbook">
+  <h2><%= t("manage.characters.grant_kit") %></h2>
+  <%= form_with url: grant_kit_manage_character_path(@character), method: :post, local: true do |f| %>
+    <%= f.select :set_id, Game::Equipment::SetBonuses::SET_META.map { |id, meta| [meta[:name_ru], id] } %>
+    <%= f.select :tier, Game::World::NpcLoadout::CATALOG_TIERS %>
+    <%= f.submit t("manage.characters.grant_kit_cta"), class: "lbut" %>
+  <% end %>
+</section>
+
+<section class="nl-handbook">
+  <h2><%= t("manage.characters.inq_title") %></h2>
+  <%= button_to(
+        @inquisitor ? t("manage.characters.inq_off_cta") : t("manage.characters.inq_on_cta"),
+        toggle_inq_manage_character_path(@character),
+        method: :post,
+        class: "lbut"
+      ) %>
+</section>
+
+<p><%= link_to t("manage.characters.back"), manage_characters_path, class: "nl-sheet-link" %></p>

@@ -7,7 +7,7 @@ RSpec.describe Seeds::ForpostGateRepair, type: :model do
   include ActiveSupport::Testing::TimeHelpers
 
   let!(:outdoors) do
-    create(:zone, :mvp_outdoor_region, name: "Outpost Surroundings", metadata: {"source_map" => "m_1001_999"})
+    create(:zone, :mvp_outdoor_region, name: "Пепельный Берег", metadata: {"source_map" => "m_1001_999"})
   end
   let!(:central) do
     create(:zone, :city_node, name: "Outpost")

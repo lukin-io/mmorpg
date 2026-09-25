@@ -1,7 +1,7 @@
-<%= render "manage/shared/page_header", title: "Audit Event ##{@audit_event.id}", description: "#{@audit_event.action} #{@audit_event.record_type}" %>
+<%= render "manage/shared/page_header", title: t("manage.views.audit_event_title", id: @audit_event.id), description: "#{management_audit_action_label(@audit_event.action)} · #{management_audit_record_type_label(@audit_event.record_type)}" %>
 <table class="nl-sheet-table nl-manage-detail">
-  <tr><th>Time</th><td><%= l(@audit_event.created_at, format: :long) %></td></tr><tr><th>Administrator</th><td><%= @audit_event.actor.profile_name %></td></tr>
-  <tr><th>Record</th><td><%= @audit_event.record_label %> (#<%= @audit_event.record_id || "deleted" %>)</td></tr><tr><th>Source</th><td><%= @audit_event.metadata.to_h["source"] %></td></tr>
+  <tr><th><%= t("manage.views.col_time") %></th><td><%= l(@audit_event.created_at, format: :long) %></td></tr><tr><th><%= t("manage.views.col_admin") %></th><td><%= @audit_event.actor.profile_name %></td></tr>
+  <tr><th><%= t("manage.views.col_record") %></th><td><%= @audit_event.record_label %> (#<%= @audit_event.record_id || t("manage.views.deleted_record") %>)</td></tr><tr><th><%= t("manage.views.source") %></th><td><%= management_audit_source_label(@audit_event.metadata.to_h["source"]) %></td></tr>
 </table>
-<h2 class="invtitle">Changes</h2><pre class="nl-manage-json"><%= pretty_json(@audit_event.change_set) %></pre>
-<div class="nl-manage-record-actions"><%= link_to "Back", manage_audit_events_path, class: "lbut" %></div>
+<h2 class="invtitle"><%= t("manage.views.changes_heading") %></h2><pre class="nl-manage-json"><%= pretty_json(@audit_event.change_set) %></pre>
+<div class="nl-manage-record-actions"><%= link_to t("manage.back"), manage_audit_events_path, class: "lbut" %></div>

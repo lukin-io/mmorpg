@@ -123,7 +123,7 @@ module Game
         private
 
         def starter_region?(zone)
-          zone&.outdoor? && zone.name == "Outpost Surroundings" && zone.width == 1000 && zone.height == 1000 &&
+          zone&.outdoor? && zone.name == "Пепельный Берег" && zone.width == 1000 && zone.height == 1000 &&
             zone.metadata.to_h["source_map"] == "m_1001_999"
         end
 

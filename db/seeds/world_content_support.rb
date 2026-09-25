@@ -28,7 +28,7 @@ module Seeds
       end
 
       case name
-      when "Outpost Surroundings"
+      when "Пепельный Берег"
         {
           "source_map" => "m_1001_999"
         }
@@ -47,7 +47,7 @@ module Seeds
         building_type: "city", name: gate.fetch("name"), destination_zone: city_zone,
         destination_x: 0, destination_y: 0, icon: nil, required_level: 0,
         metadata: {
-          "description" => "Enter Forpost through the #{gate.fetch('name')}.",
+          "description" => "Вход в Форпост через #{gate.fetch('name')}.",
           "presence_label" => gate.fetch("presence_label"),
           "source_map" => gate.fetch("source_map"),
           "source_coordinates" => gate.fetch("source_coordinates"),
@@ -155,7 +155,7 @@ module Seeds
           "source_map" => "m_1007_1002",
           "source_coordinates" => [1007, 1002],
           "source_observation" => "2026-09-08_cell_content_and_world_rules",
-          "presence_label" => "Outpost Surroundings, Pond",
+          "presence_label" => "Пепельный Берег, Pond",
           "cell_art" => {"key" => "forpost_pond", "column" => 2, "row" => 2},
           "local_actions" => [
             {"type" => "resource_search", "source_id" => "look", "label" => "Look Around", "active" => true,
@@ -186,7 +186,13 @@ module Seeds
         "source_coordinates" => cell.metadata.fetch("source_coordinates")
       )
       merged["resource_groups"] ||= cell.metadata.dig("atlas", "herb_groups").map do |group|
-        {"key" => "herbs_#{group}", "kind" => "herbs", "label" => "Herb group #{group}", "active" => true}
+        id = group.to_i
+        {
+          "key" => "herbs_#{id}",
+          "kind" => "herbs",
+          "label" => Game::World::ResourceLabel::HERB_GROUPS.fetch(id) { "Пепельная трава" },
+          "active" => true
+        }
       end
       {terrain_type: "outdoor", passable: cell.passable, metadata: merged}
     end

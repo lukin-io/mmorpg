@@ -20,7 +20,7 @@
         <%= render "village_scene" %>
       <% end %>
 
-      <nav class="nl-world-location-hotspots" aria-label="Location actions">
+      <nav class="nl-world-location-hotspots" aria-label="<%= t("game.world.cell_actions") %>">
         <% @location_features.each do |feature| %>
           <% next if feature["placement"] == "navigation" %>
           <% feature_key = feature.fetch("key") %>

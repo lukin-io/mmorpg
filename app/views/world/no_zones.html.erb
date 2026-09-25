@@ -1,4 +1,7 @@
-<section class="world-empty-state">
-  <h1>World Unavailable</h1>
-  <p>No playable zones are available.</p>
+<section class="world-empty-state" data-world-unavailable="1">
+  <h1><%= t("game.world.unavailable_title") %></h1>
+  <p><%= t("game.world.unavailable_body") %></p>
+  <p class="nl-quests-board__meta">
+    <%= link_to t("nav.world"), world_path, class: "nl-sheet-link", data: {world_recovery: "retry"} %>
+  </p>
 </section>

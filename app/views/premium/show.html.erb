@@ -1,0 +1,118 @@
+<% content_for :title, t("game.premium_pass.title") %>
+<section class="nl-handbook" data-premium-shop="1">
+  <p class="nl-handbook__banner" data-premium-banner="1">
+    <%= image_tag "cc0/ui/premium-veil-banner.png", alt: "", class: "nl-handbook__banner-img", width: 960, height: 540 %>
+  </p>
+  <h1><%= t("game.premium_pass.title") %></h1>
+  <p class="nl-handbook__lead"><%= t("game.premium_pass.lead_mist") %></p>
+  <p class="nl-quests-board__meta">
+    <%= t("game.gifts.wallet_both", nv: @nv, vm: @vm) %>
+    · <%= link_to t("game.inventory.title"), inventory_path, class: "nl-sheet-link" %>
+    · <%= link_to t("game.gifts.title"), gifts_path, class: "nl-sheet-link" %>
+    · <%= link_to t("game.season.nav"), season_path, class: "nl-sheet-link" %>
+  </p>
+
+  <% if @premium_perks[:plan].present? %>
+    <p data-premium-active="1">
+      <%= t("game.premium_pass.active",
+            title: @premium_perks[:title_ru],
+            until: l(@premium_perks[:expires_at], format: :short),
+            discount: @premium_perks[:gift_nv_discount_percent],
+            mass: @premium_perks[:mass_bonus],
+            stipend: @premium_perks[:daily_nv_stipend]) %>
+    </p>
+    <p class="nl-quests-board__meta">
+      <%= t("game.premium_pass.features_line",
+            gather: @premium_perks[:gather_bonus],
+            xp: @premium_perks[:xp_bonus_percent],
+            auto_gather: @premium_perks[:auto_gather] ? t("game.common.yes", default: "да") : t("game.common.no", default: "нет"),
+            auto_combat: @premium_perks[:auto_combat] ? t("game.common.yes", default: "да") : t("game.common.no", default: "нет"),
+            junk: @premium_perks[:junk_remote] ? t("game.common.yes", default: "да") : t("game.common.no", default: "нет")) %>
+    </p>
+    <%= button_to t("game.premium_pass.claim_stipend"),
+          claim_stipend_premium_path,
+          method: :post,
+          class: "lbut",
+          form: {data: {turbo: false}} %>
+
+    <% if @premium_perks[:auto_combat] %>
+      <p>
+        <% if @auto_hunt_armed %>
+          <%= button_to t("game.premium_pass.auto_hunt_disarm_cta"),
+                world_auto_hunt_path,
+                method: :post,
+                params: {disarm: 1},
+                class: "lbut",
+                form: {data: {turbo: false}} %>
+        <% else %>
+          <%= button_to t("game.premium_pass.auto_hunt_arm_cta"),
+                world_auto_hunt_path,
+                method: :post,
+                params: {arm: 1},
+                class: "lbut",
+                form: {data: {turbo: false}} %>
+          <%= button_to t("game.premium_pass.auto_hunt_once_cta"),
+                world_auto_hunt_path,
+                method: :post,
+                class: "lbut",
+                form: {data: {turbo: false}} %>
+        <% end %>
+      </p>
+    <% end %>
+    <% if @premium_perks[:auto_gather] %>
+      <p>
+        <%= button_to t("game.premium_pass.auto_gather_dig_cta"),
+              world_auto_gather_path,
+              method: :post,
+              params: {local_action_type: "digging"},
+              class: "lbut",
+              form: {data: {turbo: false}} %>
+        <%= button_to t("game.premium_pass.auto_gather_herb_cta"),
+              world_auto_gather_path,
+              method: :post,
+              params: {local_action_type: "resource_search"},
+              class: "lbut",
+              form: {data: {turbo: false}} %>
+        <%= button_to t("game.premium_pass.auto_gather_fish_cta"),
+              world_auto_gather_path,
+              method: :post,
+              params: {local_action_type: "fishing"},
+              class: "lbut",
+              form: {data: {turbo: false}} %>
+      </p>
+    <% else %>
+      <p class="nl-trade-hub__note"><%= t("game.premium_pass.manual_only_hint") %></p>
+    <% end %>
+  <% else %>
+    <p class="nl-trade-hub__note" data-premium-inactive="1"><%= t("game.premium_pass.inactive_hint") %></p>
+    <p class="nl-trade-hub__note"><%= t("game.premium_pass.manual_only_hint") %></p>
+  <% end %>
+
+  <h2><%= t("game.premium_pass.plans_title") %></h2>
+  <ul class="nl-trade-hub__list" data-premium-plans="<%= @premium_plans.size %>">
+    <% @premium_plans.each do |key, plan| %>
+      <li data-premium-plan="<%= key %>">
+        <strong><%= plan[:title_ru] %></strong>
+        — <%= plan[:days] %> <%= t("game.premium_pass.days") %>
+        · <%= plan[:price_vm] %> VM
+        <p class="nl-quests-board__meta">
+          <%= t("game.premium_pass.perks_mist",
+                discount: plan[:gift_nv_discount_percent],
+                mass: plan[:mass_bonus],
+                stipend: plan[:daily_nv_stipend],
+                gather: plan[:gather_bonus],
+                xp: plan[:xp_bonus_percent],
+                auto_gather: plan[:auto_gather] ? "✓" : "—",
+                auto_combat: plan[:auto_combat] ? "✓" : "—",
+                junk: plan[:junk_remote] ? "✓" : "—") %>
+        </p>
+        <%= button_to t("game.premium_pass.buy_cta"),
+              buy_premium_path,
+              method: :post,
+              params: {plan_key: key},
+              class: "lbut",
+              form: {data: {turbo: false}} %>
+      </li>
+    <% end %>
+  </ul>
+</section>

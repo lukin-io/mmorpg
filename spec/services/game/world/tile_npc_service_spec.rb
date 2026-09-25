@@ -22,7 +22,7 @@ RSpec.describe Game::World::TileNpcService do
     )
     create(
       :tile_npc,
-      zone: "Outpost Surroundings",
+      zone: "Пепельный Берег",
       x: 7,
       y: 7,
       npc_template: template,
@@ -33,7 +33,7 @@ RSpec.describe Game::World::TileNpcService do
     )
     service = described_class.new(
       character:,
-      zone: "Outpost Surroundings",
+      zone: "Пепельный Берег",
       x: 7,
       y: 7
     )
@@ -56,7 +56,7 @@ RSpec.describe Game::World::TileNpcService do
   it "does not recreate a deleted placement from seed configuration at runtime" do
     service = described_class.new(
       character:,
-      zone: "Outpost Surroundings",
+      zone: "Пепельный Берег",
       x: 8,
       y: 7
     )

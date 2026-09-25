@@ -17,7 +17,7 @@ module Players
       def allocate!(allocations)
         normalized_allocations = normalize_allocations(allocations)
         total_requested = normalized_allocations.values.sum
-        raise ArgumentError, "Not enough free stat points" if total_requested > character.stat_points_available
+        raise ArgumentError, I18n.t("game.flashes.alloc_not_enough_stat_points") if total_requested > character.stat_points_available
 
         character.stat_points_available -= total_requested
         normalized_allocations.each do |stat, value|
@@ -39,7 +39,7 @@ module Players
       def normalize_allocations(allocations)
         allocations.each_with_object(Hash.new(0)) do |(stat, value), result|
           key = Character.normalize_stat_key(stat)
-          raise ArgumentError, "Unknown stat #{stat}" unless key
+          raise ArgumentError, I18n.t("game.flashes.alloc_unknown_stat", stat: stat) unless key
 
           result[key.to_s] += value.to_i
         end.to_h
